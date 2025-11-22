@@ -1,4 +1,4 @@
-ÿþï»¿package com.example.childPortal.security;
+ï»¿package com.example.childPortal.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
+import org.springframework.stereotype.Component;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -42,4 +43,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         chain.doFilter(request, response);
     }
-}
+}

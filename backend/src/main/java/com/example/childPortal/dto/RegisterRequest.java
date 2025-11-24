@@ -13,6 +13,16 @@ public class RegisterRequest {
     private String certificationFile;
     private boolean termsAccepted;
 
+    private String badgeNumber;
+    private String department;
+    private String rank;
+    private String stationAddress;
+
+    private String licenseNumber;
+    private java.util.List<String> specializations;
+    private String organization;
+    private String yearsOfExperience;
+ 
     public RegisterRequest() {}
 
     public String getFullName() { 
@@ -77,4 +87,61 @@ public class RegisterRequest {
     public void setTermsAccepted(boolean termsAccepted) {
          this.termsAccepted = termsAccepted; 
     }
+
+    public String getBadgeNumber() { 
+        return badgeNumber; 
+    }
+    public void setBadgeNumber(String badgeNumber) { 
+        this.badgeNumber = badgeNumber; 
+    }
+
+    public String getDepartment() { 
+        return department; 
+    }
+    public void setDepartment(String department) { 
+        this.department = department; 
+    }
+
+    public String getRank() { 
+        return rank; 
+    }
+    public void setRank(String rank) { 
+        this.rank = rank; 
+    }
+
+    public String getStationAddress() { 
+        return stationAddress; 
+    }
+    public void setStationAddress(String stationAddress) { 
+        this.stationAddress = stationAddress; 
+    }
+
+    public String getLicenseNumber() { 
+        return licenseNumber; 
+    }
+    public void setLicenseNumber(String licenseNumber) { 
+        this.licenseNumber = licenseNumber; 
+    }
+
+    public java.util.List<String> getSpecializations() {
+        return specializations; 
+    }
+    public void setSpecializations(java.util.List<String> specializations) {
+        this.specializations = specializations; 
+    }
+
+    public String getOrganization() {
+        return organization; 
+    }
+    public void setOrganization(String organization) {
+        this.organization = organization; 
+    }
+
+    public String getYearsOfExperience() {
+        return yearsOfExperience; 
+    }
+    public void setYearsOfExperience(String yearsOfExperience) {
+        this.yearsOfExperience = yearsOfExperience;
+    }
+
 }

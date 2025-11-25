@@ -1,16 +1,18 @@
 package com.example.childPortal.service.impl;
-
 import com.example.childPortal.model.User;
 import com.example.childPortal.model.Role;
 import com.example.childPortal.dto.RegisterRequest;
 import com.example.childPortal.dto.LoginResponse;
+import com.example.childPortal.dto.PoliceOfficerDTO;
+import com.example.childPortal.dto.SocialWorkerDTO;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.UserService;
+import com.example.childPortal.service.PoliceOfficerService;
+import com.example.childPortal.service.SocialWorkerService;
 import com.example.childPortal.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -20,6 +22,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PoliceOfficerService policeOfficerService;
+
+    @Autowired
+    private SocialWorkerService socialWorkerService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -71,16 +79,40 @@ public class UserServiceImpl implements UserService {
 
         if (request.getRole() == Role.PU || request.getRole() == Role.ADMIN) {
             user.setApproved(true);
+            user.setStatus("APPROVED");
+
             if (request.getRole() == Role.PU) {
                 sendWelcomeEmail(user.getEmail());
             }
         } else {
             user.setApproved(false);
+            user.setStatus("PENDING");
             sendPendingApprovalEmail(user.getEmail());
             notifyAdminForApproval(user);
         }
 
-        userRepository.save(user);
+        User savedUser =userRepository.save(user);
+        
+        if (request.getRole() == Role.PO) {
+        PoliceOfficerDTO officerDTO = new PoliceOfficerDTO();
+            officerDTO.setUserId(savedUser.getId());
+            officerDTO.setBadgeNumber(request.getBadgeNumber());
+            officerDTO.setDepartment(request.getDepartment());
+            officerDTO.setRank(request.getRank());
+            officerDTO.setStationAddress(request.getStationAddress());
+            officerDTO.setIdDocumentUrl(request.getOfficialIdFile());
+            policeOfficerService.createPoliceOfficer(officerDTO);
+        } else if (request.getRole() == Role.SW) {
+            SocialWorkerDTO workerDTO = new SocialWorkerDTO();
+            workerDTO.setUserId(savedUser.getId());
+            workerDTO.setLicenseNumber(request.getLicenseNumber());
+            workerDTO.setSpecializations(request.getSpecializations());
+            workerDTO.setOrganization(request.getOrganization());
+            workerDTO.setYearsOfExperience(request.getYearsOfExperience());
+            workerDTO.setCertificationUrl(request.getCertificationFile());
+            socialWorkerService.createSocialWorker(workerDTO);
+    }
+
 
         if (user.isApproved()) {
             String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
@@ -91,6 +123,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+        public List<User> getUsersByRole(String role) {
+        try {
+            Role userRole = Role.valueOf(role.toUpperCase());
+            return userRepository.findByRole(userRole);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid role: " + role);
+        }
+    }
+
+       @Override
+    public List<User> getUsersByStatus(String status) {
+         return userRepository.findByStatus(status.toUpperCase());
+    }
+          
+    @Override
     public LoginResponse loginUser(String email, String password) {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
@@ -98,7 +145,6 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userOpt.get();
-except for ADMIN)
         if (!user.isApproved() && user.getRole() != Role.ADMIN) {
             return new LoginResponse(null, null, null, false, "Account pending admin approval");
         }
@@ -109,7 +155,7 @@ except for ADMIN)
 
     @Override
     public List<User> getPendingApprovals() {
-        return userRepository.findByApproved(false);
+        return userRepository.findByStatus("PENDING");
     }
 
     @Override
@@ -118,6 +164,7 @@ except for ADMIN)
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setApproved(true);
+            user.setStatus("APPROVED");
             userRepository.save(user);
 
             sendApprovalEmail(user.getEmail());
@@ -130,8 +177,11 @@ except for ADMIN)
     public boolean rejectUser(String userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setStatus("REJECTED");
+            userRepository.save(user);
             userRepository.delete(userOpt.get());
-            sendRejectionEmail(userOpt.get().getEmail());
+            sendRejectionEmail(user.getEmail());
             return true;
         }
         return false;

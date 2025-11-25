@@ -15,5 +15,5 @@ public interface UserService {
     Optional<User> getUserById(String userId);
     List<User> getAllUsers();
     List<User> getUsersByRole(String role); 
-    List<User> getUsersByStatus(String status);
+    List<User> getUsersByStatus(String status); 
 }

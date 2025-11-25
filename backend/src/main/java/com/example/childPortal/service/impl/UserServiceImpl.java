@@ -4,8 +4,14 @@ import com.example.childPortal.model.User;
 import com.example.childPortal.model.Role;
 import com.example.childPortal.dto.RegisterRequest;
 import com.example.childPortal.dto.LoginResponse;
+import com.example.childPortal.dto.PoliceOfficerDTO;
+import com.example.childPortal.dto.SocialWorkerDTO;
+
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.UserService;
+import com.example.childPortal.service.PoliceOfficerService;
+import com.example.childPortal.service.SocialWorkerService;
+
 import com.example.childPortal.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,7 +28,10 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PoliceOfficerService policeOfficerService;
+
+    @Autowired
+    private SocialWorkerService socialWorkerService;
 
     @Autowired
     private JwtUtil jwtUtil;

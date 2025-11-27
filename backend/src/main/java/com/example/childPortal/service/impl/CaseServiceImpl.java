@@ -148,19 +148,16 @@ public class CaseServiceImpl implements CaseService {
         dto.setReportDate(caseEntity.getReportDate());
         dto.setLastUpdated(caseEntity.getLastUpdated());
 
-        // Set reporter name if not anonymous
         if (!caseEntity.isAnonymous() && caseEntity.getReporterUserId() != null) {
             Optional<User> reporter = userRepository.findById(caseEntity.getReporterUserId());
             reporter.ifPresent(user -> dto.setReporterName(user.getFullName()));
         }
 
-        // Set assigned officer name
         if (caseEntity.getAssignedOfficerId() != null) {
             Optional<User> officer = userRepository.findById(caseEntity.getAssignedOfficerId());
             officer.ifPresent(user -> dto.setAssignedOfficerName(user.getFullName()));
         }
 
-        // Set assigned social worker name
         if (caseEntity.getAssignedWorkerId() != null) {
             Optional<User> worker = userRepository.findById(caseEntity.getAssignedWorkerId());
             worker.ifPresent(user -> dto.setAssignedWorkerName(user.getFullName()));

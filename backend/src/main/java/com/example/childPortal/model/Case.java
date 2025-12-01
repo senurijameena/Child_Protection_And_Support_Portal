@@ -23,7 +23,7 @@ public class Case {
 
     private List<String> evidenceUrls; 
 
-    private CaseStatus status
+    private CaseStatus status;
     private String assignedOfficerId; 
     private String assignedWorkerId; 
     private LocalDateTime reportDate;

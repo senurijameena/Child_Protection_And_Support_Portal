@@ -4,6 +4,7 @@ import com.example.childPortal.dto.CaseDTO;
 import com.example.childPortal.dto.CaseReportRequest;
 import com.example.childPortal.dto.CaseResponse;
 import com.example.childPortal.model.Case;
+import com.example.childPortal.model.CaseType;
 import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.model.User;
 import com.example.childPortal.repository.CaseRepository;

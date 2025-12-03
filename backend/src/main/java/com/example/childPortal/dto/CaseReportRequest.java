@@ -1,6 +1,7 @@
 package com.example.childPortal.dto;
 
 import com.example.childPortal.model.CaseType;
+import com.example.childPortal.model.PriorityLevel; 
 import java.time.LocalDateTime;
 import java.util.List;
 

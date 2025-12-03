@@ -194,6 +194,5 @@ public class Case {
     public LocalDateTime getRejectionDate() { 
         return rejectionDate; }
 
-    public void setRejectionDate(LocalDateTime rejectionDate) { 
-        this.rejectionDate = rejectionDate; }
+  
 }

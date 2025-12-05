@@ -178,5 +178,37 @@ public class HelpRequest {
     public Priority getPriority() {
         return priority; }
 
+    public void setPriority(Priority priority) { 
+        this.priority = priority; }    
 
-} 
+    public boolean isEmergency() { 
+        return emergency; }
+
+    public void setEmergency(boolean emergency) { 
+        this.emergency = emergency; }
+
+    public String getAssignedAdminId() { 
+        return assignedAdminId; }
+    
+    public void setAssignedAdminId(String assignedAdminId) { 
+        this.assignedAdminId = assignedAdminId; }
+
+    public String getRejectionReason() { 
+        return rejectionReason; }
+
+    public void setRejectionReason(String rejectionReason) { 
+        this.rejectionReason = rejectionReason; }
+
+    public LocalDateTime getApprovalDate() { 
+        return approvalDate; }
+
+    public void setApprovalDate(LocalDateTime approvalDate) { 
+        this.approvalDate = approvalDate; }
+
+    public LocalDateTime getRejectionDate() { 
+        return rejectionDate; }
+
+    public void setRejectionDate(LocalDateTime rejectionDate) { 
+        this.rejectionDate = rejectionDate; }
+
+    }

@@ -28,6 +28,13 @@ public class HelpRequest {
     private String assignedWorkerId; 
     private LocalDateTime requestDate; 
     private LocalDateTime lastUpdated; 
+
+    private Priority priority;
+    private boolean emergency;
+    private String assignedAdminId;
+    private String rejectionReason;
+    private LocalDateTime approvalDate;
+    private LocalDateTime rejectionDate;
      
     public enum ContactMethod { 
         EMAIL, 
@@ -168,4 +175,8 @@ public class HelpRequest {
     public void setLastUpdated(LocalDateTime lastUpdated) { 
         this.lastUpdated = lastUpdated; 
     } 
+    public Priority getPriority() {
+        return priority; }
+
+
 } 

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Document(collection = "shelter_assignments")
 public class ShelterAssignment {
  @Id
+ @GeneratedValue(strategy = GenerationType.IDENTITY)
  private String id;
 
  @ManyToOne

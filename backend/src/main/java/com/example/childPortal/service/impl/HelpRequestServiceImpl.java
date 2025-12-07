@@ -181,5 +181,21 @@ helpRequest.getId());
         System.out.println("Help Type: " + helpRequest.getHelpType()); 
         System.out.println("Location: " + helpRequest.getLocation()); 
     } 
+
+    private void calculateInitialPriority(HelpRequest helpRequest) {
+    String description = helpRequest.getDescription().toLowerCase();
+    boolean basicNeeds = helpRequest.getHelpType() == HelpType.FOOD_ASSISTANCE || helpRequest.getHelpType() == HelpType.SHELTER || helpRequest.getHelpType() == HelpType.MEDICAL_HELP;
+    boolean urgentKeywords = description.contains("urgent") || description.contains("emergency") ||
+            description.contains("immediate");
+    if (basicNeeds && urgentKeywords) { 
+        helpRequest.setPriority(Priority.HIGH);
+    } else if (basicNeeds) { 
+        helpRequest.setPriority(Priority.MEDIUM);
+    } else { 
+        helpRequest.setPriority(Priority.LOW);
+    }
+    helpRequest.setEmergency(helpRequest.getPriority() == Priority.URGENT || helpRequest.getPriority() == Priority.CRITICAL);
+}
+
 } 
 

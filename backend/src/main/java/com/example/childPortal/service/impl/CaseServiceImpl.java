@@ -5,6 +5,7 @@ import com.example.childPortal.dto.CaseReportRequest;
 import com.example.childPortal.dto.CaseResponse;
 import com.example.childPortal.model.Case;
 import com.example.childPortal.model.Case.CaseStatus;
+import com.example.childPortal.model.CaseType;
 import com.example.childPortal.model.User;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
@@ -44,6 +45,11 @@ public class CaseServiceImpl implements CaseService {
             caseEntity.setEvidenceUrls(request.getEvidenceUrls());
             caseEntity.setStatus(CaseStatus.REPORTED);
 
+            Priority initialPriority = calculateInitialPriority(request);
+            caseEntity.setPriority(initialPriority);
+            caseEntity.setEmergency(initialPriority == Priority.URGENT || initialPriority == Priority.CRITICAL);
+
+
             Case savedCase = caseRepository.save(caseEntity);
             
             return new CaseResponse(savedCase.getId(), "Case reported successfully", true);
@@ -51,6 +57,26 @@ public class CaseServiceImpl implements CaseService {
             return new CaseResponse(null, "Failed to report case: " + e.getMessage(), false);
         }
     }
+
+private Priority calculateInitialPriority(CaseReportRequest request) {
+
+    String description = request.getCaseDescription().toLowerCase();
+
+boolean immediateDanger = description.contains("immediate danger") ||
+description.contains("life threatening") || description.contains("emergency");
+
+boolean severeCase = request.getCaseType() == CaseType.MISSING_CHILD ||
+request.getCaseType() == CaseType.CHILD_TRAFFICKING ||
+request.getCaseType() == CaseType.IMMEDIATE_DANGER;
+
+    if (immediateDanger) {
+    return Priority.CRITICAL;
+    } else if (severeCase) {
+    return Priority.HIGH;
+    } else {
+        return Priority.MEDIUM; 
+    }
+}
 
     @Override
     public CaseDTO getCaseById(String caseId) {

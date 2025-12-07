@@ -7,6 +7,7 @@ import java.util.List;
 
 public class HelpRequestDTO { 
     private String id; 
+    private String trackingId;
     private String requesterUserId; 
     private boolean anonymous; 
     private String requesterName; 
@@ -135,4 +136,10 @@ public class HelpRequestDTO {
     public void setLastUpdated(LocalDateTime lastUpdated) { 
         this.lastUpdated = lastUpdated; 
     } 
+    public String getTrackingId() {
+        return trackingId;
+    }
+    public void setTrackingId(String trackingId) {
+        this.trackingId = trackingId;
+    }
 }

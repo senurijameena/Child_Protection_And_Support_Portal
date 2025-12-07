@@ -200,15 +200,25 @@ public class HelpRequest {
         this.rejectionReason = rejectionReason; }
 
     public LocalDateTime getApprovalDate() { 
-        return approvalDate; }
+        return approvalDate; 
+    }
 
     public void setApprovalDate(LocalDateTime approvalDate) { 
-        this.approvalDate = approvalDate; }
+        this.approvalDate = approvalDate; 
+    }
 
     public LocalDateTime getRejectionDate() { 
-        return rejectionDate; }
+        return rejectionDate; 
+    }
 
     public void setRejectionDate(LocalDateTime rejectionDate) { 
-        this.rejectionDate = rejectionDate; }
-
+        this.rejectionDate = rejectionDate; 
     }
+
+    public String getTrackingId() { 
+        if (this.id != null && this.id.length() >= 4) { 
+            return "RH-" + this.id.substring(0, 4).toUpperCase(); 
+        } 
+        return "RH-" + this.id; 
+    } 
+}

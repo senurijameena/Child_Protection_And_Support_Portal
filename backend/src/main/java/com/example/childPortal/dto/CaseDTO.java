@@ -7,6 +7,7 @@ import java.util.List;
 
 public class CaseDTO {
     private String id;
+    private String trackingId;
     private String reporterUserId;
     private boolean anonymous;
     private String reporterName;
@@ -84,4 +85,10 @@ public class CaseDTO {
 
     public LocalDateTime getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
-}
+
+    public String getTrackingId() {
+        return trackingId;
+    }
+    public void setTrackingId(String trackingId) {
+        this.trackingId = trackingId;
+    }

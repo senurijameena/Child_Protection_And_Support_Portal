@@ -1,29 +1,42 @@
 package com.example.childPortal.dto;
-import com.example.childPortal.model.CaseTimelineEvent.EventType; import com.example.childPortal.model.Case.CaseStatus;
+
+import com.example.childPortal.model.CaseTimelineEvent.EventType; 
+import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.model.Priority;
 import java.time.LocalDateTime;
 import java.util.Map;
+
 public class CaseTimelineDTO {
 private String id;
 private String caseId;
 private String helpRequestId;
-private String trackingId; // CS-XXXX or RH-XXXX
-// Event Details
-private EventType eventType; private String title;
-private String description; private String details;
-// Actor Information
+private String trackingId; 
+
+private EventType eventType; 
+private String title;
+private String description; 
+private String details;
+
 private String performedByUserId;
 private String performedByRole;
 private String performedByName;
-private String performedByAvatar; // URL to avatar/image
-// Target Information private String targetUserId; private String targetRole; private String targetName;
-// Status Information
+private String performedByAvatar; 
 
-private CaseStatus previousStatus; private CaseStatus newStatus; private String statusChangeReason;
-// Priority Information
-private Priority previousPriority; private Priority newPriority;
-// Assignment Information
-private String assignedToUserId; private String assignedToName; private String assignedFromUserId; private String assignedFromName;
+private String targetUserId; 
+private String targetRole; 
+private String targetName;
+
+private CaseStatus previousStatus; 
+private CaseStatus newStatus; 
+private String statusChangeReason;
+
+private Priority previousPriority; 
+private Priority newPriority;
+  
+private String assignedToUserId;
+private String assignedToName; 
+private String assignedFromUserId; 
+private String assignedFromName;
 // Metadata
 private LocalDateTime eventTime;
 private String timeAgo; // Human readable time (e.g., "2 hours ago") private Map<String, String> metadata;

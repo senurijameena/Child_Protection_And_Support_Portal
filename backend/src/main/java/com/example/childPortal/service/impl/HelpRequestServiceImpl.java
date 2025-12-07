@@ -146,6 +146,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     private HelpRequestDTO convertToDTO(HelpRequest entity) { 
         HelpRequestDTO dto = new HelpRequestDTO(); 
         dto.setId(entity.getId()); 
+        dto.setTrackingId(entity.getTrackingId())
         dto.setRequesterUserId(entity.getRequesterUserId()); 
         dto.setAnonymous(entity.isAnonymous()); 
         dto.setApproximateAge(entity.getApproximateAge()); 
@@ -176,8 +177,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     } 
  
     private void notifySocialWorkers(HelpRequest helpRequest) { 
-        System.out.println("Notifying social workers about new help request: " + 
-helpRequest.getId()); 
+        System.out.println("Notifying social workers about new help request: " + helpRequest.getId()); 
         System.out.println("Help Type: " + helpRequest.getHelpType()); 
         System.out.println("Location: " + helpRequest.getLocation()); 
     } 
@@ -185,8 +185,7 @@ helpRequest.getId());
     private void calculateInitialPriority(HelpRequest helpRequest) {
     String description = helpRequest.getDescription().toLowerCase();
     boolean basicNeeds = helpRequest.getHelpType() == HelpType.FOOD_ASSISTANCE || helpRequest.getHelpType() == HelpType.SHELTER || helpRequest.getHelpType() == HelpType.MEDICAL_HELP;
-    boolean urgentKeywords = description.contains("urgent") || description.contains("emergency") ||
-            description.contains("immediate");
+    boolean urgentKeywords = description.contains("urgent") || description.contains("emergency") ||description.contains("immediate");
     if (basicNeeds && urgentKeywords) { 
         helpRequest.setPriority(Priority.HIGH);
     } else if (basicNeeds) { 

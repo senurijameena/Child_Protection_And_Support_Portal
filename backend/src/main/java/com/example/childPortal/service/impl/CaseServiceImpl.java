@@ -57,22 +57,18 @@ public class CaseServiceImpl implements CaseService {
             return new CaseResponse(null, "Failed to report case: " + e.getMessage(), false);
         }
     }
-
-private Priority calculateInitialPriority(CaseReportRequest request) {
-
-    String description = request.getCaseDescription().toLowerCase();
-
-boolean immediateDanger = description.contains("immediate danger") ||
-description.contains("life threatening") || description.contains("emergency");
-
-boolean severeCase = request.getCaseType() == CaseType.MISSING_CHILD ||
-request.getCaseType() == CaseType.CHILD_TRAFFICKING ||
-request.getCaseType() == CaseType.IMMEDIATE_DANGER;
+    private Priority calculateInitialPriority(CaseReportRequest request) {
+        String description = request.getCaseDescription().toLowerCase();
+        boolean immediateDanger = description.contains("immediate danger") || description.contains("life threatening") || description.contains("emergency");
+        boolean severeCase = request.getCaseType() == CaseType.MISSING_CHILD ||
+        request.getCaseType() == CaseType.CHILD_TRAFFICKING ||
+        request.getCaseType() == CaseType.IMMEDIATE_DANGER;
 
     if (immediateDanger) {
-    return Priority.CRITICAL;
-    } else if (severeCase) {
-    return Priority.HIGH;
+        return Priority.CRITICAL;
+    } 
+    else if (severeCase) {
+        return Priority.HIGH;
     } else {
         return Priority.MEDIUM; 
     }
@@ -158,6 +154,7 @@ request.getCaseType() == CaseType.IMMEDIATE_DANGER;
     private CaseDTO convertToDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());
+        dto.setTrackingId(caseEntity.getTrackingId()); 
         dto.setReporterUserId(caseEntity.getReporterUserId());
         dto.setAnonymous(caseEntity.isAnonymous());
         dto.setApproximateAge(caseEntity.getApproximateAge());

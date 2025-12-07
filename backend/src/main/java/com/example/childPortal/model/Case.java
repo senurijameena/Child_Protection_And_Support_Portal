@@ -192,7 +192,13 @@ public class Case {
         this.approvalDate = approvalDate; }
 
     public LocalDateTime getRejectionDate() { 
-        return rejectionDate; }
+        return rejectionDate; 
+    }
 
-  
+    public String getTrackingId() { 
+        if (this.id != null && this.id.length() >= 4) { 
+            return "CS-" + this.id.substring(0, 4).toUpperCase(); 
+        } 
+        return "CS-" + this.id; 
+    } 
 }

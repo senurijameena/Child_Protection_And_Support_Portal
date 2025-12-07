@@ -1,25 +1,25 @@
 package com.example.childPortal.service;
 
-import com.example.childPortal.dto.FeedbackDTO; 
-import com.example.childPortal.dto.FeedbackResponseDTO; 
+import com.example.childPortal.dto.FeedbacResponseDTO; 
+import com.example.childPortal.dto.FeedbacResponseDTO; 
 import com.example.childPortal.model.Feedback.FeedbackStatus; 
 import com.example.childPortal.model.Feedback.FeedbackType; 
 import com.example.childPortal.model.Feedback.Category; 
 import java.util.List; 
 
 public interface FeedbackService {
-    FeedbackResponseDTO submitFeedback(FeedbackDTO feedbackDTO, String userId);
-    FeedbackDTO getFeedbackById(String feedbackId); 
-    List<FeedbackDTO> getFeedbackByUser(String userId); 
-    List<FeedbackDTO> getFeedbackByCase(String caseId);
-    List<FeedbackDTO> getAllFeedback(); 
-    List<FeedbackDTO> getFeedbackByType(FeedbackType type); 
-    List<FeedbackDTO> getFeedbackByCategory(Category category);
-    List<FeedbackDTO> getFeedbackByStatus(FeedbackStatus status);
-    List<FeedbackDTO> getFeedbackByStatus(FeedbackStatus status);
-    FeedbackDTO updateFeedbackStatus(String feedbackId, FeedbackStatus status); 
-    FeedbackDTO respondToFeedback(String feedbackId, String response, String adminId);
+    FeedbacResponseDTO submitFeedback(FeedbacResponseDTO feedbackDTO, String userId);
+    FeedbacResponseDTO getFeedbackById(String feedbackId); 
+    List<FeedbacResponseDTO> getFeedbackByUser(String userId); 
+    List<FeedbacResponseDTO> getFeedbackByCase(String caseId);
+    List<FeedbacResponseDTO> getAllFeedback(); 
+    List<FeedbacResponseDTO> getFeedbackByType(FeedbackType type); 
+    List<FeedbacResponseDTO> getFeedbackByCategory(Category category);
+    List<FeedbacResponseDTO> getFeedbackByStatus(FeedbackStatus status);
+    List<FeedbacResponseDTO> getFeedbackByStatus(FeedbackStatus status);
+    FeedbacResponseDTO updateFeedbackStatus(String feedbackId, FeedbackStatus status); 
+    FeedbacResponseDTO respondToFeedback(String feedbackId, String response, String adminId);
     boolean deleteFeedback(String feedbackId); 
     Double getAverageRating(); 
-    List<FeedbackDTO> getPublicFeedback();
+    List<FeedbacResponseDTO> getPublicFeedback();
 }

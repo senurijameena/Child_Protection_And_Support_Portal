@@ -4,14 +4,14 @@ import com.example.childPortal.model.Feedback.FeedbackType;
 import com.example.childPortal.model.Feedback.Category; 
 import com.example.childPortal.model.Feedback.Privacy;
 
-public class FeedbackDTO {
+public class FeedbacResponseDTO {
     private String feedbackId;
     private String message;
     private boolean success; 
 
-    public FeedbackDTO() {} 
+    public FeedbacResponseDTO() {} 
 
-    public FeedbackDTO(String feedbackId, String message, boolean success) { 
+    public FeedbacResponseDTO(String feedbackId, String message, boolean success) { 
         this.feedbackId = feedbackId; 
         this.message = message; 
         this.success = success; 

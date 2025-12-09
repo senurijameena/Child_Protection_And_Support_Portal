@@ -37,17 +37,17 @@ private String assignedToUserId;
 private String assignedToName; 
 private String assignedFromUserId; 
 private String assignedFromName;
-// Metadata
-private LocalDateTime eventTime;
-private String timeAgo; // Human readable time (e.g., "2 hours ago") private Map<String, String> metadata;
-// Evidence/Documents private String evidenceUrl; private String documentUrl; private String documentName;
-// UI Properties
-private String icon; // Icon class for UI
 
-private String color; // Color for UI display
-private boolean isMajorEvent; // Major milestone event private boolean isSystemEvent; // Automated system event private boolean isUserAction; // User-initiated action
+private LocalDateTime eventTime;
+private String timeAgo; 
+
+
+private String icon; 
+
+private String color; 
+private boolean isMajorEvent; 
 public CaseTimelineDTO() {}
-// Getters and Setters
+
 public String getId() { return id; }
 public void setId(String id) { this.id = id; }
 public String getCaseId() { return caseId; }

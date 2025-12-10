@@ -216,4 +216,26 @@ public class UserServiceImpl implements UserService {
     private void notifyAdminForApproval(User user) {
         System.out.println("Admin notified for approval: New " + user.getRole() + " registration from " + user.getEmail());
     }
+
+    @Override
+    public LoginResponse loginUser(String email, String password) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
+            return new LoginResponse(null, null, null, false, "Invalid email or password"); 
+        }
+        User user = userOpt.get();
+        
+        if (!user.isActive()) {
+            return new LoginResponse(null, null, null, false, "Account is deactivated");
+        }
+        
+        if (!user.isApproved() && user.getRole() != Role.ADMIN) {
+            return new LoginResponse(null, null, null, false, "Account pending admin approval");
+        }
+        
+        user.setLastLogin(LocalDateTime.now()); 
+        userRepository.save(user);
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        return new LoginResponse(token, user.getEmail(), user.getRole(), user.isApproved(), "Login successful");
+    }
 }

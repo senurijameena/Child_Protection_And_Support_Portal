@@ -1,5 +1,4 @@
 package com.example.childPortal.controller;
-
 import com.example.childPortal.dto.*;
 import com.example.childPortal.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired; 
@@ -105,33 +104,105 @@ ResponseEntity.notFound().build();
     }
 
 @PutMapping("/cases/{caseId}/priority")
-public ResponseEntity<String> updateCasePriority(
-@PathVariable String caseId,
-@RequestParam String priority) { 
+    public ResponseEntity<String> updateCasePriority(
+        @PathVariable String caseId,
+        @RequestParam String priority) { 
     try {
 adminService.updateCasePriority(caseId, priority);
-return ResponseEntity.ok("Case priority updated successfully");
+        return ResponseEntity.ok("Case priority updated successfully");
  } catch (Exception e) {
 return ResponseEntity.badRequest().body(e.getMessage()); 
  }
 }
 
 @PutMapping("/help-requests/{helpRequestId}/priority") 
-public ResponseEntity<String> updateHelpRequestPriority(
-@PathVariable String helpRequestId,
-@RequestParam String priority) { 
+    public ResponseEntity<String> updateHelpRequestPriority(
+        @PathVariable String helpRequestId,
+        @RequestParam String priority) { 
     try {
-adminService.updateHelpRequestPriority(helpRequestId, priority);
-return ResponseEntity.ok("Help request priority updated successfully"); 
+        adminService.updateHelpRequestPriority(helpRequestId, priority);
+        return ResponseEntity.ok("Help request priority updated successfully"); 
 } catch (Exception e) {
-return ResponseEntity.badRequest().body(e.getMessage()); 
-}
+        return ResponseEntity.badRequest().body(e.getMessage()); 
+    }
 }
 public static class RejectRequest {
 private String reason;
-public String getReason() { return reason; }
-public void setReason(String reason) { this.reason = reason; } 
+public String getReason() { 
+    return reason;
 }
+public void setReason(String reason) { 
+    this.reason = reason;
+} 
+}
+
+@GetMapping("/users")
+    public ResponseEntity<List<UserManagementDTO>> getAllUsers() {
+        List<UserManagementDTO> users = userService.getAllUsersForManagement();
+        return ResponseEntity.ok(users); }
+
+@GetMapping("/users/role/{role}")
+    public ResponseEntity<List<UserManagementDTO>> getUsersByRole(@PathVariable Role role) {
+        List<UserManagementDTO> users = userService.getUsersByRoleForManagement(role);
+        return ResponseEntity.ok(users);
+    }
+
+@GetMapping("/users/active")
+    public ResponseEntity<List<UserManagementDTO>> getActiveUsers() {
+        List<UserManagementDTO> users = userService.getActiveUsers();
+        return ResponseEntity.ok(users);
+    }
+      
+@GetMapping("/users/inactive")
+    public ResponseEntity<List<UserManagementDTO>> getInactiveUsers() {
+        List<UserManagementDTO> users = userService.getInactiveUsers();
+        return ResponseEntity.ok(users);
+    }
+
+@GetMapping("/users/{userId}")
+    public ResponseEntity<UserManagementDTO> getUserDetails(@PathVariable String userId) {
+        UserManagementDTO user = userService.getUserForManagement(userId); return user != null ?
+            ResponseEntity.ok(user) :
+            ResponseEntity.notFound().build(); 
+}
+
+@PostMapping("/users/{userId}/deactivate") 
+    public ResponseEntity<String> deactivateUser(
+        @PathVariable String userId,
+        @RequestBody DeactivateRequest request) {
+        boolean deactivated = userService.deactivateUser(userId, request.getReason()); return deactivated ?
+            ResponseEntity.ok("User deactivated successfully") :
+            ResponseEntity.notFound().build(); }
+
+@PostMapping("/users/{userId}/activate")
+    public ResponseEntity<String> activateUser(@PathVariable String userId) {
+        boolean activated = userService.activateUser(userId); return activated ?
+            ResponseEntity.ok("User activated successfully") :
+            ResponseEntity.notFound().build(); }
+
+@PutMapping("/users/{userId}")
+    public ResponseEntity<String> updateUser(
+        @PathVariable String userId,
+        @RequestBody UserUpdateRequest updateRequest) { try {
+        boolean updated = userService.updateUserDetails(userId, updateRequest); return updated ?
+            ResponseEntity.ok("User updated successfully") :
+            ResponseEntity.notFound().build(); } catch (Exception e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}
+
+@GetMapping("/users/statistics")
+    public ResponseEntity<Map<String, Long>> getUserStatistics() {
+        Map<String, Long> statistics = adminService.getUserStatistics();
+        return ResponseEntity.ok(statistics); 
+    }
+    private String reason;
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; } 
+}
+
+  
+    
 }
 
 

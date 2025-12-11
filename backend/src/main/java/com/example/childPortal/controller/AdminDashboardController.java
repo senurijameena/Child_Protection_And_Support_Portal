@@ -201,7 +201,72 @@ public void setReason(String reason) {
     public void setReason(String reason) { this.reason = reason; } 
 }
 
-  
+  @GetMapping("/transfers") 
+public ResponseEntity<List<TransferRequestDTO>> getAllTransferRequests() { 
+    List<TransferRequestDTO> transfers = 
+transferService.getPendingTransferRequests(); 
+    return ResponseEntity.ok(transfers); 
+} 
+
+@GetMapping("/transfers/statistics") 
+public ResponseEntity<TransferStatistics> getTransferStatistics() { 
+    TransferStatistics stats = new TransferStatistics(); 
+     
+    stats.setPendingTransfers(transferService.getPendingTransferCount()); 
+    stats.setUrgentTransfers(transferService.getUrgentTransferRequests().size()); 
+     
+    return ResponseEntity.ok(stats); 
+} 
+ 
+public static class TransferStatistics { 
+    private long pendingTransfers; 
+    private long urgentTransfers; 
+    private long caseTransfers; 
+    private long helpRequestTransfers; 
+    private long approvedThisWeek; 
+    private long rejectedThisWeek; 
+
+    public long getPendingTransfers() { 
+        return pendingTransfers;
+    } 
+    public void setPendingTransfers(long pendingTransfers) {
+        this.pendingTransfers = pendingTransfers; 
+    } 
+ 
+    public long getUrgentTransfers() {
+        return urgentTransfers; 
+    } 
+    public void setUrgentTransfers(long urgentTransfers) {
+        this.urgentTransfers = urgentTransfers;
+    } 
+ 
+    public long getCaseTransfers() {
+        return caseTransfers; 
+    } 
+    public void setCaseTransfers(long caseTransfers) {
+        this.caseTransfers = caseTransfers; 
+    } 
+ 
+    public long getHelpRequestTransfers() {
+        return helpRequestTransfers;
+    } 
+    public void setHelpRequestTransfers(long helpRequestTransfers) { 
+        this.helpRequestTransfers = helpRequestTransfers; 
+    } 
+ 
+    public long getApprovedThisWeek() { 
+        return approvedThisWeek;
+    } 
+    public void setApprovedThisWeek(long approvedThisWeek) { 
+        this.approvedThisWeek = approvedThisWeek; 
+    } 
+ 
+    public long getRejectedThisWeek() {
+        return rejectedThisWeek; 
+    } 
+    public void setRejectedThisWeek(long rejectedThisWeek) { 
+        this.rejectedThisWeek = rejectedThisWeek; } 
+} 
     
 }
 

@@ -174,6 +174,18 @@ public class CaseServiceImpl implements CaseService {
         return false;
     }
 
+    public boolean hasPendingTransfer(String caseId) { 
+        List<TransferRequest> activeTransfers = transferRequestRepository.findActiveTransfersForCase(caseId); 
+        return !activeTransfers.isEmpty(); 
+    }
+
+    @Override 
+    public CaseDTO assignCaseToOfficer(String caseId, String officerId) { 
+        if (hasPendingTransfer(caseId)) { 
+        throw new RuntimeException("Cannot assign case while transfer request is pending"); 
+        }
+    }
+    
     private CaseDTO convertToDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());

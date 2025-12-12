@@ -1,3 +1,6 @@
+package com.example.childPortal.dto;
+
+public class FeedbackDTO {
 private String userType;  
 private String formattedDate; 
 private String ratingStars; 
@@ -48,4 +51,5 @@ public String getResponseStatus() {
 }
 public void setResponseStatus(String responseStatus) { 
   this.responseStatus = responseStatus; 
+}
 }

@@ -14,8 +14,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class ServiceOfferServiceImpl  implements ServiceOfferService{
+    private static final String RESCHEDULE = null;
+
     @Autowired
-    private ServiceOfferRepository serviceOfferRepository; 
+    private ServiceOffer serviceOfferRepository; 
 
     @Autowired
     private ServiceResponseRepository serviceResponseRepository; 
@@ -52,7 +54,7 @@ public class ServiceOfferServiceImpl  implements ServiceOfferService{
     }
     @Override
     public ServiceOfferDTO getServiceOfferById(String offerId) { 
-        Optional<ServiceOffer> offerOpt = serviceOfferRepository.findById(offerId);
+        Optional<ServiceOffer> offerOpt = Optional.empty();
         if (offerOpt.isPresent()) { 
             return convertToDTO(offerOpt.get()); 
         } 
@@ -61,7 +63,7 @@ public class ServiceOfferServiceImpl  implements ServiceOfferService{
 
     @Override 
     public List<ServiceOfferDTO> getOffersForUser(String userId) { 
-        List<ServiceOffer> offers = serviceOfferRepository.findByOfferedToUserId(userId);
+        List<ServiceOffer> offers = serviceOfferRepository.setOfferedToUserId(userId);
         return offers.stream()
           .map(this::convertToDTO)
           .peek(dto -> { 
@@ -82,13 +84,13 @@ public class ServiceOfferServiceImpl  implements ServiceOfferService{
 
     @Override 
     public List<ServiceOfferDTO> getOffersByHelpRequest(String helpRequestId) { 
-        List<ServiceOffer> offers = serviceOfferRepository.findByHelpRequestId(helpRequestId); 
+        List<ServiceOffer> offers = serviceOfferRepository.setHelpRequestId(helpRequestId); 
         return offers.stream().map(this::convertToDTO).collect(Collectors.toList()); 
     } 
 
     @Override 
     public List<ServiceOfferDTO> getOffersByServiceType(HelpType serviceType) { 
-        List<ServiceOffer> offers = serviceOfferRepository.findByServiceType(serviceType); 
+        List<ServiceOffer> offers = serviceOfferRepository.setServiceType(serviceType); 
         return offers.stream().map(this::convertToDTO).collect(Collectors.toList()); 
     } 
 
@@ -103,7 +105,7 @@ public class ServiceOfferServiceImpl  implements ServiceOfferService{
         LocalDateTime now = LocalDateTime.now(); 
         LocalDateTime nextWeek = now.plusWeeks(1); 
 
-        List<ServiceOffer> offers = serviceOfferRepository.findByOfferedToUserId(userId);
+        List<ServiceOffer> offers = serviceOfferRepository.setOfferedToUserId(userId);
         return offers.stream() 
             .filter(offer -> offer.getScheduledDateTime() != null && 
                             offer.getScheduledDateTime().isAfter(now) && 

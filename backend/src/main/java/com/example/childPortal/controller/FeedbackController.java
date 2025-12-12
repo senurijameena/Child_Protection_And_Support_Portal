@@ -86,6 +86,19 @@ FeedbackType type) {
         return ResponseEntity.ok(feedbackList); 
     } 
 
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<FeedbackDTO>> getAllFeedbackEnhanced() {
+        List<FeedbackDTO> feedback = feedbackService.getAllFeedback();
+        return ResponseEntity.ok(feedback); }
+
+    @GetMapping("/admin/analytics/monthly")
+    public ResponseEntity<MonthlyAnalytics> getMonthlyAnalytics() {
+        MonthlyAnalytics analytics = new MonthlyAnalytics(); 
+        LocalDateTime now = LocalDateTime.now(); LocalDateTime sixMonthsAgo = now.minusMonths(6);
+        return ResponseEntity.ok(analytics); 
+    }
+
+
     @PutMapping("/{feedbackId}/status") 
     public ResponseEntity<FeedbackDTO> updateStatus( 
             @PathVariable String feedbackId, 
@@ -131,6 +144,12 @@ FeedbackType type) {
         return ResponseEntity.ok(new FeedbackStatistics()); 
     } 
 
+    @PostMapping("/admin/bulk-respond")
+    public ResponseEntity<String> bulkRespondToFeedback(@RequestBody BulkRespondRequest request) {
+        return ResponseEntity.ok("Bulk response functionality would be implemented here"); 
+    }
+
+
     public static class AdminResponseRequest { 
         private String response; 
  
@@ -149,7 +168,7 @@ FeedbackType type) {
         } 
         public void setTotalFeedback(long totalFeedback) { 
             this.totalFeedback = totalFeedback;
-     } 
+        } 
  
         public long getPendingFeedback() { 
             return pendingFeedback; 
@@ -170,5 +189,63 @@ FeedbackType type) {
         public void setAverageRating(double averageRating) { 
             this.averageRating = averageRating; 
         } 
-} 
+    } 
+
+    public static class MonthlyAnalytics {
+        private Map<String, Long> feedbackByMonth = new HashMap<>(); 
+        private Map<String, Double> averageRatingByMonth = new HashMap<>(); 
+        private Map<String, Long> complaintsByMonth = new HashMap<>(); 
+        private Map<String, Long> complimentsByMonth = new HashMap<>();
+        
+        public Map<String, Long> getFeedbackByMonth() { 
+            return feedbackByMonth; 
+        }
+        public void setFeedbackByMonth(Map<String, Long> feedbackByMonth) { 
+            this.feedbackByMonth = feedbackByMonth; 
+        }
+        public Map<String, Double> getAverageRatingByMonth() { 
+            return averageRatingByMonth; 
+        }
+        public void setAverageRatingByMonth(Map<String, Double> averageRatingByMonth) { 
+            this.averageRatingByMonth = averageRatingByMonth; 
+        }
+        public Map<String, Long> getComplaintsByMonth() { 
+            return complaintsByMonth; 
+        }
+        public void setComplaintsByMonth(Map<String, Long> complaintsByMonth) { 
+            this.complaintsByMonth = complaintsByMonth; 
+        }
+        public Map<String, Long> getComplimentsByMonth() { 
+            return complimentsByMonth; 
+        }
+        public void setComplimentsByMonth(Map<String, Long> complimentsByMonth) { 
+            this.complimentsByMonth = complimentsByMonth; 
+        }
+    }
+    
+    public static class BulkRespondRequest { 
+        private List<String> feedbackIds; 
+        private String response;
+        private String adminId;
+        
+        public List<String> getFeedbackIds() { 
+            return feedbackIds; 
+        }
+        public void setFeedbackIds(List<String> feedbackIds) { 
+            this.feedbackIds = feedbackIds; 
+        }
+        public String getResponse() { 
+            return response; 
+        }
+        public void setResponse(String response) { 
+            this.response = response; 
+        }
+        public String getAdminId() { 
+            return adminId; 
+        }
+        public void setAdminId(String adminId) { 
+            this.adminId = adminId; 
+        } 
+    }
+    
 } 

@@ -22,4 +22,9 @@ public interface FeedbackService {
     boolean deleteFeedback(String feedbackId); 
     Double getAverageRating(); 
     List<FeedbacResponseDTO> getPublicFeedback();
+    List<FeedbackDTO> getFeedbackForDashboard(FeedbackFilterDTO filter);
+    FeedbackStatisticsDTO getFeedbackStatistics();
+    List<FeedbackDTO> getRecentFeedback(int limit);
+    List<FeedbackDTO> getFeedbackWithRatingsOnly();
+    Map<String, Object> getFeedbackAnalytics(LocalDateTime startDate, LocalDateTime endDate);
 }

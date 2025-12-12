@@ -26,6 +26,10 @@ public class CaseServiceImpl implements CaseService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CaseTimelineService caseTimelineService;
+
+
     @Override
     public CaseResponse reportCase(CaseReportRequest request, String reporterUserId) {
         try {
@@ -51,6 +55,10 @@ public class CaseServiceImpl implements CaseService {
 
 
             Case savedCase = caseRepository.save(caseEntity);
+
+            caseTimelineService.createCaseCreatedEvent(
+                savedCase.getId(), reporterUserId, getReporterName(reporterUserId)
+            );
             
             return new CaseResponse(savedCase.getId(), "Case reported successfully", true);
         } catch (Exception e) {
@@ -103,6 +111,14 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public CaseDTO updateCaseStatus(String caseId, CaseStatus status) {
+        caseTimelineService.createStatusChangeEvent(
+            caseId,
+            getCurrentUserId(),
+            getCurrentUserName(), 
+            oldStatus.toString(),
+            status.toString(),
+            "Status updated"
+);
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isPresent()) {
             Case caseEntity = caseOpt.get();
@@ -116,6 +132,13 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public CaseDTO assignCaseToOfficer(String caseId, String officerId) {
+        caseTimelineService.createAssignmentEvent(
+            caseId, getCurrentUserId(),
+            getCurrentUserName(), 
+            officerId, 
+            getOfficerName(officerId), 
+            "PO"
+        );
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isPresent()) {
             Case caseEntity = caseOpt.get();
@@ -151,6 +174,18 @@ public class CaseServiceImpl implements CaseService {
         return false;
     }
 
+    public boolean hasPendingTransfer(String caseId) { 
+        List<TransferRequest> activeTransfers = transferRequestRepository.findActiveTransfersForCase(caseId); 
+        return !activeTransfers.isEmpty(); 
+    }
+
+    @Override 
+    public CaseDTO assignCaseToOfficer(String caseId, String officerId) { 
+        if (hasPendingTransfer(caseId)) { 
+        throw new RuntimeException("Cannot assign case while transfer request is pending"); 
+        }
+    }
+    
     private CaseDTO convertToDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());

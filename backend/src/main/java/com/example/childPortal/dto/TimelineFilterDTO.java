@@ -49,7 +49,6 @@ public boolean isShowUserActions() { return showUserActions; }
  public void setShowUserActions(boolean showUserActions) {
  this.showUserActions = showUserActions; }
 public boolean isShowMajorEventsOnly() { return showMajorEventsOnly; }
-public boolean isShowMajorEventsOnly() { return showMajorEventsOnly; }
  public void setShowMajorEventsOnly(boolean showMajorEventsOnly) {
  this.showMajorEventsOnly = showMajorEventsOnly; }
 public String getSearchText() { return searchText; }

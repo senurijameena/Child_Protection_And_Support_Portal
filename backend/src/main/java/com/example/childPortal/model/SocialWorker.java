@@ -12,65 +12,29 @@ public class SocialWorker {
     private String licenseNumber;
     private List<String> specializations;
     private String organization;
-    private String yearsOfExperience;
-    private String certificationUrl;
+    private int yearsOfExperience;
+    private String idDocumentUrl;
+    private boolean available;
 
-    public SocialWorker() {}
-
-    public SocialWorker(String userId, String licenseNumber, List<String> specializations, String organization, String yearsOfExperience, String certificationUrl) {
-        this.userId = userId;
-        this.licenseNumber = licenseNumber;
-        this.specializations = specializations;
-        this.organization = organization;
-        this.yearsOfExperience = yearsOfExperience;
-        this.certificationUrl = certificationUrl;
+    public SocialWorker() {
+        this.available = true;
     }
 
-    public String getId() { 
-        return id; 
-    }
-    public void setId(String id) { 
-        this.id = id; 
-    }
-
-    public String getUserId() { 
-        return userId; 
-    }
-    public void setUserId(String userId) { this.userId = userId; 
-
-    }
-
-    public String getLicenseNumber() { 
-        return licenseNumber; }
-    public void setLicenseNumber(String licenseNumber) { 
-        this.licenseNumber = licenseNumber; 
-    }
-
-    public List<String> getSpecializations() { 
-        return specializations; 
-    }
-    public void setSpecializations(List<String> specializations) { 
-        this.specializations = specializations; 
-    }
-
-    public String getOrganization() { 
-        return organization; 
-    }
-    public void setOrganization(String organization) { 
-        this.organization = organization; 
-    }
-
-    public String getYearsOfExperience() { 
-        return yearsOfExperience; 
-    }
-    public void setYearsOfExperience(String yearsOfExperience) { 
-        this.yearsOfExperience = yearsOfExperience; 
-    }
-
-    public String getCertificationUrl() { 
-        return certificationUrl; 
-    }
-    public void setCertificationUrl(String certificationUrl) { 
-        this.certificationUrl = certificationUrl; 
-    }
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public String getLicenseNumber() { return licenseNumber; }
+    public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
+    public List<String> getSpecializations() { return specializations; }
+    public void setSpecializations(List<String> specializations) { this.specializations = specializations; }
+    public String getOrganization() { return organization; }
+    public void setOrganization(String organization) { this.organization = organization; }
+    public int getYearsOfExperience() { return yearsOfExperience; }
+    public void setYearsOfExperience(int yearsOfExperience) { this.yearsOfExperience = yearsOfExperience; }
+    public String getIdDocumentUrl() { return idDocumentUrl; }
+    public void setIdDocumentUrl(String idDocumentUrl) { this.idDocumentUrl = idDocumentUrl; }
+    public boolean isAvailable() { return available; }
+    public void setAvailable(boolean available) { this.available = available; }
 }

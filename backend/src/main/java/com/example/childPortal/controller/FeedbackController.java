@@ -8,6 +8,7 @@ import com.example.childPortal.model.Feedback.FeedbackStatus;
 import com.example.childPortal.service.FeedbackService; 
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity; 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*; 
 import java.util.List;
 
@@ -19,13 +20,15 @@ public class FeedbackController {
     private FeedbackService feedbackService;
 
     @PostMapping("/submit") 
-    public ResponseEntity<?> submitFeedback(@RequestBody FeedbackDTO feedbackDTO) { 
+    public ResponseEntity<?> submitFeedback(
+            @RequestBody FeedbackDTO feedbackDTO,
+            @AuthenticationPrincipal String userId) { 
         String feedbackText = feedbackDTO.getMessage(); 
         if (feedbackText == null || feedbackText.trim().isEmpty()) { 
             return ResponseEntity.badRequest().body("Feedback text is required"); 
         } 
          
-        FeedbackResponseDTO response = feedbackService.submitFeedback(feedbackDTO); 
+        FeedbackResponseDTO response = feedbackService.submitFeedback(feedbackDTO, userId); 
         return response.isSuccess() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response); 
     }
 
@@ -60,14 +63,14 @@ public class FeedbackController {
     } 
 
     @GetMapping("/type/{type}") 
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByType(@PathVariable FeedbackType type) { 
-        List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByType(type); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByType(@PathVariable FeedbackType type) { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByType(type); 
         return ResponseEntity.ok(feedbackList); 
     } 
 
     @GetMapping("/category/{category}") 
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByCategory(@PathVariable Category category) { 
-        List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByCategory(category); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByCategory(@PathVariable String category) { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByCategory(category); 
         return ResponseEntity.ok(feedbackList); 
     } 
 
@@ -78,18 +81,24 @@ public class FeedbackController {
     } 
 
     @PutMapping("/{feedbackId}/status") 
-    public ResponseEntity<FeedbackResponseDTO> updateStatus(@PathVariable String feedbackId, @RequestParam FeedbackStatus status) { 
-        FeedbackResponseDTO updatedFeedback = feedbackService.updateFeedbackStatus(feedbackId, status); 
+    public ResponseEntity<FeedbackResponseDTO> updateStatus(
+            @PathVariable String feedbackId, 
+            @RequestParam FeedbackStatus status,
+            @AuthenticationPrincipal String userId) { 
+        FeedbackResponseDTO updatedFeedback = feedbackService.updateFeedbackStatus(feedbackId, status, userId); 
         return updatedFeedback != null ? ResponseEntity.ok(updatedFeedback) : ResponseEntity.notFound().build(); 
     } 
 
     @PostMapping("/{feedbackId}/respond") 
-    public ResponseEntity<FeedbackResponseDTO> respondToFeedback(@PathVariable String feedbackId, @RequestBody AdminResponseRequest request) { 
+    public ResponseEntity<FeedbackResponseDTO> respondToFeedback(
+            @PathVariable String feedbackId, 
+            @RequestBody AdminResponseRequest request,
+            @AuthenticationPrincipal String adminId) { 
         if (request.getResponse() == null || request.getResponse().trim().isEmpty()) { 
             return ResponseEntity.badRequest().build(); 
         } 
          
-        FeedbackResponseDTO updatedFeedback = feedbackService.respondToFeedback(feedbackId, request.getResponse()); 
+        FeedbackResponseDTO updatedFeedback = feedbackService.respondToFeedback(feedbackId, request.getResponse(), adminId); 
         return updatedFeedback != null ? ResponseEntity.ok(updatedFeedback) : ResponseEntity.notFound().build(); 
     } 
 

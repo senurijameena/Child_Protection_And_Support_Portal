@@ -7,6 +7,7 @@ import com.example.childPortal.model.ServiceOffer.OfferStatus;
 import com.example.childPortal.service.ServiceOfferService; 
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity; 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*; 
 import java.util.List;
 
@@ -18,9 +19,12 @@ public class ServiceOfferController {
     private ServiceOfferService serviceOfferService;
 
     @PostMapping("/offer") 
-    public ResponseEntity<ServiceOfferDTO> createServiceOffer(@RequestBody ServiceOfferDTO serviceOfferDTO) { 
-            ServiceOfferDTO createdOffer = serviceOfferService.createServiceOffer(serviceOfferDTO); 
-            return ResponseEntity.ok(createdOffer); 
+    public ResponseEntity<ServiceOfferDTO> createServiceOffer(
+            @RequestBody ServiceOfferDTO serviceOfferDTO,
+            @AuthenticationPrincipal String userId) { 
+        serviceOfferDTO.setOfferedByUserId(userId);
+        ServiceOfferDTO createdOffer = serviceOfferService.createServiceOffer(serviceOfferDTO); 
+        return ResponseEntity.ok(createdOffer); 
     }
 
     @GetMapping("/user/{userId}") 
@@ -60,15 +64,21 @@ public class ServiceOfferController {
     } 
 
     @PostMapping("/respond") 
-    public ResponseEntity<ServiceOfferDTO> respondToOffer(@RequestBody ServiceResponseDTO responseDTO) { 
+    public ResponseEntity<ServiceOfferDTO> respondToOffer(
+            @RequestBody ServiceResponseDTO responseDTO,
+            @AuthenticationPrincipal String userId) { 
+        responseDTO.setUserId(userId);
         ServiceOfferDTO updatedOffer = serviceOfferService.respondToServiceOffer(responseDTO); 
-        return updatedOffer != null ?  ResponseEntity.ok(updatedOffer) : ResponseEntity.notFound().build(); 
+        return updatedOffer != null ? ResponseEntity.ok(updatedOffer) : ResponseEntity.notFound().build(); 
     }
 
     @PutMapping("/{offerId}/status") 
-    public ResponseEntity<ServiceOfferDTO> updateStatus(@PathVariable String offerId, @RequestParam OfferStatus status) { 
+    public ResponseEntity<ServiceOfferDTO> updateStatus(
+            @PathVariable String offerId, 
+            @RequestParam OfferStatus status,
+            @AuthenticationPrincipal String userId) { 
         ServiceOfferDTO updatedOffer = serviceOfferService.updateServiceOfferStatus(offerId, status); 
-        return updatedOffer != null ?  ResponseEntity.ok(updatedOffer) : ResponseEntity.notFound().build(); 
+        return updatedOffer != null ? ResponseEntity.ok(updatedOffer) : ResponseEntity.notFound().build(); 
     }
 
     @DeleteMapping("/{offerId}") 

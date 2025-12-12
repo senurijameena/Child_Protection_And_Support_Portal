@@ -4,6 +4,7 @@ import com.example.childPortal.dto.TransferRequestDTO;
 import com.example.childPortal.service.TransferService; 
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity; 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*; 
 import java.util.List; 
 
@@ -15,9 +16,12 @@ public class TransferController {
   private TransferService transferService; 
 
   @PostMapping("/case/request") 
-  public ResponseEntity<TransferRequestDTO> requestCaseTransfer(@RequestBody CaseTransferRequest request) { 
-    TransferRequestDTO transferRequest = transferService.createCaseTransferRequest( 
+  public ResponseEntity<TransferRequestDTO> requestCaseTransfer(
+          @RequestBody CaseTransferRequest request,
+          @AuthenticationPrincipal String userId) { 
+    TransferRequestDTO transferRequest = transferService.createCaseTransfer(
             request.getCaseId(), 
+            userId,
             request.getRequestedAssigneeId(), 
             request.getReason()
         ); 
@@ -26,9 +30,12 @@ public class TransferController {
     } 
  
     @PostMapping("/help-request/request") 
-    public ResponseEntity<TransferRequestDTO> requestHelpRequestTransfer(@RequestBody HelpRequestTransferRequest request) { 
-        TransferRequestDTO transferRequest = transferService.createHelpRequestTransferRequest( 
+    public ResponseEntity<TransferRequestDTO> requestHelpRequestTransfer(
+            @RequestBody HelpRequestTransferRequest request,
+            @AuthenticationPrincipal String userId) { 
+        TransferRequestDTO transferRequest = transferService.createHelpRequestTransfer(
             request.getHelpRequestId(), 
+            userId,
             request.getRequestedAssigneeId(), 
             request.getReason()
         ); 
@@ -38,7 +45,7 @@ public class TransferController {
  
     @GetMapping("/pending") 
     public ResponseEntity<List<TransferRequestDTO>> getPendingTransfers() { 
-        List<TransferRequestDTO> transfers = transferService.getPendingTransferRequests(); 
+        List<TransferRequestDTO> transfers = transferService.getPendingTransfers(); 
         return ResponseEntity.ok(transfers); 
     } 
 
@@ -50,19 +57,19 @@ public class TransferController {
  
     @GetMapping("/user/{userId}") 
     public ResponseEntity<List<TransferRequestDTO>> getTransfersByUser(@PathVariable String userId) { 
-        List<TransferRequestDTO> transfers = transferService.getTransferRequestsByUser(userId); 
+        List<TransferRequestDTO> transfers = transferService.getTransfersByUser(userId); 
         return ResponseEntity.ok(transfers); 
     } 
  
     @GetMapping("/case/{caseId}") 
     public ResponseEntity<List<TransferRequestDTO>> getTransfersForCase(@PathVariable String caseId) { 
-        List<TransferRequestDTO> transfers = transferService.getTransferRequestsForCase(caseId); 
+        List<TransferRequestDTO> transfers = transferService.getTransfersForEntity(caseId); 
         return ResponseEntity.ok(transfers); 
     } 
 
     @GetMapping("/help-request/{helpRequestId}") 
     public ResponseEntity<List<TransferRequestDTO>> getTransfersForHelpRequest(@PathVariable String helpRequestId) { 
-        List<TransferRequestDTO> transfers = transferService.getTransferRequestsForHelpRequest(helpRequestId); 
+        List<TransferRequestDTO> transfers = transferService.getTransfersForEntity(helpRequestId); 
         return ResponseEntity.ok(transfers); 
     } 
 
@@ -75,24 +82,31 @@ public class TransferController {
     } 
 
     @PostMapping("/{transferId}/approve") 
-    public ResponseEntity<TransferRequestDTO> approveTransfer(@PathVariable String transferId) { 
-        TransferRequestDTO approvedTransfer = transferService.approveTransferRequest(transferId); 
+    public ResponseEntity<TransferRequestDTO> approveTransfer(
+            @PathVariable String transferId,
+            @AuthenticationPrincipal String adminId) { 
+        TransferRequestDTO approvedTransfer = transferService.approveTransfer(transferId, adminId); 
         return approvedTransfer != null ?  
             ResponseEntity.ok(approvedTransfer) :  
             ResponseEntity.notFound().build(); 
     } 
 
     @PostMapping("/{transferId}/reject") 
-    public ResponseEntity<TransferRequestDTO> rejectTransfer(@PathVariable String transferId, @RequestBody RejectRequest request) { 
-        TransferRequestDTO rejectedTransfer = transferService.rejectTransferRequest(transferId, request.getReason()); 
+    public ResponseEntity<TransferRequestDTO> rejectTransfer(
+            @PathVariable String transferId, 
+            @RequestBody RejectRequest request,
+            @AuthenticationPrincipal String adminId) { 
+        TransferRequestDTO rejectedTransfer = transferService.rejectTransfer(transferId, adminId, request.getReason()); 
         return rejectedTransfer != null ?  
             ResponseEntity.ok(rejectedTransfer) :  
             ResponseEntity.notFound().build(); 
     } 
   
     @PostMapping("/{transferId}/cancel") 
-    public ResponseEntity<TransferRequestDTO> cancelTransfer(@PathVariable String transferId) { 
-        TransferRequestDTO cancelledTransfer = transferService.cancelTransferRequest(transferId); 
+    public ResponseEntity<TransferRequestDTO> cancelTransfer(
+            @PathVariable String transferId,
+            @AuthenticationPrincipal String userId) { 
+        TransferRequestDTO cancelledTransfer = transferService.cancelTransfer(transferId, userId); 
         return cancelledTransfer != null ?  
             ResponseEntity.ok(cancelledTransfer) :  
             ResponseEntity.notFound().build(); 

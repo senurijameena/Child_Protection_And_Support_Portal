@@ -44,14 +44,6 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
     
-   @GetMapping("/users/status/{status}")
-public ResponseEntity<List<UserManagementDTO>> getUsersByStatus(@PathVariable String status) {
-    List<User> users = UserCredentialRepository.findByStatus(status); 
-    List<UserManagementDTO> userDTOs = users.stream()
-        .map(user -> userService.convertToUserManagementDTO(user))
-        .collect(Collectors.toList());
-    return ResponseEntity.ok(userDTOs);
-}
 
 
     @GetMapping("/police-officers")
@@ -103,18 +95,20 @@ public ResponseEntity<List<UserManagementDTO>> getUsersByStatus(@PathVariable St
 
 
     @GetMapping("/users/search")
-        public ResponseEntity<List<UserManagementDTO>> searchUsers(@RequestParam String query) {
-        List<User> users = userRepository.findAll();
-        List<UserManagementDTO> filteredUsers = users.stream()
-            .filter(user -> user.getFullName().toLowerCase().contains(query.toLowerCase()) || user.getEmail().toLowerCase().contains(query.toLowerCase()))
-            .map(user -> userService.convertToUserManagementDTO(user))
-            .collect(Collectors.toList());
-        return ResponseEntity.ok(filteredUsers);   
-    }
+    public ResponseEntity<List<Object>> searchUsers(@RequestParam String query) {
+    List<User> users = userService.getAllUsers(); 
+    List<Object> filteredUsers = users.stream()
+        .filter(user -> user.getFullName().toLowerCase().contains(query.toLowerCase()) ||user.getEmail().toLowerCase().contains(query.toLowerCase()))
+        .map(user -> userService.convertToUserManagementDTO(user))
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(filteredUsers);
+}
+
     
     @GetMapping("/users/status/{status}")
-    public ResponseEntity<List<UserManagementDTO>> getUsersByStatus(@PathVariable String status) {
-        List<User> users = userRepository.findByStatus(status); List<UserManagementDTO> userDTOs = users.stream()
+    public ResponseEntity<List<Object>> getUsersByStatus(@PathVariable String status) {
+        List<User> users = userService.getUsersByStatus(status);
+        List<Object> userDTOs = users.stream()
             .map(user -> userService.convertToUserManagementDTO(user))
             .collect(Collectors.toList());
         return ResponseEntity.ok(userDTOs);
@@ -157,5 +151,5 @@ public ResponseEntity<List<UserManagementDTO>> getUsersByStatus(@PathVariable St
             this.reason = reason; 
         } 
     }
- 
+
 }

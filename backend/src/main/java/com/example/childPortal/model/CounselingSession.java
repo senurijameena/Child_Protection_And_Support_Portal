@@ -10,27 +10,20 @@ import java.time.LocalDateTime;
 
 @Document(collection = "counseling_sessions")
 public class CounselingSession {
- @Id
- @GeneratedValue(strategy = GenerationType.IDENTITY)
- private Long id;
+  @Id
+  private String id;
 
- @ManyToOne
- private Case case;
-
+  @DBRef
+    private Case caseRef;
  private LocalDate sessionDate;
  private LocalTime sessionTime;
 
- @Enumerated(EnumType.STRING)
- private SessionMode mode;
-
+ private Session mode;
  private String notes;
  private String specialInstructions;
-
- @Enumerated(EnumType.STRING)
  private SessionStatus status;
-RESCHEDULED
-
- @ManyToOne
+ 
+ @DBRef
  private SocialWorker scheduledBy;
  private LocalDateTime scheduledAt;
 
@@ -47,10 +40,10 @@ RESCHEDULED
     }
 
     public Case getCase() {
-        return case;
+        return caseRef;
     }
 
-    public void setCase(Case case) {
+    public void setCase(Case caseRef) {
         this.case = case;
     }
 
@@ -133,5 +126,14 @@ RESCHEDULED
                 ", scheduledAt=" + scheduledAt +
                 '}';
     }
+
+
  
+}
+public enum SessionStatus {
+    SCHEDULED,
+    COMPLETED,
+    CANCELLED,
+    RESCHEDULED
+}
 }

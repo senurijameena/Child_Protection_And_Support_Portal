@@ -24,5 +24,6 @@ public interface UserService {
     List<UserManagementDTO> getUsersByRoleForManagement(Role role); 
     List<UserManagementDTO> getActiveUsers();
     List<UserManagementDTO> getInactiveUsers();
+    Object convertToUserManagementDTO(User user);
 
 }

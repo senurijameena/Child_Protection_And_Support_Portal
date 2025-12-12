@@ -3,7 +3,7 @@ package com.example.childPortal.model;
 import org.springframework.data.annotation.Id; 
 import org.springframework.data.mongodb.core.mapping.Document; 
 import java.time.LocalDateTime;
-import java.util.Locale.Category;
+
 
 @Document(collection = "feedbacks")
 public class Feedback {
@@ -13,7 +13,7 @@ public class Feedback {
     private String caseId;
     private String helpRequestId;
     private String serviceOfferId; 
-
+    private String adminResponse;
     private FeedbackType feedbackType;
     private String feedbackText; 
     private Integer rating; 

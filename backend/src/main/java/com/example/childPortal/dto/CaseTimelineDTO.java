@@ -46,6 +46,14 @@ private String icon;
 
 private String color; 
 private boolean isMajorEvent; 
+
+private Map<String, String> metadata;
+private String evidenceUrl;
+private String documentUrl;
+private String documentName;
+private boolean isSystemEvent;
+private boolean isUserAction;
+
 public CaseTimelineDTO() {}
 
 public String getId() { return id; }

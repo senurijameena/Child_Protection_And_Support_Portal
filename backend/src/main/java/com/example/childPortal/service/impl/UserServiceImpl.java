@@ -62,35 +62,35 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-public LoginResponse loginUser(LoginRequest request) {
-    Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
-    if (userOpt.isEmpty()) {
-        return new LoginResponse(null, "Invalid credentials", false);
+    public LoginResponse loginUser(LoginRequest request) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return new LoginResponse(null, "Invalid credentials", false);
+        }
+
+        User user = userOpt.get();
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return new LoginResponse(null, "Invalid credentials", false);
+        }
+
+        if (!user.isActive()) {
+            return new LoginResponse(null, "Account is deactivated", false);
+        }
+
+        if (!user.isApproved()) {
+            return new LoginResponse(null, "Account pending approval", false);
+        }
+
+        // Generate token with userId, email, and role
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+
+        return new LoginResponse(token, user.getId(), user.getEmail(), user.getRole(), true);
     }
 
-    User user = userOpt.get();
-    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-        return new LoginResponse(null, "Invalid credentials", false);
-    }
-
-    if (!user.isActive()) {
-        return new LoginResponse(null, "Account is deactivated", false);
-    }
-
-    if (!user.isApproved()) {
-        return new LoginResponse(null, "Account pending approval", false);
-    }
-
-    String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-    user.setLastLogin(LocalDateTime.now());
-    userRepository.save(user);
-
-    return new LoginResponse(token, user.getId(), user.getEmail(), user.getRole(), true);
+    // ... rest of the methods remain the same ...
 }
-    @Override
-    public Optional<User> getUserById(String userId) {
-        return userRepository.findById(userId);
-    }
 
     @Override
     public UserDTO getUserProfile(String userId) {

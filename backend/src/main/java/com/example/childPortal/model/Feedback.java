@@ -14,9 +14,9 @@ public class Feedback {
     private String helpRequestId;
     private String serviceOfferId; 
     private String adminResponse;
-    private FeedbackType feedbackType;
-    private String feedbackText; 
-    private Integer rating; 
+    private Object feedbackType;
+    private Object feedbackText; 
+    private String rating; 
     private Category category; 
     private Privacy privacy; 
 
@@ -102,19 +102,19 @@ public class Feedback {
     public FeedbackType getFeedbackType() { 
         return feedbackType; 
     } 
-    public void setFeedbackType(FeedbackType feedbackType) { 
+    public void setFeedbackType(Object feedbackType) { 
         this.feedbackType = feedbackType; 
     } 
-    public String getFeedbackText() { 
+    public Object getFeedbackText() { 
         return feedbackText; 
     } 
-    public void setFeedbackText(String feedbackText) { 
+    public void setFeedbackText(Object feedbackText) { 
         this.feedbackText = feedbackText; 
     } 
-    public Integer getRating() { 
+    public String getRating() { 
         return rating; 
     } 
-    public void setRating(Integer rating) { 
+    public void setRating(String rating) { 
         this.rating = rating; 
     } 
     public Category getCategory() { 

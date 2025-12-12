@@ -1,6 +1,8 @@
 package com.example.childPortal.controller;
 
 import com.example.childPortal.model.User;
+import com.example.childPortal.model.PoliceOfficer;
+import com.example.childPortal.model.SocialWorker;
 import com.example.childPortal.service.UserService;
 import com.example.childPortal.service.PoliceOfficerService;
 import com.example.childPortal.service.SocialWorkerService;

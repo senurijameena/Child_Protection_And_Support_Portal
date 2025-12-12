@@ -24,7 +24,7 @@ public class TransferRequestDTO {
   private String reviewedByAdminName; 
   private LocalDateTime reviewDate;
   
-  private LocalDateTime requestDate
+  private LocalDateTime requestDate;
   private LocalDateTime responseDate; 
   private LocalDateTime transferDate;
   private String notes; 

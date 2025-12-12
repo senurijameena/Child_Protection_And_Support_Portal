@@ -1,35 +1,36 @@
 package com.example.childPortal.model;
 
-import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.example.childPortal.model.ShelterFacility;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "shelter_assignments")
 public class ShelterAssignment {
- @Id
- @GeneratedValue(strategy = GenerationType.IDENTITY)
- private String id;
+  @Id
+    private String id;
 
- @ManyToOne
- private Case case;
+    @DBRef
+    private Case caseDetails;
 
- @ManyToOne
- private ShelterFacility shelter;
+    @DBRef
+    private ShelterFacility shelter;
 
- private Integer durationDays; 
- private String specialConditions;
- private String capacityAvailable;
- private String roomType; 
+    private Integer durationDays; 
+    private String specialConditions;
+    private String capacityAvailable;
+    private String roomType; 
 
- @Enumerated(EnumType.STRING)
- private ServiceStatus status;
+    private ServiceStatus status;
 
- private LocalDate startDate;
- private LocalDate endDate;
- private LocalDateTime assignedAt;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private LocalDateTime assignedAt;
 
- @ManyToOne
- private SocialWorker assignedBy;
+    @DBRef
+    private SocialWorker assignedBy;
 
  public ShelterAssignment() {
         this.assignedAt = LocalDateTime.now();

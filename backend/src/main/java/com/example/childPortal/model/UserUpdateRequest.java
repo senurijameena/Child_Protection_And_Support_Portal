@@ -1,6 +1,8 @@
-package com.example.childPortal.dto;
-import com.example.childPortal.model.Role; import java.util.List;
-public class UserUpdateRequest { 
+package com.example.childPortal.model;
+
+import com.example.childPortal.model.Role; 
+import java.util.List;
+public class UserUpdateRequest {  
   private String fullName;
   private String email;
   private String phone;

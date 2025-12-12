@@ -1,7 +1,6 @@
 package com.example.childPortal.controller; 
 
 import com.example.childPortal.dto.TransferRequestDTO; 
-import com.example.childPortal.dto.TransferActionDTO; 
 import com.example.childPortal.service.TransferService; 
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity; 
@@ -16,31 +15,22 @@ public class TransferController {
   private TransferService transferService; 
 
   @PostMapping("/case/request") 
-  public ResponseEntity<TransferRequestDTO> requestCaseTransfer( 
-    @RequestBody CaseTransferRequest request, 
-    @RequestHeader("X-User-Id") String userId) { 
+  public ResponseEntity<TransferRequestDTO> requestCaseTransfer(@RequestBody CaseTransferRequest request) { 
     TransferRequestDTO transferRequest = transferService.createCaseTransferRequest( 
             request.getCaseId(), 
-            userId, 
             request.getRequestedAssigneeId(), 
-            request.getReason(), 
-            request.getNotes() 
+            request.getReason()
         ); 
          
         return ResponseEntity.ok(transferRequest); 
     } 
  
     @PostMapping("/help-request/request") 
-    public ResponseEntity<TransferRequestDTO> requestHelpRequestTransfer( 
-            @RequestBody HelpRequestTransferRequest request, 
-            @RequestHeader("X-User-Id") String userId) { 
-         
+    public ResponseEntity<TransferRequestDTO> requestHelpRequestTransfer(@RequestBody HelpRequestTransferRequest request) { 
         TransferRequestDTO transferRequest = transferService.createHelpRequestTransferRequest( 
             request.getHelpRequestId(), 
-            userId, 
             request.getRequestedAssigneeId(), 
-            request.getReason(), 
-            request.getNotes() 
+            request.getReason()
         ); 
          
         return ResponseEntity.ok(transferRequest); 
@@ -64,7 +54,6 @@ public class TransferController {
         return ResponseEntity.ok(transfers); 
     } 
  
-    // Get transfer requests for a case 
     @GetMapping("/case/{caseId}") 
     public ResponseEntity<List<TransferRequestDTO>> getTransfersForCase(@PathVariable String caseId) { 
         List<TransferRequestDTO> transfers = transferService.getTransferRequestsForCase(caseId); 
@@ -86,42 +75,24 @@ public class TransferController {
     } 
 
     @PostMapping("/{transferId}/approve") 
-    public ResponseEntity<TransferRequestDTO> approveTransfer( 
-            @PathVariable String transferId, 
-            @RequestBody ApproveRequest request, 
-            @RequestHeader("X-Admin-Id") String adminId) { 
-         
-        TransferRequestDTO approvedTransfer = transferService.approveTransferRequest( 
-            transferId, adminId, request.getNotes() 
-        ); 
-         
+    public ResponseEntity<TransferRequestDTO> approveTransfer(@PathVariable String transferId) { 
+        TransferRequestDTO approvedTransfer = transferService.approveTransferRequest(transferId); 
         return approvedTransfer != null ?  
             ResponseEntity.ok(approvedTransfer) :  
             ResponseEntity.notFound().build(); 
     } 
 
     @PostMapping("/{transferId}/reject") 
-    public ResponseEntity<TransferRequestDTO> rejectTransfer( 
-            @PathVariable String transferId, 
-            @RequestBody RejectRequest request, 
-            @RequestHeader("X-Admin-Id") String adminId) { 
-         
-        TransferRequestDTO rejectedTransfer = transferService.rejectTransferRequest( 
-            transferId, adminId, request.getReason() 
-        ); 
-         
+    public ResponseEntity<TransferRequestDTO> rejectTransfer(@PathVariable String transferId, @RequestBody RejectRequest request) { 
+        TransferRequestDTO rejectedTransfer = transferService.rejectTransferRequest(transferId, request.getReason()); 
         return rejectedTransfer != null ?  
             ResponseEntity.ok(rejectedTransfer) :  
             ResponseEntity.notFound().build(); 
     } 
   
     @PostMapping("/{transferId}/cancel") 
-    public ResponseEntity<TransferRequestDTO> cancelTransfer( 
-            @PathVariable String transferId, 
-            @RequestHeader("X-User-Id") String userId) { 
-         
-        TransferRequestDTO cancelledTransfer = transferService.cancelTransferRequest(transferId, userId); 
-         
+    public ResponseEntity<TransferRequestDTO> cancelTransfer(@PathVariable String transferId) { 
+        TransferRequestDTO cancelledTransfer = transferService.cancelTransferRequest(transferId); 
         return cancelledTransfer != null ?  
             ResponseEntity.ok(cancelledTransfer) :  
             ResponseEntity.notFound().build(); 
@@ -140,8 +111,7 @@ public class TransferController {
     } 
 
     @PostMapping("/{transferId}/execute") 
-    public ResponseEntity<String> executeTransfer(@PathVariable String 
-transferId) { 
+    public ResponseEntity<String> executeTransfer(@PathVariable String transferId) { 
         boolean executed = transferService.executeTransfer(transferId); 
         return executed ?  
             ResponseEntity.ok("Transfer executed successfully") :  
@@ -152,88 +122,31 @@ transferId) {
         private String caseId; 
         private String requestedAssigneeId; 
         private String reason; 
-        private String notes; 
- 
-        public String getCaseId() {
-          return caseId; 
-        } 
-        public void setCaseId(String caseId) { 
-          this.caseId = caseId; 
-        } 
- 
-        public String getRequestedAssigneeId() {
-          return requestedAssigneeId;
-        } 
-        public void setRequestedAssigneeId(String requestedAssigneeId) { 
-          this.requestedAssigneeId = requestedAssigneeId; 
-        } 
- 
-        public String getReason() {
-          return reason; 
-        } 
-      
-        public void setReason(String reason) { 
-          this.reason = reason;
-        } 
- 
-        public String getNotes() {
-          return notes;
-        } 
-        public void setNotes(String notes) {
-          this.notes = notes;
-        } 
+
+        public String getCaseId() { return caseId; } 
+        public void setCaseId(String caseId) { this.caseId = caseId; } 
+        public String getRequestedAssigneeId() { return requestedAssigneeId; } 
+        public void setRequestedAssigneeId(String requestedAssigneeId) { this.requestedAssigneeId = requestedAssigneeId; } 
+        public String getReason() { return reason; } 
+        public void setReason(String reason) { this.reason = reason; } 
     } 
  
     public static class HelpRequestTransferRequest { 
         private String helpRequestId; 
         private String requestedAssigneeId; 
         private String reason; 
-        private String notes; 
- 
-        public String getHelpRequestId() {
-          return helpRequestId; 
-        } 
-        public void setHelpRequestId(String helpRequestId) {
-          this.helpRequestId = helpRequestId;
-        } 
- 
-        public String getRequestedAssigneeId() {
-          return requestedAssigneeId; 
-        } 
-        public void setRequestedAssigneeId(String requestedAssigneeId) { 
-          this.requestedAssigneeId = requestedAssigneeId;
-        } 
- 
-        public String getReason() {
-          return reason; 
-        } 
-        public void setReason(String reason) {
-          this.reason = reason;
-        } 
- 
-        public String getNotes() {
-          return notes;
-        } 
-        public void setNotes(String notes) { 
-          this.notes = notes; 
-        } 
+
+        public String getHelpRequestId() { return helpRequestId; } 
+        public void setHelpRequestId(String helpRequestId) { this.helpRequestId = helpRequestId; } 
+        public String getRequestedAssigneeId() { return requestedAssigneeId; } 
+        public void setRequestedAssigneeId(String requestedAssigneeId) { this.requestedAssigneeId = requestedAssigneeId; } 
+        public String getReason() { return reason; } 
+        public void setReason(String reason) { this.reason = reason; } 
     } 
- 
-    public static class ApproveRequest { 
-        private String notes; 
- 
-        public String getNotes() { return notes; } 
-        public void setNotes(String notes) { this.notes = notes; } 
-    } 
- 
+
     public static class RejectRequest { 
         private String reason; 
- 
-        public String getReason() {
-          return reason; 
-        } 
-        public void setReason(String reason) {
-          this.reason = reason;
-        } 
+        public String getReason() { return reason; } 
+        public void setReason(String reason) { this.reason = reason; } 
     } 
 }

@@ -13,14 +13,12 @@ import java.util.List;
 @RestController 
 @RequestMapping("/api/services") 
 @CrossOrigin(origins = "*")
-
 public class ServiceOfferController {
     @Autowired 
     private ServiceOfferService serviceOfferService;
 
     @PostMapping("/offer") 
-    public ResponseEntity<ServiceOfferDTO> createServiceOffer(@RequestBody 
-    ServiceOfferDTO serviceOfferDTO) { 
+    public ResponseEntity<ServiceOfferDTO> createServiceOffer(@RequestBody ServiceOfferDTO serviceOfferDTO) { 
             ServiceOfferDTO createdOffer = serviceOfferService.createServiceOffer(serviceOfferDTO); 
             return ResponseEntity.ok(createdOffer); 
     }
@@ -62,36 +60,26 @@ public class ServiceOfferController {
     } 
 
     @PostMapping("/respond") 
-    public ResponseEntity<ServiceOfferDTO> respondToOffer( 
-            @RequestBody ServiceResponseDTO responseDTO, 
-            @RequestHeader("X-User-Id") String userId) { 
-                ServiceOfferDTO updatedOffer = serviceOfferService.respondToServiceOffer(responseDTO, userId); 
-                return updatedOffer != null ?  ResponseEntity.ok(updatedOffer) :  
-                ResponseEntity.notFound().build(); 
+    public ResponseEntity<ServiceOfferDTO> respondToOffer(@RequestBody ServiceResponseDTO responseDTO) { 
+        ServiceOfferDTO updatedOffer = serviceOfferService.respondToServiceOffer(responseDTO); 
+        return updatedOffer != null ?  ResponseEntity.ok(updatedOffer) : ResponseEntity.notFound().build(); 
     }
 
     @PutMapping("/{offerId}/status") 
-    public ResponseEntity<ServiceOfferDTO> updateStatus( 
-            @PathVariable String offerId, 
-            @RequestParam OfferStatus status) { 
-                ServiceOfferDTO updatedOffer = serviceOfferService.updateServiceOfferStatus(offerId, status); 
-                return updatedOffer != null ?  ResponseEntity.ok(updatedOffer) :  
-                ResponseEntity.notFound().build(); 
+    public ResponseEntity<ServiceOfferDTO> updateStatus(@PathVariable String offerId, @RequestParam OfferStatus status) { 
+        ServiceOfferDTO updatedOffer = serviceOfferService.updateServiceOfferStatus(offerId, status); 
+        return updatedOffer != null ?  ResponseEntity.ok(updatedOffer) : ResponseEntity.notFound().build(); 
     }
 
     @DeleteMapping("/{offerId}") 
     public ResponseEntity<String> cancelServiceOffer(@PathVariable String offerId) { 
         boolean cancelled = serviceOfferService.cancelServiceOffer(offerId); 
-        return cancelled ?  
-            ResponseEntity.ok("Service offer cancelled successfully") :  
-            ResponseEntity.notFound().build(); 
+        return cancelled ? ResponseEntity.ok("Service offer cancelled successfully") : ResponseEntity.notFound().build(); 
     }
 
     @GetMapping("/{offerId}") 
     public ResponseEntity<ServiceOfferDTO> getServiceOffer(@PathVariable String offerId) { 
         ServiceOfferDTO offer = serviceOfferService.getServiceOfferById(offerId); 
-        return offer != null ?  
-            ResponseEntity.ok(offer) :  
-            ResponseEntity.notFound().build(); 
+        return offer != null ? ResponseEntity.ok(offer) : ResponseEntity.notFound().build(); 
     } 
 }

@@ -19,15 +19,8 @@ public class CaseController {
     private CaseService caseService;
 
     @PostMapping("/report")
-    public ResponseEntity<CaseResponse> reportCase(
-            @RequestBody CaseReportRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        String reporterUserId = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        }
-        
-        CaseResponse response = caseService.reportCase(request, reporterUserId);
+    public ResponseEntity<CaseResponse> reportCase(@RequestBody CaseReportRequest request) {
+        CaseResponse response = caseService.reportCase(request);
         return response.isSuccess() ? 
             ResponseEntity.ok(response) : 
             ResponseEntity.badRequest().body(response);
@@ -60,9 +53,7 @@ public class CaseController {
     }
 
     @PutMapping("/{caseId}/status")
-    public ResponseEntity<CaseDTO> updateCaseStatus(
-            @PathVariable String caseId, 
-            @RequestParam CaseStatus status) {
+    public ResponseEntity<CaseDTO> updateCaseStatus(@PathVariable String caseId, @RequestParam CaseStatus status) {
         CaseDTO updatedCase = caseService.updateCaseStatus(caseId, status);
         return updatedCase != null ? 
             ResponseEntity.ok(updatedCase) : 
@@ -70,9 +61,7 @@ public class CaseController {
     }
 
     @PutMapping("/{caseId}/assign/officer")
-    public ResponseEntity<CaseDTO> assignToOfficer(
-            @PathVariable String caseId, 
-            @RequestParam String officerId) {
+    public ResponseEntity<CaseDTO> assignToOfficer(@PathVariable String caseId, @RequestParam String officerId) {
         CaseDTO updatedCase = caseService.assignCaseToOfficer(caseId, officerId);
         return updatedCase != null ? 
             ResponseEntity.ok(updatedCase) : 
@@ -80,9 +69,7 @@ public class CaseController {
     }
 
     @PutMapping("/{caseId}/assign/social-worker")
-    public ResponseEntity<CaseDTO> assignToSocialWorker(
-            @PathVariable String caseId, 
-            @RequestParam String workerId) {
+    public ResponseEntity<CaseDTO> assignToSocialWorker(@PathVariable String caseId, @RequestParam String workerId) {
         CaseDTO updatedCase = caseService.assignCaseToSocialWorker(caseId, workerId);
         return updatedCase != null ? 
             ResponseEntity.ok(updatedCase) : 

@@ -18,22 +18,8 @@ public class HelpController {
     private HelpRequestService helpRequestService; 
  
     @PostMapping("/request") 
-    public ResponseEntity<HelpResponse> createHelpRequest( 
-            @RequestBody HelpRequestDTO helpRequestDTO, 
-            @RequestHeader(value = "Authorization", required = false) String authHeader) { 
-         
-        String requesterUserId = null; 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) { 
-            requesterUserId = "extractedUserIdFromToken"; 
-        } 
-         
-        if (!helpRequestDTO.isAnonymous() && requesterUserId == null) { 
-            return ResponseEntity.status(401).body( 
-                new HelpResponse(null, "Authentication required for non-anonymous requests", false) 
-            ); 
-        } 
-         
-        HelpResponse response = helpRequestService.createHelpRequest(helpRequestDTO, requesterUserId); 
+    public ResponseEntity<HelpResponse> createHelpRequest(@RequestBody HelpRequestDTO helpRequestDTO) { 
+        HelpResponse response = helpRequestService.createHelpRequest(helpRequestDTO); 
         return response.isSuccess() ?  
             ResponseEntity.ok(response) :  
             ResponseEntity.badRequest().body(response); 

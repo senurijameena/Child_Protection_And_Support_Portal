@@ -1,11 +1,11 @@
 package com.example.childPortal.controller;
 import com.example.childPortal.dto.*;
+import com.example.childPortal.model.UserUpdateRequest;
 import com.example.childPortal.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import com.example.childPortal.dto.FeedbackStatisticsDTO;
 
 
 @RestController 
@@ -66,10 +66,11 @@ ResponseEntity.notFound().build();
 }
 
 @GetMapping("/feedback/statistics")
-    public ResponseEntity<FeedbackStatisticsDTO> getFeedbackStatistics() {
-        FeedbackStatisticsDTO statistics = feedbackService.getFeedbackStatistics(); 
-        return ResponseEntity.ok(statistics);
+public ResponseEntity<FeedbackStatisticsDTO> getFeedbackStatistics() {
+    FeedbackStatisticsDTO statistics = feedbackService.getFeedbackStatistics(); 
+    return ResponseEntity.ok(statistics);
 }
+
     
 @GetMapping("/feedback/recent")
     public ResponseEntity<List<FeedbackDTO>> getRecentFeedbackForDashboard() {

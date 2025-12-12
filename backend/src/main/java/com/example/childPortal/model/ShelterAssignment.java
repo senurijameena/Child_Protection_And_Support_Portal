@@ -23,7 +23,7 @@ public class ShelterAssignment {
     private String capacityAvailable;
     private String roomType; 
 
-    private ServiceStatus status;
+    private String status;
 
     private LocalDate startDate;
     private LocalDate endDate;
@@ -43,10 +43,10 @@ public class ShelterAssignment {
         this.id = id;
  }
  public Case getCase() {
-        return case;
+        return caseDetails;
  }
- public void setCase(Case case) {
-        this.case = case;
+ public void setCase(Case caseDetails) {
+        this.caseDetails = caseDetails;
  }
  public ShelterFacility getShelter() {
         return shelter;
@@ -112,7 +112,7 @@ public class ShelterAssignment {
     public String toString() {
         return "ShelterAssignment{" +
                 "id='" + id + '\'' +
-                ", case=" + (case != null ? case.getId() : null) +
+                ", case=" + (caseDetails != null ? caseDetails.getId() : null) +
                 ", shelter=" + (shelter != null ? shelter.getId() : null) +
                 ", durationDays=" + durationDays +
                 ", specialConditions='" + specialConditions + '\'' +

@@ -3,6 +3,7 @@ package com.example.childPortal.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed;
+import java.time.LocalDateTime;
 
 @Document(collection = "users")
 public class User {
@@ -21,6 +22,8 @@ public class User {
     private String certificationFile; 
     private boolean approved;
     private boolean termsAccepted;
+    private LocalDateTime submissionDate;
+    private String status;
 
     public User() {}
 
@@ -31,6 +34,8 @@ public class User {
         this.password = password;
         this.role = role;
         this.approved = (role == Role.PU || role == Role.ADMIN);
+        this.submissionDate = LocalDateTime.now();
+        this.status = this.approved ? "APPROVED" : "PENDING";
     }
 
     public String getId() { 
@@ -101,5 +106,18 @@ public class User {
     }
     public void setTermsAccepted(boolean termsAccepted) { 
         this.termsAccepted = termsAccepted; 
+    }
+    public LocalDateTime getSubmissionDate() { 
+        return submissionDate; 
+    }
+    public void setSubmissionDate(LocalDateTime submissionDate) { 
+        this.submissionDate = submissionDate; 
+    }
+
+    public String getStatus() { 
+        return status; 
+    }
+    public void setStatus(String status) { 
+        this.status = status; 
     }
 }

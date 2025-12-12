@@ -5,7 +5,6 @@ import com.example.childPortal.dto.HelpRequestTransferDTO;
 import com.example.childPortal.dto.SocialWorkerDashboardDTO;
 import com.example.childPortal.dto.HelpRequestDTO;
 import com.example.childPortal.model.HelpRequestAssignment.AssignmentStatus;
-import com.example.childPortal.model.HelpRequestTransfer.TransferStatus;
 import java.util.List;
 
 public interface HelpAssignmentService {

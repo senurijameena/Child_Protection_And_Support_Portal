@@ -1,6 +1,7 @@
 package com.example.childPortal.controller;
 
 import com.example.childPortal.model.User;
+import com.example.childPortal.dto.UserManagementDTO;
 import com.example.childPortal.model.PoliceOfficer;
 import com.example.childPortal.model.SocialWorker;
 import com.example.childPortal.service.UserService;
@@ -8,12 +9,14 @@ import com.example.childPortal.service.PoliceOfficerService;
 import com.example.childPortal.service.SocialWorkerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -41,11 +44,15 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
     
-    @GetMapping("/users-by-status/{status}")
-    public ResponseEntity<List<User>> getUsersByStatus(@PathVariable String status) {
-        List<User> users = userService.getUsersByStatus(status);
-        return ResponseEntity.ok(users);
-    }
+   @GetMapping("/users/status/{status}")
+public ResponseEntity<List<UserManagementDTO>> getUsersByStatus(@PathVariable String status) {
+    List<User> users = UserCredentialRepository.findByStatus(status); 
+    List<UserManagementDTO> userDTOs = users.stream()
+        .map(user -> userService.convertToUserManagementDTO(user))
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(userDTOs);
+}
+
 
     @GetMapping("/police-officers")
     public ResponseEntity<List<PoliceOfficer>> getAllPoliceOfficers() {
@@ -92,12 +99,6 @@ public class AdminController {
         boolean success = userService.rejectUser(userId);
         return success ? ResponseEntity.ok("User rejected successfully") 
                       : ResponseEntity.badRequest().body("User not found");
-    }
-
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
     }
 
 

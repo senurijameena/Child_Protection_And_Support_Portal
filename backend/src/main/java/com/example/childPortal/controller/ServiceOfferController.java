@@ -94,12 +94,4 @@ public class ServiceOfferController {
             ResponseEntity.ok(offer) :  
             ResponseEntity.notFound().build(); 
     } 
-
-    @GetMapping("/{offerId}") 
-    public ResponseEntity<ServiceOfferDTO> getServiceOffer(@PathVariable String offerId) { 
-        ServiceOfferDTO offer = serviceOfferService.getServiceOfferById(offerId); 
-        return offer != null ?  
-            ResponseEntity.ok(offer) :  
-            ResponseEntity.notFound().build(); 
-    } 
 }

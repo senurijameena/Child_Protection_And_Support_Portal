@@ -99,4 +99,62 @@ public class AdminController {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
+
+
+    @GetMapping("/users/search")
+        public ResponseEntity<List<UserManagementDTO>> searchUsers(@RequestParam String query) {
+        List<User> users = userRepository.findAll();
+        List<UserManagementDTO> filteredUsers = users.stream()
+            .filter(user -> user.getFullName().toLowerCase().contains(query.toLowerCase()) || user.getEmail().toLowerCase().contains(query.toLowerCase()))
+            .map(user -> userService.convertToUserManagementDTO(user))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(filteredUsers);   
+    }
+    
+    @GetMapping("/users/status/{status}")
+    public ResponseEntity<List<UserManagementDTO>> getUsersByStatus(@PathVariable String status) {
+        List<User> users = userRepository.findByStatus(status); List<UserManagementDTO> userDTOs = users.stream()
+            .map(user -> userService.convertToUserManagementDTO(user))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(userDTOs);
+    }
+
+        @PostMapping("/users/bulk-approve")
+    public ResponseEntity<String> bulkApproveUsers(@RequestBody List<String> userIds) {
+        int approvedCount = 0;
+        for (String userId : userIds) {
+            if (userService.approveUser(userId)) { 
+                approvedCount++;
+            }
+        }
+        return ResponseEntity.ok("Approved " + approvedCount + " out of " + userIds.size() + " users");
+    }
+    
+    @PostMapping("/users/bulk-reject")
+    public ResponseEntity<String> bulkRejectUsers(@RequestBody BulkRejectRequest request) {
+        int rejectedCount = 0;
+        for (String userId : request.getUserIds()) {
+            if (userService.rejectUser(userId)) { 
+                rejectedCount++;
+            } 
+        }
+        return ResponseEntity.ok("Rejected " + rejectedCount + " out of " + request.getUserIds().size() + " users");
+    }
+    public static class BulkRejectRequest {
+        private List<String> userIds; private String reason;
+
+        public List<String> getUserIds() { 
+            return userIds; 
+        }
+        public void setUserIds(List<String> userIds) { 
+            this.userIds = userIds; 
+        }
+        public String getReason() { 
+            return reason;
+        }
+        public void setReason(String reason) { 
+            this.reason = reason; 
+        } 
+    }
+ 
 }

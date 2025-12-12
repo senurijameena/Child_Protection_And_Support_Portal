@@ -218,6 +218,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+
     public LoginResponse loginUser(String email, String password) {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
@@ -238,4 +239,237 @@ public class UserServiceImpl implements UserService {
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
         return new LoginResponse(token, user.getEmail(), user.getRole(), user.isApproved(), "Login successful");
     }
+
+    public List<UserManagementDTO> getAllUsersForManagement() {
+    List<User> users = userRepository.findAll(); return users.stream()
+        .map(this::convertToUserManagementDTO) .collect(Collectors.toList());
+    }
+    
+    @Override
+    public UserManagementDTO getUserForManagement(String userId) {
+        Optional<User> userOpt = userRepository.findById(userId); if (userOpt.isPresent()) {
+            return convertToUserManagementDTO(userOpt.get()); 
+        }
+        return null; 
+    }
+    
+    @Override
+    public boolean deactivateUser(String userId, String reason) {
+        Optional<User> userOpt = userRepository.findById(userId); 
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setActive(false); 
+            user.setDeactivationReason(reason);
+            user.setDeactivationDate(LocalDateTime.now()); 
+            userRepository.save(user);
+            logUserDeactivation(user, reason); 
+            return true;
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean activateUser(String userId) {
+        Optional<User> userOpt = userRepository.findById(userId); 
+        if (userOpt.isPresent()) {
+            User user = userOpt.get(); user.setActive(true);
+            user.setDeactivationReason(null); user.setDeactivationDate(null); 
+            userRepository.save(user);
+            logUserActivation(user); 
+            return true;
+        }
+        return false; 
+    }
+    
+    @Override
+    public boolean updateUserDetails(String userId, UserUpdateRequest updateRequest) {
+        Optional<User> userOpt = userRepository.findById(userId); 
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (updateRequest.getFullName() != null) { 
+                user.setFullName(updateRequest.getFullName());
+            }
+            if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+                if (!userRepository.existsByEmail(updateRequest.getEmail())) {
+                    user.setEmail(updateRequest.getEmail()); } else {
+                    throw new RuntimeException("Email already exists");
+                }
+            }
+            if (updateRequest.getPhone() != null) {
+                user.setPhone(updateRequest.getPhone()); 
+            }
+            if (updateRequest.getStatus() != null) {
+                user.setStatus(updateRequest.getStatus());
+            }
+            user.setActive(updateRequest.isActive());
+            userRepository.save(user);
+            if (user.getRole() == Role.PO && updateRequest.getBadgeNumber() != null) {
+                updatePoliceOfficerDetails(userId, updateRequest);
+            } else if (user.getRole() == Role.SW && updateRequest.getLicenseNumber() != null) {
+                updateSocialWorkerDetails(userId, updateRequest); }
+            logUserUpdate(user, updateRequest);
+            return true;
+        }
+        return false; 
+    }
+    
+    @Override
+    public List<UserManagementDTO> getUsersByRoleForManagement(Role role) {
+        List<User> users = userRepository.findByRole(role);
+        return users.stream()
+            .map(this::convertToUserManagementDTO)
+            .collect(Collectors.toList()); 
+    }
+    
+    @Override
+    public List<UserManagementDTO> getActiveUsers() {
+        List<User> users = userRepository.findAll(); 
+        return users.stream()
+            .filter(User::isActive) .map(this::convertToUserManagementDTO) .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<UserManagementDTO> getInactiveUsers() {
+        List<User> users = userRepository.findAll(); return users.stream()
+            .filter(user -> !user.isActive()) .map(this::convertToUserManagementDTO) .collect(Collectors.toList());
+    }
+
+    private UserManagementDTO convertToUserManagementDTO(User user) {
+        UserManagementDTO dto = new UserManagementDTO(); 
+        dto.setId(user.getId());
+        dto.setFullName(user.getFullName());
+        dto.setRole(user.getRole());
+        dto.setEmail(user.getEmail());
+        dto.setPhone(user.getPhone()); 
+        dto.setStatus(user.getStatus()); 
+        dto.setActive(user.isActive()); 
+        dto.setLastLogin(user.getLastLogin()); 
+        dto.setRegistrationDate(user.getSubmissionDate()); 
+        dto.setApproved(user.isApproved());
+        dto.setDeactivationReason(user.getDeactivationReason()); 
+        dto.setDeactivationDate(user.getDeactivationDate());
+        
+        if (user.getRole() == Role.PO) {
+            populatePoliceOfficerDetails(dto, user.getId()); 
+        } else if (user.getRole() == Role.SW) {
+            populateSocialWorkerDetails(dto, user.getId()); 
+        }
+        if (user.getRole() == Role.PO) {
+            populatePoliceOfficerStatistics(dto, user.getId());
+        } else if (user.getRole() == Role.SW) {
+            populateSocialWorkerStatistics(dto, user.getId()); 
+        } else if (user.getRole() == Role.PU) {
+            populatePublicUserStatistics(dto, user.getId());
+        }
+        return dto; 
+    }
+    
+    private void populatePoliceOfficerDetails(UserManagementDTO dto, String userId) {
+        Optional<PoliceOfficer> officerOpt = policeOfficerRepository.findByUserId(userId); 
+        if (officerOpt.isPresent()) {
+            PoliceOfficer officer = officerOpt.get(); 
+            dto.setBadgeNumber(officer.getBadgeNumber()); 
+            dto.setDepartment(officer.getDepartment());
+            dto.setRank(officer.getRank()); 
+            dto.setOrganization(officer.getStationAddress())
+                }
+    }
+
+    private void populateSocialWorkerDetails(UserManagementDTO dto, String userId) {
+        Optional<SocialWorker> workerOpt = socialWorkerRepository.findByUserId(userId); 
+        if (workerOpt.isPresent()) {
+            SocialWorker worker = workerOpt.get();
+            dto.setLicenseNumber(worker.getLicenseNumber()); 
+            dto.setSpecializations(worker.getSpecializations()); 
+            dto.setOrganization(worker.getOrganization());
+            dto.setYearsOfExperience(worker.getYearsOfExperience());
+        }
+    }
+    
+    private void populatePoliceOfficerStatistics(UserManagementDTO dto, String userId) {
+        List<Case> activeCases = caseRepository.findByAssignedOfficerId(userId).stream()
+            .filter(c -> c.getStatus() != Case.CaseStatus.CLOSED && c.getStatus() != Case.CaseStatus.RESOLVED)
+            .collect(Collectors.toList()); dto.setActiveCases(activeCases.size());
+        List<Case> completedCases = caseRepository.findByAssignedOfficerId(userId).stream()
+            .filter(c -> c.getStatus() == Case.CaseStatus.CLOSED || c.getStatus() == Case.CaseStatus.RESOLVED)
+            .collect(Collectors.toList()); dto.setCompletedCases(completedCases.size());
+    }
+    
+    private void populateSocialWorkerStatistics(UserManagementDTO dto, String userId) {
+        List<HelpRequest> activeHelpRequests = helpRequestRepository.findByAssignedWorkerId(userId).stream()
+            .filter(h -> h.getStatus() != HelpRequest.RequestStatus.COMPLETED && h.getStatus() != HelpRequest.RequestStatus.REJECTED)
+            .collect(Collectors.toList()); dto.setActiveHelpRequests(activeHelpRequests.size());
+        List<ServiceOffer> completedServices = serviceOfferRepository.findByOfferedByUserId(userId).stream()
+            .filter(s -> s.getStatus() == ServiceOffer.OfferStatus.COMPLETED)
+            .collect(Collectors.toList()); dto.setCompletedServices(completedServices.size());
+    }
+
+    private void populatePublicUserStatistics(UserManagementDTO dto, String userId) { // Count cases reported by this user
+        List<Case> userCases = caseRepository.findByReporterUserId(userId); dto.setCompletedCases(userCases.size());
+        List<HelpRequest> userHelpRequests = helpRequestRepository.findByRequesterUserId(userId);
+
+        dto.setCompletedServices(userHelpRequests.size()); 
+    }
+    
+    private void updatePoliceOfficerDetails(String userId, UserUpdateRequest updateRequest) {
+        Optional<PoliceOfficer> officerOpt = policeOfficerRepository.findByUserId(userId); 
+        if (officerOpt.isPresent()) {
+            PoliceOfficer officer = officerOpt.get();
+            if (updateRequest.getBadgeNumber() != null) {
+                officer.setBadgeNumber(updateRequest.getBadgeNumber()); }
+            if (updateRequest.getDepartment() != null) { 
+                officer.setDepartment(updateRequest.getDepartment());
+            }
+            if (updateRequest.getRank() != null) {
+                officer.setRank(updateRequest.getRank()); }
+            if (updateRequest.getStationAddress() != null) { 
+                officer.setStationAddress(updateRequest.getStationAddress());
+            }
+            policeOfficerRepository.save(officer); 
+        }
+    }
+    
+    private void updateSocialWorkerDetails(String userId, UserUpdateRequest updateRequest) {
+        Optional<SocialWorker> workerOpt = socialWorkerRepository.findByUserId(userId);
+
+        if (workerOpt.isPresent()) {
+            SocialWorker worker = workerOpt.get();
+            if (updateRequest.getLicenseNumber() != null) {
+                worker.setLicenseNumber(updateRequest.getLicenseNumber()); 
+            }
+            if (updateRequest.getSpecializations() != null) { 
+                worker.setSpecializations(updateRequest.getSpecializations());
+            }
+            if (updateRequest.getOrganization() != null) {
+                worker.setOrganization(updateRequest.getOrganization()); }
+            if (updateRequest.getYearsOfExperience() != null) { 
+                worker.setYearsOfExperience(updateRequest.getYearsOfExperience());
+            }
+            socialWorkerRepository.save(worker); }
+    }
+    
+    private void logUserDeactivation(User user, String reason) {
+        System.out.println("User deactivated: " + user.getEmail()); 
+        System.out.println("Name: " + user.getFullName());
+        System.out.println("Role: " + user.getRole()); 
+        System.out.println("Reason: " + reason); System.out.println("Date: " + LocalDateTime.now());
+    }
+
+    private void logUserActivation(User user) {
+        System.out.println("User activated: " + user.getEmail());
+        System.out.println("Name: " + user.getFullName()); 
+        System.out.println("Role: " + user.getRole());
+        System.out.println("Date: " + LocalDateTime.now());
+    }
+    
+    private void logUserUpdate(User user, UserUpdateRequest updateRequest) {
+        System.out.println("User updated: " + user.getEmail());
+        System.out.println("Updated fields:");
+        if (updateRequest.getFullName() != null) System.out.println(" Name: " + updateRequest.getFullName());
+        if (updateRequest.getEmail() != null) System.out.println(" Email: " + updateRequest.getEmail());
+        if (updateRequest.getPhone() != null) System.out.println(" Phone: " + updateRequest.getPhone());
+        System.out.println("Active status: " + updateRequest.isActive());
+    }
+
+
 }

@@ -13,7 +13,7 @@ private String ratingStars;
 private String caseTitle; 
 private String assignedToName; 
 private String assignedToRole; 
-private LocalDateTime responseStatus; 
+private String responseStatus; 
 
 public String getUserType() { 
   return userType; 
@@ -55,7 +55,7 @@ public void setAssignedToRole(String assignedToRole) {
 public LocalDateTime getResponseStatus() {
   return responseStatus; 
 }
-public void setResponseStatus(LocalDateTime responseStatus) { 
+public void setResponseStatus(String responseStatus) { 
   this.responseStatus = responseStatus; 
 }
 public Object getFeedbackText() {

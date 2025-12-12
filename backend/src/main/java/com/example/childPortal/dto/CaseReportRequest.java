@@ -7,13 +7,11 @@ import java.util.List;
 
 public class CaseReportRequest {
     private boolean anonymous;
-    
-    // Child Identification
+
     private String approximateAge;
     private String gender;
     private String identificationMarks;
-    
-    // Case Details
+
     private CaseType caseType;
     private String location;
     private LocalDateTime incidentDate;

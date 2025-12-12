@@ -1,6 +1,6 @@
 package com.example.childPortal.model;
 
-import com.example.childPortal.model.Role; 
+//import com.example.childPortal.model.Role; 
 import java.util.List;
 public class UserUpdateRequest {  
   private String fullName;

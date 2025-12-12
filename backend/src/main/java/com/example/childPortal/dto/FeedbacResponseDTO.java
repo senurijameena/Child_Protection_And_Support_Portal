@@ -1,7 +1,6 @@
 package com.example.childPortal.dto;
 
 import com.example.childPortal.model.Feedback.FeedbackType; 
-import com.example.childPortal.model.Feedback.Category; 
 import com.example.childPortal.model.Feedback.Privacy;
 
 public class FeedbacResponseDTO {

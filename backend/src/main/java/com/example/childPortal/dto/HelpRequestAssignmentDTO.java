@@ -14,7 +14,6 @@ public class HelpRequestAssignmentDTO {
  private LocalDateTime completedDate;
  private String initialNotes;
  private String completionNotes;
- private Integer riskScore;
  private String priority;
  private String helpRequestTitle;
  private String helpRequestType;

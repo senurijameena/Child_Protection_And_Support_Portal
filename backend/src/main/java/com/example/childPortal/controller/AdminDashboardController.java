@@ -2,6 +2,8 @@ package com.example.childPortal.controller;
 import com.example.childPortal.dto.*;
 import com.example.childPortal.model.UserUpdateRequest;
 import com.example.childPortal.service.AdminService;
+import com.example.childPortal.service.FeedbackService;
+
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,10 @@ public class AdminDashboardController {
 
 @Autowired
 private AdminService adminService;
+
+@Autowired
+private FeedbackService feedbackService;
+
 
 @GetMapping("/overview")
     public ResponseEntity<AdminDashboardDTO> getDashboardOverview() {

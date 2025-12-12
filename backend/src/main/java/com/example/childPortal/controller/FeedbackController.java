@@ -9,7 +9,9 @@ import com.example.childPortal.service.FeedbackService;
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.http.ResponseEntity; 
 import org.springframework.web.bind.annotation.*; 
-import java.util.List; 
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController 
 @RequestMapping("/api/feedback") 
@@ -19,13 +21,15 @@ public class FeedbackController {
     private FeedbackService feedbackService;
 
     @PostMapping("/submit") 
-    public ResponseEntity<FeedbackResponseDTO> submitFeedback( 
+    public ResponseEntity<?> submitFeedback( 
             @RequestBody FeedbackDTO feedbackDTO, 
             @RequestHeader("X-User-Id") String userId) { 
          
-        if (feedbackDTO.getFeedbackText() == null || feedbackDTO.getFeedbackText().trim().isEmpty()) { 
-            return ResponseEntity.badRequest().body( 
-                new FeedbackResponseDTO(null, "Feedback text is required", false) 
+        // Check if feedback text exists
+        String feedbackText = feedbackDTO.getMessage(); 
+        if (feedbackText == null || feedbackText.trim().isEmpty()) { 
+            return ResponseEntity.badRequest().body(
+                new SimpleResponse("Feedback text is required", false)
             ); 
         } 
          
@@ -36,40 +40,39 @@ public class FeedbackController {
     }
 
     @GetMapping("/{feedbackId}") 
-    public ResponseEntity<FeedbackDTO> getFeedback(@PathVariable String feedbackId) { 
-        FeedbackDTO feedback = feedbackService.getFeedbackById(feedbackId); 
+    public ResponseEntity<FeedbackResponseDTO> getFeedback(@PathVariable String feedbackId) { 
+        FeedbackResponseDTO feedback = feedbackService.getFeedbackById(feedbackId); 
         return feedback != null ?  
             ResponseEntity.ok(feedback) :  
             ResponseEntity.notFound().build(); 
     } 
 
     @GetMapping("/user/{userId}") 
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByUser(@PathVariable String userId) { 
-        List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByUser(userId); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByUser(@PathVariable String userId) { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByUser(userId); 
         return ResponseEntity.ok(feedbackList); 
     }
 
     @GetMapping("/case/{caseId}") 
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByCase(@PathVariable String caseId) { 
-        List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByCase(caseId); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByCase(@PathVariable String caseId) { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByCase(caseId); 
         return ResponseEntity.ok(feedbackList); 
     } 
 
     @GetMapping("/all") 
-    public ResponseEntity<List<FeedbackDTO>> getAllFeedback() { 
-        List<FeedbackDTO> feedbackList = feedbackService.getAllFeedback(); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getAllFeedback() { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getAllFeedback(); 
         return ResponseEntity.ok(feedbackList); 
     } 
 
     @GetMapping("/public") 
-    public ResponseEntity<List<FeedbackDTO>> getPublicFeedback() { 
-        List<FeedbackDTO> feedbackList = feedbackService.getPublicFeedback(); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getPublicFeedback() { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getPublicFeedback(); 
         return ResponseEntity.ok(feedbackList); 
     } 
 
     @GetMapping("/type/{type}") 
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByType(@PathVariable 
-FeedbackType type) { 
+    public ResponseEntity<List<FeedbackDTO>> getFeedbackByType(@PathVariable FeedbackType type) { 
         List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByType(type); 
         return ResponseEntity.ok(feedbackList); 
     } 
@@ -81,36 +84,35 @@ FeedbackType type) {
     } 
 
     @GetMapping("/status/{status}") 
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByStatus(@PathVariable FeedbackStatus status) { 
-        List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByStatus(status); 
+    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByStatus(@PathVariable FeedbackStatus status) { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByStatus(status); 
         return ResponseEntity.ok(feedbackList); 
     } 
 
     @GetMapping("/admin/all")
-    public ResponseEntity<List<FeedbackDTO>> getAllFeedbackEnhanced() {
-        List<FeedbackDTO> feedback = feedbackService.getAllFeedback();
-        return ResponseEntity.ok(feedback); }
+    public ResponseEntity<List<FeedbackResponseDTO>> getAllFeedbackEnhanced() {
+        List<FeedbackResponseDTO> feedback = feedbackService.getAllFeedback();
+        return ResponseEntity.ok(feedback); 
+    }
 
     @GetMapping("/admin/analytics/monthly")
     public ResponseEntity<MonthlyAnalytics> getMonthlyAnalytics() {
         MonthlyAnalytics analytics = new MonthlyAnalytics(); 
-        LocalDateTime now = LocalDateTime.now(); LocalDateTime sixMonthsAgo = now.minusMonths(6);
         return ResponseEntity.ok(analytics); 
     }
 
-
     @PutMapping("/{feedbackId}/status") 
-    public ResponseEntity<FeedbackDTO> updateStatus( 
+    public ResponseEntity<FeedbackResponseDTO> updateStatus( 
             @PathVariable String feedbackId, 
             @RequestParam FeedbackStatus status) { 
-        FeedbackDTO updatedFeedback = feedbackService.updateFeedbackStatus(feedbackId, status); 
+        FeedbackResponseDTO updatedFeedback = feedbackService.updateFeedbackStatus(feedbackId, status); 
         return updatedFeedback != null ?  
             ResponseEntity.ok(updatedFeedback) :  
             ResponseEntity.notFound().build(); 
     } 
 
     @PostMapping("/{feedbackId}/respond") 
-    public ResponseEntity<FeedbackDTO> respondToFeedback( 
+    public ResponseEntity<FeedbackResponseDTO> respondToFeedback( 
             @PathVariable String feedbackId, 
             @RequestBody AdminResponseRequest request, 
             @RequestHeader("X-Admin-Id") String adminId) { 
@@ -119,7 +121,7 @@ FeedbackType type) {
             return ResponseEntity.badRequest().build(); 
         } 
          
-        FeedbackDTO updatedFeedback = feedbackService.respondToFeedback(feedbackId, request.getResponse(), adminId); 
+        FeedbackResponseDTO updatedFeedback = feedbackService.respondToFeedback(feedbackId, request.getResponse(), adminId); 
         return updatedFeedback != null ?  
             ResponseEntity.ok(updatedFeedback) :  
             ResponseEntity.notFound().build(); 
@@ -141,15 +143,32 @@ FeedbackType type) {
 
     @GetMapping("/statistics") 
     public ResponseEntity<FeedbackStatistics> getStatistics() { 
-        return ResponseEntity.ok(new FeedbackStatistics()); 
+        FeedbackStatistics stats = new FeedbackStatistics();
+
+        return ResponseEntity.ok(stats); 
     } 
 
     @PostMapping("/admin/bulk-respond")
     public ResponseEntity<String> bulkRespondToFeedback(@RequestBody BulkRespondRequest request) {
+  
         return ResponseEntity.ok("Bulk response functionality would be implemented here"); 
     }
 
-
+    public static class SimpleResponse {
+        private String message;
+        private boolean success;
+        
+        public SimpleResponse(String message, boolean success) {
+            this.message = message;
+            this.success = success;
+        }
+        
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+    }
+    
     public static class AdminResponseRequest { 
         private String response; 
  
@@ -247,5 +266,4 @@ FeedbackType type) {
             this.adminId = adminId; 
         } 
     }
-    
-} 
+}

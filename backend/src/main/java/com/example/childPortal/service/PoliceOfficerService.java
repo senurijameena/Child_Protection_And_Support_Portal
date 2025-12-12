@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PoliceOfficerService {
-    PoliceOfficer createPoliceOfficer(PoliceOfficerDTO policeOfficerDTO);
+    PoliceOfficer createPoliceOfficer(String userId, PoliceOfficerDTO policeOfficerDTO);
     Optional<PoliceOfficer> getPoliceOfficerByUserId(String userId);
     List<PoliceOfficer> getAllPoliceOfficers();
     PoliceOfficer updatePoliceOfficer(String userId, PoliceOfficerDTO policeOfficerDTO);

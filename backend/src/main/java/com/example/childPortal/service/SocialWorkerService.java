@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SocialWorkerService {
-    SocialWorker createSocialWorker(SocialWorkerDTO socialWorkerDTO);
+    SocialWorker createSocialWorker(String userId, SocialWorkerDTO socialWorkerDTO);
     Optional<SocialWorker> getSocialWorkerByUserId(String userId);
     List<SocialWorker> getAllSocialWorkers();
     SocialWorker updateSocialWorker(String userId, SocialWorkerDTO socialWorkerDTO);
     void deleteSocialWorker(String userId);
+    List<SocialWorker> getAvailableSocialWorkers();
 }

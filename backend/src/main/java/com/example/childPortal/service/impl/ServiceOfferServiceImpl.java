@@ -1,306 +1,115 @@
 package com.example.childPortal.service.impl;
-import com.example.childPortal.dto.ServiceOfferDTO; 
-import com.example.childPortal.dto.ServiceResponseDTO; 
-import com.example.childPortal.model.*; 
-import com.example.childPortal.model.ServiceOffer.OfferStatus; 
-import com.example.childPortal.repository.*; 
-import com.example.childPortal.service.ServiceOfferService; 
-import org.springframework.beans.factory.annotation.Autowired; 
-import org.springframework.stereotype.Service; 
-import java.time.LocalDateTime; 
-import java.util.List; 
-import java.util.Optional; 
-import java.util.stream.Collectors; 
+
+import com.example.childPortal.dto.*;
+import com.example.childPortal.model.*;
+import com.example.childPortal.repository.ServiceOfferRepository;
+import com.example.childPortal.service.ServiceOfferService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
-public class ServiceOfferServiceImpl  implements ServiceOfferService{
-    private static final String RESCHEDULE = null;
+public class ServiceOfferServiceImpl implements ServiceOfferService {
 
-    @Autowired
-    private ServiceOffer serviceOfferRepository; 
+    @Autowired private ServiceOfferRepository serviceOfferRepository;
 
-    @Autowired
-    private ServiceResponseRepository serviceResponseRepository; 
-
-    @Autowired
-    private UserRepository userRepository; 
-    
-    @Autowired 
-    private HelpRequestRepository helpRequestRepository; 
-
-    @Override 
+    @Override
     public ServiceOfferDTO createServiceOffer(ServiceOfferDTO serviceOfferDTO) {
-        ServiceOffer serviceOffer = new ServiceOffer(); 
-
-        serviceOffer.setHelpRequestId(serviceOfferDTO.getHelpRequestId());
-        serviceOffer.setOfferedByUserId(serviceOfferDTO.getOfferedByUserId());
-        serviceOffer.setOfferedToUserId(serviceOfferDTO.getOfferedToUserId());
-        serviceOffer.setServiceType(serviceOfferDTO.getServiceType());
-        serviceOffer.setProviderName(serviceOfferDTO.getProviderName()); 
-        serviceOffer.setProviderLocation(serviceOfferDTO.getProviderLocation()); 
-        serviceOffer.setServiceDetails(serviceOfferDTO.getServiceDetails()); 
-        serviceOffer.setScheduledDateTime(serviceOfferDTO.getScheduledDateTime());
-        serviceOffer.setEndDateTime(serviceOfferDTO.getEndDateTime());
-        serviceOffer.setDuration(serviceOfferDTO.getDuration());
-        serviceOffer.setNotes(serviceOfferDTO.getNotes());
-        serviceOffer.setRequiresFollowUp(serviceOfferDTO.isRequiresFollowUp()); 
-        serviceOffer.setFollowUpDate(serviceOfferDTO.getFollowUpDate());
-
-        ServiceOffer savedOffer = serviceOfferRepository.save(serviceOffer);
+        ServiceOffer offer = new ServiceOffer();
+        offer.setHelpRequestId(serviceOfferDTO.getHelpRequestId());
+        offer.setOfferedByUserId(serviceOfferDTO.getOfferedByUserId());
+        offer.setOfferedToUserId(serviceOfferDTO.getOfferedToUserId());
+        offer.setServiceType(serviceOfferDTO.getServiceType());
+        offer.setServiceDetails(serviceOfferDTO.getServiceDetails());
+        offer.setScheduledDateTime(serviceOfferDTO.getScheduledDateTime());
+        offer.setStatus(ServiceOffer.OfferStatus.PENDING);
+        offer.setOfferDate(LocalDateTime.now());
         
-        sendNotificationToUser(savedOffer);
-
-        return convertToDTO(savedOffer);
+        offer = serviceOfferRepository.save(offer);
+        return convertToDTO(offer);
     }
+
     @Override
-    public ServiceOfferDTO getServiceOfferById(String offerId) { 
-        Optional<ServiceOffer> offerOpt = Optional.empty();
-        if (offerOpt.isPresent()) { 
-            return convertToDTO(offerOpt.get()); 
-        } 
-        return null; 
+    public ServiceOfferDTO getServiceOfferById(String offerId) {
+        return serviceOfferRepository.findById(offerId)
+                .map(this::convertToDTO)
+                .orElse(null);
     }
 
-    @Override 
-    public List<ServiceOfferDTO> getOffersForUser(String userId) { 
-        List<ServiceOffer> offers = serviceOfferRepository.setOfferedToUserId(userId);
-        return offers.stream()
-          .map(this::convertToDTO)
-          .peek(dto -> { 
-             dto.setPendingResponse(dto.getStatus() == OfferStatus.PENDING);
-              dto.setUpcoming(dto.getScheduledDateTime() != null &&
-              dto.getScheduledDateTime().isAfter(LocalDateTime.now()) &&
-                (dto.getStatus() == OfferStatus.ACCEPTED || dto.getStatus() == OfferStatus.RESCHEDULED));
-                dto.setCompleted(dto.getStatus() == OfferStatus.COMPLETED); 
-                  dto.setCanRespond(dto.getStatus() == OfferStatus.PENDING);
-          })
-        .collect(Collectors.toList());   
-    }
     @Override
-    public List<ServiceOfferDTO> getOffersBySocialWorker(String workerId) { 
-        List<ServiceOffer> offers = serviceOfferRepository.findByOfferedByUserId(workerId);
-        return offers.stream().map(this::convertToDTO).collect(Collectors.toList());
+    public List<ServiceOfferDTO> getOffersForUser(String userId) {
+        List<ServiceOffer> sent = serviceOfferRepository.findByOfferedByUserId(userId);
+        List<ServiceOffer> received = serviceOfferRepository.findByOfferedToUserId(userId);
+        
+        return Stream.concat(sent.stream(), received.stream())
+                .map(this::convertToDTO)
+                .toList();
     }
 
-    @Override 
-    public List<ServiceOfferDTO> getOffersByHelpRequest(String helpRequestId) { 
-        List<ServiceOffer> offers = serviceOfferRepository.setHelpRequestId(helpRequestId); 
-        return offers.stream().map(this::convertToDTO).collect(Collectors.toList()); 
-    } 
-
-    @Override 
-    public List<ServiceOfferDTO> getOffersByServiceType(HelpType serviceType) { 
-        List<ServiceOffer> offers = serviceOfferRepository.setServiceType(serviceType); 
-        return offers.stream().map(this::convertToDTO).collect(Collectors.toList()); 
-    } 
-
-    @Override 
-    public List<ServiceOfferDTO> getPendingOffersForUser(String userId) { 
-        List<ServiceOffer> offers = serviceOfferRepository.findByOfferedToUserIdAndStatus(userId, OfferStatus.PENDING); 
-        return offers.stream().map(this::convertToDTO).collect(Collectors.toList()); 
+    @Override
+    public List<ServiceOfferDTO> getOffersBySocialWorker(String workerId) {
+        return serviceOfferRepository.findByOfferedByUserId(workerId).stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
-    @Override 
-    public List<ServiceOfferDTO> getUpcomingServicesForUser(String userId) { 
-        LocalDateTime now = LocalDateTime.now(); 
-        LocalDateTime nextWeek = now.plusWeeks(1); 
+    @Override
+    public List<ServiceOfferDTO> getOffersByHelpRequest(String helpRequestId) {
+        return serviceOfferRepository.findByHelpRequestId(helpRequestId).stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
 
-        List<ServiceOffer> offers = serviceOfferRepository.setOfferedToUserId(userId);
-        return offers.stream() 
-            .filter(offer -> offer.getScheduledDateTime() != null && 
-                            offer.getScheduledDateTime().isAfter(now) && 
-                            offer.getScheduledDateTime().isBefore(nextWeek) && 
-                            (offer.getStatus() == OfferStatus.ACCEPTED || offer.getStatus() == OfferStatus.RESCHEDULED))
-                             .map(this::convertToDTO) 
-                             .collect(Collectors.toList());
-} 
+    @Override
+    public ServiceOfferDTO respondToServiceOffer(ServiceResponseDTO responseDTO) {
+        return serviceOfferRepository.findById(responseDTO.getOfferId())
+                .map(offer -> {
+                    if (responseDTO.isAccepted()) {
+                        offer.setStatus(ServiceOffer.OfferStatus.ACCEPTED);
+                    } else {
+                        offer.setStatus(ServiceOffer.OfferStatus.REJECTED);
+                    }
+                    offer.setResponseDate(LocalDateTime.now());
+                    serviceOfferRepository.save(offer);
+                    return convertToDTO(offer);
+                })
+                .orElse(null);
+    }
 
-  @Override 
-    public ServiceOfferDTO respondToServiceOffer(ServiceResponseDTO responseDTO, String userId) { 
-        Optional<ServiceOffer> offerOpt = serviceOfferRepository.findById(responseDTO.getServiceOfferId());
+    @Override
+    public ServiceOfferDTO updateServiceOfferStatus(String offerId, ServiceOffer.OfferStatus status) {
+        return serviceOfferRepository.findById(offerId)
+                .map(offer -> {
+                    offer.setStatus(status);
+                    serviceOfferRepository.save(offer);
+                    return convertToDTO(offer);
+                })
+                .orElse(null);
+    }
 
-        if (offerOpt.isPresent()) { 
-            ServiceOffer offer = offerOpt.get();
-            if (!offer.getOfferedToUserId().equals(userId)) { 
-                throw new RuntimeException("User not authorized to respond to this offer");
-            }
-            ServiceResponse response = new ServiceResponse(); 
-            
-            response.setServiceOfferId(offer.getId()); 
-            response.setUserId(userId); 
-            response.setAction(responseDTO.getAction()); 
-            response.setResponseMessage(responseDTO.getResponseMessage()); 
-            response.setProposedDateTime(responseDTO.getProposedDateTime()); 
-            response.setRescheduleReason(responseDTO.getRescheduleReason()); 
-            response.setRequestedInfo(responseDTO.getRequestedInfo()); 
-             
-            ServiceResponse savedResponse = serviceResponseRepository.save(response);
-            
-            offer.setUserAction(responseDTO.getAction()); 
-            offer.setResponseDate(LocalDateTime.now()); 
-            offer.setLastUpdated(LocalDateTime.now()); 
-             
-            switch (responseDTO.getAction()) { 
-                case ACCEPT: 
-                    offer.setStatus(OfferStatus.ACCEPTED); 
-                    notifySocialWorkerAccepted(offer); 
-                    break; 
-                case REJECT: 
-                    offer.setStatus(OfferStatus.REJECTED); 
-                    notifySocialWorkerRejected(offer); 
-                    break; 
-                case RESCHEDULE: 
-                    offer.setStatus(OfferStatus.RESCHEDULED); 
-                    if (responseDTO.getProposedDateTime() != null) { 
-                        offer.setScheduledDateTime(responseDTO.getProposedDateTime()); 
-                    } 
-                    notifySocialWorkerRescheduled(offer, response); 
-                    break; 
-                case REQUEST_INFO:
-                    notifySocialWorkerInfoRequested(offer, response); 
-                    break; 
-                }
+    @Override
+    public boolean cancelServiceOffer(String offerId) {
+        return serviceOfferRepository.findById(offerId)
+                .map(offer -> {
+                    offer.setStatus(ServiceOffer.OfferStatus.CANCELLED);
+                    serviceOfferRepository.save(offer);
+                    return true;
+                })
+                .orElse(false);
+    }
 
-                ServiceOffer updatedOffer = serviceOfferRepository.save(offer);
-
-                return convertToDTO(updatedOffer);
-            }
-            return null; 
-    } 
- 
-    @Override 
-    public ServiceOfferDTO updateServiceOfferStatus(String offerId, OfferStatus status) { 
-        Optional<ServiceOffer> offerOpt = serviceOfferRepository.findById(offerId); 
-        if (offerOpt.isPresent()) { 
-            ServiceOffer offer = offerOpt.get(); 
-            offer.setStatus(status); 
-            offer.setLastUpdated(LocalDateTime.now()); 
-             
-            ServiceOffer updatedOffer = serviceOfferRepository.save(offer); 
- 
-            if (status == OfferStatus.CANCELLED || status == OfferStatus.COMPLETED) { 
-                notifyUserStatusUpdate(offer, status); 
-            } 
-             
-            return convertToDTO(updatedOffer); 
-        } 
-        return null; 
-    } 
- 
-    @Override 
-    public boolean cancelServiceOffer(String offerId) { 
-        Optional<ServiceOffer> offerOpt = serviceOfferRepository.findById(offerId); 
-        if (offerOpt.isPresent()) { 
-            ServiceOffer offer = offerOpt.get(); 
-            offer.setStatus(OfferStatus.CANCELLED); 
-            offer.setLastUpdated(LocalDateTime.now()); 
-            serviceOfferRepository.save(offer); 
-             
-            notifyUserServiceCancelled(offer); 
-            return true; 
-        } 
-        return false; 
-    } 
- 
-    @Override 
-    public List<ServiceOfferDTO> getExpiredOffers() { 
-        LocalDateTime weekAgo = LocalDateTime.now().minusWeeks(1); 
-        List<ServiceOffer> offers = serviceOfferRepository.findByOfferDateBeforeAndStatus(weekAgo, OfferStatus.PENDING); 
-
-        offers.forEach(offer -> { 
-            offer.setStatus(OfferStatus.EXPIRED); 
-            offer.setLastUpdated(LocalDateTime.now()); 
-            serviceOfferRepository.save(offer); 
-        }); 
-         
-        return offers.stream().map(this::convertToDTO).collect(Collectors.toList()); 
-    } 
- 
-    private ServiceOfferDTO convertToDTO(ServiceOffer offer) { 
-        ServiceOfferDTO dto = new ServiceOfferDTO(); 
-        dto.setId(offer.getId()); 
-        dto.setHelpRequestId(offer.getHelpRequestId()); 
-        dto.setOfferedByUserId(offer.getOfferedByUserId()); 
-        dto.setOfferedToUserId(offer.getOfferedToUserId()); 
-        dto.setServiceType(offer.getServiceType()); 
-        dto.setProviderName(offer.getProviderName()); 
-        dto.setProviderLocation(offer.getProviderLocation()); 
-        dto.setServiceDetails(offer.getServiceDetails()); 
-        dto.setScheduledDateTime(offer.getScheduledDateTime()); 
-        dto.setEndDateTime(offer.getEndDateTime()); 
-        dto.setDuration(offer.getDuration()); 
-        dto.setStatus(offer.getStatus()); 
-        dto.setUserAction(offer.getUserAction()); 
-        dto.setResponseDate(offer.getResponseDate()); 
-        dto.setNotes(offer.getNotes()); 
-        dto.setRequiresFollowUp(offer.isRequiresFollowUp()); 
-        dto.setFollowUpDate(offer.getFollowUpDate()); 
-        dto.setOfferDate(offer.getOfferDate()); 
-        dto.setLastUpdated(offer.getLastUpdated()); 
-
-        if (offer.getOfferedByUserId() != null) { 
-            Optional<User> worker = userRepository.findById(offer.getOfferedByUserId()); 
-            worker.ifPresent(user -> dto.setOfferedByName(user.getFullName())); 
-        } 
-         
-        if (offer.getOfferedToUserId() != null) { 
-            Optional<User> user = userRepository.findById(offer.getOfferedToUserId()); 
-            user.ifPresent(u -> dto.setOfferedToName(u.getFullName())); 
-        } 
-
-        dto.setPendingResponse(offer.getStatus() == OfferStatus.PENDING); 
-        dto.setUpcoming(offer.getScheduledDateTime() != null &&  
-                       offer.getScheduledDateTime().isAfter(LocalDateTime.now()) && 
-                       (offer.getStatus() == OfferStatus.ACCEPTED || offer.getStatus() == 
-OfferStatus.RESCHEDULED)); 
-        dto.setCompleted(offer.getStatus() == OfferStatus.COMPLETED); 
-        dto.setCanRespond(offer.getStatus() == OfferStatus.PENDING); 
-         
-        return dto; 
-    } 
- 
-    private void sendNotificationToUser(ServiceOffer offer) { 
-        System.out.println("Service offer notification sent to user: " + offer.getOfferedToUserId()); 
-        System.out.println("Service Type: " + offer.getServiceType()); 
-        System.out.println("Provider: " + offer.getProviderName()); 
-        System.out.println("Scheduled: " + offer.getScheduledDateTime()); 
-
-    } 
- 
-    private void notifySocialWorkerAccepted(ServiceOffer offer) { 
-        System.out.println("Notification sent to social worker: " + offer.getOfferedByUserId()); 
-        System.out.println("User accepted service offer: " + offer.getId()); 
-        System.out.println("Service Type: " + offer.getServiceType()); 
-    } 
- 
-    private void notifySocialWorkerRejected(ServiceOffer offer) { 
-        System.out.println("Notification sent to social worker: " + offer.getOfferedByUserId()); 
-        System.out.println("User rejected service offer: " + offer.getId()); 
-        System.out.println("Service Type: " + offer.getServiceType()); 
-    } 
- 
-    private void notifySocialWorkerRescheduled(ServiceOffer offer, ServiceResponse response) { 
-        System.out.println("Notification sent to social worker: " + offer.getOfferedByUserId()); 
-        System.out.println("User requested rescheduling for: " + offer.getId()); 
-        System.out.println("Proposed new time: " + response.getProposedDateTime()); 
-        System.out.println("Reason: " + response.getRescheduleReason()); 
-    } 
- 
-    private void notifySocialWorkerInfoRequested(ServiceOffer offer, ServiceResponse response) { 
-        System.out.println("Notification sent to social worker: " + offer.getOfferedByUserId()); 
-        System.out.println("User requested more info for: " + offer.getId()); 
-        System.out.println("Requested info: " + response.getRequestedInfo()); 
-    } 
- 
-    private void notifyUserStatusUpdate(ServiceOffer offer, OfferStatus status) { 
-        System.out.println("Notification sent to user: " + offer.getOfferedToUserId()); 
-        System.out.println("Service offer status updated to: " + status); 
-        System.out.println("Service: " + offer.getServiceType()); 
-    } 
-    
-    private void notifyUserServiceCancelled(ServiceOffer offer) { 
-        System.out.println("Notification sent to user: " + offer.getOfferedToUserId()); 
-        System.out.println("Service offer cancelled: " + offer.getId()); 
-        System.out.println("Service: " + offer.getServiceType()); 
-    } 
-} 
+    private ServiceOfferDTO convertToDTO(ServiceOffer offer) {
+        ServiceOfferDTO dto = new ServiceOfferDTO();
+        dto.setId(offer.getId());
+        dto.setHelpRequestId(offer.getHelpRequestId());
+        dto.setOfferedByUserId(offer.getOfferedByUserId());
+        dto.setOfferedToUserId(offer.getOfferedToUserId());
+        dto.setServiceType(offer.getServiceType());
+        dto.setServiceDetails(offer.getServiceDetails());
+        dto.setScheduledDateTime(offer.getScheduledDateTime());
+        dto.setStatus(offer.getStatus());
+        dto.setOfferDate(offer.getOfferDate());
+        return dto;
+    }
+}

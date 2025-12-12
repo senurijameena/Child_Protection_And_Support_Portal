@@ -1,44 +1,26 @@
 package com.example.childPortal.service.impl;
 
-import com.example.childPortal.dto.CaseDTO;
-import com.example.childPortal.dto.CaseReportRequest;
-import com.example.childPortal.dto.CaseResponse;
-import com.example.childPortal.model.Case;
-import com.example.childPortal.model.Case.CaseStatus;
-import com.example.childPortal.model.CaseType;
-import com.example.childPortal.model.Priority;
-import com.example.childPortal.model.User;
+import com.example.childPortal.dto.*;
+import com.example.childPortal.model.*;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
-import com.example.childPortal.service.CaseTimelineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CaseServiceImpl implements CaseService {
 
-    @Autowired
-    private CaseRepository caseRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CaseTimelineService caseTimelineService;
+    @Autowired private CaseRepository caseRepository;
+    @Autowired private UserRepository userRepository;
 
     @Override
     public CaseResponse reportCase(CaseReportRequest request, String reporterUserId) {
         try {
             Case caseEntity = new Case();
-            
-            if (!request.isAnonymous() && reporterUserId != null) {
-                caseEntity.setReporterUserId(reporterUserId);
-            }
+            caseEntity.setReporterUserId(reporterUserId);
             caseEntity.setAnonymous(request.isAnonymous());
             caseEntity.setApproximateAge(request.getApproximateAge());
             caseEntity.setGender(request.getGender());
@@ -48,133 +30,86 @@ public class CaseServiceImpl implements CaseService {
             caseEntity.setIncidentDate(request.getIncidentDate());
             caseEntity.setCaseDescription(request.getCaseDescription());
             caseEntity.setEvidenceUrls(request.getEvidenceUrls());
-            caseEntity.setStatus(CaseStatus.REPORTED);
-
-            Priority initialPriority = calculateInitialPriority(request);
-            caseEntity.setPriority(initialPriority);
-            caseEntity.setEmergency(initialPriority == Priority.URGENT || initialPriority == Priority.CRITICAL);
-
-            Case savedCase = caseRepository.save(caseEntity);
-
-            // Get reporter name before calling the timeline service
-            String reporterName = getReporterName(reporterUserId);
-            caseTimelineService.createCaseCreatedEvent(
-                savedCase.getId(), reporterUserId, reporterName
-            );
             
-            return new CaseResponse(savedCase.getId(), "Case reported successfully", true);
+            if (!request.isAnonymous()) {
+                userRepository.findById(reporterUserId)
+                    .ifPresent(user -> caseEntity.setReporterName(user.getFullName()));
+            }
+
+            caseEntity = caseRepository.save(caseEntity);
+            return new CaseResponse(caseEntity.getId(), "Case reported successfully", true);
         } catch (Exception e) {
             return new CaseResponse(null, "Failed to report case: " + e.getMessage(), false);
         }
     }
 
-    private Priority calculateInitialPriority(CaseReportRequest request) {
-        String description = request.getCaseDescription().toLowerCase();
-        boolean immediateDanger = description.contains("immediate danger") || 
-                                  description.contains("life threatening") || 
-                                  description.contains("emergency");
-        
-        boolean severeCase = request.getCaseType() == CaseType.MISSING_CHILD ||
-                             request.getCaseType() == CaseType.CHILD_TRAFFICKING;
-
-        if (immediateDanger) {
-            return Priority.CRITICAL;
-        } 
-        else if (severeCase) {
-            return Priority.HIGH;
-        } else {
-            return Priority.MEDIUM; 
-        }
-    }
-
     @Override
     public CaseDTO getCaseById(String caseId) {
-        Optional<Case> caseOpt = caseRepository.findById(caseId);
-        if (caseOpt.isPresent()) {
-            return convertToDTO(caseOpt.get());
-        }
-        return null;
+        return caseRepository.findById(caseId)
+                .map(this::convertToDTO)
+                .orElse(null);
     }
 
     @Override
     public List<CaseDTO> getCasesByReporter(String reporterUserId) {
-        List<Case> cases = caseRepository.findByReporterUserId(reporterUserId);
-        return cases.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return caseRepository.findByReporterUserId(reporterUserId).stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
     @Override
     public List<CaseDTO> getAllCases() {
-        List<Case> cases = caseRepository.findAllByOrderByReportDateDesc();
-        return cases.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return caseRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
     @Override
-    public List<CaseDTO> getCasesByStatus(CaseStatus status) {
-        List<Case> cases = caseRepository.findByStatus(status);
-        return cases.stream().map(this::convertToDTO).collect(Collectors.toList());
+    public List<CaseDTO> getCasesByStatus(Case.CaseStatus status) {
+        return caseRepository.findByStatus(status).stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
     @Override
-    public CaseDTO updateCaseStatus(String caseId, CaseStatus status) {
-        Optional<Case> caseOpt = caseRepository.findById(caseId);
-        if (caseOpt.isPresent()) {
-            Case caseEntity = caseOpt.get();
-            CaseStatus oldStatus = caseEntity.getStatus();
-            
-            caseTimelineService.createStatusChangeEvent(
-                caseId,
-                getCurrentUserId(),
-                getCurrentUserName(), 
-                oldStatus.toString(),
-                status.toString(),
-                "Status updated"
-            );
-            
-            caseEntity.setStatus(status);
-            caseEntity.setLastUpdated(LocalDateTime.now());
-            Case updatedCase = caseRepository.save(caseEntity);
-            return convertToDTO(updatedCase);
-        }
-        return null;
+    public CaseDTO updateCaseStatus(String caseId, Case.CaseStatus status, String updatedBy) {
+        return caseRepository.findById(caseId)
+                .map(caseEntity -> {
+                    caseEntity.setStatus(status);
+                    caseEntity.setLastUpdated(LocalDateTime.now());
+                    if (status == Case.CaseStatus.RESOLVED || status == Case.CaseStatus.CLOSED) {
+                        caseEntity.setResolutionDate(LocalDateTime.now());
+                    }
+                    caseRepository.save(caseEntity);
+                    return convertToDTO(caseEntity);
+                })
+                .orElse(null);
     }
 
     @Override
-    public CaseDTO assignCaseToOfficer(String caseId, String officerId) {
-        Optional<Case> caseOpt = caseRepository.findById(caseId);
-        if (caseOpt.isPresent()) {
-            Case caseEntity = caseOpt.get();
-            
-            String officerName = getOfficerName(officerId);
-            caseTimelineService.createAssignmentEvent(
-                caseId, 
-                getCurrentUserId(),
-                getCurrentUserName(), 
-                officerId, 
-                officerName, 
-                "PO"
-            );
-            
-            caseEntity.setAssignedOfficerId(officerId);
-            caseEntity.setStatus(CaseStatus.ASSIGNED_TO_OFFICER);
-            caseEntity.setLastUpdated(LocalDateTime.now());
-            Case updatedCase = caseRepository.save(caseEntity);
-            return convertToDTO(updatedCase);
-        }
-        return null;
+    public CaseDTO assignCaseToOfficer(String caseId, String officerId, String assignedBy) {
+        return caseRepository.findById(caseId)
+                .map(caseEntity -> {
+                    caseEntity.setAssignedOfficerId(officerId);
+                    caseEntity.setStatus(Case.CaseStatus.ASSIGNED);
+                    caseEntity.setLastUpdated(LocalDateTime.now());
+                    caseRepository.save(caseEntity);
+                    return convertToDTO(caseEntity);
+                })
+                .orElse(null);
     }
 
     @Override
-    public CaseDTO assignCaseToSocialWorker(String caseId, String workerId) {
-        Optional<Case> caseOpt = caseRepository.findById(caseId);
-        if (caseOpt.isPresent()) {
-            Case caseEntity = caseOpt.get();
-            caseEntity.setAssignedWorkerId(workerId);
-            caseEntity.setStatus(CaseStatus.ASSIGNED_TO_SOCIAL_WORKER);
-            caseEntity.setLastUpdated(LocalDateTime.now());
-            Case updatedCase = caseRepository.save(caseEntity);
-            return convertToDTO(updatedCase);
-        }
-        return null;
+    public CaseDTO assignCaseToSocialWorker(String caseId, String workerId, String assignedBy) {
+        return caseRepository.findById(caseId)
+                .map(caseEntity -> {
+                    caseEntity.setAssignedWorkerId(workerId);
+                    caseEntity.setStatus(Case.CaseStatus.ASSIGNED);
+                    caseEntity.setLastUpdated(LocalDateTime.now());
+                    caseRepository.save(caseEntity);
+                    return convertToDTO(caseEntity);
+                })
+                .orElse(null);
     }
 
     @Override
@@ -186,35 +121,25 @@ public class CaseServiceImpl implements CaseService {
         return false;
     }
 
-    private String getCurrentUserId() {
-        return "current-user-id"; 
+    @Override
+    public CaseDTO updateCaseNotes(String caseId, String notes, String updatedBy) {
+        return caseRepository.findById(caseId)
+                .map(caseEntity -> {
+                    caseEntity.setCaseNotes(notes);
+                    caseEntity.setLastUpdated(LocalDateTime.now());
+                    caseRepository.save(caseEntity);
+                    return convertToDTO(caseEntity);
+                })
+                .orElse(null);
     }
-    
-    private String getCurrentUserName() {
-        return "Current User";
-    }
-    
-    private String getReporterName(String reporterUserId) {
-        if (reporterUserId == null) {
-            return "Anonymous";
-        }
-        return userRepository.findById(reporterUserId)
-            .map(User::getFullName)
-            .orElse("Unknown Reporter");
-    }
-    
-    private String getOfficerName(String officerId) {
-        return userRepository.findById(officerId)
-            .map(User::getFullName)
-            .orElse("Unknown Officer");
-    }
-    
+
     private CaseDTO convertToDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());
-        dto.setTrackingId(caseEntity.getTrackingId()); 
+        dto.setTrackingId(caseEntity.getTrackingId());
         dto.setReporterUserId(caseEntity.getReporterUserId());
         dto.setAnonymous(caseEntity.isAnonymous());
+        dto.setReporterName(caseEntity.getReporterName());
         dto.setApproximateAge(caseEntity.getApproximateAge());
         dto.setGender(caseEntity.getGender());
         dto.setIdentificationMarks(caseEntity.getIdentificationMarks());
@@ -224,28 +149,11 @@ public class CaseServiceImpl implements CaseService {
         dto.setCaseDescription(caseEntity.getCaseDescription());
         dto.setEvidenceUrls(caseEntity.getEvidenceUrls());
         dto.setStatus(caseEntity.getStatus());
-        dto.setPriority(caseEntity.getPriority()); 
-        dto.setEmergency(caseEntity.isEmergency()); 
         dto.setAssignedOfficerId(caseEntity.getAssignedOfficerId());
         dto.setAssignedWorkerId(caseEntity.getAssignedWorkerId());
         dto.setReportDate(caseEntity.getReportDate());
-        dto.setLastUpdated(caseEntity.getLastUpdated());
-
-        if (!caseEntity.isAnonymous() && caseEntity.getReporterUserId() != null) {
-            Optional<User> reporter = userRepository.findById(caseEntity.getReporterUserId());
-            reporter.ifPresent(user -> dto.setReporterName(user.getFullName()));
-        }
-
-        if (caseEntity.getAssignedOfficerId() != null) {
-            Optional<User> officer = userRepository.findById(caseEntity.getAssignedOfficerId());
-            officer.ifPresent(user -> dto.setAssignedOfficerName(user.getFullName()));
-        }
-
-        if (caseEntity.getAssignedWorkerId() != null) {
-            Optional<User> worker = userRepository.findById(caseEntity.getAssignedWorkerId());
-            worker.ifPresent(user -> dto.setAssignedWorkerName(user.getFullName()));
-        }
-
+        dto.setPriority(caseEntity.getPriority());
+        dto.setEmergency(caseEntity.isEmergency());
         return dto;
     }
 }

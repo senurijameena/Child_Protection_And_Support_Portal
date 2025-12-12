@@ -24,8 +24,7 @@ public class FeedbackController {
     public ResponseEntity<?> submitFeedback( 
             @RequestBody FeedbackDTO feedbackDTO, 
             @RequestHeader("X-User-Id") String userId) { 
-         
-        // Check if feedback text exists
+
         String feedbackText = feedbackDTO.getMessage(); 
         if (feedbackText == null || feedbackText.trim().isEmpty()) { 
             return ResponseEntity.badRequest().body(

@@ -7,11 +7,8 @@ public class FeedbackStatisticsDTO {
 
     public long getTotalFeedback() { return totalFeedback; }
     public void setTotalFeedback(long totalFeedback) { this.totalFeedback = totalFeedback; }
-
     public long getPositiveFeedback() { return positiveFeedback; }
     public void setPositiveFeedback(long positiveFeedback) { this.positiveFeedback = positiveFeedback; }
-
     public long getNegativeFeedback() { return negativeFeedback; }
     public void setNegativeFeedback(long negativeFeedback) { this.negativeFeedback = negativeFeedback; }
 }
-

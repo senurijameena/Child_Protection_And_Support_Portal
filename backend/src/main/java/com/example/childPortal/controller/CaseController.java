@@ -7,6 +7,7 @@ import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -19,8 +20,10 @@ public class CaseController {
     private CaseService caseService;
 
     @PostMapping("/report")
-    public ResponseEntity<CaseResponse> reportCase(@RequestBody CaseReportRequest request) {
-        CaseResponse response = caseService.reportCase(request);
+    public ResponseEntity<CaseResponse> reportCase(
+            @RequestBody CaseReportRequest request,
+            @AuthenticationPrincipal String userId) {
+        CaseResponse response = caseService.reportCase(request, userId);
         return response.isSuccess() ? 
             ResponseEntity.ok(response) : 
             ResponseEntity.badRequest().body(response);
@@ -35,7 +38,7 @@ public class CaseController {
     }
 
     @GetMapping("/my-cases")
-    public ResponseEntity<List<CaseDTO>> getMyCases(@RequestParam String userId) {
+    public ResponseEntity<List<CaseDTO>> getMyCases(@AuthenticationPrincipal String userId) {
         List<CaseDTO> cases = caseService.getCasesByReporter(userId);
         return ResponseEntity.ok(cases);
     }
@@ -53,24 +56,33 @@ public class CaseController {
     }
 
     @PutMapping("/{caseId}/status")
-    public ResponseEntity<CaseDTO> updateCaseStatus(@PathVariable String caseId, @RequestParam CaseStatus status) {
-        CaseDTO updatedCase = caseService.updateCaseStatus(caseId, status);
+    public ResponseEntity<CaseDTO> updateCaseStatus(
+            @PathVariable String caseId, 
+            @RequestParam CaseStatus status,
+            @AuthenticationPrincipal String userId) {
+        CaseDTO updatedCase = caseService.updateCaseStatus(caseId, status, userId);
         return updatedCase != null ? 
             ResponseEntity.ok(updatedCase) : 
             ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{caseId}/assign/officer")
-    public ResponseEntity<CaseDTO> assignToOfficer(@PathVariable String caseId, @RequestParam String officerId) {
-        CaseDTO updatedCase = caseService.assignCaseToOfficer(caseId, officerId);
+    public ResponseEntity<CaseDTO> assignToOfficer(
+            @PathVariable String caseId, 
+            @RequestParam String officerId,
+            @AuthenticationPrincipal String adminId) {
+        CaseDTO updatedCase = caseService.assignCaseToOfficer(caseId, officerId, adminId);
         return updatedCase != null ? 
             ResponseEntity.ok(updatedCase) : 
             ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{caseId}/assign/social-worker")
-    public ResponseEntity<CaseDTO> assignToSocialWorker(@PathVariable String caseId, @RequestParam String workerId) {
-        CaseDTO updatedCase = caseService.assignCaseToSocialWorker(caseId, workerId);
+    public ResponseEntity<CaseDTO> assignToSocialWorker(
+            @PathVariable String caseId, 
+            @RequestParam String workerId,
+            @AuthenticationPrincipal String adminId) {
+        CaseDTO updatedCase = caseService.assignCaseToSocialWorker(caseId, workerId, adminId);
         return updatedCase != null ? 
             ResponseEntity.ok(updatedCase) : 
             ResponseEntity.notFound().build();

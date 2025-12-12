@@ -92,3 +92,4 @@ public class CaseDTO {
     public void setTrackingId(String trackingId) {
         this.trackingId = trackingId;
     }
+}

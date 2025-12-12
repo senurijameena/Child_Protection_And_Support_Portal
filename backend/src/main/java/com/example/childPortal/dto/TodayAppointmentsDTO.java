@@ -1,5 +1,6 @@
 package com.example.childPortal.dto;
 
+import com.example.childPortal.model.AppointmentStatus;
 import java.util.List;
 
 public class TodayAppointmentsDTO {
@@ -9,9 +10,8 @@ public class TodayAppointmentsDTO {
     private int pendingCount;
     private int overdueCount;
 
-    public TodayAppointmentsDTO() {
-    }
-
+    public TodayAppointmentsDTO() {}
+ 
     public TodayAppointmentsDTO(List<AppointmentDetailDTO> appointments, int totalAppointments, 
                                 int completedCount, int pendingCount, int overdueCount) {
         this.appointments = appointments;
@@ -81,5 +81,11 @@ public class TodayAppointmentsDTO {
                 ", pendingCount=" + pendingCount +
                 ", overdueCount=" + overdueCount +
                 '}';
+    }
+
+    public enum AppointmentStatus {
+        SCHEDULED,
+        IN_PROGRESS,
+        COMPLETED
     }
 }

@@ -16,7 +16,7 @@ public class FeedbackDTO {
 
     private FeedbackType feedbackType;
     private String feedbackText;
-    private Integer ratingStars;      
+    private String ratingStars;      
     private Category category;
     private Privacy privacy;
     private FeedbackStatus status;
@@ -59,13 +59,13 @@ public class FeedbackDTO {
     public void setServiceOfferId(String serviceOfferId) { this.serviceOfferId = serviceOfferId; }
 
     public FeedbackType getFeedbackType() { return feedbackType; }
-    public void setFeedbackType(FeedbackType feedbackType) { this.feedbackType = feedbackType; }
+    public void setFeedbackType(Object feedbackType) { this.feedbackType = (FeedbackType) feedbackType; }
 
     public String getFeedbackText() { return feedbackText; }
-    public void setFeedbackText(String feedbackText) { this.feedbackText = feedbackText; }
+    public void setFeedbackText(Object feedbackText) { this.feedbackText = (String) feedbackText; }
 
     public Integer getRatingStars() { return ratingStars; }
-    public void setRatingStars(Integer ratingStars) { this.ratingStars = ratingStars; }
+    public void setRatingStars(String ratingStars) { this.ratingStars = ratingStars; }
 
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }
@@ -117,4 +117,8 @@ public class FeedbackDTO {
 
     public String getTrackingId() { return trackingId; }
     public void setTrackingId(String trackingId) { this.trackingId = trackingId; }
+
+    public String getMessage() {
+        throw new UnsupportedOperationException("Unimplemented method 'getMessage'");
+    }
 }

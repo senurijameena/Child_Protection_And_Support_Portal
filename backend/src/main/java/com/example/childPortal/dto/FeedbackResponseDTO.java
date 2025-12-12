@@ -27,9 +27,16 @@ public class FeedbackResponseDTO {
     private LocalDateTime updatedAt;
     private boolean isAnonymous;
     private boolean isPublic;
+    private String message;
+    private boolean success;
 
-    // Constructors
     public FeedbackResponseDTO() {}
+
+    public FeedbackResponseDTO(String message, boolean success) {
+        this.message = message;
+        this.success = success;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public FeedbackResponseDTO(String caseId, String userId, FeedbackType type, 
                               Category category, String description, Integer rating) {
@@ -40,10 +47,10 @@ public class FeedbackResponseDTO {
         this.description = description;
         this.rating = rating;
         this.createdAt = LocalDateTime.now();
-        this.status = FeedbackStatus.PENDING;
+        this.status = FeedbackStatus.PENDING; 
+        this.success = true;
     }
 
-    // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -107,6 +114,12 @@ public class FeedbackResponseDTO {
     public boolean isPublic() { return isPublic; }
     public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
 
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
+
     @Override
     public String toString() {
         return "FeedbackResponseDTO{" +
@@ -118,6 +131,8 @@ public class FeedbackResponseDTO {
                 ", rating=" + rating +
                 ", status=" + status +
                 ", createdAt=" + createdAt +
+                ", message='" + message + '\'' +
+                ", success=" + success +
                 '}';
     }
 }

@@ -1,6 +1,7 @@
 package com.example.childPortal.controller;
 
 import com.example.childPortal.dto.*;
+import com.example.childPortal.model.User;
 import com.example.childPortal.model.UserUpdateRequest;
 import com.example.childPortal.service.AdminService;
 import com.example.childPortal.service.FeedbackService;
@@ -154,8 +155,8 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/users/role/{role}")
-    public ResponseEntity<List<UserManagementDTO>> getUsersByRole(@PathVariable String role) {
-        List<UserManagementDTO> users = userService.getUsersByRoleForManagement(role);
+    public ResponseEntity<List<User>> getUsersByRole(@PathVariable String role) {
+        List<User> users = userService.getUsersByRole(role);
         return ResponseEntity.ok(users);
     }
 
@@ -200,7 +201,7 @@ public class AdminDashboardController {
     @PutMapping("/users/{userId}")
     public ResponseEntity<String> updateUser(
         @PathVariable String userId,
-        @RequestBody UserUpdateRequest updateRequest) { 
+        @RequestBody com.example.childPortal.dto.UserUpdateRequest updateRequest) { 
         try {
             boolean updated = userService.updateUserDetails(userId, updateRequest); 
             return updated ?

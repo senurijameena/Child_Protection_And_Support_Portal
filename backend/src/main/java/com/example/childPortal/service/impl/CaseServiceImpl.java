@@ -6,10 +6,12 @@ import com.example.childPortal.dto.CaseResponse;
 import com.example.childPortal.model.Case;
 import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.model.CaseType;
+import com.example.childPortal.model.Priority;
 import com.example.childPortal.model.User;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
+import com.example.childPortal.service.CaseTimelineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -28,7 +30,6 @@ public class CaseServiceImpl implements CaseService {
 
     @Autowired
     private CaseTimelineService caseTimelineService;
-
 
     @Override
     public CaseResponse reportCase(CaseReportRequest request, String reporterUserId) {
@@ -53,11 +54,12 @@ public class CaseServiceImpl implements CaseService {
             caseEntity.setPriority(initialPriority);
             caseEntity.setEmergency(initialPriority == Priority.URGENT || initialPriority == Priority.CRITICAL);
 
-
             Case savedCase = caseRepository.save(caseEntity);
 
+            // Get reporter name before calling the timeline service
+            String reporterName = getReporterName(reporterUserId);
             caseTimelineService.createCaseCreatedEvent(
-                savedCase.getId(), reporterUserId, getReporterName(reporterUserId)
+                savedCase.getId(), reporterUserId, reporterName
             );
             
             return new CaseResponse(savedCase.getId(), "Case reported successfully", true);
@@ -65,22 +67,25 @@ public class CaseServiceImpl implements CaseService {
             return new CaseResponse(null, "Failed to report case: " + e.getMessage(), false);
         }
     }
+
     private Priority calculateInitialPriority(CaseReportRequest request) {
         String description = request.getCaseDescription().toLowerCase();
-        boolean immediateDanger = description.contains("immediate danger") || description.contains("life threatening") || description.contains("emergency");
+        boolean immediateDanger = description.contains("immediate danger") || 
+                                  description.contains("life threatening") || 
+                                  description.contains("emergency");
+        
         boolean severeCase = request.getCaseType() == CaseType.MISSING_CHILD ||
-        request.getCaseType() == CaseType.CHILD_TRAFFICKING ||
-        request.getCaseType() == CaseType.IMMEDIATE_DANGER;
+                             request.getCaseType() == CaseType.CHILD_TRAFFICKING;
 
-    if (immediateDanger) {
-        return Priority.CRITICAL;
-    } 
-    else if (severeCase) {
-        return Priority.HIGH;
-    } else {
-        return Priority.MEDIUM; 
+        if (immediateDanger) {
+            return Priority.CRITICAL;
+        } 
+        else if (severeCase) {
+            return Priority.HIGH;
+        } else {
+            return Priority.MEDIUM; 
+        }
     }
-}
 
     @Override
     public CaseDTO getCaseById(String caseId) {
@@ -111,17 +116,20 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public CaseDTO updateCaseStatus(String caseId, CaseStatus status) {
-        caseTimelineService.createStatusChangeEvent(
-            caseId,
-            getCurrentUserId(),
-            getCurrentUserName(), 
-            oldStatus.toString(),
-            status.toString(),
-            "Status updated"
-);
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isPresent()) {
             Case caseEntity = caseOpt.get();
+            CaseStatus oldStatus = caseEntity.getStatus();
+            
+            caseTimelineService.createStatusChangeEvent(
+                caseId,
+                getCurrentUserId(),
+                getCurrentUserName(), 
+                oldStatus.toString(),
+                status.toString(),
+                "Status updated"
+            );
+            
             caseEntity.setStatus(status);
             caseEntity.setLastUpdated(LocalDateTime.now());
             Case updatedCase = caseRepository.save(caseEntity);
@@ -132,16 +140,20 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public CaseDTO assignCaseToOfficer(String caseId, String officerId) {
-        caseTimelineService.createAssignmentEvent(
-            caseId, getCurrentUserId(),
-            getCurrentUserName(), 
-            officerId, 
-            getOfficerName(officerId), 
-            "PO"
-        );
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isPresent()) {
             Case caseEntity = caseOpt.get();
+            
+            String officerName = getOfficerName(officerId);
+            caseTimelineService.createAssignmentEvent(
+                caseId, 
+                getCurrentUserId(),
+                getCurrentUserName(), 
+                officerId, 
+                officerName, 
+                "PO"
+            );
+            
             caseEntity.setAssignedOfficerId(officerId);
             caseEntity.setStatus(CaseStatus.ASSIGNED_TO_OFFICER);
             caseEntity.setLastUpdated(LocalDateTime.now());
@@ -174,16 +186,27 @@ public class CaseServiceImpl implements CaseService {
         return false;
     }
 
-    public boolean hasPendingTransfer(String caseId) { 
-        List<TransferRequest> activeTransfers = transferRequestRepository.findActiveTransfersForCase(caseId); 
-        return !activeTransfers.isEmpty(); 
+    private String getCurrentUserId() {
+        return "current-user-id"; 
     }
-
-    @Override 
-    public CaseDTO assignCaseToOfficer(String caseId, String officerId) { 
-        if (hasPendingTransfer(caseId)) { 
-        throw new RuntimeException("Cannot assign case while transfer request is pending"); 
+    
+    private String getCurrentUserName() {
+        return "Current User";
+    }
+    
+    private String getReporterName(String reporterUserId) {
+        if (reporterUserId == null) {
+            return "Anonymous";
         }
+        return userRepository.findById(reporterUserId)
+            .map(User::getFullName)
+            .orElse("Unknown Reporter");
+    }
+    
+    private String getOfficerName(String officerId) {
+        return userRepository.findById(officerId)
+            .map(User::getFullName)
+            .orElse("Unknown Officer");
     }
     
     private CaseDTO convertToDTO(Case caseEntity) {
@@ -201,6 +224,8 @@ public class CaseServiceImpl implements CaseService {
         dto.setCaseDescription(caseEntity.getCaseDescription());
         dto.setEvidenceUrls(caseEntity.getEvidenceUrls());
         dto.setStatus(caseEntity.getStatus());
+        dto.setPriority(caseEntity.getPriority()); 
+        dto.setEmergency(caseEntity.isEmergency()); 
         dto.setAssignedOfficerId(caseEntity.getAssignedOfficerId());
         dto.setAssignedWorkerId(caseEntity.getAssignedWorkerId());
         dto.setReportDate(caseEntity.getReportDate());

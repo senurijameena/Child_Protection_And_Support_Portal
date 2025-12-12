@@ -12,9 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-import org.springframework.stereotype.Component;
 
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -26,35 +24,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        if (header != null && header.startsWith("Bearer ")){
+        if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            if (jwtUtil.validateToken(token)){
+            if (jwtUtil.validateToken(token)) {
                 String email = jwtUtil.getEmailFromToken(token);
                 String role = jwtUtil.getRoleFromToken(token);
 
+                // Add ROLE_ prefix for Spring Security
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    email, null, Collections.singletonList(new SimpleGrantedAuthority(role))
+                    email, 
+                    null, 
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
-        }
-
-        
-        header = request.getHeader("Authorization");
-        
-        if (header != null && header.startsWith("Bearer ")){
-            String token = header.substring(7);
-            
-            if (jwtUtil.validateToken(token)){
-                String email = jwtUtil.getEmailFromToken(token);
-                String role = jwtUtil.getRoleFromToken(token);
-                
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    email, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-                );
-                
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }

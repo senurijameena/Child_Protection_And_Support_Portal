@@ -15,6 +15,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -31,10 +32,11 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -44,60 +46,49 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
+
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/track/**").permitAll() 
-                .requestMatchers("/api/cases/report").permitAll()
-                .requestMatchers("/api/help/request").permitAll()
-                .requestMatchers("/api/feedback/submit").authenticated()
+                .requestMatchers("/api/cases/report").permitAll() 
+                .requestMatchers("/api/help-requests/request").permitAll() 
                 .requestMatchers("/api/feedback/public").permitAll()
-                .requestMatchers("/api/transfers/case/request").hasAnyAuthority("ROLE_PO", "ROLE_SW") 
-                .requestMatchers("/api/transfers/helprequest/request").hasAuthority("ROLE_SW") 
-                .requestMatchers("/api/transfers/pending").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/transfers/urgent").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/transfers/*/approve").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/transfers/*/reject").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/transfers/*/execute").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/transfers/user/**").authenticated() 
+                .requestMatchers("/api/track/**").permitAll() 
+                .requestMatchers("/api/health").permitAll() 
+
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/feedback/all").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/feedback/statistics").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/feedback/*/respond").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/feedback/*/status").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/timeline/case/**").authenticated()
-                .requestMatchers("/api/timeline/recent").authenticated()
-                .requestMatchers("/api/timeline/filter")
-                .hasAuthority("ROLE_ADMIN")  
-                .requestMatchers("/api/timeline/create").hasAuthority("ROLE_ADMIN") 
-                .requestMatchers("/api/timeline/event/**")
-                .hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/admin/**")
-                .hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/information-requests/create").hasAnyAuthority("ROLE_PO", "ROLE_SW") 
+                .requestMatchers("/api/transfers/pending").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/transfers/urgent").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/transfers/*/approve").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/transfers/*/reject").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/feedback/all").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/feedback/*/respond").hasAuthority("ROLE_ADMIN")
+                
+                // Police Officer endpoints
+                .requestMatchers("/api/cases/assign/officer").hasAuthority("ROLE_PO")
+                .requestMatchers("/api/transfers/case/request").hasAnyAuthority("ROLE_PO", "ROLE_SW")
+                
+                // Social Worker endpoints
+                .requestMatchers("/api/help-requests/assign").hasAuthority("ROLE_SW")
                 .requestMatchers("/api/services/offer").hasAuthority("ROLE_SW")
-                .requestMatchers("/api/services/offer").hasAuthority("ROLE_SW") 
-                .requestMatchers("/api/services/worker/**").hasAuthority("ROLE_SW") 
-                .requestMatchers("/api/services/expired").hasAuthority("ROLE_SW") 
-                .requestMatchers("/api/services/respond").authenticated() 
-                .requestMatchers("/api/services/user/**").authenticated() 
-                .requestMatchers("/api/feedback/**").authenticated() 
-                .requestMatchers("/api/information-requests/**").authenticated()
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/services/offer").hasAuthority("ROLE_PO") 
-                .requestMatchers("/api/services/worker/**").hasAuthority("ROLE_PO") 
-                .requestMatchers("/api/services/expired").hasAuthority("ROLE_PO")
-                .requestMatchers("/api/cases/**").authenticated() 
+                .requestMatchers("/api/transfers/help-request/request").hasAuthority("ROLE_SW")
+                
+                // Authenticated users (all roles)
                 .requestMatchers("/api/user/**").authenticated()
-                .requestMatchers("/api/admin/**").permitAll() 
-                .requestMatchers("/api/user/**").permitAll() 
-                .requestMatchers("/api/**").permitAll() 
+                .requestMatchers("/api/cases/my-cases").authenticated()
+                .requestMatchers("/api/help-requests/my-requests").authenticated()
+                .requestMatchers("/api/feedback/submit").authenticated()
+                .requestMatchers("/api/services/user/**").authenticated()
+                .requestMatchers("/api/transfers/user/**").authenticated()
+                .requestMatchers("/api/timeline/**").authenticated()
+                
+                // Default - require authentication
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            
         return http.build();
     }
 }

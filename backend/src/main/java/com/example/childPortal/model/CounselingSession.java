@@ -10,28 +10,30 @@ import java.time.LocalDateTime;
 
 @Document(collection = "counseling_sessions")
 public class CounselingSession {
-  @Id
-  private String id;
+    @Id
+    private String id;
 
-  @DBRef
-    private Case caseRef;
- private LocalDate sessionDate;
- private LocalTime sessionTime;
+    @DBRef
+    private Case caseRef; 
+    
+    private LocalDate sessionDate;
+    private LocalTime sessionTime;
 
- private Session mode;
- private String notes;
- private String specialInstructions;
- private SessionStatus status;
- 
- @DBRef
- private SocialWorker scheduledBy;
- private LocalDateTime scheduledAt;
+    private SessionMode mode; 
+    private String notes;
+    private String specialInstructions;
+    private SessionStatus status;
+    
+    @DBRef
+    private SocialWorker scheduledBy;
+    
+    private LocalDateTime scheduledAt;
 
-  public CounselingSession() {
+    public CounselingSession() {
         this.scheduledAt = LocalDateTime.now();
     }
 
-  public String getId() {
+    public String getId() {
         return id;
     }
 
@@ -39,12 +41,12 @@ public class CounselingSession {
         this.id = id;
     }
 
-    public Case getCase() {
+    public Case getCaseRef() { 
         return caseRef;
     }
 
-    public void setCase(Case caseRef) {
-        this.case = case;
+    public void setCaseRef(Case caseRef) { 
+        this.caseRef = caseRef;
     }
 
     public LocalDate getSessionDate() {
@@ -63,11 +65,11 @@ public class CounselingSession {
         this.sessionTime = sessionTime;
     }
 
-    public String getMode() {
+    public SessionMode getMode() {
         return mode;
     }
 
-    public void setMode(String mode) {
+    public void setMode(SessionMode mode) {
         this.mode = mode;
     }
 
@@ -87,11 +89,11 @@ public class CounselingSession {
         this.specialInstructions = specialInstructions;
     }
 
-    public String getStatus() {
+    public SessionStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(SessionStatus status) { 
         this.status = status;
     }
 
@@ -115,25 +117,28 @@ public class CounselingSession {
     public String toString() {
         return "CounselingSession{" +
                 "id='" + id + '\'' +
-                ", case=" + (case != null ? case.getId() : null) +
+                ", caseRef=" + (caseRef != null ? caseRef.getId() : null) +
                 ", sessionDate=" + sessionDate +
                 ", sessionTime=" + sessionTime +
-                ", mode='" + mode + '\'' +
+                ", mode=" + mode +
                 ", notes='" + notes + '\'' +
                 ", specialInstructions='" + specialInstructions + '\'' +
-                ", status='" + status + '\'' +
+                ", status=" + status +
                 ", scheduledBy=" + (scheduledBy != null ? scheduledBy.getId() : null) +
                 ", scheduledAt=" + scheduledAt +
                 '}';
     }
-
-
- 
 }
-public enum SessionStatus {
+
+enum SessionMode {
+    IN_PERSON,
+    ONLINE,
+    PHONE
+}
+
+enum SessionStatus {
     SCHEDULED,
     COMPLETED,
     CANCELLED,
     RESCHEDULED
-}
 }

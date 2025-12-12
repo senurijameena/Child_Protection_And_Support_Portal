@@ -1,6 +1,7 @@
 package com.example.childPortal.dto;
 
 import com.example.childPortal.model.CaseType;
+import com.example.childPortal.model.Priority;
 import com.example.childPortal.model.Case.CaseStatus;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -91,5 +92,15 @@ public class CaseDTO {
     }
     public void setTrackingId(String trackingId) {
         this.trackingId = trackingId;
+    }
+
+    public void setPriority(Priority priority) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setPriority'");
+    }
+
+    public void setEmergency(boolean emergency) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setEmergency'");
     }
 }

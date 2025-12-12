@@ -54,6 +54,7 @@ public class Feedback {
     } 
 
     public enum FeedbackStatus { 
+        PENDING,
         SUBMITTED,  
         REVIEWED,    
         RESPONDED,   

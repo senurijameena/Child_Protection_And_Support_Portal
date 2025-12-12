@@ -5,6 +5,7 @@ import com.example.childPortal.dto.HelpResponse;
 import com.example.childPortal.model.HelpRequest; 
 import com.example.childPortal.model.HelpRequest.RequestStatus; 
 import com.example.childPortal.model.HelpType; 
+import com.example.childPortal.model.Priority; // Import Priority enum
 import com.example.childPortal.model.User; 
 import com.example.childPortal.repository.HelpRequestRepository; 
 import com.example.childPortal.repository.UserRepository; 
@@ -36,6 +37,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             helpRequest.setStatus(RequestStatus.REQUESTED); 
             helpRequest.setRequestDate(LocalDateTime.now()); 
             helpRequest.setLastUpdated(LocalDateTime.now()); 
+            
+            // Calculate initial priority
+            calculateInitialPriority(helpRequest);
  
             HelpRequest savedRequest = helpRequestRepository.save(helpRequest); 
 
@@ -146,7 +150,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     private HelpRequestDTO convertToDTO(HelpRequest entity) { 
         HelpRequestDTO dto = new HelpRequestDTO(); 
         dto.setId(entity.getId()); 
-        dto.setTrackingId(entity.getTrackingId())
+        dto.setTrackingId(entity.getTrackingId());
         dto.setRequesterUserId(entity.getRequesterUserId()); 
         dto.setAnonymous(entity.isAnonymous()); 
         dto.setApproximateAge(entity.getApproximateAge()); 
@@ -159,6 +163,8 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         dto.setContactDetails(entity.getContactDetails()); 
         dto.setDocumentUrls(entity.getDocumentUrls()); 
         dto.setStatus(entity.getStatus()); 
+        dto.setPriority(entity.getPriority()); // Add priority to DTO
+        dto.setEmergency(entity.isEmergency()); // Add emergency flag to DTO
         dto.setAssignedWorkerId(entity.getAssignedWorkerId()); 
         dto.setRequestDate(entity.getRequestDate()); 
         dto.setLastUpdated(entity.getLastUpdated()); 
@@ -180,21 +186,43 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         System.out.println("Notifying social workers about new help request: " + helpRequest.getId()); 
         System.out.println("Help Type: " + helpRequest.getHelpType()); 
         System.out.println("Location: " + helpRequest.getLocation()); 
+        System.out.println("Priority: " + helpRequest.getPriority()); 
+        System.out.println("Emergency: " + helpRequest.isEmergency()); 
     } 
 
     private void calculateInitialPriority(HelpRequest helpRequest) {
-    String description = helpRequest.getDescription().toLowerCase();
-    boolean basicNeeds = helpRequest.getHelpType() == HelpType.FOOD_ASSISTANCE || helpRequest.getHelpType() == HelpType.SHELTER || helpRequest.getHelpType() == HelpType.MEDICAL_HELP;
-    boolean urgentKeywords = description.contains("urgent") || description.contains("emergency") ||description.contains("immediate");
-    if (basicNeeds && urgentKeywords) { 
-        helpRequest.setPriority(Priority.HIGH);
-    } else if (basicNeeds) { 
-        helpRequest.setPriority(Priority.MEDIUM);
-    } else { 
-        helpRequest.setPriority(Priority.LOW);
+        if (helpRequest.getDescription() == null) {
+            helpRequest.setPriority(Priority.MEDIUM);
+            helpRequest.setEmergency(false);
+            return;
+        }
+        
+        String description = helpRequest.getDescription().toLowerCase();
+        boolean basicNeeds = helpRequest.getHelpType() == HelpType.FOOD_ASSISTANCE || 
+                           helpRequest.getHelpType() == HelpType.SHELTER || 
+                           helpRequest.getHelpType() == HelpType.MEDICAL_HELP;
+        boolean urgentKeywords = description.contains("urgent") || 
+                                description.contains("emergency") || 
+                                description.contains("immediate");
+        boolean criticalKeywords = description.contains("critical") || 
+                                  description.contains("life-threatening") || 
+                                  description.contains("danger") ||
+                                  description.contains("abuse") ||
+                                  description.contains("violence");
+        
+        if (criticalKeywords) {
+            helpRequest.setPriority(Priority.CRITICAL);
+        } else if (urgentKeywords && basicNeeds) {
+            helpRequest.setPriority(Priority.URGENT);
+        } else if (urgentKeywords) {
+            helpRequest.setPriority(Priority.HIGH);
+        } else if (basicNeeds) { 
+            helpRequest.setPriority(Priority.MEDIUM);
+        } else { 
+            helpRequest.setPriority(Priority.LOW);
+        }
+        
+        helpRequest.setEmergency(helpRequest.getPriority() == Priority.URGENT || 
+                               helpRequest.getPriority() == Priority.CRITICAL);
     }
-    helpRequest.setEmergency(helpRequest.getPriority() == Priority.URGENT || helpRequest.getPriority() == Priority.CRITICAL);
 }
-
-} 
-

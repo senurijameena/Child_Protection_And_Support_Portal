@@ -15,5 +15,14 @@ public interface UserService {
     Optional<User> getUserById(String userId);
     List<User> getAllUsers();
     List<User> getUsersByRole(String role); 
-    List<User> getUsersByStatus(String status); 
+    List<User> getUsersByStatus(String status);
+    List<UserManagementDTO> getAllUsersForManagement(); 
+    UserManagementDTO getUserForManagement(String userId);
+    boolean deactivateUser(String userId, String reason);
+    boolean activateUser(String userId);
+    boolean updateUserDetails(String userId, UserUpdateRequest updateRequest); 
+    List<UserManagementDTO> getUsersByRoleForManagement(Role role); 
+    List<UserManagementDTO> getActiveUsers();
+    List<UserManagementDTO> getInactiveUsers();
+
 }

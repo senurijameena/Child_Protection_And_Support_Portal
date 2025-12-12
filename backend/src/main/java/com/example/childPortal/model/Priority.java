@@ -1,7 +1,6 @@
 package com.example.childPortal.model;
 
 public enum Priority {
-    public enum Priority {
         
 LOW, // Normal priority cases
 MEDIUM, // Requires attention within 48 hours

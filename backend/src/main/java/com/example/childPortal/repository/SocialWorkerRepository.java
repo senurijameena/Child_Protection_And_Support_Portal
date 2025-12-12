@@ -8,6 +8,6 @@ import java.util.Optional;
 public interface SocialWorkerRepository extends MongoRepository<SocialWorker, String> {
     Optional<SocialWorker> findByUserId(String userId);
     Optional<SocialWorker> findByLicenseNumber(String licenseNumber);
-    List<SocialWorker> findAll();
     boolean existsByLicenseNumber(String licenseNumber);
+    List<SocialWorker> findByAvailable(boolean available);
 }

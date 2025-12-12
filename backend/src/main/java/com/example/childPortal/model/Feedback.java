@@ -99,7 +99,7 @@ public class Feedback {
     public void setServiceOfferId(String serviceOfferId) { 
         this.serviceOfferId = serviceOfferId; 
     } 
-    public FeedbackType getFeedbackType() { 
+    public Object getFeedbackType() { 
         return feedbackType; 
     } 
     public void setFeedbackType(Object feedbackType) { 

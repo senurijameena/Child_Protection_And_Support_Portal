@@ -1,12 +1,14 @@
 package com.example.childPortal.dto;
-import java.time.LocalDateTime;
 
 public class ServiceResponseDTO {
     private String offerId;
     private boolean accepted;
     private String responseMessage;
+    private String userId;
 
     // Getters and setters
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getOfferId() { return offerId; }
     public void setOfferId(String offerId) { this.offerId = offerId; }
     public boolean isAccepted() { return accepted; }

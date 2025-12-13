@@ -116,4 +116,5 @@ public class Case {
     public void setResolutionDate(LocalDateTime resolutionDate) { this.resolutionDate = resolutionDate; }
     public String getCaseNotes() { return caseNotes; }
     public void setCaseNotes(String caseNotes) { this.caseNotes = caseNotes; }
+    
 }

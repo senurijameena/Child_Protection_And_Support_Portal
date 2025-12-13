@@ -14,7 +14,7 @@ public class Feedback {
     
     private FeedbackType type;
     private String message;
-    private Integer rating; // 1-5 stars
+    private String rating; // 1-5 stars
     private String category;
     
     private FeedbackStatus status;
@@ -57,8 +57,8 @@ public class Feedback {
     public void setType(FeedbackType type) { this.type = type; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    public Integer getRating() { return rating; }
-    public void setRating(Integer rating) { this.rating = rating; }
+    public String getRating() { return rating; }
+    public void setRating(String rating) { this.rating = rating; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
     public FeedbackStatus getStatus() { return status; }

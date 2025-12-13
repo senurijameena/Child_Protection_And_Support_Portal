@@ -17,7 +17,7 @@ public class HelpRequest {
     // Child details
     private String approximateAge;
     private String gender;
-    
+     private String identificationMarks;
     // Request details
     private HelpType helpType;
     private String description;
@@ -62,6 +62,13 @@ public class HelpRequest {
     }
 
     // Getters and setters
+    public String getIdentificationMarks() {
+        return identificationMarks;
+    }
+    
+    public void setIdentificationMarks(String identificationMarks) {
+        this.identificationMarks = identificationMarks;
+    }
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTrackingId() { 
@@ -103,4 +110,5 @@ public class HelpRequest {
     public void setCompletionDate(LocalDateTime completionDate) { this.completionDate = completionDate; }
     public String getRequestNotes() { return requestNotes; }
     public void setRequestNotes(String requestNotes) { this.requestNotes = requestNotes; }
+    
 }

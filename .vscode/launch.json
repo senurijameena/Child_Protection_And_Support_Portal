@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ChildPortalApplication",
+            "request": "launch",
+            "mainClass": "com.example.childPortal.ChildPortalApplication",
+            "projectName": "com.example-backend"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-ChildPortalApplication<backend>",
             "request": "launch",
             "cwd": "${workspaceFolder}",

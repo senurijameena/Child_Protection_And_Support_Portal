@@ -6,28 +6,39 @@ import com.example.childPortal.repository.ServiceOfferRepository;
 import com.example.childPortal.service.ServiceOfferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream; 
 
 @Service
 public class ServiceOfferServiceImpl implements ServiceOfferService {
 
-    @Autowired private ServiceOfferRepository serviceOfferRepository;
+    @Autowired 
+    private ServiceOfferRepository serviceOfferRepository;
 
     @Override
     public ServiceOfferDTO createServiceOffer(ServiceOfferDTO serviceOfferDTO) {
-        ServiceOffer offer = new ServiceOffer();
-        offer.setHelpRequestId(serviceOfferDTO.getHelpRequestId());
-        offer.setOfferedByUserId(serviceOfferDTO.getOfferedByUserId());
-        offer.setOfferedToUserId(serviceOfferDTO.getOfferedToUserId());
-        offer.setServiceType(serviceOfferDTO.getServiceType());
-        offer.setServiceDetails(serviceOfferDTO.getServiceDetails());
-        offer.setScheduledDateTime(serviceOfferDTO.getScheduledDateTime());
-        offer.setStatus(ServiceOffer.OfferStatus.PENDING);
-        offer.setOfferDate(LocalDateTime.now());
-        
-        offer = serviceOfferRepository.save(offer);
-        return convertToDTO(offer);
+        try {
+            ServiceOffer offer = new ServiceOffer();
+            offer.setHelpRequestId(serviceOfferDTO.getHelpRequestId());
+            offer.setOfferedByUserId(serviceOfferDTO.getOfferedByUserId());
+            offer.setOfferedToUserId(serviceOfferDTO.getOfferedToUserId());
+            offer.setServiceType(serviceOfferDTO.getServiceType());
+            offer.setServiceDetails(serviceOfferDTO.getServiceDetails());
+            offer.setScheduledDateTime(serviceOfferDTO.getScheduledDateTime()); // Make sure this setter exists
+            offer.setStatus(ServiceOffer.OfferStatus.PENDING);
+            offer.setOfferDate(LocalDateTime.now());
+            
+            offer = serviceOfferRepository.save(offer);
+            return convertToDTO(offer);
+        } catch (Exception e) {
+            // Return a default error DTO or handle appropriately
+            ServiceOfferDTO errorDTO = new ServiceOfferDTO();
+            errorDTO.setServiceDetails("Error creating service offer: " + e.getMessage());
+            return errorDTO;
+        }
     }
 
     @Override
@@ -44,21 +55,58 @@ public class ServiceOfferServiceImpl implements ServiceOfferService {
         
         return Stream.concat(sent.stream(), received.stream())
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ServiceOfferDTO> getOffersBySocialWorker(String workerId) {
         return serviceOfferRepository.findByOfferedByUserId(workerId).stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ServiceOfferDTO> getOffersByHelpRequest(String helpRequestId) {
         return serviceOfferRepository.findByHelpRequestId(helpRequestId).stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServiceOfferDTO> getOffersByServiceType(HelpType serviceType) {
+        return serviceOfferRepository.findByServiceType(serviceType).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServiceOfferDTO> getPendingOffersForUser(String userId) {
+        return serviceOfferRepository.findByOfferedToUserId(userId).stream()
+                .filter(offer -> offer.getStatus() == ServiceOffer.OfferStatus.PENDING)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServiceOfferDTO> getUpcomingServicesForUser(String userId) {
+        LocalDateTime now = LocalDateTime.now();
+        return serviceOfferRepository.findByOfferedToUserId(userId).stream()
+                .filter(offer -> offer.getStatus() == ServiceOffer.OfferStatus.ACCEPTED)
+                .filter(offer -> offer.getScheduledDateTime() != null && 
+                                 offer.getScheduledDateTime().isAfter(now))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ServiceOfferDTO> getExpiredOffers() {
+        LocalDateTime now = LocalDateTime.now();
+        return serviceOfferRepository.findAll().stream()
+                .filter(offer -> offer.getStatus() == ServiceOffer.OfferStatus.PENDING)
+                .filter(offer -> offer.getOfferDate() != null && 
+                                 offer.getOfferDate().plusDays(7).isBefore(now)) // Offers older than 7 days
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

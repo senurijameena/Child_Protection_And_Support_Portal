@@ -10,6 +10,7 @@ public class LoginResponse {
     private String message;
 
     public LoginResponse() {}
+
     public LoginResponse(String token, String userId, String email, Role role, boolean approved) {
         this.token = token;
         this.userId = userId;
@@ -17,6 +18,18 @@ public class LoginResponse {
         this.role = role;
         this.approved = approved;
         this.message = approved ? "Login successful" : "Account pending approval";
+    }
+
+    public LoginResponse(String token, String message, boolean success) {
+        this.token = token;
+        this.message = message;
+        this.approved = success;
+    }
+
+     public LoginResponse(String message, boolean success) {
+        this.message = message;
+        this.approved = success;
+        this.token = null;
     }
 
     // Getters and setters
@@ -32,4 +45,5 @@ public class LoginResponse {
     public void setApproved(boolean approved) { this.approved = approved; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+    
 }

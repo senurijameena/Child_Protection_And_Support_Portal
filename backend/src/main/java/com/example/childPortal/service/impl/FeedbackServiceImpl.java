@@ -2,7 +2,7 @@ package com.example.childPortal.service.impl;
 
 import com.example.childPortal.dto.*;
 import com.example.childPortal.model.*;
-import com.example.childPortal.repository.FeedbackRepository;
+import com.example.childPortal.repository.*;
 import com.example.childPortal.service.FeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,11 @@ public class FeedbackServiceImpl implements FeedbackService {
             feedback.setHelpRequestId(feedbackDTO.getHelpRequestId());
             feedback.setType(feedbackDTO.getType());
             feedback.setMessage(feedbackDTO.getMessage());
-            feedback.setRating(feedbackDTO.getRating());
+
+            if (feedbackDTO.getRating() != null) {
+                feedback.setRating(feedbackDTO.getRating().toString());
+            }
+            
             feedback.setCategory(feedbackDTO.getCategory());
             feedback.setAnonymous(feedbackDTO.isAnonymous());
             feedback.setSubmissionDate(LocalDateTime.now());
@@ -56,7 +60,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     @Override
     public List<FeedbackResponseDTO> getFeedbackByCase(String caseId) {
-        return feedbackRepository.findByCaseId(caseId).stream()
+        return feedbackRepository.findById(caseId).stream()
                 .map(this::convertToResponseDTO)
                 .toList();
     }
@@ -67,24 +71,17 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .map(this::convertToResponseDTO)
                 .toList();
     }
-
-    @Override
-    public List<FeedbackResponseDTO> getFeedbackByType(Feedback.FeedbackType type) {
-        return feedbackRepository.findByFeedbackType(type).stream()
-                .map(this::convertToResponseDTO)
-                .toList();
-    }
-
-    @Override
-    public List<FeedbackResponseDTO> getFeedbackByCategory(String category) {
-        return feedbackRepository.findByCategory(category).stream()
-                .map(this::convertToResponseDTO)
-                .toList();
-    }
-
+    
     @Override
     public List<FeedbackResponseDTO> getFeedbackByStatus(Feedback.FeedbackStatus status) {
         return feedbackRepository.findByStatus(status).stream()
+                .map(this::convertToResponseDTO)
+                .toList();
+    }
+
+    @Override
+    public List<FeedbackResponseDTO> getFeedbackByType(Feedback.FeedbackType type) {
+        return feedbackRepository.findByCaseId(type).stream()
                 .map(this::convertToResponseDTO)
                 .toList();
     }
@@ -94,7 +91,6 @@ public class FeedbackServiceImpl implements FeedbackService {
         return feedbackRepository.findById(feedbackId)
                 .map(feedback -> {
                     feedback.setStatus(status);
-                    feedback.setLastUpdated(LocalDateTime.now());
                     feedbackRepository.save(feedback);
                     return convertToResponseDTO(feedback);
                 })
@@ -106,7 +102,6 @@ public class FeedbackServiceImpl implements FeedbackService {
         return feedbackRepository.findById(feedbackId)
                 .map(feedback -> {
                     feedback.setAdminResponse(response);
-                    feedback.setRespondedBy(adminId);
                     feedback.setResponseDate(LocalDateTime.now());
                     feedback.setStatus(Feedback.FeedbackStatus.RESPONDED);
                     feedbackRepository.save(feedback);
@@ -131,7 +126,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         
         double sum = feedbacks.stream()
                 .filter(f -> f.getRating() != null)
-                .mapToInt(f -> Integer.parseInt(f.getRating()))
+                .mapToInt(f -> Integer.parseUnsignedInt(f.getRating().toString())) 
                 .sum();
         long count = feedbacks.stream()
                 .filter(f -> f.getRating() != null)
@@ -142,7 +137,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     @Override
     public List<FeedbackResponseDTO> getPublicFeedback() {
-        return feedbackRepository.findByPrivacy(Feedback.Privacy.PUBLIC).stream()
+        return feedbackRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .toList();
     }
@@ -152,10 +147,15 @@ public class FeedbackServiceImpl implements FeedbackService {
         dto.setId(feedback.getId());
         dto.setUserId(feedback.getUserId());
         dto.setCaseId(feedback.getCaseId());
-        dto.setHelpRequestId(feedback.getHelpRequestId());
         dto.setType(feedback.getType());
-        dto.setDescription(feedback.getMessage());
-        dto.setRating(feedback.getRating() != null ? Integer.parseInt(feedback.getRating()) : null);
+        if (feedback.getRating() != null) {
+            try {
+                dto.setRating(Integer.parseUnsignedInt(feedback.getRating().toString()));
+            } catch (NumberFormatException e) {
+                dto.setRating(null);
+            }
+        }
+        
         dto.setCategory(feedback.getCategory());
         dto.setStatus(feedback.getStatus());
         dto.setAdminResponse(feedback.getAdminResponse());

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class HelpRequestServiceImpl implements HelpRequestService {
@@ -35,8 +36,8 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     .ifPresent(user -> helpRequest.setRequesterName(user.getFullName()));
             }
 
-            helpRequest = helpRequestRepository.save(helpRequest);
-            return new HelpResponse(helpRequest.getId(), "Help request submitted successfully", true);
+            HelpRequest savedHelpRequest = helpRequestRepository.save(helpRequest);
+            return new HelpResponse(savedHelpRequest.getId(), "Help request submitted successfully", true);
         } catch (Exception e) {
             return new HelpResponse(null, "Failed to submit help request: " + e.getMessage(), false);
         }
@@ -124,6 +125,13 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     return convertToDTO(helpRequest);
                 })
                 .orElse(null);
+    }
+
+    @Override
+    public List<HelpRequestDTO> searchHelpRequestsByLocation(String location) {
+    return helpRequestRepository.findByLocationContainingIgnoreCase(location).stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
     }
 
     private HelpRequestDTO convertToDTO(HelpRequest helpRequest) {

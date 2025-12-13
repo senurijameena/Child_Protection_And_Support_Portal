@@ -1,7 +1,6 @@
 package com.example.childPortal.dto;
 
 import com.example.childPortal.model.Feedback.FeedbackType;
-import com.example.childPortal.model.Feedback.Category;
 import com.example.childPortal.model.Feedback.FeedbackStatus;
 import java.time.LocalDateTime;
 
@@ -9,7 +8,7 @@ public class FeedbackFilterDTO {
     private String caseId;
     private String userId;
     private FeedbackType feedbackType;
-    private Category category;
+    private String category;
     private FeedbackStatus status;
     private Integer rating;
     private LocalDateTime startDate;
@@ -25,8 +24,8 @@ public class FeedbackFilterDTO {
     public void setUserId(String userId) { this.userId = userId; }
     public FeedbackType getFeedbackType() { return feedbackType; }
     public void setFeedbackType(FeedbackType feedbackType) { this.feedbackType = feedbackType; }
-    public Category getCategory() { return category; }
-    public void setCategory(Category category) { this.category = category; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public FeedbackStatus getStatus() { return status; }
     public void setStatus(FeedbackStatus status) { this.status = status; }
     public Integer getRating() { return rating; }

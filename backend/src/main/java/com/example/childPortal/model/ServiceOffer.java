@@ -11,7 +11,7 @@ public class ServiceOffer {
     private String helpRequestId;
     private String offeredByUserId; // social worker ID
     private String offeredToUserId; // requester ID
-    
+    private LocalDateTime scheduledDateTime;
     private HelpType serviceType;
     private String serviceDetails;
     private OfferStatus status;
@@ -51,5 +51,6 @@ public class ServiceOffer {
     public void setOfferDate(LocalDateTime offerDate) { this.offerDate = offerDate; }
     public LocalDateTime getResponseDate() { return responseDate; }
     public void setResponseDate(LocalDateTime responseDate) { this.responseDate = responseDate; }
-        
+    public LocalDateTime getScheduledDateTime() { return scheduledDateTime; }
+    public void setScheduledDateTime(LocalDateTime scheduledDateTime) { this.scheduledDateTime = scheduledDateTime; }
 }

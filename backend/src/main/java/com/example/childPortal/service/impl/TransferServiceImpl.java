@@ -6,8 +6,12 @@ import com.example.childPortal.repository.TransferRequestRepository;
 import com.example.childPortal.service.TransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class TransferServiceImpl implements TransferService {
@@ -55,7 +59,7 @@ public class TransferServiceImpl implements TransferService {
     public List<TransferRequestDTO> getPendingTransfers() {
         return transferRequestRepository.findByStatus(TransferRequest.TransferStatus.PENDING).stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -63,16 +67,17 @@ public class TransferServiceImpl implements TransferService {
         List<TransferRequest> fromUser = transferRequestRepository.findByFromUserId(userId);
         List<TransferRequest> toUser = transferRequestRepository.findByToUserId(userId);
         
+        // Fix: Use Stream.concat correctly
         return Stream.concat(fromUser.stream(), toUser.stream())
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<TransferRequestDTO> getTransfersForEntity(String entityId) {
         return transferRequestRepository.findByEntityId(entityId).stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -116,6 +121,37 @@ public class TransferServiceImpl implements TransferService {
                     return null;
                 })
                 .orElse(null);
+    }
+
+    @Override
+    public boolean executeTransfer(String transferId) {
+        // Simple implementation - mark as executed
+        Optional<TransferRequest> transferOpt = transferRequestRepository.findById(transferId);
+        if (transferOpt.isPresent()) {
+            TransferRequest transfer = transferOpt.get();
+            transfer.setStatus(TransferRequest.TransferStatus.APPROVED); // Or add an EXECUTED status
+            transfer.setProcessedAt(LocalDateTime.now());
+            transferRequestRepository.save(transfer);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public List<TransferRequestDTO> getUrgentTransferRequests() {
+        // Simple implementation - return pending transfers
+        return getPendingTransfers();
+    }
+
+    @Override
+    public List<TransferRequestDTO> getTransferHistory(String userId) {
+        // Return all transfers involving this user
+        return getTransfersByUser(userId);
+    }
+
+    @Override
+    public long getPendingTransferCount() {
+        return transferRequestRepository.findByStatus(TransferRequest.TransferStatus.PENDING).size();
     }
 
     private TransferRequestDTO convertToDTO(TransferRequest transfer) {

@@ -17,4 +17,5 @@ public interface HelpRequestService {
     HelpRequestDTO assignHelpRequestToWorker(String requestId, String workerId, String assignedBy);
     boolean deleteHelpRequest(String requestId);
     HelpRequestDTO updateHelpRequestNotes(String requestId, String notes, String updatedBy);
+    List<HelpRequestDTO> searchHelpRequestsByLocation(String location);
 }

@@ -2,8 +2,7 @@ package com.example.childPortal.controller;
 
 import com.example.childPortal.dto.FeedbackDTO; 
 import com.example.childPortal.dto.FeedbackResponseDTO; 
-import com.example.childPortal.model.Feedback.FeedbackType; 
-import com.example.childPortal.model.Feedback.Category; 
+import com.example.childPortal.model.Feedback.FeedbackType;  
 import com.example.childPortal.model.Feedback.FeedbackStatus; 
 import com.example.childPortal.service.FeedbackService; 
 import org.springframework.beans.factory.annotation.Autowired; 
@@ -68,11 +67,6 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackList); 
     } 
 
-    @GetMapping("/category/{category}") 
-    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByCategory(@PathVariable String category) { 
-        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByCategory(category); 
-        return ResponseEntity.ok(feedbackList); 
-    } 
 
     @GetMapping("/status/{status}") 
     public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByStatus(@PathVariable FeedbackStatus status) { 
@@ -114,6 +108,11 @@ public class FeedbackController {
         return ResponseEntity.ok(averageRating); 
     } 
 
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<FeedbackResponseDTO>> getFeedbackByCategory(@PathVariable String category) { 
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getFeedbackByCase(category);
+        return ResponseEntity.ok(feedbackList);
+    }
     public static class AdminResponseRequest { 
         private String response; 
         public String getResponse() { return response; } 

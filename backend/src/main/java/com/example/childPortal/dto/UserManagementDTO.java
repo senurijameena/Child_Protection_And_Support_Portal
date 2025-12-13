@@ -1,37 +1,50 @@
-package com.example.childPortal.dto; 
+package com.example.childPortal.dto;
 
-import com.example.childPortal.model.Role;
+import java.time.LocalDateTime;
 import java.util.List;
 
-public class UserUpdateRequest {
+public class UserManagementDTO {
+    private String userId;
     private String fullName;
     private String email;
     private String phone;
-    private Role role;
+    private String role;
     private boolean active;
-    private String status;
+    private boolean approved;
+    private LocalDateTime registrationDate;
+    private LocalDateTime lastLogin;
+    
+    // Police officer specific
     private String badgeNumber;
     private String department;
     private String rank;
     private String stationAddress;
+    
+    // Social worker specific
     private String licenseNumber;
     private List<String> specializations;
     private String organization;
     private String yearsOfExperience;
     
     // Getters and setters
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
+    public LocalDateTime getRegistrationDate() { return registrationDate; }
+    public void setRegistrationDate(LocalDateTime registrationDate) { this.registrationDate = registrationDate; }
+    public LocalDateTime getLastLogin() { return lastLogin; }
+    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
     public String getBadgeNumber() { return badgeNumber; }
     public void setBadgeNumber(String badgeNumber) { this.badgeNumber = badgeNumber; }
     public String getDepartment() { return department; }

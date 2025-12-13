@@ -2,6 +2,7 @@ package com.example.childPortal.dto;
 
 import com.example.childPortal.model.CaseType;
 import com.example.childPortal.model.Case.CaseStatus;
+import com.example.childPortal.model.Priority;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +24,8 @@ public class CaseDTO {
     private String assignedOfficerId;
     private String assignedWorkerId;
     private LocalDateTime reportDate;
+    private Priority priority;
+    private boolean emergency;
 
     public CaseDTO() {}
 
@@ -61,4 +64,18 @@ public class CaseDTO {
     public void setAssignedWorkerId(String assignedWorkerId) { this.assignedWorkerId = assignedWorkerId; }
     public LocalDateTime getReportDate() { return reportDate; }
     public void setReportDate(LocalDateTime reportDate) { this.reportDate = reportDate; }
+    public void setPriority(Priority priority) {
+        this.priority = priority;
+    }
+    
+    public void setEmergency(boolean emergency) {
+        this.emergency = emergency;
+    }
+    public Priority getPriority() {
+        return priority;
+    }
+    
+    public boolean isEmergency() {
+        return emergency;
+    }
 }

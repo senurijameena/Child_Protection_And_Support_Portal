@@ -1,14 +1,20 @@
 package com.example.childPortal.service.impl;
 
-import com.example.childPortal.dto.*;
-import com.example.childPortal.model.*;
+import com.example.childPortal.dto.CaseDTO;
+import com.example.childPortal.dto.CaseReportRequest;
+import com.example.childPortal.dto.CaseResponse;
+import com.example.childPortal.model.Case;
+import com.example.childPortal.model.User;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CaseServiceImpl implements CaseService {
@@ -31,9 +37,12 @@ public class CaseServiceImpl implements CaseService {
             caseEntity.setCaseDescription(request.getCaseDescription());
             caseEntity.setEvidenceUrls(request.getEvidenceUrls());
             
+            // Fix for lambda issue
             if (!request.isAnonymous()) {
-                userRepository.findById(reporterUserId)
-                    .ifPresent(user -> caseEntity.setReporterName(user.getFullName()));
+                Optional<User> reporter = userRepository.findById(reporterUserId);
+                if (reporter.isPresent()) {
+                    caseEntity.setReporterName(reporter.get().getFullName());
+                }
             }
 
             caseEntity = caseRepository.save(caseEntity);
@@ -45,30 +54,29 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public CaseDTO getCaseById(String caseId) {
-        return caseRepository.findById(caseId)
-                .map(this::convertToDTO)
-                .orElse(null);
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        return caseOpt.map(this::convertToDTO).orElse(null);
     }
 
     @Override
     public List<CaseDTO> getCasesByReporter(String reporterUserId) {
         return caseRepository.findByReporterUserId(reporterUserId).stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<CaseDTO> getAllCases() {
         return caseRepository.findAll().stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<CaseDTO> getCasesByStatus(Case.CaseStatus status) {
         return caseRepository.findByStatus(status).stream()
                 .map(this::convertToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

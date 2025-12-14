@@ -15,6 +15,11 @@ public interface HelpRequestRepository extends MongoRepository<HelpRequest, Stri
     List<HelpRequest> findByAnonymous(boolean anonymous);
     Optional<HelpRequest> findById(String id);
     List<HelpRequest> findAllByOrderByRequestDateDesc();
-    
     List<HelpRequest> findByLocationContainingIgnoreCase(String location);
+    List<HelpRequest> findByLocationAndApproximateAgeAndGenderAndHelpType(
+        String location, 
+        String approximateAge, 
+        String gender, 
+        HelpType helpType
+    );
 }

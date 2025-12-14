@@ -4,6 +4,8 @@ import com.example.childPortal.dto.CaseDTO;
 import com.example.childPortal.dto.CaseReportRequest;
 import com.example.childPortal.dto.CaseResponse;
 import com.example.childPortal.model.Case.CaseStatus;
+import com.example.childPortal.model.CaseType;
+import com.example.childPortal.model.Priority;
 import java.util.List;
 
 public interface CaseService {
@@ -17,4 +19,17 @@ public interface CaseService {
     CaseDTO assignCaseToSocialWorker(String caseId, String workerId, String assignedBy);
     boolean deleteCase(String caseId);
     CaseDTO updateCaseNotes(String caseId, String notes, String updatedBy);
+    
+    // New methods
+    List<CaseDTO> getAllCasesWithFullDetails();
+    List<CaseDTO> getPublicActiveCases();
+    List<CaseDTO> getCasesForOfficer(String officerId);
+    List<CaseDTO> getCasesForWorker(String workerId);
+    List<CaseDTO> getEmergencyCases();
+    List<CaseDTO> getCasesByType(CaseType caseType);
+    CaseDTO updateCasePriority(String caseId, Priority priority, String updatedBy);
+    List<CaseDTO> searchCases(String keyword);
+    long getCaseCountByStatus(CaseStatus status);
+    long getTotalCaseCount();
+    long getEmergencyCaseCount();
 }

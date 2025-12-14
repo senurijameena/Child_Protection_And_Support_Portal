@@ -7,6 +7,7 @@ import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -19,6 +20,19 @@ public class CaseController {
     @Autowired
     private CaseService caseService;
 
+    @GetMapping("/admin/all-details")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CaseDTO>> getAllCasesWithFullDetails() {
+        List<CaseDTO> cases = caseService.getAllCasesWithFullDetails(); 
+        return ResponseEntity.ok(cases);
+    }
+
+    @GetMapping("/public/active")
+    public ResponseEntity<List<CaseDTO>> getActivePublicCases() {
+        List<CaseDTO> cases = caseService.getPublicActiveCases(); 
+        return ResponseEntity.ok(cases);
+    }
+    
     @PostMapping("/report")
     public ResponseEntity<CaseResponse> reportCase(
             @RequestBody CaseReportRequest request,

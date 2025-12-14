@@ -18,4 +18,5 @@ public interface HelpRequestService {
     boolean deleteHelpRequest(String requestId);
     HelpRequestDTO updateHelpRequestNotes(String requestId, String notes, String updatedBy);
     List<HelpRequestDTO> searchHelpRequestsByLocation(String location);
+    
 }

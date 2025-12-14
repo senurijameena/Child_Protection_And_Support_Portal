@@ -3,6 +3,8 @@ package com.example.childPortal.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,23 +21,25 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -44,51 +48,41 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-
+                // Allow all auth endpoints
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/cases/report").permitAll() 
                 .requestMatchers("/api/cases/public/**").permitAll()
-                .requestMatchers("/api/cases/admin/**").hasAuthority("ROLE_ADMIN")
-                 .requestMatchers("/api/cases/officer/**").hasAuthority("ROLE_PO")
-                .requestMatchers("/api/help-requests/request").permitAll() 
-                .requestMatchers("/api/cases/worker/**").hasAuthority("ROLE_SW") 
-                .requestMatchers("/api/feedback/public").permitAll()
-                .requestMatchers("/api/track/**").permitAll() 
-                .requestMatchers("/api/health").permitAll() 
-
+                .requestMatchers("/api/health").permitAll()
+                
+                // Admin endpoints
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/transfers/pending").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/transfers/urgent").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/transfers/*/approve").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/transfers/*/reject").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/feedback/all").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/feedback/*/respond").hasAuthority("ROLE_ADMIN")
-
-                .requestMatchers("/api/cases/assign/officer").hasAuthority("ROLE_PO")
-                .requestMatchers("/api/transfers/case/request").hasAnyAuthority("ROLE_PO", "ROLE_SW")
-
-                .requestMatchers("/api/help-requests/assign").hasAuthority("ROLE_SW")
+                
+                // Police officer endpoints
+                .requestMatchers("/api/cases/officer/**").hasAuthority("ROLE_PO")
+                
+                // Social worker endpoints
                 .requestMatchers("/api/services/offer").hasAuthority("ROLE_SW")
-                .requestMatchers("/api/transfers/help-request/request").hasAuthority("ROLE_SW")
-
+                .requestMatchers("/api/help-requests/assign").hasAuthority("ROLE_SW")
+                
+                // Authenticated endpoints
                 .requestMatchers("/api/user/**").authenticated()
-                .requestMatchers("/api/cases/my-cases").authenticated()
-                .requestMatchers("/api/help-requests/my-requests").authenticated()
-                .requestMatchers("/api/feedback/submit").authenticated()
-                .requestMatchers("/api/services/user/**").authenticated()
-                .requestMatchers("/api/transfers/user/**").authenticated()
+                .requestMatchers("/api/cases/**").authenticated()
+                .requestMatchers("/api/help-requests/**").authenticated()
+                .requestMatchers("/api/feedback/**").authenticated()
+                .requestMatchers("/api/services/**").authenticated()
+                .requestMatchers("/api/transfers/**").authenticated()
                 .requestMatchers("/api/timeline/**").authenticated()
-
+                
+                // Any other request
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-            
+
         return http.build();
     }
 }

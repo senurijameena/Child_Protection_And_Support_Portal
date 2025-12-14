@@ -31,6 +31,28 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
         try {
+            List<HelpRequest> similarRequests = helpRequestRepository.findByLocationAndApproximateAgeAndGenderAndHelpType(
+                helpRequestDTO.getLocation(),
+                helpRequestDTO.getApproximateAge(),
+                helpRequestDTO.getGender(),
+                helpRequestDTO.getHelpType()
+            );
+        
+            if (!similarRequests.isEmpty()) {
+                LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
+                long recentDuplicates = similarRequests.stream()
+                    .filter(req -> req.getRequestDate().isAfter(oneDayAgo))
+                    .count();
+                
+                if (recentDuplicates > 0) {
+                    return new HelpResponse(
+                        null, 
+                        "A similar help request was made recently. Please check if you need to submit again.", 
+                        false
+                    );
+                }
+            }
+
             HelpRequest helpRequest = new HelpRequest();
             helpRequest.setRequesterUserId(requesterUserId);
             helpRequest.setAnonymous(helpRequestDTO.isAnonymous());

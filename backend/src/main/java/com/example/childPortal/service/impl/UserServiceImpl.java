@@ -5,6 +5,9 @@ import com.example.childPortal.model.*;
 import com.example.childPortal.repository.*;
 import com.example.childPortal.security.JwtUtil;
 import com.example.childPortal.service.UserService;
+
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -82,7 +85,6 @@ public class UserServiceImpl implements UserService {
             return new LoginResponse(null, "Account pending approval", false);
         }
 
-        // Generate token with userId, email, and role
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
@@ -240,8 +242,7 @@ public boolean updateUserDetails(String userId, com.example.childPortal.dto.User
         user.setEmail(updateRequest.getEmail());
         user.setPhone(updateRequest.getPhone());
         user.setActive(updateRequest.isActive());
-        
-        // Update role-specific details
+
         if (user.getRole() == Role.PO) {
             Optional<PoliceOfficer> officerOpt = policeOfficerRepository.findByUserId(userId);
             if (officerOpt.isPresent()) {
@@ -351,6 +352,29 @@ public boolean updateUserDetails(String userId, com.example.childPortal.dto.User
         return stats;
     }
 
+    @PostConstruct
+    public void createDefaultAdmin() {
+        try {
+            if (!userRepository.findByEmail("admin@gmail.com").isPresent()) {
+                User admin = new User();
+                admin.setFullName("System Administrator");
+                admin.setEmail("admin@gmail.com");
+                admin.setPhone("+1234567890");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setRole(Role.ADMIN);
+                admin.setActive(true);
+                admin.setApproved(true);
+                admin.setOfficialIdFile("system_admin");
+                admin.setRegistrationDate(LocalDateTime.now());
+            
+                userRepository.save(admin);
+                System.out.println("✅ Default admin created successfully");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to create default admin: " + e.getMessage());
+        }
+    }
+    
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());

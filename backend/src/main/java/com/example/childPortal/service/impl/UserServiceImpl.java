@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,16 +19,56 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private PoliceOfficerRepository policeOfficerRepository;
-    @Autowired private SocialWorkerRepository socialWorkerRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private JwtUtil jwtUtil;
+    @Autowired 
+    private UserRepository userRepository;
+
+    @Autowired
+    private PoliceOfficerRepository policeOfficerRepository;
+
+    @Autowired 
+    private SocialWorkerRepository socialWorkerRepository;
+
+    @Autowired 
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired 
+    private JwtUtil jwtUtil;
+
+    @PostConstruct
+    public void createDefaultAdmin() {
+        try {
+            if (!userRepository.findByEmail("admin@gmail.com").isPresent()) {
+                User admin = new User();
+                admin.setFullName("System Administrator");
+                admin.setEmail("admin@gmail.com");
+                admin.setPhone("+1234567890");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setRole(Role.ADMIN);
+                admin.setActive(true);
+                admin.setApproved(true);
+                admin.setOfficialIdFile("system_admin");
+                admin.setRegistrationDate(LocalDateTime.now());
+            
+                userRepository.save(admin);
+                System.out.println("✅ Default admin created successfully");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to create default admin: " + e.getMessage());
+        }
+    }
 
     @Override
     public LoginResponse registerUser(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             return new LoginResponse(null, "Email already exists", false);
+        }
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return new LoginResponse(null, "Passwords do not match", false);
+        }
+
+        if (!request.isTermsAccepted()) {
+            return new LoginResponse(null, "You must accept the terms and conditions", false);
         }
 
         User user = new User();
@@ -37,32 +78,46 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
         user.setActive(true);
-        user.setApproved(false); // Needs admin approval
-        user.setOfficialIdFile(request.getOfficialIdFile());
+        user.setApproved(false); 
         user.setRegistrationDate(LocalDateTime.now());
 
         user = userRepository.save(user);
+        try {
+            if (user.getRole() == Role.PO) {
+                PoliceOfficer officer = new PoliceOfficer();
+                officer.setUserId(user.getId());
+                officer.setBadgeNumber(request.getBadgeNumber());
+                officer.setDepartment(request.getDepartment());
+                officer.setRank(request.getRank());
+                officer.setStationAddress(request.getStationAddress());
+                officer.setIdDocumentUrl(request.getIdDocumentUrl());
+                policeOfficerRepository.save(officer);
+                
+            } else if (user.getRole() == Role.SW) {
+                SocialWorker worker = new SocialWorker();
+                worker.setUserId(user.getId());
+                worker.setLicenseNumber(request.getLicenseNumber());
+                worker.setOrganization(request.getOrganization());
+                worker.setYearsOfExperience(request.getYearsOfExperience() != null ? 
+                    Integer.parseInt(request.getYearsOfExperience()) : 0);
 
-        // Create role-specific profile
-        if (user.getRole() == Role.PO && request.getBadgeNumber() != null) {
-            PoliceOfficer officer = new PoliceOfficer();
-            officer.setUserId(user.getId());
-            officer.setBadgeNumber(request.getBadgeNumber());
-            officer.setDepartment(request.getDepartment());
-            officer.setRank(request.getRank());
-            officer.setStationAddress(request.getStationAddress());
-            officer.setIdDocumentUrl(request.getOfficialIdFile());
-            policeOfficerRepository.save(officer);
-        } else if (user.getRole() == Role.SW && request.getLicenseNumber() != null) {
-            SocialWorker worker = new SocialWorker();
-            worker.setUserId(user.getId());
-            worker.setLicenseNumber(request.getLicenseNumber());
-            worker.setOrganization(request.getOrganization());
-            worker.setIdDocumentUrl(request.getOfficialIdFile());
-            socialWorkerRepository.save(worker);
+                if (request.getSpecializations() != null) {
+                    List<String> specializations = Arrays.asList(
+                        request.getSpecializations().split(",")
+                    );
+                    worker.setSpecializations(specializations);
+                }
+                
+                worker.setIdDocumentUrl(request.getCertificationDocumentUrl());
+                socialWorkerRepository.save(worker);
+            }
+            
+            return new LoginResponse(null, "Registration successful. Awaiting admin approval.", false);
+            
+        } catch (Exception e) {
+            userRepository.delete(user);
+            return new LoginResponse(null, "Registration failed: " + e.getMessage(), false);
         }
-
-        return new LoginResponse(null, "Registration successful. Awaiting admin approval.", false);
     }
 
     @Override
@@ -226,7 +281,6 @@ public class UserServiceImpl implements UserService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setActive(false);
-            // Note: You might want to store the reason in a separate field
             userRepository.save(user);
             return true;
         }
@@ -234,14 +288,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-public boolean updateUserDetails(String userId, com.example.childPortal.dto.UserUpdateRequest updateRequest) {
-    Optional<User> userOpt = userRepository.findById(userId);
-    if (userOpt.isPresent()) {
-        User user = userOpt.get();
-        user.setFullName(updateRequest.getFullName());
-        user.setEmail(updateRequest.getEmail());
-        user.setPhone(updateRequest.getPhone());
-        user.setActive(updateRequest.isActive());
+    public boolean updateUserDetails(String userId, com.example.childPortal.dto.UserUpdateRequest updateRequest) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+             User user = userOpt.get();
+            user.setFullName(updateRequest.getFullName());
+            user.setEmail(updateRequest.getEmail());
+            user.setPhone(updateRequest.getPhone());
+            user.setActive(updateRequest.isActive());
 
         if (user.getRole() == Role.PO) {
             Optional<PoliceOfficer> officerOpt = policeOfficerRepository.findByUserId(userId);
@@ -308,8 +362,7 @@ public boolean updateUserDetails(String userId, com.example.childPortal.dto.User
         dto.setApproved(user.isApproved());
         dto.setRegistrationDate(user.getRegistrationDate());
         dto.setLastLogin(user.getLastLogin());
-        
-        // Add role-specific details
+
         if (user.getRole() == Role.PO) {
             policeOfficerRepository.findByUserId(user.getId()).ifPresent(officer -> {
                 dto.setBadgeNumber(officer.getBadgeNumber());
@@ -352,29 +405,6 @@ public boolean updateUserDetails(String userId, com.example.childPortal.dto.User
         return stats;
     }
 
-    @PostConstruct
-    public void createDefaultAdmin() {
-        try {
-            if (!userRepository.findByEmail("admin@gmail.com").isPresent()) {
-                User admin = new User();
-                admin.setFullName("System Administrator");
-                admin.setEmail("admin@gmail.com");
-                admin.setPhone("+1234567890");
-                admin.setPassword(passwordEncoder.encode("admin123"));
-                admin.setRole(Role.ADMIN);
-                admin.setActive(true);
-                admin.setApproved(true);
-                admin.setOfficialIdFile("system_admin");
-                admin.setRegistrationDate(LocalDateTime.now());
-            
-                userRepository.save(admin);
-                System.out.println("✅ Default admin created successfully");
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Failed to create default admin: " + e.getMessage());
-        }
-    }
-    
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());

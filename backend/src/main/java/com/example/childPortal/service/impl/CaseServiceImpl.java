@@ -4,11 +4,11 @@ import com.example.childPortal.dto.CaseDTO;
 import com.example.childPortal.dto.CaseReportRequest;
 import com.example.childPortal.dto.CaseResponse;
 import com.example.childPortal.model.Case;
-import com.example.childPortal.model.Case.CaseStatus;
-import com.example.childPortal.model.CaseType;
 import com.example.childPortal.model.User;
 import com.example.childPortal.model.Role;
 import com.example.childPortal.model.Priority;
+import com.example.childPortal.model.CaseType;
+import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
@@ -44,8 +44,7 @@ public class CaseServiceImpl implements CaseService {
             caseEntity.setIncidentDate(request.getIncidentDate());
             caseEntity.setCaseDescription(request.getCaseDescription());
             caseEntity.setEvidenceUrls(request.getEvidenceUrls());
-            
-            // Set priority based on case type
+
             if (request.getCaseType() != null) {
                 switch (request.getCaseType()) {
                     case MISSING_CHILD:
@@ -63,20 +62,20 @@ public class CaseServiceImpl implements CaseService {
                 }
             }
             
-            // Set reporter name (store actual name even for anonymous, will filter in DTO)
             if (!request.isAnonymous()) {
                 Optional<User> reporter = userRepository.findById(reporterUserId);
                 if (reporter.isPresent()) {
                     caseEntity.setReporterName(reporter.get().getFullName());
                 }
             } else {
-                // For anonymous reports, store name but it will be filtered in DTO
-                userRepository.findById(reporterUserId)
-                    .ifPresent(user -> caseEntity.setReporterName(user.getFullName()));
+                Optional<User> reporter = userRepository.findById(reporterUserId);
+                if (reporter.isPresent()) {
+                    caseEntity.setReporterName(reporter.get().getFullName());
+                }
             }
 
-            caseEntity = caseRepository.save(caseEntity);
-            return new CaseResponse(caseEntity.getId(), "Case reported successfully", true);
+            Case savedCase = caseRepository.save(caseEntity);
+            return new CaseResponse(savedCase.getId(), "Case reported successfully", true);
         } catch (Exception e) {
             return new CaseResponse(null, "Failed to report case: " + e.getMessage(), false);
         }
@@ -86,8 +85,6 @@ public class CaseServiceImpl implements CaseService {
     public CaseDTO getCaseById(String caseId) {
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isEmpty()) return null;
-        
-        // Get current user info for filtering
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -98,8 +95,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesByReporter(String reporterUserId) {
         List<Case> cases = caseRepository.findByReporterUserId(reporterUserId);
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -112,8 +108,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getAllCases() {
         List<Case> allCases = caseRepository.findAll();
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -126,8 +121,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesByStatus(CaseStatus status) {
         List<Case> cases = caseRepository.findByStatus(status);
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -144,7 +138,6 @@ public class CaseServiceImpl implements CaseService {
         if (caseOpt.isEmpty()) return null;
         
         Case caseEntity = caseOpt.get();
-        CaseStatus previousStatus = caseEntity.getStatus();
         caseEntity.setStatus(status);
         caseEntity.setLastUpdated(LocalDateTime.now());
         
@@ -152,14 +145,13 @@ public class CaseServiceImpl implements CaseService {
             caseEntity.setResolutionDate(LocalDateTime.now());
         }
         
-        caseRepository.save(caseEntity);
-        
-        // Get current user info for filtering
+        Case updatedCase = caseRepository.save(caseEntity);
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
         
-        return CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId);
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
     }
 
     @Override
@@ -173,14 +165,13 @@ public class CaseServiceImpl implements CaseService {
         caseEntity.setStatus(CaseStatus.ASSIGNED);
         caseEntity.setLastUpdated(LocalDateTime.now());
         
-        caseRepository.save(caseEntity);
-        
-        // Get current user info for filtering
+        Case updatedCase = caseRepository.save(caseEntity);
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
         
-        return CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId);
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
     }
 
     @Override
@@ -194,14 +185,13 @@ public class CaseServiceImpl implements CaseService {
         caseEntity.setStatus(CaseStatus.ASSIGNED);
         caseEntity.setLastUpdated(LocalDateTime.now());
         
-        caseRepository.save(caseEntity);
-        
-        // Get current user info for filtering
+        Case updatedCase = caseRepository.save(caseEntity);
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
         
-        return CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId);
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
     }
 
     @Override
@@ -224,26 +214,22 @@ public class CaseServiceImpl implements CaseService {
         caseEntity.setCaseNotes(notes);
         caseEntity.setLastUpdated(LocalDateTime.now());
         
-        caseRepository.save(caseEntity);
-        
-        // Get current user info for filtering
+        Case updatedCase = caseRepository.save(caseEntity);
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
         
-        return CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId);
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
     }
 
     @Override
     public List<CaseDTO> getAllCasesWithFullDetails() {
-        // Only ADMIN should call this - returns all details including anonymous reporter names
         List<Case> allCases = caseRepository.findAll();
-        
-        // Create DTOs with full details (no filtering)
+
         return allCases.stream()
                 .map(caseEntity -> {
                     CaseDTO dto = convertToFullDTO(caseEntity);
-                    // Always include reporter name for admin
                     dto.setReporterName(caseEntity.getReporterName());
                     return dto;
                 })
@@ -252,7 +238,6 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public List<CaseDTO> getPublicActiveCases() {
-        // For public viewing - exclude sensitive information
         List<Case> activeCases = caseRepository.findByStatus(CaseStatus.REPORTED);
         
         return activeCases.stream()
@@ -265,8 +250,7 @@ public class CaseServiceImpl implements CaseService {
                     dto.setIncidentDate(caseEntity.getIncidentDate());
                     dto.setStatus(caseEntity.getStatus());
                     dto.setReportDate(caseEntity.getReportDate());
-                    
-                    // For public viewing, always anonymize
+
                     if (caseEntity.isAnonymous()) {
                         dto.setReporterName("Anonymous");
                         dto.setAnonymous(true);
@@ -283,8 +267,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesForOfficer(String officerId) {
         List<Case> cases = caseRepository.findByAssignedOfficerId(officerId);
-        
-        // Get current user info for filtering
+ 
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -297,8 +280,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesForWorker(String workerId) {
         List<Case> cases = caseRepository.findByAssignedWorkerId(workerId);
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -310,11 +292,11 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public List<CaseDTO> getEmergencyCases() {
-        List<Case> emergencyCases = caseRepository.findAll().stream()
+        List<Case> allCases = caseRepository.findAll();
+        List<Case> emergencyCases = allCases.stream()
                 .filter(Case::isEmergency)
                 .collect(Collectors.toList());
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -327,8 +309,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesByType(CaseType caseType) {
         List<Case> cases = caseRepository.findByCaseType(caseType);
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -339,26 +320,24 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
+    @Transactional
     public CaseDTO updateCasePriority(String caseId, Priority priority, String updatedBy) {
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isEmpty()) return null;
         
         Case caseEntity = caseOpt.get();
-        Priority previousPriority = caseEntity.getPriority();
         caseEntity.setPriority(priority);
         caseEntity.setLastUpdated(LocalDateTime.now());
-        
-        // Mark as emergency if priority is URGENT or CRITICAL
+
         caseEntity.setEmergency(priority == Priority.URGENT || priority == Priority.CRITICAL);
         
-        caseRepository.save(caseEntity);
-        
-        // Get current user info for filtering
+        Case updatedCase = caseRepository.save(caseEntity);
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
         
-        return CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId);
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
     }
 
     @Override
@@ -366,20 +345,26 @@ public class CaseServiceImpl implements CaseService {
         List<Case> allCases = caseRepository.findAll();
         List<Case> filteredCases = new ArrayList<>();
         
+        String searchTerm = keyword.toLowerCase();
+        
         for (Case caseEntity : allCases) {
-            // Search in multiple fields
-            boolean matches = 
-                (caseEntity.getTrackingId() != null && caseEntity.getTrackingId().toLowerCase().contains(keyword.toLowerCase())) ||
-                (caseEntity.getLocation() != null && caseEntity.getLocation().toLowerCase().contains(keyword.toLowerCase())) ||
-                (caseEntity.getCaseDescription() != null && caseEntity.getCaseDescription().toLowerCase().contains(keyword.toLowerCase())) ||
-                (caseEntity.getReporterName() != null && caseEntity.getReporterName().toLowerCase().contains(keyword.toLowerCase()));
+            boolean matches = false;
+            
+            if (caseEntity.getTrackingId() != null && caseEntity.getTrackingId().toLowerCase().contains(searchTerm)) {
+                matches = true;
+            } else if (caseEntity.getLocation() != null && caseEntity.getLocation().toLowerCase().contains(searchTerm)) {
+                matches = true;
+            } else if (caseEntity.getCaseDescription() != null && caseEntity.getCaseDescription().toLowerCase().contains(searchTerm)) {
+                matches = true;
+            } else if (caseEntity.getReporterName() != null && caseEntity.getReporterName().toLowerCase().contains(searchTerm)) {
+                matches = true;
+            }
             
             if (matches) {
                 filteredCases.add(caseEntity);
             }
         }
-        
-        // Get current user info for filtering
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -401,12 +386,12 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public long getEmergencyCaseCount() {
-        return caseRepository.findAll().stream()
+        List<Case> allCases = caseRepository.findAll();
+        return allCases.stream()
                 .filter(Case::isEmergency)
                 .count();
     }
 
-    // Helper method to convert to full DTO (no filtering)
     private CaseDTO convertToFullDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());
@@ -429,15 +414,5 @@ public class CaseServiceImpl implements CaseService {
         dto.setPriority(caseEntity.getPriority());
         dto.setEmergency(caseEntity.isEmergency());
         return dto;
-    }
-
-    // Helper method to convert with role-based filtering
-    private CaseDTO convertToDTOWithFilter(Case caseEntity) {
-        // Get current user info
-        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
-        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
-        
-        return CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId);
     }
 }

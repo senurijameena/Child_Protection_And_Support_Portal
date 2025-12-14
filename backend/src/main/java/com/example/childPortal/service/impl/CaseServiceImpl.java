@@ -33,6 +33,24 @@ public class CaseServiceImpl implements CaseService {
     @Transactional
     public CaseResponse reportCase(CaseReportRequest request, String reporterUserId) {
         try {
+            LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
+        
+            List<Case> similarCases = caseRepository.findByLocationAndApproximateAgeAndGenderAndIncidentDateBetween(
+                request.getLocation(),
+                request.getApproximateAge(),
+                request.getGender(),
+                request.getIncidentDate().minusHours(6), 
+                request.getIncidentDate().plusHours(6)   
+            );
+        
+            if (!similarCases.isEmpty()) {
+                return new CaseResponse(
+                    null, 
+                    "A similar case was reported recently. Please check if this is a duplicate.", 
+                    false
+                );
+            }
+
             Case caseEntity = new Case();
             caseEntity.setReporterUserId(reporterUserId);
             caseEntity.setAnonymous(request.isAnonymous());

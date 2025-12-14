@@ -1,21 +1,32 @@
 package com.example.childPortal.service.impl;
 
-import com.example.childPortal.dto.*;
-import com.example.childPortal.model.*;
+import com.example.childPortal.dto.HelpRequestDTO;
+import com.example.childPortal.dto.HelpResponse;
+import com.example.childPortal.model.HelpRequest;
+import com.example.childPortal.model.HelpType;
+import com.example.childPortal.model.Priority;
+import com.example.childPortal.model.Role;
+import com.example.childPortal.model.User;
 import com.example.childPortal.repository.HelpRequestRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.HelpRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class HelpRequestServiceImpl implements HelpRequestService {
 
-    @Autowired private HelpRequestRepository helpRequestRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired 
+    private HelpRequestRepository helpRequestRepository;
+    
+    @Autowired 
+    private UserRepository userRepository;
 
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
@@ -30,10 +41,13 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             helpRequest.setDescription(helpRequestDTO.getDescription());
             helpRequest.setLocation(helpRequestDTO.getLocation());
             helpRequest.setDocumentUrls(helpRequestDTO.getDocumentUrls());
-            
-            if (!helpRequestDTO.isAnonymous()) {
-                userRepository.findById(requesterUserId)
-                    .ifPresent(user -> helpRequest.setRequesterName(user.getFullName()));
+
+            helpRequest.setPriority(helpRequestDTO.getPriority() != null ? 
+                helpRequestDTO.getPriority() : Priority.MEDIUM);
+
+            Optional<User> reporterOpt = userRepository.findById(requesterUserId);
+            if (reporterOpt.isPresent()) {
+                helpRequest.setRequesterName(reporterOpt.get().getFullName());
             }
 
             HelpRequest savedHelpRequest = helpRequestRepository.save(helpRequest);
@@ -46,36 +60,36 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     @Override
     public HelpRequestDTO getHelpRequestById(String requestId) {
         return helpRequestRepository.findById(requestId)
-                .map(this::convertToDTO)
+                .map(this::convertToFilteredDTO)
                 .orElse(null);
     }
 
     @Override
     public List<HelpRequestDTO> getHelpRequestsByRequester(String requesterUserId) {
         return helpRequestRepository.findByRequesterUserId(requesterUserId).stream()
-                .map(this::convertToDTO)
-                .toList();
+                .map(this::convertToFilteredDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<HelpRequestDTO> getAllHelpRequests() {
         return helpRequestRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .toList();
+                .map(this::convertToFilteredDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<HelpRequestDTO> getHelpRequestsByStatus(HelpRequest.RequestStatus status) {
         return helpRequestRepository.findByStatus(status).stream()
-                .map(this::convertToDTO)
-                .toList();
+                .map(this::convertToFilteredDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<HelpRequestDTO> getHelpRequestsByType(HelpType helpType) {
         return helpRequestRepository.findByHelpType(helpType).stream()
-                .map(this::convertToDTO)
-                .toList();
+                .map(this::convertToFilteredDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -88,7 +102,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                         helpRequest.setCompletionDate(LocalDateTime.now());
                     }
                     helpRequestRepository.save(helpRequest);
-                    return convertToDTO(helpRequest);
+                    return convertToFilteredDTO(helpRequest);
                 })
                 .orElse(null);
     }
@@ -101,7 +115,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     helpRequest.setStatus(HelpRequest.RequestStatus.ASSIGNED);
                     helpRequest.setLastUpdated(LocalDateTime.now());
                     helpRequestRepository.save(helpRequest);
-                    return convertToDTO(helpRequest);
+                    return convertToFilteredDTO(helpRequest);
                 })
                 .orElse(null);
     }
@@ -122,25 +136,24 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     helpRequest.setRequestNotes(notes);
                     helpRequest.setLastUpdated(LocalDateTime.now());
                     helpRequestRepository.save(helpRequest);
-                    return convertToDTO(helpRequest);
+                    return convertToFilteredDTO(helpRequest);
                 })
                 .orElse(null);
     }
 
     @Override
     public List<HelpRequestDTO> searchHelpRequestsByLocation(String location) {
-    return helpRequestRepository.findByLocationContainingIgnoreCase(location).stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+        return helpRequestRepository.findByLocationContainingIgnoreCase(location).stream()
+                .map(this::convertToFilteredDTO)
+                .collect(Collectors.toList());
     }
 
-    private HelpRequestDTO convertToDTO(HelpRequest helpRequest) {
+    private HelpRequestDTO convertToFilteredDTO(HelpRequest helpRequest) {
         HelpRequestDTO dto = new HelpRequestDTO();
         dto.setId(helpRequest.getId());
         dto.setTrackingId(helpRequest.getTrackingId());
         dto.setRequesterUserId(helpRequest.getRequesterUserId());
         dto.setAnonymous(helpRequest.isAnonymous());
-        dto.setRequesterName(helpRequest.getRequesterName());
         dto.setApproximateAge(helpRequest.getApproximateAge());
         dto.setGender(helpRequest.getGender());
         dto.setIdentificationMarks(helpRequest.getIdentificationMarks());
@@ -152,6 +165,31 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         dto.setAssignedWorkerId(helpRequest.getAssignedWorkerId());
         dto.setRequestDate(helpRequest.getRequestDate());
         dto.setPriority(helpRequest.getPriority());
+
+        try {
+            String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+            Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+            Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+            
+            if (helpRequest.isAnonymous()) {
+                if (userRole == Role.ADMIN || 
+                    (helpRequest.getRequesterUserId() != null && 
+                     helpRequest.getRequesterUserId().equals(currentUserId))) {
+                    dto.setRequesterName(helpRequest.getRequesterName());
+                } else {
+                    dto.setRequesterName("Anonymous Requester");
+                }
+            } else {
+                dto.setRequesterName(helpRequest.getRequesterName());
+            }
+        } catch (Exception e) {
+            if (helpRequest.isAnonymous()) {
+                dto.setRequesterName("Anonymous Requester");
+            } else {
+                dto.setRequesterName(helpRequest.getRequesterName());
+            }
+        }
+        
         return dto;
     }
 }

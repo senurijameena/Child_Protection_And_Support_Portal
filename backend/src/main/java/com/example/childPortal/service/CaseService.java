@@ -19,8 +19,7 @@ public interface CaseService {
     CaseDTO assignCaseToSocialWorker(String caseId, String workerId, String assignedBy);
     boolean deleteCase(String caseId);
     CaseDTO updateCaseNotes(String caseId, String notes, String updatedBy);
-    
-    // New methods
+
     List<CaseDTO> getAllCasesWithFullDetails();
     List<CaseDTO> getPublicActiveCases();
     List<CaseDTO> getCasesForOfficer(String officerId);

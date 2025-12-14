@@ -53,7 +53,11 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/cases/report").permitAll() 
+                .requestMatchers("/api/cases/public/**").permitAll()
+                .requestMatchers("/api/cases/admin/**").hasAuthority("ROLE_ADMIN")
+                 .requestMatchers("/api/cases/officer/**").hasAuthority("ROLE_PO")
                 .requestMatchers("/api/help-requests/request").permitAll() 
+                .requestMatchers("/api/cases/worker/**").hasAuthority("ROLE_SW") 
                 .requestMatchers("/api/feedback/public").permitAll()
                 .requestMatchers("/api/track/**").permitAll() 
                 .requestMatchers("/api/health").permitAll() 
@@ -65,17 +69,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/transfers/*/reject").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/feedback/all").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/feedback/*/respond").hasAuthority("ROLE_ADMIN")
-                
-                // Police Officer endpoints
+
                 .requestMatchers("/api/cases/assign/officer").hasAuthority("ROLE_PO")
                 .requestMatchers("/api/transfers/case/request").hasAnyAuthority("ROLE_PO", "ROLE_SW")
-                
-                // Social Worker endpoints
+
                 .requestMatchers("/api/help-requests/assign").hasAuthority("ROLE_SW")
                 .requestMatchers("/api/services/offer").hasAuthority("ROLE_SW")
                 .requestMatchers("/api/transfers/help-request/request").hasAuthority("ROLE_SW")
-                
-                // Authenticated users (all roles)
+
                 .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/api/cases/my-cases").authenticated()
                 .requestMatchers("/api/help-requests/my-requests").authenticated()
@@ -83,8 +84,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/services/user/**").authenticated()
                 .requestMatchers("/api/transfers/user/**").authenticated()
                 .requestMatchers("/api/timeline/**").authenticated()
-                
-                // Default - require authentication
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

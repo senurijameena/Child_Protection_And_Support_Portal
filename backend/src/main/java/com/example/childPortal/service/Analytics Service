@@ -1,0 +1,30 @@
+package com.example.childPortal.service;
+import com.example.childPortal.dto.*;
+import java.time.LocalDateTime; 
+import java.util.List;
+import java.util.Map;
+
+public interface AnalyticsService {
+CaseStatisticsDTO
+Map<String, Long>
+Map<String, Long>
+List<CaseTrendDTO> getCaseTrends(String period); 
+
+HelpRequestStatisticsDTO getHelpRequestStatistics(LocalDateTime startDate, LocalD ateTime endDate);
+Map<String, Long> getHelpTypeDistribution(); 
+Map<String, Long> getHelpRequestStatusDistribution();
+
+UserStatisticsDTO getUserStatistics();
+Map<String, Long> getUserRoleDistribution(); List<UserActivityDTO> getMostActiveUsers(int limit);
+    // Performance Metrics
+ResponseTimeMetricsDTO getResponseTimeMetrics(); ResolutionRateDTO getResolutionRates();
+    // Geographical Analytics
+e);
+getCaseStatistics(LocalDateTime startDate, LocalDateTime endDat
+getCaseStatusDistribution();
+getCaseTypeDistribution();
+List<LocationAnalyticsDTO> getLocationAnalytics(); Map<String, Long> getCaseDistributionByLocation();
+    // Real-time Dashboard
+DashboardMetricsDTO getDashboardMetrics();
+    // Custom Reports
+CustomReportDTO generateCustomReport(ReportRequestDTO request); }

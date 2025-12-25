@@ -20,4 +20,5 @@ public interface FeedbackService {
     Double getAverageRating();
     List<FeedbackResponseDTO> getPublicFeedback();
     List<FeedbackResponseDTO> getFeedbackByType(FeedbackType type); 
+    
 }

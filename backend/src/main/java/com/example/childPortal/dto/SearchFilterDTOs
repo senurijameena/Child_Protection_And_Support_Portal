@@ -39,3 +39,76 @@ public class CaseSearchFilterDTO {
   public void setStatus(CaseStatus status) { 
     this.status = status; 
   }
+  public Priority getPriority() { 
+    return priority; 
+  }
+  public void setPriority(Priority priority) { 
+    this.priority = priority; 
+  }
+  public String getLocation() { 
+    return location;
+   }
+  public void setLocation(String location) { 
+    this.location = location; 
+  }
+  public String getApproximateAge() {
+     return approximateAge; 
+    }
+  public void setApproximateAge(String approximateAge) { 
+    this.approximateAge = appr oximateAge; 
+  }
+  public String getGender() { 
+    return gender; 
+  }
+  public void setGender(String gender) { 
+    this.gender = gender; 
+  }
+  public Boolean getEmergency() { 
+    return emergency;
+   }
+  public void setEmergency(Boolean emergency) {
+     this.emergency = emergency; 
+  } 
+  public LocalDateTime getStartDate() { 
+    return startDate; 
+  }
+  public void setStartDate(LocalDateTime startDate) {
+     this.startDate = startDate; 
+    } 
+  public LocalDateTime getEndDate() { 
+    return endDate; 
+  }
+  public void setEndDate(LocalDateTime endDate) { 
+    this.endDate = endDate;
+  }
+  public String getAssignedOfficerId() { 
+    return assignedOfficerId; 
+  }
+  public void setAssignedOfficerId(String assignedOfficerId) {
+     this.assignedOfficerId = assignedOfficerId; 
+    }
+  public String getAssignedWorkerId() { 
+    return assignedWorkerId; 
+  }
+  public void setAssignedWorkerId(String assignedWorkerId) { 
+    this.assignedWorkerId = assignedWorkerId; 
+  }
+  public String getReporterUserId() { 
+    return reporterUserId;
+  }
+  public void setReporterUserId(String reporterUserId) { 
+    this.reporterUserId = reporterUserId; 
+  }
+  public Boolean getAnonymous() { 
+    return anonymous; 
+  }
+  public void setAnonymous(Boolean anonymous) { 
+    this.anonymous = anonymous;
+   }
+    public boolean hasFilters() {
+      returnkeyword != null || caseType != null || status != null || 
+      priority != null || location != null || approximateAge != null ||
+      gender != null || emergency != null || startDate != null || endDate != null || assignedOfficerId != null ||
+      assignedWorkerId != null || reporterUserId != null || anonymous != null; 
+    }
+}

@@ -12,7 +12,7 @@ public class CaseTrendDTO {
     return period; 
   }
   public void setPeriod(LocalDateTime period) { 
-    this.period = period; 
+    this.period = period;
   } 
   public long getNewCases() { 
     return newCases;

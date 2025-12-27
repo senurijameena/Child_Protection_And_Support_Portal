@@ -203,7 +203,7 @@ if (newStatus == AvailabilityStatus.OFF_DUTY) {
   notificationService.sendEmergencyOnlyStatusNotification(user.getId());
 }
   }
-  private boolean isUserSuitableForAssignment(User user, String location, String ca seType) {
+  private boolean isUserSuitableForAssignment(User user, String location, String caseType) {
         if (!user.canTakeMoreAssignments()) {
             return false;
         }

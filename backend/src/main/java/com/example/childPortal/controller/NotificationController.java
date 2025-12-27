@@ -23,3 +23,18 @@ import java.util.Map;
       List<Notification> notifications =notificationRepository.findByUserIdOrderByCreatedAtDesc(userId); 
       return ResponseEntity.ok(notifications);
     }
+
+    @GetMapping("/unread")
+    public ResponseEntity<List<Notification>> getUnreadNotifications(
+      @AuthenticationPrincipal String userId) { 
+      List<Notification> notifications =notificationRepository.findByUserIdAndReadFalse(userId); 
+      return ResponseEntity.ok(notifications);
+    }
+    @GetMapping("/unread-count")
+    public ResponseEntity<Long> getUnreadCount(@AuthenticationPrincipal String userId) {
+      long count = notificationRepository.countByUserIdAndReadFalse(userId); 
+      return ResponseEntity.ok(count);
+    }
+    
+    @PutMapping("/{notificationId}/read")
+    public ResponseEntity<Notification> markAsRead(

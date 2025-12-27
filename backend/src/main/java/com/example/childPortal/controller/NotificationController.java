@@ -38,3 +38,26 @@ import java.util.Map;
     
     @PutMapping("/{notificationId}/read")
     public ResponseEntity<Notification> markAsRead(
+      @PathVariable String notificationId,
+      @AuthenticationPrincipal String userId) {
+      return notificationRepository.findById(notificationId).map(notification -> {
+        if (!notification.getUserId().equals(userId)) {
+          return ResponseEntity.status(403).build(); 
+        }
+        notification.setRead(true);
+        notificationRepository.save(notification);
+        return ResponseEntity.ok(notification);
+      }) 
+        .orElse(ResponseEntity.notFound().build());
+      }
+
+
+
+
+
+
+
+
+
+
+      

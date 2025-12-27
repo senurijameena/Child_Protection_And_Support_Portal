@@ -50,6 +50,21 @@ import java.util.Map;
       }) 
         .orElse(ResponseEntity.notFound().build());
       }
+  
+     @PutMapping("/read-all")
+    public ResponseEntity<String> markAllAsRead(
+      @AuthenticationPrincipal String userId) { 
+      List<Notification> unread =notificationRepository.findByUserIdAndReadFalse(userId); 
+      unread.forEach(notification -> notification.setRead(true)); 
+      notificationRepository.saveAll(unread);
+      return ResponseEntity.ok("All notifications marked as read");
+    }
+    @PostMapping("/test/approval")
+    public ResponseEntity<String> testApprovalNotification(
+      @RequestBody Map<String, String> request) {
+      String userId = request.get("userId"); notificationService.sendUserApprovalNotification(userId); return ResponseEntity.ok("Test notification sent");
+} 
+  }
 
 
 

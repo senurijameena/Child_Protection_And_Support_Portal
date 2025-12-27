@@ -76,3 +76,21 @@ catch (MessagingException e) {
   throw new RuntimeException("Failed to send email", e);
 }
 }
+private void logNotification(String userId, String type, String message) { 
+  Notification notification = new Notification(); notification.setUserId(userId);
+  notification.setType(type);
+  notification.setMessage(message); 
+  notification.setRead(false); 
+  notification.setCreatedAt(LocalDateTime.now());
+} 
+}
+
+
+
+
+
+
+
+
+
+

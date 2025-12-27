@@ -62,8 +62,10 @@ import java.util.Map;
     @PostMapping("/test/approval")
     public ResponseEntity<String> testApprovalNotification(
       @RequestBody Map<String, String> request) {
-      String userId = request.get("userId"); notificationService.sendUserApprovalNotification(userId); return ResponseEntity.ok("Test notification sent");
-} 
+      String userId = request.get("userId");
+      notificationService.sendUserApprovalNotification(userId); 
+      return ResponseEntity.ok("Test notification sent");
+    } 
   }
 
 

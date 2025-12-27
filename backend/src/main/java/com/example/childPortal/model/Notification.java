@@ -7,3 +7,11 @@ import java.time.LocalDateTime;
   public class Notification {
     @Id
     private String id;
+    private String userId;
+    private String type; 
+    private String title;
+    private String message;
+    private boolean read;
+    private String actionUrl;
+    private LocalDateTime createdAt;
+}

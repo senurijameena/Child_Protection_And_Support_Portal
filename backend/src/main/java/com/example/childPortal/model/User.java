@@ -19,9 +19,24 @@ public class User {
     private LocalDateTime registrationDate;
     private LocalDateTime lastLogin;
 
+    private AvailabilityStatus availabilityStatus;
+    private LocalDateTime statusChangedAt;
+    private String statusNote;
+
+    private int currentCaseCount; /
+    private int currentHelpRequestCount; 
+    private int maxCapacity;
+    
+    private WorkSchedule workSchedule;
+
     public User() {
         this.registrationDate = LocalDateTime.now();
         this.active = true;
+        this.availabilityStatus = AvailabilityStatus.AVAILABLE; 
+        this.statusChangedAt = LocalDateTime.now(); 
+        this.currentCaseCount = 0;
+        this.currentHelpRequestCount = 0;
+        this.maxCapacity = 10; 
     }
 
     // Getters and setters

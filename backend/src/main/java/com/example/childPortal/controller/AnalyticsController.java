@@ -43,9 +43,8 @@ startDate = LocalDateTime.now().minusDays(30);
 @GetMapping("/cases/status-distribution")
   public ResponseEntity<Map<String, Long>> getCaseStatusDistribution() {
   Map<String, Long> distribution = analyticsService.getCaseStatusDistribution();
-}
   return ResponseEntity.ok(distribution);
-
+}
 @GetMapping("/cases/type-distribution")
   public ResponseEntity<Map<String, Long>> getCaseTypeDistribution() {
   Map<String, Long> distribution = analyticsService.getCaseTypeDistribution();
@@ -85,7 +84,7 @@ HelpRequestStatisticsDTO statistics = analyticsService.getHelpRequestStatistics(
 @GetMapping("/users/activity")
   public ResponseEntity<List<UserActivityDTO>> getMostActiveUsers(
 @RequestParam(defaultValue = "10") int limit) {
-  List<UserActivityDTO> activeUsers = analyticsService.getMostActiveUsers(limit
+  List<UserActivityDTO> activeUsers = analyticsService.getMostActiveUsers(limit);
     return ResponseEntity.ok(activeUsers);
 }
 

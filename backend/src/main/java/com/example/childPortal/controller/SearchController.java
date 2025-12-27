@@ -39,6 +39,17 @@ import org.springframework.web.bind.annotation.*;
       PaginationDTO<HelpRequestDTO> result = searchService.searchHelpRequests(filte r, pageable);
           return ResponseEntity.ok(result);
     }
+    @GetMapping("/quick/cases")
+    public ResponseEntity<PaginationDTO<CaseDTO>> quickSearchCases(
+      @RequestParam String keyword, 
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+      CaseSearchFilterDTO filter = new CaseSearchFilterDTO(); filter.setKeyword(keyword);
+      Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, " reportDate"));
+      PaginationDTO<CaseDTO> result = searchService.searchCases(filter, pageable);
+        return ResponseEntity.ok(result);
+    }
+}
 
 
 

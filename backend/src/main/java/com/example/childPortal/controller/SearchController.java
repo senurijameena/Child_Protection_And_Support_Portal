@@ -26,4 +26,27 @@ import org.springframework.web.bind.annotation.*;
       PaginationDTO<CaseDTO> result = searchService.searchCases(filter, pageable);
         return ResponseEntity.ok(result);
     }
+    @PostMapping("/help-requests")
+    public ResponseEntity<PaginationDTO<HelpRequestDTO>> searchHelpRequests(
+      @RequestBody HelpRequestSearchFilterDTO filter, 
+      @RequestParam(defaultValue = "0") int page, 
+      @RequestParam(defaultValue = "20") int size, 
+      @RequestParam(defaultValue = "requestDate") String sortBy, 
+      @RequestParam(defaultValue = "DESC") String sortDirection) {
+      Pageable pageable = PageRequest.of( 
+        page, size,
+        Sort.by(Sort.Direction.fromString(sortDirection), sortBy) );
+      PaginationDTO<HelpRequestDTO> result = searchService.searchHelpRequests(filte r, pageable);
+          return ResponseEntity.ok(result);
+    }
 
+
+
+
+
+
+
+
+
+
+    

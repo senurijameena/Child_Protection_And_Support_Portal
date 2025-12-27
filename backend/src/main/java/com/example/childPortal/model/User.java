@@ -39,7 +39,6 @@ public class User {
         this.maxCapacity = 10; 
     }
 
-    // Getters and setters
     public String getId() { 
         return id; 
     }
@@ -174,7 +173,7 @@ public class User {
     } else if (role == Role.SW) {
         currentHelpRequestCount++;
     }
-}
+    }
     public void decrementAssignmentCount() {
 
         if (role == Role.PO) {
@@ -189,7 +188,3 @@ public class User {
 
 
 
-
-
-    
-}

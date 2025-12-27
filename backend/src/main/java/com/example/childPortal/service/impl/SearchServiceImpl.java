@@ -99,5 +99,31 @@ package com.example.childPortal.service.impl;
     query.with(pageable);
     List<Case> cases = mongoTemplate.find(query, Case.class); 
     long total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Case.class);
-
-
+      Page<Case> casesPage = PageableExecutionUtils.getPage( cases, pageable, () -> total);
+      String currentUserId = SecurityContextHolder.getContext().getAuthentication() .getName();
+      Role userRole = getUserRole(currentUserId);
+      Page<CaseDTO> dtoPage = casesPage.map(caseEntity -> CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId));
+      return PaginationUtil.createPaginationResponse(dtoPage); 
+    }
+    @Override
+    public PaginationDTO<HelpRequestDTO> searchHelpRequests(
+      HelpRequestSearchFilterDTO filter, Pageable pageable) { 
+      Query query = new Query();
+      List<Criteria> criteriaList = new ArrayList<>(); 
+      query.with(pageable);
+      List<HelpRequest> helpRequests = mongoTemplate.find(query, HelpRequest.class);
+      long total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), HelpRequest.class);
+      Page<HelpRequest> helpRequestsPage = PageableExecutionUtils.getPage( helpRequests, pageable, () -> total);
+      String currentUserId = SecurityContextHolder.getContext().getAuthentication() .getName();
+      Page<HelpRequestDTO> dtoPage = helpRequestsPage.map(helpRequest -> { 
+        HelpRequestDTO dto = new HelpRequestDTO(); 
+        return dto;
+      });
+      return PaginationUtil.createPaginationResponse(dtoPage);#
+    }
+    private Role getUserRole(String userId) {
+        return userRepository.findById(userId)
+            .map(User::getRole)
+            .orElse(Role.PU);
+    } 
+}

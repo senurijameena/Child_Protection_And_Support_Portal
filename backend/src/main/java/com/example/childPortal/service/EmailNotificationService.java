@@ -48,4 +48,31 @@ private UserRepository userRepository;
     String subject = "Account Approved - Child Protection Portal"; 
     String content = EMAIL_TEMPLATES.get("USER_APPROVED").replace("{LOGIN_URL}", appUrl + "/login"); 
     sendEmail(user.getEmail(), subject, content);
-    logNotification(userId, "USER_APPROVED",
+    logNotification(userId, "USER_APPROVED","Your account has been approved by administrator");
+    }
+  public void sendCaseAssignmentNotification(String userId, String caseId, String p riority) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    String subject = "New Case Assigned - Child Protection Portal"; String content = EMAIL_TEMPLATES.get("CASE_ASSIGNED").replace("{CASE_ID}", caseId) .replace("{PRIORITY}", priority) .replace("{CASE_URL}", appUrl + "/cases/" + caseId);
+    sendEmail(user.getEmail(), subject, content); logNotification(userId, "CASE_ASSIGNED","Case " + caseId + " has been assigned to you");
+  }
+  public void sendHelpRequestUpdate(String userId, String requestId, String status) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    String subject = "Help Request Update - Child Protection Portal"; String content = EMAIL_TEMPLATES.get("HELP_REQUEST_STATUS").replace("{REQUEST_ID}", requestId).replace("{STATUS}", status).replace("{REQUEST_URL}", appUrl + "/help-requests/" + requestId);
+    sendEmail(user.getEmail(), subject, content); logNotification(userId, "HELP_REQUEST_UPDATE","Help request " + requestId + " status changed to " + status);
+  }
+  private void sendEmail(String to, String subject, String content) { 
+    try {
+      MimeMessage message = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    } 
+  }
+  helper.setFrom(fromEmail);
+helper.setTo(to);
+helper.setSubject(subject);
+helper.setText(content, true);
+mailSender.send(message);
+} 
+catch (MessagingException e) {
+  throw new RuntimeException("Failed to send email", e);
+}
+}

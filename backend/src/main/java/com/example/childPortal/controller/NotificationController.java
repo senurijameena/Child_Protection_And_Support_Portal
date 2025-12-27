@@ -8,3 +8,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+
+@RestController 
+  @RequestMapping("/api/notifications") 
+  @CrossOrigin(origins = "*")
+  public class NotificationController {
+    @Autowired
+    private NotificationRepository notificationRepository;
+    @Autowired
+    private NotificationService notificationService;
+    @GetMapping
+    public ResponseEntity<List<Notification>> getUserNotifications(
+      @AuthenticationPrincipal String userId) { 
+      List<Notification> notifications =notificationRepository.findByUserIdOrderByCreatedAtDesc(userId); 
+      return ResponseEntity.ok(notifications);
+    }

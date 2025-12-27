@@ -47,7 +47,7 @@ import java.util.Map;
         notification.setRead(true);
         notificationRepository.save(notification);
         return ResponseEntity.ok(notification);
-      }) 
+     }) 
         .orElse(ResponseEntity.notFound().build());
       }
   
@@ -67,6 +67,7 @@ import java.util.Map;
       return ResponseEntity.ok("Test notification sent");
     } 
   }
+
 
 
 

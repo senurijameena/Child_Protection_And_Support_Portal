@@ -1,0 +1,21 @@
+package com.example.childPortal.dto;
+
+public class CaseResponse {
+    private String caseId;
+    private String message;
+    private boolean success;
+
+    public CaseResponse() {}
+    public CaseResponse(String caseId, String message, boolean success) {
+        this.caseId = caseId;
+        this.message = message;
+        this.success = success;
+    }
+
+    public String getCaseId() { return caseId; }
+    public void setCaseId(String caseId) { this.caseId = caseId; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
+}

@@ -1,0 +1,430 @@
+.hero-section {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+.hero-video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  padding: 80px 15px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-text {
+  margin-bottom: 60px;
+}
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+  line-height: 1.2;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+
+.hero-subtitle {
+  font-size: 1.8rem;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.hero-cards-row {
+  margin-top: 40px;
+}
+
+
+.hero-action-card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.hero-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  padding: 3px;
+  background: linear-gradient(135deg, transparent, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.hero-card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.hero-action-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.hero-action-card:hover .hero-card-glow {
+  opacity: 1;
+}
+
+.hero-action-card:hover::before {
+  opacity: 1;
+}
+
+
+.hero-card-danger {
+  border-top: 4px solid #dc3545;
+}
+
+.hero-card-danger::before {
+  background: linear-gradient(135deg, #dc3545, #ff6b6b, transparent);
+}
+
+.hero-card-danger:hover {
+  border-color: #dc3545;
+}
+
+.hero-card-danger .hero-card-icon-bg {
+  background: linear-gradient(135deg, #ff6b6b, #dc3545);
+}
+
+.hero-card-danger .hero-card-action-btn {
+  background: linear-gradient(135deg, #dc3545, #ff6b6b);
+}
+
+.hero-card-warning {
+  border-top: 4px solid #ffc107;
+}
+
+.hero-card-warning::before {
+  background: linear-gradient(135deg, #ffc107, #ffd93d, transparent);
+}
+
+.hero-card-warning:hover {
+  border-color: #ffc107;
+}
+
+.hero-card-warning .hero-card-icon-bg {
+  background: linear-gradient(135deg, #ffd93d, #ffc107);
+}
+
+.hero-card-warning .hero-card-action-btn {
+  background: linear-gradient(135deg, #ffc107, #ffd93d);
+}
+
+.hero-card-success {
+  border-top: 4px solid #28a745;
+}
+
+.hero-card-success::before {
+  background: linear-gradient(135deg, #28a745, #51cf66, transparent);
+}
+
+.hero-card-success:hover {
+  border-color: #28a745;
+}
+
+.hero-card-success .hero-card-icon-bg {
+  background: linear-gradient(135deg, #51cf66, #28a745);
+}
+
+.hero-card-success .hero-card-action-btn {
+  background: linear-gradient(135deg, #28a745, #51cf66);
+}
+
+
+.hero-card-icon-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.75rem;
+}
+
+.hero-card-icon-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  opacity: 0.15;
+  transition: all 0.4s ease;
+  z-index: 1;
+}
+
+.hero-action-card:hover .hero-card-icon-bg {
+  width: 80px;
+  height: 80px;
+  opacity: 0.25;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.hero-card-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  transition: all 0.4s ease;
+  display: inline-block;
+}
+
+.hero-action-card:hover .hero-card-icon {
+  transform: scale(1.1) rotate(5deg);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
+}
+
+
+.hero-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.hero-card-danger .hero-card-title {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-card-warning .hero-card-title {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-card-success .hero-card-title {
+  background: linear-gradient(135deg, #28a745, #218838);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-card-subtitle {
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+}
+
+.hero-card-description {
+  color: #495057;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  min-height: 40px;
+}
+
+
+.hero-card-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.25rem;
+  border-radius: 50px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-top: 0.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card-action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.hero-card-action-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.hero-card-action-btn span,
+.hero-card-action-btn i {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.hero-card-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hero-card-action-btn:hover i {
+  transform: translateX(5px);
+}
+
+
+@keyframes cardFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-action-card {
+  animation: cardFadeInUp 0.6s ease-out;
+}
+
+.hero-action-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.hero-action-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.hero-action-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+
+@media (max-width: 991.98px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.3rem;
+  }
+  
+  .hero-content {
+    padding: 60px 15px;
+  }
+
+  .hero-card-icon {
+    font-size: 2rem;
+  }
+
+  .hero-card-icon-bg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .hero-action-card:hover .hero-card-icon-bg {
+    width: 70px;
+    height: 70px;
+  }
+
+  .hero-card-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-title {
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .hero-card-icon {
+    font-size: 1.75rem;
+  }
+
+  .hero-card-icon-bg {
+    width: 50px;
+    height: 50px;
+  }
+
+  .hero-action-card:hover .hero-card-icon-bg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .hero-card-title {
+    font-size: 0.95rem;
+  }
+
+  .hero-card-action-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .hero-action-card {
+    padding: 1rem !important;
+  }
+}

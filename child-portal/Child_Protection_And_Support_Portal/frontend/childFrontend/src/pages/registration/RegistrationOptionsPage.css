@@ -1,0 +1,191 @@
+.registration-options-page {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  min-height: 100vh;
+  padding-top: 90px;
+}
+
+.back-to-home-btn {
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-to-home-btn:hover {
+  transform: translateX(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.main-content-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.role-col {
+  position: relative;
+}
+
+.role-card {
+  transition: all 0.3s ease;
+  background: white;
+  border-radius: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.role-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.role-icon {
+  transition: transform 0.3s ease;
+}
+
+.role-card:hover .role-icon {
+  transform: scale(1.1);
+}
+
+.role-features {
+  min-height: 120px;
+}
+
+.role-features li {
+  padding: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.video-text {
+  font-style: italic;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #0d6efd;
+}
+
+.role-button {
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.role-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.route-info {
+  font-size: 0.75rem;
+  font-family: 'Courier New', monospace;
+}
+
+.animated-arrows {
+  padding: 2rem 0;
+}
+
+.animated-arrows i {
+  animation: arrowPulse 2s infinite;
+  opacity: 0.7;
+}
+
+.animated-arrows i:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+@keyframes arrowPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(10px);
+  }
+}
+
+.comparison-card {
+  background: white;
+  border-radius: 12px;
+}
+
+.comparison-table {
+  margin-bottom: 0;
+}
+
+.comparison-table thead {
+  background: linear-gradient(135deg, #1a56db 0%, #2563eb 100%);
+  color: white;
+}
+
+.comparison-table thead th {
+  border: none;
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.comparison-table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-color: #dee2e6;
+}
+
+.comparison-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.comparison-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.comparison-table tbody tr:nth-child(even):hover {
+  background-color: #e9ecef;
+}
+
+
+@media (max-width: 768px) {
+  .main-content-card .card-body {
+    padding: 2rem 1.5rem !important;
+  }
+
+  .role-card {
+    margin-bottom: 2rem;
+  }
+
+  .animated-arrows {
+    display: none;
+  }
+
+  .comparison-table {
+    font-size: 0.85rem;
+  }
+
+  .comparison-table thead th,
+  .comparison-table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .display-4 {
+    font-size: 2rem;
+  }
+
+  .role-icon {
+    font-size: 3rem !important;
+  }
+
+  .comparison-table {
+    font-size: 0.75rem;
+  }
+
+  .comparison-table thead th,
+  .comparison-table tbody td {
+    padding: 0.5rem 0.25rem;
+  }
+}
+

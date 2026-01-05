@@ -1,0 +1,94 @@
+.public-user-layout {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.public-user-layout .dashboard-container {
+  flex: 1;
+  padding-top: 0;
+  padding-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.public-user-layout .sidebar-column {
+  padding-right: 0;
+  padding-left: 15px;
+  padding-top: 0;
+}
+
+.public-user-layout .main-content-column {
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 0;
+  overflow-x: hidden;
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+}
+
+.public-user-layout .dashboard-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.public-user-layout .row {
+  margin-left: 0;
+  margin-right: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.public-user-layout .row > [class*="col-"] {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+@media (max-width: 991px) {
+  .public-user-layout .sidebar-column {
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .public-user-layout .main-content-column {
+    padding-left: 15px;
+    padding-right: 15px;
+    height: auto;
+  }
+
+  .public-user-layout .dashboard-content {
+    padding: 16px;
+    border-radius: 0;
+    min-height: auto;
+    height: auto;
+  }
+
+  .public-user-layout .row > [class*="col-"] {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .public-user-layout .dashboard-content {
+    padding: 12px;
+  }
+
+  .public-user-layout .sidebar-column,
+  .public-user-layout .main-content-column {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}

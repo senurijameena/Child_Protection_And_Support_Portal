@@ -1,0 +1,111 @@
+package com.example.childPortal.security;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Base64;
+import java.util.Date;
+
+@Component
+public class JwtUtil {
+    private final SecretKey secretKey;
+    private final long expiration = 86400000; // 24 hours
+
+    public JwtUtil(@Value("${jwt.secret:defaultSecretKeyForChildPortalSystem}") String secret) {
+        SecretKey key;
+        try {
+
+            byte[] keyBytes;
+            try {
+                keyBytes = Base64.getDecoder().decode(secret);
+
+                if (keyBytes.length < 32) {
+
+                    keyBytes = secret.getBytes();
+                }
+            } catch (IllegalArgumentException e) {
+
+                keyBytes = secret.getBytes();
+            }
+
+            if (keyBytes.length < 32) {
+
+                byte[] paddedKey = new byte[32];
+                System.arraycopy(keyBytes, 0, paddedKey, 0, Math.min(keyBytes.length, 32));
+                keyBytes = paddedKey;
+            }
+            
+            key = Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+
+            key = Keys.hmacShaKeyFor("defaultSecretKeyForChildPortalSystemMinimum32BytesLong!".getBytes());
+        }
+        this.secretKey = key;
+    }
+
+    public String generateToken(String userId, String email, String role) {
+        return Jwts.builder()
+                .setSubject(userId) // Store user ID as subject
+                .claim("email", email)
+                .claim("role", role)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public String getUserIdFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    public String getEmailFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("email", String.class);
+    }
+
+    public String getRoleFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role", String.class);
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            if (claims.getExpiration().before(new Date())) {
+                return false;
+            }
+            
+            return true;
+        } catch (ExpiredJwtException e) {
+
+            return false;
+        } catch (JwtException | IllegalArgumentException e) {
+
+            return false;
+        }
+    }
+}

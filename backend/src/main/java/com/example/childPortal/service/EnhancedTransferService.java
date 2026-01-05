@@ -10,8 +10,7 @@ import java.util.stream.Collectors;
 public class EnhancedTransferService {
 @Autowired
 private UserRepository userRepository;
-@Autowired
-private StatusManagementService statusManagementService;
+
 public List<User> findSuitableRecipientsForTransfer(User currentUser, String entityType,String location,boolean isEmergency) {
   Role targetRole = entityType.equals("CASE") ? Role.PO : Role.SW;
   List<User> allUsers = userRepository.findByRole(targetRole);
@@ -20,7 +19,7 @@ public List<User> findSuitableRecipientsForTransfer(User currentUser, String ent
     .limit(10) 
     .collect(Collectors.toList());
 }
-  private boolean isUserSuitableForTransfer(User user, String location, boolean isE mergency) {
+  private boolean isUserSuitableForTransfer(User user, String location, boolean isEmergency) {
         if (!user.canTakeMoreAssignments()) {
             return false;
 }

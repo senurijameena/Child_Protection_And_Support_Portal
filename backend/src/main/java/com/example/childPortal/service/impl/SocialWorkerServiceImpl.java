@@ -22,7 +22,7 @@ public class SocialWorkerServiceImpl implements SocialWorkerService {
         worker.setSpecializations(socialWorkerDTO.getSpecializations());
         worker.setOrganization(socialWorkerDTO.getOrganization());
         worker.setYearsOfExperience(Integer.parseInt(socialWorkerDTO.getYearsOfExperience()));
-        worker.setIdDocumentUrl(socialWorkerDTO.getLicenseNumber()); // Assuming this is the ID doc
+        worker.setIdDocumentUrl(socialWorkerDTO.getLicenseNumber()); 
         return socialWorkerRepository.save(worker);
     }
 

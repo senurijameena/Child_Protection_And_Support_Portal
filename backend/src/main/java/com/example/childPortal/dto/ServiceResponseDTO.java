@@ -6,7 +6,6 @@ public class ServiceResponseDTO {
     private String responseMessage;
     private String userId;
 
-    // Getters and setters
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public String getOfferId() { return offerId; }

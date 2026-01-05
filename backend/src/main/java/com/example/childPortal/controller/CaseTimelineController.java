@@ -53,6 +53,12 @@ public class CaseTimelineController {
     return ResponseEntity.ok(count);
   }
   
+  @GetMapping("/help-request/{helpRequestId}/count")
+  public ResponseEntity<Long> getHelpRequestEventCount(@PathVariable String helpRequestId) {
+    long count = caseTimelineService.getEventCountForHelpRequest(helpRequestId);
+    return ResponseEntity.ok(count);
+  }
+  
   @PostMapping("/create")
   public ResponseEntity<String> createTimelineEvent(@RequestBody CaseTimelineDTO timelineDTO) {
     caseTimelineService.createTimelineEvent(timelineDTO);

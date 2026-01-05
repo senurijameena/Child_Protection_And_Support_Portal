@@ -18,7 +18,6 @@ public class FeedbackResponseDTO {
     private String message;
     private boolean success;
 
-    // Constructors
     public FeedbackResponseDTO() {}
     public FeedbackResponseDTO(String message, boolean success) {
         this.message = message;
@@ -26,7 +25,6 @@ public class FeedbackResponseDTO {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getCaseId() { return caseId; }

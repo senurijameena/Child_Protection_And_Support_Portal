@@ -14,7 +14,6 @@ public class ServiceOfferDTO {
     private OfferStatus status;
     private LocalDateTime offerDate;
 
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getHelpRequestId() { return helpRequestId; }

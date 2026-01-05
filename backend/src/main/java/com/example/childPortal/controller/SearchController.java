@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
       Pageable pageable = PageRequest.of( 
         page, size,
         Sort.by(Sort.Direction.fromString(sortDirection), sortBy) );
-      PaginationDTO<HelpRequestDTO> result = searchService.searchHelpRequests(filte r, pageable);
+      PaginationDTO<HelpRequestDTO> result = searchService.searchHelpRequests(filter, pageable);
           return ResponseEntity.ok(result);
     }
     @GetMapping("/quick/cases")
@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.*;
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size) {
       CaseSearchFilterDTO filter = new CaseSearchFilterDTO(); filter.setKeyword(keyword);
-      Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, " reportDate"));
+      Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reportDate"));
       PaginationDTO<CaseDTO> result = searchService.searchCases(filter, pageable);
         return ResponseEntity.ok(result);
     }

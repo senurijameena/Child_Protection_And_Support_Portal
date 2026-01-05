@@ -4,10 +4,12 @@ import com.example.childPortal.repository.NotificationRepository;
 import com.example.childPortal.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.annotation.AuthenticationPrincipal; 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController 
   @RequestMapping("/api/notifications") 
@@ -37,12 +39,13 @@ import java.util.Map;
     }
     
     @PutMapping("/{notificationId}/read")
-    public ResponseEntity<Notification> markAsRead(
-      @PathVariable String notificationId,
+    public ResponseEntity<?> markAsRead(
+      @PathVariable @NonNull String notificationId,
       @AuthenticationPrincipal String userId) {
+      Objects.requireNonNull(notificationId, "Notification ID cannot be null");
       return notificationRepository.findById(notificationId).map(notification -> {
         if (!notification.getUserId().equals(userId)) {
-          return ResponseEntity.status(403).build(); 
+          return ResponseEntity.status(403).<Notification>build(); 
         }
         notification.setRead(true);
         notificationRepository.save(notification);

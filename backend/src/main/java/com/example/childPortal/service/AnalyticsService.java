@@ -7,10 +7,10 @@ import java.util.Map;
 public interface AnalyticsService { 
     CaseStatisticsDTO getCaseStatistics(LocalDateTime startDate, LocalDateTime endDate);
 Map<String, Long> getCaseStatusDistribution();
-Map<String, Long> getCasetypeDistribution();
+Map<String, Long> getCaseTypeDistribution();
 List<CaseTrendDTO> getCaseTrends(String period);
 
-HelpRequestStatisticsDTO getHelpRequestStatistics(LocalDateTime startDate, LocalD ateTime endDate);
+HelpRequestStatisticsDTO getHelpRequestStatistics(LocalDateTime startDate, LocalDateTime endDate);
 Map<String, Long> getHelpTypeDistribution(); 
 Map<String, Long> getHelpRequestStatusDistribution();
 

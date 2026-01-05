@@ -18,7 +18,6 @@ public interface ServiceOfferService {
     ServiceOfferDTO respondToServiceOffer(ServiceResponseDTO responseDTO); 
     ServiceOfferDTO updateServiceOfferStatus(String offerId, OfferStatus status); 
     boolean cancelServiceOffer(String offerId); 
-    
-    // Optional
+
     List<ServiceOfferDTO> getExpiredOffers();
 }

@@ -11,8 +11,8 @@ public class UserDTO {
     private boolean active;
     private boolean approved;
     private LocalDateTime registrationDate;
-    
-    // Getters and setters
+    private LocalDateTime lastLogin;
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getFullName() { return fullName; }
@@ -29,4 +29,6 @@ public class UserDTO {
     public void setApproved(boolean approved) { this.approved = approved; }
     public LocalDateTime getRegistrationDate() { return registrationDate; }
     public void setRegistrationDate(LocalDateTime registrationDate) { this.registrationDate = registrationDate; }
+    public LocalDateTime getLastLogin() { return lastLogin; }
+    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
 }

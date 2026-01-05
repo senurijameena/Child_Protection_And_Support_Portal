@@ -75,6 +75,12 @@ HelpRequestStatisticsDTO statistics = analyticsService.getHelpRequestStatistics(
     return ResponseEntity.ok(statistics);
 }
 
+@GetMapping("/help-requests/type-distribution")
+  public ResponseEntity<Map<String, Long>> getHelpTypeDistribution() {
+  Map<String, Long> distribution = analyticsService.getHelpTypeDistribution();
+    return ResponseEntity.ok(distribution);
+}
+
 @GetMapping("/users/statistics")
   public ResponseEntity<UserStatisticsDTO> getUserStatistics() {
   UserStatisticsDTO statistics = analyticsService.getUserStatistics();

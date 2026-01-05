@@ -72,7 +72,7 @@ public class SocialWorker {
     public String getQualificationLevel() { return qualificationLevel; }
     public void setQualificationLevel(String qualificationLevel) {this.qualificationLevel = qualificationLevel; }
     public String getContactHours() { return contactHours; }
-    public void setContactHours(String contactHours) { this.contactHours = contactHou rs; }
+    public void setContactHours(String contactHours) { this.contactHours = contactHours; }
     public String getEmergencyContact() { return emergencyContact; }
     public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
     public boolean isProvidesHomeVisits() { return providesHomeVisits; } 
@@ -87,7 +87,7 @@ public class SocialWorker {
     public void setTotalServicesProvided(int totalServicesProvided) {this.totalServicesProvided = totalServicesProvided; }
     public double getClientSatisfactionScore() { return clientSatisfactionScore; } 
     public void setClientSatisfactionScore(double clientSatisfactionScore) {this.clientSatisfactionScore = clientSatisfactionScore; }
-    public int getSuccessfulServiceCompletions() { return successfulServiceCompletion s; }
+    public int getSuccessfulServiceCompletions() { return successfulServiceCompletions; }
     public void setSuccessfulServiceCompletions(int successfulServiceCompletions) { this.successfulServiceCompletions = successfulServiceCompletions;}
     public int getEmergencyServicesProvided() { return emergencyServicesProvided; } 
     public void setEmergencyServicesProvided(int emergencyServicesProvided) {this.emergencyServicesProvided = emergencyServicesProvided; }
@@ -104,9 +104,11 @@ public class SocialWorker {
     public boolean canHandleHelpType(HelpType helpType) {
         if (preferredServiceTypes == null || preferredServiceTypes.isEmpty()) {
             return true; 
-            return preferredServiceTypes.contains(helpType.name()); }
-        public boolean speaksLanguage(String language) {
-            return languages != null && languages.contains(language);
+        }
+        return preferredServiceTypes.contains(helpType.name()); 
+    }
+    public boolean speaksLanguage(String language) {
+        return languages != null && languages.contains(language);
     }
     public double getWorkloadPercentage() {
         return (double) currentServiceCount / maxConcurrentServices * 100;

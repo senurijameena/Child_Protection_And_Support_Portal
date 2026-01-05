@@ -8,7 +8,6 @@ public class SocialWorkerDTO {
     private String organization;
     private String yearsOfExperience;
 
-    // Getters and setters
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public String getLicenseNumber() { return licenseNumber; }

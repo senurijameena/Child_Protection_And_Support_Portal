@@ -28,6 +28,8 @@ private String targetName;
 
 private Case.CaseStatus previousStatus; 
 private Case.CaseStatus newStatus;
+private HelpRequest.RequestStatus previousHelpRequestStatus;
+private HelpRequest.RequestStatus newHelpRequestStatus;
 private String statusChangeReason;
 
 private LocalDateTime eventTime;
@@ -45,31 +47,58 @@ private String assignedToUserId;
 private String assignedFromUserId;
 
 public enum EventType {
-CASE_CREATED,
-CASE_APPROVED,
-CASE_REJECTED,
-CASE_ASSIGNED,
-CASE_UNASSIGNED,
-STATUS_CHANGED,
-PRIORITY_CHANGED,
-INFORMATION_REQUESTED,
-INFORMATION_PROVIDED,
-EVIDENCE_ADDED,
-DOCUMENT_ADDED,
-NOTE_ADDED,
-MEETING_SCHEDULED,
-MEETING_COMPLETED,
-FOLLOWUP_CREATED,
-CASE_RESOLVED,
-CASE_CLOSED,
-FEEDBACK_SUBMITTED,
-SERVICE_OFFERED,
-SERVICE_ACCEPTED,
-SERVICE_REJECTED,
-SERVICE_COMPLETED,
-SYSTEM_AUTO_ACTION,
-ADMIN_OVERRIDE,
-OTHER
+
+    CASE_CREATED,
+    CASE_APPROVED,
+    CASE_REJECTED,
+    CASE_ASSIGNED,
+    CASE_UNASSIGNED,
+    STATUS_CHANGED,
+    PRIORITY_CHANGED,
+    INFORMATION_REQUESTED,
+    INFORMATION_PROVIDED,
+    EVIDENCE_ADDED,
+    DOCUMENT_ADDED,
+    NOTE_ADDED,
+    MEETING_SCHEDULED,
+    MEETING_COMPLETED,
+    FOLLOWUP_CREATED,
+    CASE_RESOLVED,
+    CASE_CLOSED,
+    FEEDBACK_SUBMITTED,
+    SERVICE_OFFERED,
+    SERVICE_ACCEPTED,
+    SERVICE_REJECTED,
+    SYSTEM_AUTO_ACTION,
+    ADMIN_OVERRIDE,
+
+    HELP_REQUEST_CREATED,
+    HELP_REQUEST_SUBMITTED,
+    HELP_REQUEST_UNDER_REVIEW,
+    HELP_REQUEST_ASSIGNED,
+    HELP_REQUEST_UNASSIGNED,
+    HELP_REQUEST_STATUS_CHANGED,
+    HELP_REQUEST_PRIORITY_CHANGED,
+    HELP_REQUEST_IN_PROGRESS,
+    HELP_REQUEST_COMPLETED,
+    HELP_REQUEST_REJECTED,
+    HELP_REQUEST_CANCELLED,
+    SERVICE_OFFER_CREATED,
+    SERVICE_OFFER_ACCEPTED,
+    SERVICE_OFFER_DECLINED,
+    SERVICE_OFFER_WITHDRAWN,
+    SERVICE_STARTED,
+    SERVICE_COMPLETED,
+    SERVICE_CANCELLED,
+    HELP_REQUEST_TRANSFER_REQUESTED,
+    HELP_REQUEST_TRANSFER_APPROVED,
+    HELP_REQUEST_TRANSFER_REJECTED,
+    HELP_REQUEST_NOTE_ADDED,
+    HELP_REQUEST_DOCUMENT_ADDED,
+    HELP_REQUEST_UPDATE_PROVIDED,
+    HELP_REQUEST_FEEDBACK_SUBMITTED,
+    
+    OTHER
 }
 
 public CaseTimelineEvent() { 
@@ -120,6 +149,12 @@ public void setPreviousStatus(Case.CaseStatus previousStatus) { this.previousSta
 
 public Case.CaseStatus getNewStatus() { return newStatus; }
 public void setNewStatus(Case.CaseStatus newStatus) { this.newStatus = newStatus; }
+
+public HelpRequest.RequestStatus getPreviousHelpRequestStatus() { return previousHelpRequestStatus; }
+public void setPreviousHelpRequestStatus(HelpRequest.RequestStatus previousHelpRequestStatus) { this.previousHelpRequestStatus = previousHelpRequestStatus; }
+
+public HelpRequest.RequestStatus getNewHelpRequestStatus() { return newHelpRequestStatus; }
+public void setNewHelpRequestStatus(HelpRequest.RequestStatus newHelpRequestStatus) { this.newHelpRequestStatus = newHelpRequestStatus; }
 
 public String getStatusChangeReason() { return statusChangeReason; }
 public void setStatusChangeReason(String statusChangeReason) { this.statusChangeReason = statusChangeReason; }

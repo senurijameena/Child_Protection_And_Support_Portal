@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*; 
 import java.util.List;
+import java.util.Map;
 
 @RestController 
 @RequestMapping("/api/feedback") 
@@ -106,6 +107,26 @@ public class FeedbackController {
     public ResponseEntity<Double> getAverageRating() { 
         Double averageRating = feedbackService.getAverageRating(); 
         return ResponseEntity.ok(averageRating); 
+    }
+
+    @GetMapping("/rating-distribution")
+    public ResponseEntity<Map<Integer, Long>> getRatingDistribution() {
+        Map<Integer, Long> distribution = feedbackService.getRatingDistribution();
+        return ResponseEntity.ok(distribution);
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics() {
+        Double averageRating = feedbackService.getAverageRating();
+        Long totalCount = feedbackService.getTotalFeedbackCount();
+        Map<Integer, Long> distribution = feedbackService.getRatingDistribution();
+        
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("averageRating", averageRating);
+        stats.put("totalCount", totalCount);
+        stats.put("ratingDistribution", distribution);
+        
+        return ResponseEntity.ok(stats);
     } 
 
     @GetMapping("/category/{category}")

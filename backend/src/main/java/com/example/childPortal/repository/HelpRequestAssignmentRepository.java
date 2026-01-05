@@ -12,6 +12,5 @@ public interface HelpRequestAssignmentRepository extends MongoRepository<HelpReq
  Optional<HelpRequestAssignment> findByHelpRequestId(String helpRequestId);
  List<HelpRequestAssignment> findByStatus(AssignmentStatus status);
  List<HelpRequestAssignment> findByPriority(String priority);
- List<HelpRequestAssignment> findByRiskScoreGreaterThan(Integer minRiskScore);
  List<HelpRequestAssignment> findByTransferRequested(boolean transferRequested);
 }

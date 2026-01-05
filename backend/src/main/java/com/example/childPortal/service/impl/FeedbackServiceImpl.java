@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class FeedbackServiceImpl implements FeedbackService {
@@ -140,6 +142,27 @@ public class FeedbackServiceImpl implements FeedbackService {
         return feedbackRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .toList();
+    }
+
+    @Override
+    public Map<Integer, Long> getRatingDistribution() {
+        List<Feedback> feedbacks = feedbackRepository.findAll();
+        return feedbacks.stream()
+                .filter(f -> f.getRating() != null)
+                .map(f -> {
+                    try {
+                        return Integer.parseInt(f.getRating());
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(rating -> rating != null && rating >= 1 && rating <= 5)
+                .collect(Collectors.groupingBy(rating -> rating, Collectors.counting()));
+    }
+
+    @Override
+    public Long getTotalFeedbackCount() {
+        return feedbackRepository.count();
     }
 
     private FeedbackResponseDTO convertToResponseDTO(Feedback feedback) {

@@ -8,18 +8,15 @@ import java.time.LocalDateTime;
 public class TransferRequest {
     @Id
     private String id;
-    
-    // Entity being transferred
+
     private String entityId; // caseId or helpRequestId
     private String entityType; // "CASE" or "HELP_REQUEST"
-    
-    // Transfer details
+
     private String fromUserId;
     private String toUserId;
     private String reason;
     private TransferStatus status;
-    
-    // Timestamps
+
     private LocalDateTime requestedAt;
     private LocalDateTime processedAt;
     private String processedBy;
@@ -36,7 +33,6 @@ public class TransferRequest {
         this.status = TransferStatus.PENDING;
     }
 
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getEntityId() { return entityId; }

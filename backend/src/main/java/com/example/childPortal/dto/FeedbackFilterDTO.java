@@ -17,7 +17,6 @@ public class FeedbackFilterDTO {
 
     public FeedbackFilterDTO() {}
 
-    // Getters and setters
     public String getCaseId() { return caseId; }
     public void setCaseId(String caseId) { this.caseId = caseId; }
     public String getUserId() { return userId; }

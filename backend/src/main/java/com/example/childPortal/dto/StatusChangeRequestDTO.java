@@ -10,7 +10,7 @@ private boolean autoReturn;
     return newStatus; 
   }
   public void setNewStatus(AvailabilityStatus newStatus) { 
-    this.newStatus = newStat us;
+    this.newStatus = newStatus;
   }
   public String getNote() { 
     return note; 

@@ -1,10 +1,16 @@
 package com.example.childPortal.service;
 import com.example.childPortal.dto.StatusChangeRequestDTO;
+import com.example.childPortal.dto.CaseTimelineDTO;
 import com.example.childPortal.model.*;
-import com.example.childPortal.repository.UserRepository; import org.springframework.beans.factory.annotation.Autowired; import org.springframework.stereotype.Service;
+import com.example.childPortal.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 @Service
 @Transactional
@@ -64,7 +70,8 @@ private NotificationService notificationService;
       details.put("currentCaseCount", user.getCurrentCaseCount()); 
       details.put("workloadPercentage",(double) user.getCurrentCaseCount() / user.getMaxCapacity() * 100); 
     } else if (user.getRole() == Role.SW) {
-      details.put("currentHelpRequestCount", user.getCurrentHelpRequestCount()) details.put("workloadPercentage",(double) user.getCurrentHelpRequestCount() / user.getMaxCapacity() *;100);
+      details.put("currentHelpRequestCount", user.getCurrentHelpRequestCount());
+      details.put("workloadPercentage", (double) user.getCurrentHelpRequestCount() / user.getMaxCapacity() * 100);
     }
     if (user.getWorkSchedule() != null) { 
       details.put("isCurrentlyAvailableBySchedule",user.getWorkSchedule().isCurrentlyAvailable()); 
@@ -162,7 +169,7 @@ stats.put("averageWorkload", avgWorkload);
         return stats;
     }
 private boolean isValidStatusTransition(AvailabilityStatus oldStatus, AvailabilityStatus newStatus,Role role) {
-  Map<AvailabilityStatus, List<AvailabilityStatus>> validTransitions = new Hash Map<>();
+  Map<AvailabilityStatus, List<AvailabilityStatus>> validTransitions = new HashMap<>();
   validTransitions.put(AvailabilityStatus.AVAILABLE, Arrays.asList( AvailabilityStatus.BUSY,AvailabilityStatus.OFF_DUTY, AvailabilityStatus.EMERGENCY_ONLY));
 validTransitions.put(AvailabilityStatus.BUSY, Arrays.asList( AvailabilityStatus.AVAILABLE, AvailabilityStatus.OFF_DUTY, AvailabilityStatus.EMERGENCY_ONLY));
 validTransitions.put(AvailabilityStatus.OFF_DUTY, Arrays.asList( AvailabilityStatus.AVAILABLE, AvailabilityStatus.EMERGENCY_ONLY));

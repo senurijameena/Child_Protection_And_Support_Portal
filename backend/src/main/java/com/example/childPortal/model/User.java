@@ -16,6 +16,7 @@ public class User {
     private boolean active;
     private boolean approved;
     private String officialIdFile;
+    private String profilePhoto;
     private LocalDateTime registrationDate;
     private LocalDateTime lastLogin;
 
@@ -23,7 +24,7 @@ public class User {
     private LocalDateTime statusChangedAt;
     private String statusNote;
 
-    private int currentCaseCount; /
+    private int currentCaseCount;
     private int currentHelpRequestCount; 
     private int maxCapacity;
     
@@ -32,6 +33,7 @@ public class User {
     public User() {
         this.registrationDate = LocalDateTime.now();
         this.active = true;
+        this.approved = true; // Auto-approve all users on registration
         this.availabilityStatus = AvailabilityStatus.AVAILABLE; 
         this.statusChangedAt = LocalDateTime.now(); 
         this.currentCaseCount = 0;
@@ -93,6 +95,12 @@ public class User {
     public void setOfficialIdFile(String officialIdFile) {
         this.officialIdFile = officialIdFile; 
     }
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
+    }
     public LocalDateTime getRegistrationDate() { 
         return registrationDate;
     }
@@ -116,7 +124,7 @@ public class User {
         return statusChangedAt;
     }
     public void setStatusChangedAt(LocalDateTime statusChangedAt) {
-        this.statusChange dAt = statusChangedAt;
+        this.statusChangedAt = statusChangedAt;
     }
     public String getStatusNote() { 
         return statusNote;
@@ -128,7 +136,7 @@ public class User {
         return currentCaseCount; 
     }
     public void setCurrentCaseCount(int currentCaseCount) {
-        this.currentCaseCount = c urrentCaseCount; 
+        this.currentCaseCount = currentCaseCount;
     }
     public int getCurrentHelpRequestCount() { 
         return currentHelpRequestCount;
@@ -146,7 +154,7 @@ public class User {
         return workSchedule;
     }
     public void setWorkSchedule(WorkSchedule workSchedule) {
-        this.workSchedule = work Schedule;
+        this.workSchedule = workSchedule;
     }
     
     public boolean canTakeMoreAssignments() {

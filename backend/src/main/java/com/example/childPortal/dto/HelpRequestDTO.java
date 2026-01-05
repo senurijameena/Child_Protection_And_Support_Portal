@@ -14,7 +14,7 @@ public class HelpRequestDTO {
     private String requesterName;
     private String approximateAge;
     private String gender;
-    private String identificationMarks; // Add this field
+    private String identificationMarks;
     private HelpType helpType;
     private String description;
     private String location;
@@ -22,11 +22,10 @@ public class HelpRequestDTO {
     private RequestStatus status;
     private String assignedWorkerId;
     private LocalDateTime requestDate;
-    private Priority priority; // Add this field
+    private Priority priority;
     
     public HelpRequestDTO() {}
 
-    // Getters and setters for ALL fields
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     
@@ -48,7 +47,6 @@ public class HelpRequestDTO {
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
     
-    // ADD THIS GETTER AND SETTER:
     public String getIdentificationMarks() { return identificationMarks; }
     public void setIdentificationMarks(String identificationMarks) { this.identificationMarks = identificationMarks; }
     
@@ -73,7 +71,6 @@ public class HelpRequestDTO {
     public LocalDateTime getRequestDate() { return requestDate; }
     public void setRequestDate(LocalDateTime requestDate) { this.requestDate = requestDate; }
     
-    // ADD THESE FOR PRIORITY:
     public Priority getPriority() { return priority; }
     public void setPriority(Priority priority) { this.priority = priority; }
 }

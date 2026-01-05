@@ -13,28 +13,24 @@ public class HelpRequest {
     private String requesterUserId;
     private boolean anonymous;
     private String requesterName;
-    
-    // Child details
+
     private String approximateAge;
     private String gender;
      private String identificationMarks;
-    // Request details
+
     private HelpType helpType;
     private String description;
     private String location;
     private List<String> documentUrls;
-    
-    // Status and assignment
+
     private RequestStatus status;
     private String assignedWorkerId;
     private Priority priority;
-    
-    // Timestamps
+
     private LocalDateTime requestDate;
     private LocalDateTime lastUpdated;
     private LocalDateTime completionDate;
-    
-    // Simple notes field
+
     private String requestNotes;
     
     public enum RequestStatus {
@@ -53,15 +49,15 @@ public class HelpRequest {
         this.priority = Priority.MEDIUM;
     }
 
-    // Generate tracking ID
     public String generateTrackingId() {
         if (this.id != null && this.id.length() >= 4) {
-            return "HR-" + this.id.substring(0, 4).toUpperCase();
+            String prefix = this.anonymous ? "ANON-" : "HELP-";
+            return prefix + this.id.substring(0, 4).toUpperCase();
         }
-        return "HR-" + this.id;
+        String prefix = this.anonymous ? "ANON-" : "HELP-";
+        return prefix + (this.id != null ? this.id : "UNKNOWN");
     }
 
-    // Getters and setters
     public String getIdentificationMarks() {
         return identificationMarks;
     }

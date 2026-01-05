@@ -3,7 +3,6 @@ package com.example.childPortal.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,17 +14,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -35,41 +32,80 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "*"
+        ));
+
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
+        ));
+
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials"
+        ));
+
         configuration.setAllowCredentials(true);
+
         configuration.setMaxAge(3600L);
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
+    @Autowired
+    private SecurityExceptionHandler securityExceptionHandler;
+    
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
             .csrf(csrf -> csrf.disable())
+
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(securityExceptionHandler)
+                .accessDeniedHandler(securityExceptionHandler)
+            )
+
             .authorizeHttpRequests(authz -> authz
-                // Allow all auth endpoints
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/cases/public/**").permitAll()
+
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/health").permitAll()
-                
-                // Admin endpoints
+                .requestMatchers("/api/cases/public/**").permitAll()
+                .requestMatchers("/statistics/public").permitAll()
+                .requestMatchers("/api/feedback/public").permitAll()
+
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                
-                // Police officer endpoints
                 .requestMatchers("/api/cases/officer/**").hasAuthority("ROLE_PO")
-                
-                // Social worker endpoints
                 .requestMatchers("/api/services/offer").hasAuthority("ROLE_SW")
                 .requestMatchers("/api/help-requests/assign").hasAuthority("ROLE_SW")
-                
-                // Authenticated endpoints
+
                 .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/api/cases/**").authenticated()
                 .requestMatchers("/api/help-requests/**").authenticated()
@@ -77,10 +113,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/services/**").authenticated()
                 .requestMatchers("/api/transfers/**").authenticated()
                 .requestMatchers("/api/timeline/**").authenticated()
-                
-                // Any other request
+                .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/api/status/**").authenticated()
+                .requestMatchers("/api/duplicates/**").authenticated()
+                .requestMatchers("/api/dashboard/**").authenticated()
+                .requestMatchers("/api/anonymity/**").authenticated()
+
                 .anyRequest().authenticated()
             )
+
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

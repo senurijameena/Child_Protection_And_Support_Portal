@@ -12,6 +12,7 @@ import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
+import com.example.childPortal.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,13 +29,12 @@ public class CaseServiceImpl implements CaseService {
 
     @Autowired private CaseRepository caseRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired(required = false) private NotificationService notificationService;
 
     @Override
     @Transactional
     public CaseResponse reportCase(CaseReportRequest request, String reporterUserId) {
         try {
-            LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
-        
             List<Case> similarCases = caseRepository.findByLocationAndApproximateAgeAndGenderAndIncidentDateBetween(
                 request.getLocation(),
                 request.getApproximateAge(),
@@ -67,7 +67,7 @@ public class CaseServiceImpl implements CaseService {
                 switch (request.getCaseType()) {
                     case MISSING_CHILD:
                     case CHILD_TRAFFICKING:
-                        caseEntity.setPriority(Priority.URGENT);
+                        caseEntity.setPriority(Priority.HIGH);
                         caseEntity.setEmergency(true);
                         break;
                     case CHILD_ABUSE:
@@ -86,13 +86,17 @@ public class CaseServiceImpl implements CaseService {
                     caseEntity.setReporterName(reporter.get().getFullName());
                 }
             } else {
-                Optional<User> reporter = userRepository.findById(reporterUserId);
-                if (reporter.isPresent()) {
-                    caseEntity.setReporterName(reporter.get().getFullName());
-                }
+
+                caseEntity.setReporterName("Anonymous Reporter");
             }
 
             Case savedCase = caseRepository.save(caseEntity);
+            
+            // Send notification (app notification only for anonymous, email + app for non-anonymous)
+            if (notificationService != null && reporterUserId != null) {
+                notificationService.sendCaseCreatedNotification(reporterUserId, savedCase.getId(), request.isAnonymous());
+            }
+            
             return new CaseResponse(savedCase.getId(), "Case reported successfully", true);
         } catch (Exception e) {
             return new CaseResponse(null, "Failed to report case: " + e.getMessage(), false);
@@ -347,7 +351,7 @@ public class CaseServiceImpl implements CaseService {
         caseEntity.setPriority(priority);
         caseEntity.setLastUpdated(LocalDateTime.now());
 
-        caseEntity.setEmergency(priority == Priority.URGENT || priority == Priority.CRITICAL);
+        caseEntity.setEmergency(priority == Priority.HIGH);
         
         Case updatedCase = caseRepository.save(caseEntity);
 

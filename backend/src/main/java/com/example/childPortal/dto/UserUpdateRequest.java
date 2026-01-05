@@ -18,8 +18,7 @@ public class UserUpdateRequest {
     private List<String> specializations;
     private String organization;
     private String yearsOfExperience;
-    
-    // Getters and setters
+
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }

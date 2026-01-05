@@ -7,7 +7,6 @@ public class PoliceOfficerDTO {
     private String rank;
     private String stationAddress;
 
-    // Getters and setters
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public String getBadgeNumber() { return badgeNumber; }

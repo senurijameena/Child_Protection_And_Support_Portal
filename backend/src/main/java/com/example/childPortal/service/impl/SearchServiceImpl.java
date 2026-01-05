@@ -4,7 +4,7 @@ package com.example.childPortal.service.impl;
   import com.example.childPortal.model.*;
   import com.example.childPortal.repository.*;
   import com.example.childPortal.service.SearchService;
-  import com.example.childPortal.util.PaginationUtil;
+
   import org.springframework.beans.factory.annotation.Autowired;
   import org.springframework.data.domain.Page;
   import org.springframework.data.domain.Pageable;
@@ -27,7 +27,7 @@ package com.example.childPortal.service.impl;
     @Autowired
     private UserRepository userRepository;
     @Override
-    public PaginationDTO<CaseDTO> searchCases(CaseSearchFilterDTO filter, Pageable pa geable) {
+    public PaginationDTO<CaseDTO> searchCases(CaseSearchFilterDTO filter, Pageable pageable) {
       Query query = new Query();
       List<Criteria> criteriaList = new ArrayList<>();
       
@@ -75,8 +75,8 @@ package com.example.childPortal.service.impl;
         criteriaList.add(Criteria.where("incidentDate").lte(filter.getEndDate()));
       }
      
-      if (filter.getAssignedOfficerId() != null && !filter.getAssignedOfficerId().i sEmpty()) {
-        criteriaList.add(Criteria.where("assignedOfficerId").is(filter.getAssigne dOfficerId()));
+      if (filter.getAssignedOfficerId() != null && !filter.getAssignedOfficerId().isEmpty()) {
+        criteriaList.add(Criteria.where("assignedOfficerId").is(filter.getAssignedOfficerId()));
       }
 
       if (filter.getAssignedWorkerId() != null && !filter.getAssignedWorkerId().isEmpty()) {
@@ -100,10 +100,20 @@ package com.example.childPortal.service.impl;
     List<Case> cases = mongoTemplate.find(query, Case.class); 
     long total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Case.class);
       Page<Case> casesPage = PageableExecutionUtils.getPage( cases, pageable, () -> total);
-      String currentUserId = SecurityContextHolder.getContext().getAuthentication() .getName();
+      String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
       Role userRole = getUserRole(currentUserId);
       Page<CaseDTO> dtoPage = casesPage.map(caseEntity -> CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId));
-      return PaginationUtil.createPaginationResponse(dtoPage); 
+      PaginationDTO<CaseDTO> paginationDTO = new PaginationDTO<>();
+      paginationDTO.setContent(dtoPage.getContent());
+      paginationDTO.setTotalElements(dtoPage.getTotalElements());
+      paginationDTO.setTotalPages(dtoPage.getTotalPages());
+      paginationDTO.setPage(dtoPage.getNumber());
+      paginationDTO.setSize(dtoPage.getSize());
+      paginationDTO.setFirst(dtoPage.isFirst());
+      paginationDTO.setLast(dtoPage.isLast());
+      paginationDTO.setHasNext(dtoPage.hasNext());
+      paginationDTO.setHasPrevious(dtoPage.hasPrevious());
+      return paginationDTO;
     }
     @Override
     public PaginationDTO<HelpRequestDTO> searchHelpRequests(
@@ -114,13 +124,69 @@ package com.example.childPortal.service.impl;
       List<HelpRequest> helpRequests = mongoTemplate.find(query, HelpRequest.class);
       long total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), HelpRequest.class);
       Page<HelpRequest> helpRequestsPage = PageableExecutionUtils.getPage( helpRequests, pageable, () -> total);
-      String currentUserId = SecurityContextHolder.getContext().getAuthentication() .getName();
+      String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
       Page<HelpRequestDTO> dtoPage = helpRequestsPage.map(helpRequest -> { 
         HelpRequestDTO dto = new HelpRequestDTO(); 
         return dto;
       });
-      return PaginationUtil.createPaginationResponse(dtoPage);#
+      PaginationDTO<HelpRequestDTO> paginationDTO = new PaginationDTO<>();
+      paginationDTO.setContent(dtoPage.getContent());
+      paginationDTO.setTotalElements(dtoPage.getTotalElements());
+      paginationDTO.setTotalPages(dtoPage.getTotalPages());
+      paginationDTO.setPage(dtoPage.getNumber());
+      paginationDTO.setSize(dtoPage.getSize());
+      paginationDTO.setFirst(dtoPage.isFirst());
+      paginationDTO.setLast(dtoPage.isLast());
+      paginationDTO.setHasNext(dtoPage.hasNext());
+      paginationDTO.setHasPrevious(dtoPage.hasPrevious());
+      return paginationDTO;
     }
+    
+    @Override
+    public PaginationDTO<UserDTO> searchUsers(UserSearchFilterDTO filter, Pageable pageable) {
+      Query query = new Query();
+      List<Criteria> criteriaList = new ArrayList<>();
+      
+      if (filter != null) {
+        if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
+          criteriaList.add(new Criteria().orOperator(
+            Criteria.where("fullName").regex(filter.getKeyword(), "i"),
+            Criteria.where("email").regex(filter.getKeyword(), "i")
+          ));
+        }
+        
+        if (filter.getRole() != null) {
+          criteriaList.add(Criteria.where("role").is(filter.getRole()));
+        }
+      }
+      
+      if (!criteriaList.isEmpty()) {
+        query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+      }
+      
+      query.with(pageable);
+      List<User> users = mongoTemplate.find(query, User.class);
+      long total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), User.class);
+      Page<User> usersPage = PageableExecutionUtils.getPage(users, pageable, () -> total);
+      
+      Page<UserDTO> dtoPage = usersPage.map(user -> {
+        UserDTO dto = new UserDTO();
+        return dto;
+      });
+      
+      PaginationDTO<UserDTO> paginationDTO = new PaginationDTO<>();
+      paginationDTO.setContent(dtoPage.getContent());
+      paginationDTO.setTotalElements(dtoPage.getTotalElements());
+      paginationDTO.setTotalPages(dtoPage.getTotalPages());
+      paginationDTO.setPage(dtoPage.getNumber());
+      paginationDTO.setSize(dtoPage.getSize());
+      paginationDTO.setFirst(dtoPage.isFirst());
+      paginationDTO.setLast(dtoPage.isLast());
+      paginationDTO.setHasNext(dtoPage.hasNext());
+      paginationDTO.setHasPrevious(dtoPage.hasPrevious());
+      return paginationDTO;
+    }
+    
     private Role getUserRole(String userId) {
         return userRepository.findById(userId)
             .map(User::getRole)

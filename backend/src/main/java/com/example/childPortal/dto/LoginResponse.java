@@ -5,9 +5,11 @@ public class LoginResponse {
     private String token;
     private String userId;
     private String email;
+    private String fullName;
     private Role role;
     private boolean approved;
     private String message;
+    private String profilePhoto;
 
     public LoginResponse() {}
 
@@ -15,6 +17,16 @@ public class LoginResponse {
         this.token = token;
         this.userId = userId;
         this.email = email;
+        this.role = role;
+        this.approved = approved;
+        this.message = approved ? "Login successful" : "Account pending approval";
+    }
+
+    public LoginResponse(String token, String userId, String email, String fullName, Role role, boolean approved) {
+        this.token = token;
+        this.userId = userId;
+        this.email = email;
+        this.fullName = fullName;
         this.role = role;
         this.approved = approved;
         this.message = approved ? "Login successful" : "Account pending approval";
@@ -32,7 +44,6 @@ public class LoginResponse {
         this.token = null;
     }
 
-    // Getters and setters
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
     public String getUserId() { return userId; }
@@ -45,5 +56,8 @@ public class LoginResponse {
     public void setApproved(boolean approved) { this.approved = approved; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getProfilePhoto() { return profilePhoto; }
+    public void setProfilePhoto(String profilePhoto) { this.profilePhoto = profilePhoto; }
 }

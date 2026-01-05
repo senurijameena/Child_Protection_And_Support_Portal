@@ -27,14 +27,13 @@ public class ServiceOfferServiceImpl implements ServiceOfferService {
             offer.setOfferedToUserId(serviceOfferDTO.getOfferedToUserId());
             offer.setServiceType(serviceOfferDTO.getServiceType());
             offer.setServiceDetails(serviceOfferDTO.getServiceDetails());
-            offer.setScheduledDateTime(serviceOfferDTO.getScheduledDateTime()); // Make sure this setter exists
+            offer.setScheduledDateTime(serviceOfferDTO.getScheduledDateTime()); 
             offer.setStatus(ServiceOffer.OfferStatus.PENDING);
             offer.setOfferDate(LocalDateTime.now());
             
             offer = serviceOfferRepository.save(offer);
             return convertToDTO(offer);
         } catch (Exception e) {
-            // Return a default error DTO or handle appropriately
             ServiceOfferDTO errorDTO = new ServiceOfferDTO();
             errorDTO.setServiceDetails("Error creating service offer: " + e.getMessage());
             return errorDTO;
@@ -104,7 +103,7 @@ public class ServiceOfferServiceImpl implements ServiceOfferService {
         return serviceOfferRepository.findAll().stream()
                 .filter(offer -> offer.getStatus() == ServiceOffer.OfferStatus.PENDING)
                 .filter(offer -> offer.getOfferDate() != null && 
-                                 offer.getOfferDate().plusDays(7).isBefore(now)) // Offers older than 7 days
+                                 offer.getOfferDate().plusDays(7).isBefore(now)) 
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

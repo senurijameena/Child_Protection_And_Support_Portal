@@ -12,7 +12,6 @@ public class HelpResponse {
         this.success = success;
     }
 
-    // Getters and setters
     public String getHelpRequestId() { return helpRequestId; }
     public void setHelpRequestId(String helpRequestId) { this.helpRequestId = helpRequestId; }
     public String getMessage() { return message; }

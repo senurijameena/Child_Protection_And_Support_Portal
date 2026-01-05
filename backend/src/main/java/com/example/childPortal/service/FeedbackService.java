@@ -19,6 +19,7 @@ public interface FeedbackService {
     boolean deleteFeedback(String feedbackId);
     Double getAverageRating();
     List<FeedbackResponseDTO> getPublicFeedback();
-    List<FeedbackResponseDTO> getFeedbackByType(FeedbackType type); 
-    
+    List<FeedbackResponseDTO> getFeedbackByType(FeedbackType type);
+    java.util.Map<Integer, Long> getRatingDistribution();
+    Long getTotalFeedbackCount();
 }

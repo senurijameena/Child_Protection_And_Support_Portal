@@ -66,8 +66,7 @@ public class TransferServiceImpl implements TransferService {
     public List<TransferRequestDTO> getTransfersByUser(String userId) {
         List<TransferRequest> fromUser = transferRequestRepository.findByFromUserId(userId);
         List<TransferRequest> toUser = transferRequestRepository.findByToUserId(userId);
-        
-        // Fix: Use Stream.concat correctly
+
         return Stream.concat(fromUser.stream(), toUser.stream())
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -125,12 +124,10 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     public boolean executeTransfer(String transferId) {
-        // Simple implementation - mark as executed
         Optional<TransferRequest> transferOpt = transferRequestRepository.findById(transferId);
         if (transferOpt.isPresent()) {
             TransferRequest transfer = transferOpt.get();
             transfer.setStatus(TransferRequest.TransferStatus.APPROVED); // Or add an EXECUTED status
-            transfer.setProcessedAt(LocalDateTime.now());
             transferRequestRepository.save(transfer);
             return true;
         }
@@ -139,13 +136,11 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     public List<TransferRequestDTO> getUrgentTransferRequests() {
-        // Simple implementation - return pending transfers
         return getPendingTransfers();
     }
 
     @Override
     public List<TransferRequestDTO> getTransferHistory(String userId) {
-        // Return all transfers involving this user
         return getTransfersByUser(userId);
     }
 

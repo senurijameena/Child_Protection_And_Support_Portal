@@ -21,8 +21,7 @@ public interface UserService {
     boolean activateUser(String userId);
     List<UserDTO> getAllUsers();
     List<User> getAllUsersAsEntities();
-    
-    // Management methods
+
     List<UserManagementDTO> getAllUsersForManagement();
     UserManagementDTO getUserForManagement(String userId);
     boolean deactivateUser(String userId, String reason);
@@ -32,4 +31,13 @@ public interface UserService {
     List<UserManagementDTO> getInactiveUsers();
     UserManagementDTO convertToUserManagementDTO(User user);
     Map<String, Long> getUserStatistics();
+
+    UserProfileStatsDTO getUserProfileStats(String userId);
+
+    PersonalAnalyticsDTO getUserPersonalAnalytics(String userId);
+
+    String uploadProfilePhoto(String userId, org.springframework.web.multipart.MultipartFile file);
+    void removeProfilePhoto(String userId);
+
+    UserDTO updateUserProfile(String userId, UserUpdateRequest updateRequest);
 }

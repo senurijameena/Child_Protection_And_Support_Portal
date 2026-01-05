@@ -10,8 +10,7 @@ public class TransferRequestDTO {
     private String reason;
     private String status; // PENDING, APPROVED, REJECTED
     private LocalDateTime requestedAt;
-    
-    // Getters and setters
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getEntityId() { return entityId; }

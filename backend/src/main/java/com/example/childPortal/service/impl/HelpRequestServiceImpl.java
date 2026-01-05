@@ -10,6 +10,7 @@ import com.example.childPortal.model.User;
 import com.example.childPortal.repository.HelpRequestRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.HelpRequestService;
+import com.example.childPortal.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     
     @Autowired 
     private UserRepository userRepository;
+    
+    @Autowired(required = false)
+    private NotificationService notificationService;
 
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
@@ -73,6 +77,12 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             }
 
             HelpRequest savedHelpRequest = helpRequestRepository.save(helpRequest);
+            
+            // Send notification (app notification only for anonymous, email + app for non-anonymous)
+            if (notificationService != null && requesterUserId != null) {
+                notificationService.sendHelpRequestCreatedNotification(requesterUserId, savedHelpRequest.getId(), helpRequestDTO.isAnonymous());
+            }
+            
             return new HelpResponse(savedHelpRequest.getId(), "Help request submitted successfully", true);
         } catch (Exception e) {
             return new HelpResponse(null, "Failed to submit help request: " + e.getMessage(), false);

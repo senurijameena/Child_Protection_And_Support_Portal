@@ -13,20 +13,17 @@ public class UserManagementDTO {
     private boolean approved;
     private LocalDateTime registrationDate;
     private LocalDateTime lastLogin;
-    
-    // Police officer specific
+
     private String badgeNumber;
     private String department;
     private String rank;
     private String stationAddress;
-    
-    // Social worker specific
+
     private String licenseNumber;
     private List<String> specializations;
     private String organization;
     private String yearsOfExperience;
-    
-    // Getters and setters
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public String getFullName() { return fullName; }

@@ -13,32 +13,27 @@ public class Case {
     private String reporterUserId;
     private boolean anonymous;
     private String reporterName;
-    
-    // Child details
+
     private String approximateAge;
     private String gender;
     private String identificationMarks;
-    
-    // Case details
+
     private CaseType caseType;
     private String location;
     private LocalDateTime incidentDate;
     private String caseDescription;
     private List<String> evidenceUrls;
-    
-    // Status and assignment
+
     private CaseStatus status;
     private String assignedOfficerId;
     private String assignedWorkerId;
     private Priority priority;
     private boolean emergency;
-    
-    // Timestamps
+
     private LocalDateTime reportDate;
     private LocalDateTime lastUpdated;
     private LocalDateTime resolutionDate;
-    
-    // Simple notes field instead of complex note system
+
     private String caseNotes;
     
     public enum CaseStatus {
@@ -58,15 +53,15 @@ public class Case {
         this.priority = Priority.MEDIUM;
     }
 
-    // Generate tracking ID
     public String generateTrackingId() {
         if (this.id != null && this.id.length() >= 4) {
-            return "CS-" + this.id.substring(0, 4).toUpperCase();
+            String prefix = this.anonymous ? "ANON-" : "CASE-";
+            return prefix + this.id.substring(0, 4).toUpperCase();
         }
-        return "CS-" + this.id;
+        String prefix = this.anonymous ? "ANON-" : "CASE-";
+        return prefix + (this.id != null ? this.id : "UNKNOWN");
     }
 
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTrackingId() { 

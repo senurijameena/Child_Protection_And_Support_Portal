@@ -17,7 +17,6 @@ public class CaseReportRequest {
 
     public CaseReportRequest() {}
 
-    // Getters and setters
     public boolean isAnonymous() { return anonymous; }
     public void setAnonymous(boolean anonymous) { this.anonymous = anonymous; }
     public String getApproximateAge() { return approximateAge; }

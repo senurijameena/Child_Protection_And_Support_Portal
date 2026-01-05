@@ -12,8 +12,7 @@ public interface TransferService {
     TransferRequestDTO approveTransfer(String transferId, String adminId); 
     TransferRequestDTO rejectTransfer(String transferId, String adminId, String reason); 
     TransferRequestDTO cancelTransfer(String transferId, String userId); 
-    
-    // Optional methods from original interface
+
     List<TransferRequestDTO> getUrgentTransferRequests();
     List<TransferRequestDTO> getTransferHistory(String userId);
     long getPendingTransferCount();

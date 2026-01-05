@@ -6,8 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal; 
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
-@RestController @RequestMapping("/api/status") @CrossOrigin(origins = "*") 
-  public class StatusController {
+@RestController 
+@RequestMapping("/api/status") 
+@CrossOrigin(origins = "*") 
+public class StatusManagementController {
 @Autowired
 private StatusManagementService statusManagementService;
     @PutMapping("/change")
@@ -22,7 +24,7 @@ statusManagementService.changeUserStatus(userId, request); return ResponseEntity
         }
     }
       @GetMapping("/my-status")
-public ResponseEntity<?> getMyStatusDetails(@AuthenticationPrincipal String userI d) {
+public ResponseEntity<?> getMyStatusDetails(@AuthenticationPrincipal String userId) {
         try {
             Map<String, Object> details =
 statusManagementService.getUserStatusDetails(userId); return ResponseEntity.ok(details);
@@ -101,7 +103,7 @@ StatusChangeRequestDTO request = new StatusChangeRequestDTO();
 @RequestParam(required = false) String note,
       @AuthenticationPrincipal String userId) {
       StatusChangeRequestDTO request = new StatusChangeRequestDTO();
-      request.setNewStatus(com.example.childPortal.model.AvailabilityStatus.EMERGEN CY_ONLY);
+      request.setNewStatus(com.example.childPortal.model.AvailabilityStatus.EMERGENCY_ONLY);
         request.setNote(note);
         return changeStatus(request, userId);
     }

@@ -24,7 +24,7 @@ public class CaseTrendDTO {
     return resolvedCases; 
   }
   public void setResolvedCases(long resolvedCases) { 
-    this.resolvedCases = resolvedC ases; 
+    this.resolvedCases = resolvedCases; 
   }
   public long getActiveCases() { 
     return activeCases; 

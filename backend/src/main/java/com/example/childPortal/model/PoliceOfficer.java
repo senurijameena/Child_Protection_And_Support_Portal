@@ -37,8 +37,6 @@ public class PoliceOfficer {
         this.acceptsEmergencyCalls = true;
     }
 
-    public PoliceOfficer() {}
-
     public PoliceOfficer(String userId, String badgeNumber, String department, String rank, String stationAddress, String idDocumentUrl) {
         this.userId = userId;
         this.badgeNumber = badgeNumber;
@@ -100,7 +98,7 @@ public class PoliceOfficer {
         return specialization;
     }
     public void setSpecialization(String specialization) { 
-        this.specialization = spec ialization;
+        this.specialization = specialization;
     }
     public String getJurisdictionArea() {
         return jurisdictionArea;
@@ -118,7 +116,7 @@ public class PoliceOfficer {
         return vehicleNumber;
     }
     public void setVehicleNumber(String vehicleNumber) {
-        this.vehicleNumber = vehicle Number;
+        this.vehicleNumber = vehicleNumber;
     }
     public String getPartnerOfficerId() {
         return partnerOfficerId; 
@@ -181,10 +179,9 @@ public class PoliceOfficer {
         }
         return false;
     }
-    public double getWorkloadPercentage() {
-        User user = getUser(); 
-        if (user != null) {
-            return (double) user.getCurrentCaseCount() / maxConcurrentCases * 100;
+    public double getWorkloadPercentage(int currentCaseCount) {
+        if (maxConcurrentCases > 0) {
+            return (double) currentCaseCount / maxConcurrentCases * 100;
         }
         return 0; 
     }

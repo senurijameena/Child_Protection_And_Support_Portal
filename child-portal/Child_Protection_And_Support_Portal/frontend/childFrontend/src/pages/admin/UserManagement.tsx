@@ -126,27 +126,102 @@ const UserManagement: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const [policeData, socialWorkerData, publicData] = await Promise.all([
-        adminService.getPoliceOfficers().catch(() => ({ data: [] })),
-        adminService.getSocialWorkers().catch(() => ({ data: [] })),
-        adminService.getUsersByRole('PUBLIC').catch(() => ({ data: [] }))
+      // Fetch all users by role - adminService returns response.data which is the array
+      const [policeData, socialWorkerData, publicData, adminData] = await Promise.all([
+        adminService.getUsersByRole('PO').catch(() => []),
+        adminService.getUsersByRole('SW').catch(() => []),
+        adminService.getUsersByRole('PUBLIC').catch(() => []),
+        adminService.getUsersByRole('ADMIN').catch(() => [])
       ]);
 
-      const allUsersList = [
-        ...(policeData.data || []),
-        ...(socialWorkerData.data || []),
-        ...(publicData.data || [])
-      ];
+      // Normalize all users to a common format
+      const normalizeUser = (user: any): User => {
+        if (!user) return null as any;
+        
+        const userId = user.id || user.userId || user._id || '';
+        // Handle role - backend uses PO, SW, PUBLIC, ADMIN
+        let roleStr = user.role;
+        if (typeof roleStr === 'object' && roleStr?.name) {
+          roleStr = roleStr.name;
+        }
+        if (!roleStr) roleStr = 'PUBLIC';
+        
+        // Map backend role codes to frontend role enum
+        let role: UserRole = UserRole.PUBLIC;
+        if (roleStr === 'PO' || roleStr === 'POLICE') {
+          role = UserRole.POLICE;
+        } else if (roleStr === 'SW' || roleStr === 'SOCIAL_WORKER') {
+          role = UserRole.SOCIAL_WORKER;
+        } else if (roleStr === 'ADMIN') {
+          role = UserRole.ADMIN;
+        } else {
+          role = UserRole.PUBLIC;
+        }
+        
+        // Determine status based on active and approved flags
+        let status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED' = 'ACTIVE';
+        if (user.active === false) {
+          status = 'INACTIVE';
+        } else if (user.approved === false) {
+          status = 'PENDING';
+        } else if (user.suspended === true) {
+          status = 'SUSPENDED';
+        }
 
+        // Get role label
+        let roleLabel = 'User';
+        switch (role) {
+          case UserRole.POLICE: roleLabel = 'Police'; break;
+          case UserRole.SOCIAL_WORKER: roleLabel = 'Social'; break;
+          case UserRole.PUBLIC: roleLabel = 'Public'; break;
+          case UserRole.ADMIN: roleLabel = 'Admin'; break;
+        }
+
+        return {
+          id: userId,
+          userId: userId,
+          fullName: user.fullName || user.name || user.userName || 'Unknown User',
+          email: user.email || '',
+          phone: user.phone || user.phoneNumber || '',
+          role: role,
+          roleLabel: roleLabel,
+          status: status,
+          approved: user.approved !== false,
+          active: user.active !== false,
+          registrationDate: user.registrationDate || user.createdAt || new Date().toISOString(),
+          lastLogin: user.lastLogin || user.lastActive,
+          profileImage: user.profilePhoto || user.profileImage,
+          availabilityStatus: user.availabilityStatus,
+          statusChangedAt: user.statusChangedAt
+        };
+      };
+
+      // Combine all users and normalize
+      const allUsersList = [
+        ...(Array.isArray(policeData) ? policeData : []),
+        ...(Array.isArray(socialWorkerData) ? socialWorkerData : []),
+        ...(Array.isArray(publicData) ? publicData : []),
+        ...(Array.isArray(adminData) ? adminData : [])
+      ]
+      .filter(user => user != null)
+      .map(normalizeUser)
+      .filter(user => user != null);
+
+      // Add case counts and status info
       const usersWithCaseCounts = await Promise.all(
         allUsersList.map(async (user) => {
           try {
-            const statsResponse = await userService.getUserStats(user.id || user.userId).catch(() => null);
-            const caseCount = statsResponse?.data?.casesHandled || statsResponse?.data?.totalCases || 0;
+            // Try to get user stats, but don't fail if it doesn't work
+            let caseCount = 0;
+            try {
+              const statsResponse = await userService.getUserStats(user.id || user.userId).catch(() => null);
+              caseCount = statsResponse?.data?.casesHandled || statsResponse?.data?.totalCases || user.currentCaseCount || 0;
+            } catch {
+              // Ignore stats errors
+            }
             
-            // Fetch availability status for social workers and police officers
-            let currentStatus = user.currentStatus;
-            // Check if user object already has availabilityStatus (from backend User model)
+            // Set current status from availabilityStatus
+            let currentStatus = null;
             if (user.availabilityStatus) {
               const availabilityStatus = user.availabilityStatus;
               currentStatus = {
@@ -157,29 +232,12 @@ const UserManagement: React.FC = () => {
                 workload: 'Normal',
                 lastStatusChange: user.statusChangedAt || new Date().toISOString()
               };
-            } else if ((user.role === 'SOCIAL_WORKER' || user.role === 'POLICE') && (user.id || user.userId)) {
-              // Fallback: fetch status if not included in user object
-              try {
-                const userDetailsResponse = await adminService.getUserWithDetails(user.id || user.userId).catch(() => null);
-                if (userDetailsResponse?.user?.availabilityStatus) {
-                  const availabilityStatus = userDetailsResponse.user.availabilityStatus;
-                  currentStatus = {
-                    availability: availabilityStatus === 'AVAILABLE' ? 'AVAILABLE' : 
-                                 availabilityStatus === 'BUSY' ? 'BUSY' : 
-                                 availabilityStatus === 'OFF_DUTY' ? 'OFFLINE' : 'AWAY',
-                    workload: 'Normal',
-                    lastStatusChange: userDetailsResponse.user.statusChangedAt || new Date().toISOString()
-                  };
-                }
-              } catch (statusError) {
-                console.error('Error fetching status for user:', user.id, statusError);
-              }
             }
             
             return {
               ...user,
               caseCount,
-              currentStatus: currentStatus || user.currentStatus
+              currentStatus
             };
           } catch {
             return {
@@ -203,26 +261,36 @@ const UserManagement: React.FC = () => {
   const applyFilters = () => {
     let filtered = [...allUsers];
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.fullName.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.userId.toLowerCase().includes(query) ||
-        user.phone.includes(query)
-      );
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(user => {
+        const fullName = (user.fullName || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const userId = (user.userId || user.id || '').toLowerCase();
+        const phone = (user.phone || '').toLowerCase();
+        
+        return fullName.includes(query) ||
+               email.includes(query) ||
+               userId.includes(query) ||
+               phone.includes(query);
+      });
     }
 
+    // Role filter
     if (roleFilter !== 'ALL') {
-      filtered = filtered.filter(user => user.role === roleFilter);
+      filtered = filtered.filter(user => {
+        // Direct comparison since we normalized roles in normalizeUser
+        return user.role === roleFilter;
+      });
     }
 
+    // Status filter
     if (statusFilter !== 'ALL') {
       filtered = filtered.filter(user => {
-        if (statusFilter === 'SUSPENDED') {
-          return user.status === 'SUSPENDED';
-        }
-        return user.status === statusFilter;
+        const userStatus = (user.status || '').toUpperCase();
+        const filterStatus = statusFilter.toUpperCase();
+        return userStatus === filterStatus;
       });
     }
 

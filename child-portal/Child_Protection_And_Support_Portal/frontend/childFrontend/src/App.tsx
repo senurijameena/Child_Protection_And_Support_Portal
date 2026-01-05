@@ -92,13 +92,35 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/users/all" element={<UserManagement />} />
+          <Route path="/admin/users/public" element={<UserManagement />} />
+          <Route path="/admin/users/police" element={<UserManagement />} />
+          <Route path="/admin/users/social-workers" element={<UserManagement />} />
+          <Route path="/admin/users/deactivated" element={<UserManagement />} />
           <Route path="/admin/cases" element={<AllCasesPage />} />
           <Route path="/admin/cases/all" element={<AllCasesPage />} />
+          <Route path="/admin/cases/emergency" element={<AllCasesPage />} />
+          <Route path="/admin/cases/pending-review" element={<AllCasesPage />} />
+          <Route path="/admin/cases/assigned" element={<AllCasesPage />} />
+          <Route path="/admin/cases/resolved" element={<AllCasesPage />} />
+          <Route path="/admin/cases/closed" element={<AllCasesPage />} />
+          <Route path="/admin/cases/:caseId" element={<CaseDetailsPage />} />
+          <Route path="/admin/cases/duplicate-detection" element={<DuplicateDetection />} />
           <Route path="/admin/help-requests" element={<HelpRequestManagement />} />
+          <Route path="/admin/help-requests/all" element={<HelpRequestManagement />} />
+          <Route path="/admin/help-requests/marketplace" element={<HelpRequestManagement />} />
+          <Route path="/admin/help-requests/assigned" element={<HelpRequestManagement />} />
+          <Route path="/admin/help-requests/completed" element={<HelpRequestManagement />} />
+          <Route path="/admin/help-requests/:requestId" element={<HelpRequestDetailsPage />} />
           <Route path="/admin/transfers" element={<TransferRequestManagement />} />
+          <Route path="/admin/transfers/pending" element={<TransferRequestManagement />} />
+          <Route path="/admin/transfers/approved" element={<TransferRequestManagement />} />
+          <Route path="/admin/transfers/rejected" element={<TransferRequestManagement />} />
+          <Route path="/admin/analytics" element={<AnalyticsPage />} />
+          <Route path="/admin/analytics/dashboard" element={<AnalyticsPage />} />
+          <Route path="/admin/analytics/custom-reports" element={<AnalyticsPage />} />
           <Route path="/admin/feedback" element={<FeedbackManagement />} />
           <Route path="/admin/announcements" element={<SystemAnnouncements />} />
-          <Route path="/admin/duplicates" element={<DuplicateDetection />} />
+          <Route path="/admin/settings" element={<SystemAnnouncements />} />
         </Route>
 
         {/* Public User Routes */}

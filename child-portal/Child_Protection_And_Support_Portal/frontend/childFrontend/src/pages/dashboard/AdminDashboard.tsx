@@ -1,70 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Row, 
-  Col, 
-  Card, 
-  Button, 
-  Alert, 
-  Spinner,
-  Table,
-  Badge,
-  ButtonGroup
+  Row, Col, Card, Button, Spinner, Alert, 
+  Table, Badge, ButtonGroup
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { analyticsService } from '../../services/analyticsService';
-import { adminService } from '../../services/adminService';
-import { timelineService } from '../../services/timelineService';
 import { caseService } from '../../services/caseService';
-
-import { transferService } from '../../services/transferService.js';
-
-import { helpRequestService } from '../../services/helpRequestService.js';
-import { api } from '../../services/api';
-import { DoughnutChart, BarChart, MultiLineChart } from '../../components/charts';
+import { helpRequestService } from '../../services/helpRequestService';
+import { adminService } from '../../services/adminService';
+import { transferService } from '../../services/transferService';
+import { DoughnutChart, BarChart } from '../../components/charts';
 import './AdminDashboard.css';
 
 interface DashboardStats {
   totalCases: number;
-  totalCasesChange: number;
   activeCases: number;
-  resolvedCases: number;
+  emergencyCases: number;
+  closedCases: number;
   totalHelpRequests: number;
   activeHelpRequests: number;
-  emergencyHelpRequests: number;
-  avgResponseTime: number;
   totalUsers: number;
   policeOfficers: number;
   socialWorkers: number;
   pendingApprovals: number;
   pendingTransfers: number;
-  dailyActiveUsers: number;
-  newRegistrationsToday: number;
-}
-
-interface ActivityItem {
-  id: string;
-  eventType: string;
-  description: string;
-  timestamp: string;
-  entityType?: string;
-  entityId?: string;
-}
-
-interface CaseStatusDistribution {
-  status: string;
-  count: number;
-  percentage: number;
-}
-
-interface HelpRequestTypeDistribution {
-  type: string;
-  count: number;
-  percentage: number;
 }
 
 interface RecentCase {
   id: string;
-  trackingId: string;
+  trackingId?: string;
   caseType: string;
   location: string;
   priority: string;
@@ -75,7 +39,7 @@ interface RecentCase {
 
 interface RecentHelpRequest {
   id: string;
-  trackingId: string;
+  trackingId?: string;
   helpType: string;
   childAge?: string;
   priority: string;
@@ -87,20 +51,9 @@ interface PendingTransfer {
   id: string;
   type: string;
   fromUserId: string;
-  fromUserName: string;
+  fromUserName?: string;
   toUserId: string;
-  toUserName: string;
-  reason: string;
-  entityId: string;
-}
-
-interface FeedbackStats {
-  averageRating: number;
-  totalFeedback: number;
-  positiveFeedback: number;
-  neutralFeedback: number;
-  negativeFeedback: number;
-  pendingReviews: number;
+  toUserName?: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -110,70 +63,69 @@ const AdminDashboard: React.FC = () => {
   
   const [stats, setStats] = useState<DashboardStats>({
     totalCases: 0,
-    totalCasesChange: 0,
     activeCases: 0,
-    resolvedCases: 0,
+    emergencyCases: 0,
+    closedCases: 0,
     totalHelpRequests: 0,
     activeHelpRequests: 0,
-    emergencyHelpRequests: 0,
-    avgResponseTime: 0,
     totalUsers: 0,
     policeOfficers: 0,
     socialWorkers: 0,
     pendingApprovals: 0,
-    pendingTransfers: 0,
-    dailyActiveUsers: 0,
-    newRegistrationsToday: 0
+    pendingTransfers: 0
   });
 
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [caseStatusDistribution, setCaseStatusDistribution] = useState<CaseStatusDistribution[]>([]);
-  const [helpRequestTypeDistribution, setHelpRequestTypeDistribution] = useState<HelpRequestTypeDistribution[]>([]);
-  const [todayStats, setTodayStats] = useState({
-    newCases: 0,
-    helpRequests: 0,
-    registrations: 0,
-    resolutions: 0,
-    transfers: 0
-  });
   const [dateFilter, setDateFilter] = useState('today');
   const [recentCases, setRecentCases] = useState<RecentCase[]>([]);
   const [recentHelpRequests, setRecentHelpRequests] = useState<RecentHelpRequest[]>([]);
   const [pendingTransfers, setPendingTransfers] = useState<PendingTransfer[]>([]);
-  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
-  const [monthlyTrends, setMonthlyTrends] = useState<any[]>([]);
-  const [closedCases, setClosedCases] = useState(0);
-  const [emergencyCases, setEmergencyCases] = useState(0);
+  const [caseStatusDistribution, setCaseStatusDistribution] = useState<any[]>([]);
+  const [helpRequestTypeDistribution, setHelpRequestTypeDistribution] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dateFilter]);
+
+  const getDateRange = () => {
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (dateFilter) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case '7days':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30days':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    
+    return {
+      startDate: startDate.toISOString(),
+      endDate: now.toISOString()
+    };
+  };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
+      const dateRange = getDateRange();
 
-      const [
-        dashboardMetrics,
-        caseStats,
-        helpRequestStats,
-        userStats,
-        recentActivity,
-        caseStatusDist,
-        pendingApprovalsData,
-        responseTimeMetrics
-      ] = await Promise.allSettled([
+      const [dashboardMetrics, caseStats, helpRequestStats, userStats, pendingApprovalsData, caseStatusDist, helpTypeDist] = await Promise.allSettled([
         analyticsService.getDashboardMetrics(),
-        analyticsService.getCaseStatistics(),
-        analyticsService.getHelpRequestStatistics(),
+        analyticsService.getCaseStatistics(dateRange.startDate, dateRange.endDate),
+        analyticsService.getHelpRequestStatistics(dateRange.startDate, dateRange.endDate),
         analyticsService.getUserStatistics(),
-        timelineService.getRecentActivity(20),
-        analyticsService.getCaseStatusDistribution(),
         adminService.getPendingApprovals(),
-        analyticsService.getResponseTimeMetrics()
+        analyticsService.getCaseStatusDistribution(),
+        analyticsService.getHelpTypeDistribution()
       ]);
 
       if (dashboardMetrics.status === 'fulfilled' && dashboardMetrics.value.data) {
@@ -182,11 +134,11 @@ const AdminDashboard: React.FC = () => {
           ...prev,
           totalCases: metrics.totalCases || 0,
           activeCases: metrics.activeCases || 0,
-          resolvedCases: metrics.resolvedCases || 0,
+          emergencyCases: metrics.emergencyCases || 0,
           totalHelpRequests: metrics.totalHelpRequests || 0,
-          activeHelpRequests: metrics.activeHelpRequests || 0,
-          emergencyHelpRequests: metrics.emergencyCases || metrics.emergencyHelpRequests || 0,
-          totalUsers: metrics.totalUsers || 0
+          activeHelpRequests: metrics.pendingHelpRequests || 0,
+          totalUsers: metrics.totalUsers || 0,
+          pendingApprovals: metrics.pendingApprovals || 0
         }));
       }
 
@@ -196,13 +148,8 @@ const AdminDashboard: React.FC = () => {
           ...prev,
           totalCases: caseData.totalCases || prev.totalCases,
           activeCases: caseData.activeCases || prev.activeCases,
-          resolvedCases: caseData.resolvedCases || prev.resolvedCases,
-          totalCasesChange: caseData.percentageChange || caseData.change || 0
+          closedCases: caseData.resolvedCases || 0
         }));
-
-        if (caseData.newCasesToday !== undefined) {
-          setTodayStats(prev => ({ ...prev, newCases: caseData.newCasesToday }));
-        }
       }
 
       if (helpRequestStats.status === 'fulfilled' && helpRequestStats.value.data) {
@@ -210,18 +157,8 @@ const AdminDashboard: React.FC = () => {
         setStats(prev => ({
           ...prev,
           totalHelpRequests: hrData.total || hrData.totalHelpRequests || prev.totalHelpRequests,
-          activeHelpRequests: hrData.active || hrData.activeHelpRequests || prev.activeHelpRequests,
-          emergencyHelpRequests: hrData.emergency || hrData.emergencyHelpRequests || prev.emergencyHelpRequests,
-          pendingHelpRequestsChange: hrData.changePercentage || hrData.percentageChange || 0
+          activeHelpRequests: hrData.active || hrData.activeHelpRequests || prev.activeHelpRequests
         }));
-
-        if (hrData.newToday !== undefined) {
-          setTodayStats(prev => ({ ...prev, helpRequests: hrData.newToday }));
-        }
-
-        if (hrData.typeDistribution && Array.isArray(hrData.typeDistribution)) {
-          setHelpRequestTypeDistribution(hrData.typeDistribution);
-        }
       }
 
       if (userStats.status === 'fulfilled' && userStats.value.data) {
@@ -230,25 +167,24 @@ const AdminDashboard: React.FC = () => {
           ...prev,
           totalUsers: usrData.totalUsers || usrData.total || prev.totalUsers,
           policeOfficers: usrData.policeOfficers || usrData.policeCount || 0,
-          socialWorkers: usrData.socialWorkers || usrData.socialWorkerCount || 0,
-          dailyActiveUsers: usrData.dailyActiveUsers || usrData.dau || 0,
-          newRegistrationsToday: usrData.newRegistrationsToday || usrData.newToday || 0
-        }));
-
-        setTodayStats(prev => ({ 
-          ...prev, 
-          registrations: usrData.newRegistrationsToday || usrData.newToday || 0 
+          socialWorkers: usrData.socialWorkers || usrData.socialWorkerCount || 0
         }));
       }
 
+      if (pendingApprovalsData.status === 'fulfilled') {
+        const approvals = pendingApprovalsData.value;
+        const approvalCount = Array.isArray(approvals) ? approvals.length : (approvals?.length || 0);
+        setStats(prev => ({ ...prev, pendingApprovals: approvalCount }));
+      }
+
+      // Process case status distribution for chart
       if (caseStatusDist.status === 'fulfilled' && caseStatusDist.value.data) {
         const statusData = caseStatusDist.value.data;
-        let distribution: CaseStatusDistribution[] = [];
+        let distribution: any[] = [];
         
         if (Array.isArray(statusData)) {
           distribution = statusData;
         } else if (typeof statusData === 'object' && statusData !== null) {
-
           const total = Object.values(statusData).reduce((sum: number, val: any) => sum + Number(val), 0);
           distribution = Object.entries(statusData).map(([status, count]) => ({
             status: status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
@@ -259,73 +195,26 @@ const AdminDashboard: React.FC = () => {
         setCaseStatusDistribution(distribution);
       }
 
-      try {
-        const helpTypeDistResponse = await analyticsService.getHelpTypeDistribution();
-        if (helpTypeDistResponse.data) {
-          const typeData = helpTypeDistResponse.data;
-          let distribution: HelpRequestTypeDistribution[] = [];
-          
-          if (Array.isArray(typeData)) {
-            distribution = typeData;
-          } else if (typeof typeData === 'object') {
-
-            const total = Object.values(typeData).reduce((sum: number, val: any) => sum + Number(val), 0);
-            distribution = Object.entries(typeData).map(([type, count]) => ({
-              type,
-              count: Number(count),
-              percentage: total > 0 ? (Number(count) / total) * 100 : 0
-            }));
-          }
-          setHelpRequestTypeDistribution(distribution);
+      // Process help request type distribution for chart
+      if (helpTypeDist.status === 'fulfilled' && helpTypeDist.value.data) {
+        const typeData = helpTypeDist.value.data;
+        let distribution: any[] = [];
+        
+        if (Array.isArray(typeData)) {
+          distribution = typeData;
+        } else if (typeof typeData === 'object') {
+          const total = Object.values(typeData).reduce((sum: number, val: any) => sum + Number(val), 0);
+          distribution = Object.entries(typeData).map(([type, count]) => ({
+            type: type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+            count: Number(count),
+            percentage: total > 0 ? (Number(count) / total) * 100 : 0
+          }));
         }
-      } catch (err) {
-        console.error('Error fetching help type distribution:', err);
+        setHelpRequestTypeDistribution(distribution);
       }
 
-      if (pendingApprovalsData.status === 'fulfilled') {
-        const approvals = pendingApprovalsData.value;
-        const approvalCount = Array.isArray(approvals) ? approvals.length : (approvals?.length || 0);
-        setStats(prev => ({ ...prev, pendingApprovals: approvalCount }));
-      }
-
-      if (responseTimeMetrics.status === 'fulfilled' && responseTimeMetrics.value.data) {
-        const rtData = responseTimeMetrics.value.data;
-        const avgTime = rtData.averageResponseTime || rtData.avgResponseTime || rtData.avgHours || 0;
-        setStats(prev => ({ ...prev, avgResponseTime: avgTime }));
-      }
-
-      if (recentActivity.status === 'fulfilled' && recentActivity.value.data) {
-        const activities = recentActivity.value.data;
-        if (Array.isArray(activities)) {
-          setActivities(activities.slice(0, 10).map((item: any) => ({
-            id: item.id || item.eventId || Math.random().toString(),
-            eventType: item.eventType || item.type || 'ACTIVITY',
-            description: item.description || item.message || item.eventDescription || 'Activity',
-            timestamp: item.timestamp || item.createdAt || item.date || new Date().toISOString(),
-            entityType: item.entityType,
-            entityId: item.entityId
-          })));
-        }
-      }
-
+      // Fetch recent cases
       try {
-        const transferResponse = await analyticsService.getDashboardMetrics();
-        if (transferResponse.data?.pendingTransfers !== undefined) {
-          setStats(prev => ({ ...prev, pendingTransfers: transferResponse.data.pendingTransfers }));
-          setTodayStats(prev => ({ ...prev, transfers: transferResponse.data.pendingTransfers || 0 }));
-        }
-      } catch (err) {
-      }
-
-      if (caseStats.status === 'fulfilled' && caseStats.value.data?.resolvedToday) {
-        setTodayStats(prev => ({ 
-          ...prev, 
-          resolutions: caseStats.value.data.resolvedToday || 0 
-        }));
-      }
-
-      try {
-
         const casesResponse = await caseService.getAllCases();
         if (casesResponse.data && Array.isArray(casesResponse.data)) {
           const cases = casesResponse.data.slice(0, 5).map((c: any) => ({
@@ -346,180 +235,84 @@ const AdminDashboard: React.FC = () => {
           const emergency = casesResponse.data.filter((c: any) => 
             c.emergency || c.priority === 'URGENT'
           ).length;
-          setClosedCases(closed);
-          setEmergencyCases(emergency);
+          setStats(prev => ({ ...prev, closedCases: closed, emergencyCases: emergency }));
         }
       } catch (err) {
         console.error('Error fetching cases:', err);
       }
 
-      try {
-        const trendsResponse = await analyticsService.getCaseTrends('monthly');
-        if (trendsResponse.data && Array.isArray(trendsResponse.data)) {
-          setMonthlyTrends(trendsResponse.data.slice(-12)); // Last 12 months
-        }
-      } catch (err) {
-        console.error('Error fetching trends:', err);
-      }
-
+      // Fetch recent help requests
       try {
         const helpRequestsResponse = await helpRequestService.getAllRequests();
         if (helpRequestsResponse.data && Array.isArray(helpRequestsResponse.data)) {
-          const helpRequests = helpRequestsResponse.data
-            .filter((hr: any) => {
-              const status = hr.status || hr.requestStatus || '';
-              return status === 'ACTIVE' || status === 'IN_PROGRESS' || status === 'ASSIGNED' || status === 'PENDING';
-            })
-            .sort((a: any, b: any) => {
-
-              const priorityOrder: any = { URGENT: 3, HIGH: 2, MEDIUM: 1, LOW: 0 };
-              const aPriority = priorityOrder[a.priority] || 0;
-              const bPriority = priorityOrder[b.priority] || 0;
-              if (bPriority !== aPriority) return bPriority - aPriority;
-              const aDate = new Date(a.requestDate || a.createdAt || 0).getTime();
-              const bDate = new Date(b.requestDate || b.createdAt || 0).getTime();
-              return bDate - aDate;
-            })
-            .slice(0, 5)
-            .map((hr: any) => ({
-              id: hr.id,
-              trackingId: hr.trackingId || hr.id?.substring(0, 8) || 'N/A',
-              helpType: (hr.helpType || hr.type || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-              childAge: hr.approximateAge || hr.childAge || 'N/A',
-              priority: hr.priority || 'MEDIUM',
-              status: hr.status || hr.requestStatus || 'REQUESTED',
-              assignedWorkerId: hr.assignedWorkerId || hr.assignedTo
-            }));
-          setRecentHelpRequests(helpRequests);
+          const requests = helpRequestsResponse.data.slice(0, 5).map((hr: any) => ({
+            id: hr.id,
+            trackingId: hr.trackingId || hr.id?.substring(0, 8),
+            helpType: hr.helpType || 'Unknown',
+            childAge: hr.childAge,
+            priority: hr.priority || 'MEDIUM',
+            status: hr.status || 'REQUESTED',
+            assignedWorkerId: hr.assignedWorkerId
+          }));
+          setRecentHelpRequests(requests);
         }
       } catch (err) {
         console.error('Error fetching help requests:', err);
       }
 
+      // Fetch pending transfers
       try {
         const transfersResponse = await transferService.getPendingTransfers();
         if (transfersResponse.data && Array.isArray(transfersResponse.data)) {
-          const transfers = transfersResponse.data.slice(0, 5).map((t: any) => ({
-            id: t.id || t.transferId,
-            type: t.transferType || t.type || (t.caseId ? 'Case' : 'Help'),
-            fromUserId: t.fromUserId || t.requestedBy,
-            fromUserName: t.fromUserName || t.fromUser || 'User',
-            toUserId: t.toUserId || t.requestedTo,
-            toUserName: t.toUserName || t.toUser || 'User',
-            reason: t.reason || t.transferReason || 'N/A',
-            entityId: t.caseId || t.helpRequestId || t.entityId
+          const transfers = transfersResponse.data.map((t: any) => ({
+            id: t.id,
+            type: t.type || 'CASE',
+            fromUserId: t.fromUserId || t.fromUser?.id,
+            fromUserName: t.fromUser?.name || t.fromUserName,
+            toUserId: t.toUserId || t.toUser?.id,
+            toUserName: t.toUser?.name || t.toUserName
           }));
           setPendingTransfers(transfers);
+          setStats(prev => ({ ...prev, pendingTransfers: transfers.length }));
         }
       } catch (err) {
         console.error('Error fetching transfers:', err);
       }
 
-      try {
-        const feedbackResponse = await api.get('/api/feedback/average-rating');
-        const avgRating = feedbackResponse.data || 0;
-        
-        const allFeedbackResponse = await api.get('/api/feedback/all');
-        const allFeedback = Array.isArray(allFeedbackResponse.data) ? allFeedbackResponse.data : [];
-        
-        const total = allFeedback.length;
-        const positive = allFeedback.filter((f: any) => (f.rating || 0) >= 4).length;
-        const neutral = allFeedback.filter((f: any) => {
-          const rating = f.rating || 0;
-          return rating >= 3 && rating < 4;
-        }).length;
-        const negative = allFeedback.filter((f: any) => (f.rating || 0) < 3).length;
-        const pending = allFeedback.filter((f: any) => 
-          !f.adminResponse && (f.status === 'SUBMITTED' || !f.status)
-        ).length;
-
-        setFeedbackStats({
-          averageRating: avgRating,
-          totalFeedback: total,
-          positiveFeedback: total > 0 ? Math.round((positive / total) * 100) : 0,
-          neutralFeedback: total > 0 ? Math.round((neutral / total) * 100) : 0,
-          negativeFeedback: total > 0 ? Math.round((negative / total) * 100) : 0,
-          pendingReviews: pending
-        });
-      } catch (err) {
-        console.error('Error fetching feedback stats:', err);
-      }
-
-    } catch (err: any) {
-      console.error('Error fetching dashboard data:', err);
-      setError(err.response?.data?.message || 'Failed to load dashboard data. Please try again.');
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      setError(error.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatTimeAgo = (timestamp: string) => {
-    const date = new Date(timestamp);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-      if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  };
-
-  const getActivityIcon = (eventType: string) => {
-    const type = eventType.toUpperCase();
-    if (type.includes('CASE')) return '📋';
-    if (type.includes('HELP')) return '🙏';
-    if (type.includes('APPROVAL') || type.includes('APPROVED')) return '✅';
-    if (type.includes('ASSIGN')) return '👮';
-    if (type.includes('RESOLVED') || type.includes('CLOSED')) return '🎉';
-    if (type.includes('ALERT') || type.includes('WARNING')) return '⚠️';
-    if (type.includes('REGISTRATION')) return '👤';
-    if (type.includes('MESSAGE')) return '💬';
-    return '📢';
-  };
-
-  const getStatusBadgeColor = (status: string): string => {
+  const getStatusBadgeColor = (status: string) => {
     const statusUpper = status.toUpperCase();
-    if (statusUpper.includes('REPORTED')) return 'success';
-    if (statusUpper.includes('REVIEW') || statusUpper.includes('UNDER_REVIEW')) return 'warning';
-    if (statusUpper.includes('ASSIGNED') || statusUpper.includes('INVESTIGATING')) return 'info';
     if (statusUpper.includes('RESOLVED') || statusUpper.includes('CLOSED')) return 'success';
+    if (statusUpper.includes('ACTIVE') || statusUpper.includes('ASSIGNED')) return 'primary';
+    if (statusUpper.includes('PENDING') || statusUpper.includes('REVIEW')) return 'warning';
     return 'secondary';
   };
 
-  const caseStatusChartData = caseStatusDistribution.length > 0
-    ? caseStatusDistribution.map(item => ({
-        label: item.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-        value: item.count
-      }))
-    : [];
-
-  const helpRequestChartData = helpRequestTypeDistribution.length > 0
-    ? helpRequestTypeDistribution.map(item => ({
-        label: item.type,
-        value: item.count
-      }))
-    : [];
-
   if (loading && stats.totalCases === 0) {
     return (
-      <div className="dashboard-loading">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-3">Loading dashboard...</p>
+      <div className="admin-dashboard">
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3 text-muted">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
-
   return (
     <div className="admin-dashboard">
       <div className="dashboard-header mb-4">
-        <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
             <h2 className="dashboard-title">Admin Dashboard</h2>
-            <p className="dashboard-subtitle">Real-time monitoring of child protection cases, services & users</p>
+            <p className="dashboard-subtitle mb-0">Overview of cases, users, and help requests</p>
           </div>
           <ButtonGroup className="date-filter-group">
             <Button 
@@ -543,79 +336,59 @@ const AdminDashboard: React.FC = () => {
             >
               Last 30 Days
             </Button>
-            <Button 
-              variant={dateFilter === 'custom' ? 'primary' : 'outline-primary'}
-              size="sm"
-              onClick={() => setDateFilter('custom')}
-            >
-              Custom Date
-            </Button>
           </ButtonGroup>
         </div>
       </div>
 
-        {error && (
-          <Alert variant="danger" dismissible onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
-      {}
+      {/* Key Metrics */}
       <Row className="mb-4">
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-blue">
+          <Card className="stat-card stat-card-blue" onClick={() => navigate('/admin/cases/all')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">📋</div>
               <Card.Title className="stat-value">{stats.totalCases.toLocaleString()}</Card.Title>
               <Card.Text className="stat-label">Total Cases</Card.Text>
-              <div className="stat-change positive">
-                <span>📈</span> {Math.abs(stats.totalCasesChange) || 12}% this week
-              </div>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-blue">
+          <Card className="stat-card stat-card-blue" onClick={() => navigate('/admin/cases/assigned')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">🔄</div>
               <Card.Title className="stat-value">{stats.activeCases.toLocaleString()}</Card.Title>
               <Card.Text className="stat-label">Active Cases</Card.Text>
-              <div className="stat-change negative">
-                <span>📉</span> 3% this week
-              </div>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-red">
+          <Card className="stat-card stat-card-red" onClick={() => navigate('/admin/cases/emergency')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">🚨</div>
-              <Card.Title className="stat-value">{emergencyCases.toLocaleString()}</Card.Title>
+              <Card.Title className="stat-value">{stats.emergencyCases.toLocaleString()}</Card.Title>
               <Card.Text className="stat-label">Emergencies</Card.Text>
-              <div className="stat-change positive">
-                <span>📈</span> 8% this week
-              </div>
             </Card.Body>
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-green">
+          <Card className="stat-card stat-card-green" onClick={() => navigate('/admin/cases/closed')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">✅</div>
-              <Card.Title className="stat-value">{closedCases.toLocaleString()}</Card.Title>
+              <Card.Title className="stat-value">{stats.closedCases.toLocaleString()}</Card.Title>
               <Card.Text className="stat-label">Closed Cases</Card.Text>
-              <div className="stat-change positive">
-                <span>📈</span> 20% this week
-              </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {}
       <Row className="mb-4">
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-blue">
+          <Card className="stat-card stat-card-blue" onClick={() => navigate('/admin/users/public')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">👥</div>
               <Card.Title className="stat-value">{(stats.totalUsers - stats.policeOfficers - stats.socialWorkers).toLocaleString()}</Card.Title>
@@ -624,7 +397,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-blue">
+          <Card className="stat-card stat-card-blue" onClick={() => navigate('/admin/users/police')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">👮</div>
               <Card.Title className="stat-value">{stats.policeOfficers.toLocaleString()}</Card.Title>
@@ -633,7 +406,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-green">
+          <Card className="stat-card stat-card-green" onClick={() => navigate('/admin/users/social-workers')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">🧑‍⚕️</div>
               <Card.Title className="stat-value">{stats.socialWorkers.toLocaleString()}</Card.Title>
@@ -642,7 +415,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Col>
         <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-yellow">
+          <Card className="stat-card stat-card-yellow" onClick={() => navigate('/admin/help-requests/all')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">🙏</div>
               <Card.Title className="stat-value">{stats.totalHelpRequests.toLocaleString()}</Card.Title>
@@ -652,114 +425,68 @@ const AdminDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      <Row>
-        {}
-        <Col lg={8} className="mb-4">
-          {}
-          <Card className="dashboard-card mb-4">
+      {/* Charts */}
+      <Row className="mb-4">
+        <Col lg={6} className="mb-3">
+          <Card className="dashboard-card">
             <Card.Header>
-              <h5 className="mb-0">📋 Case Status Distribution</h5>
+              <h5 className="mb-0">Case Status Distribution</h5>
             </Card.Header>
             <Card.Body>
-              {caseStatusChartData.length > 0 ? (
-                <Row className="align-items-center">
-                  <Col md={6}>
-                    <DoughnutChart
-                      data={caseStatusChartData}
-                      labelKey="label"
-                      valueKey="value"
-                      height={280}
-                    />
-                  </Col>
-                  <Col md={6}>
-                    <div className="status-legend">
-                      {caseStatusDistribution.map((item, index) => (
-                        <div key={index} className="status-item">
-                          <div className="status-color" style={{ 
-                            backgroundColor: getStatusColor(item.status.toUpperCase().replace(/\s/g, '_')) 
-                          }}></div>
-                          <div className="status-info">
-                            <span className="status-name">{item.status}</span>
-                            <span className="status-count">
-                              {item.count} ({item.percentage.toFixed(1)}%)
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Col>
-                </Row>
+              {caseStatusDistribution.length > 0 ? (
+                <DoughnutChart
+                  data={caseStatusDistribution}
+                  labelKey="status"
+                  valueKey="count"
+                  height={280}
+                />
               ) : (
                 <div className="text-center py-5">
                   <Spinner animation="border" variant="primary" size="sm" />
-                  <p className="text-muted mt-3">Loading case data...</p>
+                  <p className="text-muted mt-3">Loading chart data...</p>
                 </div>
               )}
             </Card.Body>
           </Card>
-
-          {}
-          <Card className="dashboard-card mb-4">
+        </Col>
+        <Col lg={6} className="mb-3">
+          <Card className="dashboard-card">
             <Card.Header>
-              <h5 className="mb-0">🙏 Help Request Breakdown</h5>
+              <h5 className="mb-0">Help Request Types</h5>
             </Card.Header>
             <Card.Body>
-              {helpRequestChartData.length > 0 ? (
+              {helpRequestTypeDistribution.length > 0 ? (
                 <BarChart
-                  data={helpRequestChartData}
-                  xKey="label"
-                  yKey="value"
+                  data={helpRequestTypeDistribution}
+                  xKey="type"
+                  yKey="count"
                   height={280}
                   color="#3949ab"
                 />
               ) : (
                 <div className="text-center py-5">
                   <Spinner animation="border" variant="primary" size="sm" />
-                  <p className="text-muted mt-3">Loading help request data...</p>
+                  <p className="text-muted mt-3">Loading chart data...</p>
                 </div>
               )}
             </Card.Body>
           </Card>
+        </Col>
+      </Row>
 
-          {}
-          <Card className="dashboard-card mb-4">
-            <Card.Header>
-              <h5 className="mb-0">📈 Monthly Trend (Cases vs Help Requests)</h5>
-            </Card.Header>
-            <Card.Body>
-              {monthlyTrends.length > 0 ? (
-                <MultiLineChart
-                  labels={monthlyTrends.map((t: any) => {
-                    const date = new Date(t.period || t.month || Date.now());
-                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                  })}
-                  datasets={[
-                    {
-                      label: 'Cases',
-                      data: monthlyTrends.map((t: any) => t.newCases || t.cases || 0),
-                      color: '#1a237e'
-                    },
-                    {
-                      label: 'Help Requests',
-                      data: monthlyTrends.map((t: any) => t.helpRequests || 0),
-                      color: '#28a745'
-                    }
-                  ]}
-                  height={300}
-                />
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted">Loading trend data...</p>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-
-          {}
-          <Card className="dashboard-card mb-4">
+      {/* Main Content */}
+      <Row>
+        <Col lg={8} className="mb-3">
+          <Card className="dashboard-card mb-3">
             <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">📋 Recent & Priority Cases</h5>
-              <Button variant="link" size="sm" onClick={() => navigate('/admin/cases/all')}>
+              <h5 className="mb-0">Recent Cases</h5>
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={() => navigate('/admin/cases/all')} 
+                className="p-0 text-primary"
+                style={{ textDecoration: 'none', fontWeight: 500 }}
+              >
                 View All →
               </Button>
             </Card.Header>
@@ -795,14 +522,14 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td>{c.assignedOfficerId ? `PO-${c.assignedOfficerId.substring(0, 2)}` : c.assignedWorkerId ? `SW-${c.assignedWorkerId.substring(0, 2)}` : '—'}</td>
                         <td>
-                          <Button variant="link" size="sm" onClick={() => navigate(`/admin/cases/${c.id}`)}>
-                            👁
-                          </Button>
-                          <Button variant="link" size="sm" onClick={() => navigate(`/admin/cases/${c.id}/edit`)}>
-                            ✏
-                          </Button>
-                          <Button variant="link" size="sm" onClick={() => navigate(`/admin/transfers?caseId=${c.id}`)}>
-                            🔁
+                          <Button 
+                            variant="link" 
+                            size="sm" 
+                            onClick={() => navigate(`/admin/cases/${c.id}`)} 
+                            className="p-0 text-primary"
+                            style={{ textDecoration: 'none' }}
+                          >
+                            View
                           </Button>
                         </td>
                       </tr>
@@ -819,11 +546,16 @@ const AdminDashboard: React.FC = () => {
             </Card.Body>
           </Card>
 
-          {}
-          <Card className="dashboard-card">
+          <Card className="dashboard-card mb-3">
             <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">🤝 Active Help Requests</h5>
-              <Button variant="link" size="sm" onClick={() => navigate('/admin/help-requests/all')}>
+              <h5 className="mb-0">Active Help Requests</h5>
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={() => navigate('/admin/help-requests/all')} 
+                className="p-0 text-primary"
+                style={{ textDecoration: 'none', fontWeight: 500 }}
+              >
                 View All →
               </Button>
             </Card.Header>
@@ -833,7 +565,6 @@ const AdminDashboard: React.FC = () => {
                   <tr>
                     <th>ID</th>
                     <th>Type</th>
-                    <th>Child Age</th>
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Worker</th>
@@ -846,7 +577,6 @@ const AdminDashboard: React.FC = () => {
                       <tr key={hr.id}>
                         <td>{hr.trackingId || hr.id.substring(0, 8)}</td>
                         <td>{hr.helpType}</td>
-                        <td>{hr.childAge || 'N/A'}</td>
                         <td>
                           <Badge bg={hr.priority === 'URGENT' ? 'danger' : hr.priority === 'HIGH' ? 'warning' : 'secondary'}>
                             {hr.priority}
@@ -859,21 +589,21 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td>{hr.assignedWorkerId ? `SW-${hr.assignedWorkerId.substring(0, 2)}` : '—'}</td>
                         <td>
-                          <Button variant="link" size="sm" onClick={() => navigate(`/admin/help-requests/${hr.id}`)}>
-                            👁
-                          </Button>
-                          <Button variant="link" size="sm" onClick={() => {}}>
-                            ✔
-                          </Button>
-                          <Button variant="link" size="sm" onClick={() => navigate(`/admin/transfers?helpRequestId=${hr.id}`)}>
-                            🔁
+                          <Button 
+                            variant="link" 
+                            size="sm" 
+                            onClick={() => navigate(`/admin/help-requests/${hr.id}`)} 
+                            className="p-0 text-primary"
+                            style={{ textDecoration: 'none' }}
+                          >
+                            View
                           </Button>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="text-center text-muted py-4">
+                      <td colSpan={6} className="text-center text-muted py-4">
                         No active help requests
                       </td>
                     </tr>
@@ -884,55 +614,30 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Col>
 
-        {}
         <Col lg={4}>
-          {}
-          <Card className="dashboard-card mb-3">
-            <Card.Header>
-              <h5 className="mb-0">🚨 Live Alerts</h5>
-            </Card.Header>
-            <Card.Body>
-              <div className="alert-list">
-                {emergencyCases > 0 && (
-                  <div className="alert-item alert-emergency">
-                    <span className="alert-icon">🔴</span>
-                    <span className="alert-text">Emergency case reported</span>
-                  </div>
-                )}
-                {stats.activeCases > 0 && (
-                  <div className="alert-item alert-warning">
-                    <span className="alert-icon">🟡</span>
-                    <span className="alert-text">Case pending review</span>
-                  </div>
-                )}
-                {stats.totalHelpRequests - stats.activeHelpRequests > 0 && (
-                  <div className="alert-item alert-success">
-                    <span className="alert-icon">🟢</span>
-                    <span className="alert-text">Help completed</span>
-                  </div>
-                )}
-                {stats.pendingTransfers > 0 && (
-                  <div className="alert-item alert-info">
-                    <span className="alert-icon">🔁</span>
-                    <span className="alert-text">Transfer awaiting approval</span>
-                  </div>
-                )}
-                {emergencyCases === 0 && stats.activeCases === 0 && stats.pendingTransfers === 0 && (
-                  <div className="text-center text-muted py-2">
-                    <small>No active alerts</small>
-                  </div>
-                )}
-              </div>
-            </Card.Body>
-          </Card>
+          {stats.pendingApprovals > 0 && (
+            <Card className="dashboard-card mb-3">
+              <Card.Header>
+                <h5 className="mb-0">Pending Approvals</h5>
+              </Card.Header>
+              <Card.Body>
+                <div className="text-center">
+                  <h3 className="text-warning">{stats.pendingApprovals}</h3>
+                  <p className="text-muted mb-3">Users awaiting approval</p>
+                  <Button variant="primary" size="sm" onClick={() => navigate('/admin/users')}>
+                    Review Approvals
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          )}
 
-          {}
-          <Card className="dashboard-card mb-3">
-            <Card.Header>
-              <h5 className="mb-0">🔁 Pending Approvals</h5>
-            </Card.Header>
-            <Card.Body>
-              {pendingTransfers.length > 0 ? (
+          {pendingTransfers.length > 0 && (
+            <Card className="dashboard-card mb-3">
+              <Card.Header>
+                <h5 className="mb-0">Pending Transfers</h5>
+              </Card.Header>
+              <Card.Body>
                 <Table responsive size="sm">
                   <thead>
                     <tr>
@@ -943,7 +648,7 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingTransfers.map((transfer) => (
+                    {pendingTransfers.slice(0, 5).map((transfer) => (
                       <tr key={transfer.id}>
                         <td>{transfer.type}</td>
                         <td>{transfer.fromUserName || transfer.fromUserId.substring(0, 6)}</td>
@@ -952,7 +657,7 @@ const AdminDashboard: React.FC = () => {
                           <Button 
                             variant="link" 
                             size="sm" 
-                            className="text-success"
+                            className="text-success p-0 me-2"
                             onClick={async () => {
                               try {
                                 await transferService.approveTransfer(transfer.id);
@@ -962,12 +667,12 @@ const AdminDashboard: React.FC = () => {
                               }
                             }}
                           >
-                            ✔
+                            ✓
                           </Button>
                           <Button 
                             variant="link" 
                             size="sm" 
-                            className="text-danger"
+                            className="text-danger p-0"
                             onClick={async () => {
                               try {
                                 await transferService.rejectTransfer(transfer.id, 'Rejected by admin');
@@ -977,173 +682,27 @@ const AdminDashboard: React.FC = () => {
                               }
                             }}
                           >
-                            ✖
+                            ✗
                           </Button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </Table>
-              ) : (
-                <div className="text-center text-muted py-3">
-                  <small>No pending approvals</small>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-
-          {}
-          <Card className="dashboard-card mb-3">
-            <Card.Header>
-              <h5 className="mb-0">👥 User Status Overview</h5>
-            </Card.Header>
-            <Card.Body>
-              <div className="user-snapshot">
-                <div className="snapshot-item">
-                  <span className="snapshot-icon">✔</span>
-                  <span className="snapshot-label">Active Public Users</span>
-                  <span className="snapshot-value">{(stats.totalUsers - stats.policeOfficers - stats.socialWorkers).toLocaleString()}</span>
-                </div>
-                <div className="snapshot-item">
-                  <span className="snapshot-icon">✔</span>
-                  <span className="snapshot-label">Verified Police Officers</span>
-                  <span className="snapshot-value">{stats.policeOfficers.toLocaleString()}</span>
-                </div>
-                <div className="snapshot-item">
-                  <span className="snapshot-icon">✔</span>
-                  <span className="snapshot-label">Verified Social Workers</span>
-                  <span className="snapshot-value">{stats.socialWorkers.toLocaleString()}</span>
-                </div>
-                <div className="snapshot-item">
-                  <span className="snapshot-icon">✖</span>
-                  <span className="snapshot-label">Blocked / Suspended</span>
-                  <span className="snapshot-value">14</span>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-
-          {}
-          <Card className="dashboard-card mb-3">
-            <Card.Header>
-              <h5 className="mb-0">⭐ Feedback Summary</h5>
-            </Card.Header>
-            <Card.Body>
-              {feedbackStats ? (
-                <div className="feedback-summary">
-                  <div className="feedback-rating">
-                    <span className="rating-value">{feedbackStats.averageRating.toFixed(1)}</span>
-                    <span className="rating-label">/ 5 Average Rating</span>
+                {pendingTransfers.length > 5 && (
+                  <div className="text-center mt-2">
+                    <Button variant="link" size="sm" onClick={() => navigate('/admin/transfers')}>
+                      View All ({pendingTransfers.length})
+                    </Button>
                   </div>
-                  <div className="feedback-breakdown">
-                    <div className="feedback-item positive">
-                      <span>😊 Positive Feedback</span>
-                      <span>{feedbackStats.positiveFeedback}%</span>
-                    </div>
-                    <div className="feedback-item neutral">
-                      <span>😐 Neutral</span>
-                      <span>{feedbackStats.neutralFeedback}%</span>
-                    </div>
-                    <div className="feedback-item negative">
-                      <span>😞 Negative</span>
-                      <span>{feedbackStats.negativeFeedback}%</span>
-                    </div>
-                  </div>
-                  <div className="feedback-pending">
-                    <span>⏳ Pending Reviews</span>
-                    <Badge bg="warning">{feedbackStats.pendingReviews}</Badge>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center text-muted py-3">
-                  <small>Loading feedback data...</small>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-
-          {}
-          <Card className="dashboard-card mb-3">
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">📢 System Announcements</h5>
-              <Button variant="link" size="sm" onClick={() => {}}>
-                + New
-              </Button>
-            </Card.Header>
-            <Card.Body>
-              <div className="announcement-list">
-                <div className="announcement-item">
-                  <span className="announcement-icon">🔔</span>
-                  <span className="announcement-text">Scheduled Maintenance Notice</span>
-                </div>
-                <div className="announcement-item">
-                  <span className="announcement-icon">📢</span>
-                  <span className="announcement-text">New Policy Update</span>
-                </div>
-                <div className="announcement-item">
-                  <span className="announcement-icon">🧾</span>
-                  <span className="announcement-text">Legal Guidelines Revised</span>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-
-          {}
-          <Card className="dashboard-card activity-feed">
-            <Card.Header>
-              <h5 className="mb-0">🔄 Live Activity Stream</h5>
-            </Card.Header>
-            <Card.Body className="activity-body">
-              {activities.length > 0 ? (
-                <div className="activity-list">
-                  {activities.map((activity) => (
-                    <div key={activity.id} className="activity-item">
-                      <div className="activity-icon">
-                        {getActivityIcon(activity.eventType)}
-                      </div>
-                      <div className="activity-content">
-                        <div className="activity-text">{activity.description}</div>
-                        <div className="activity-time">
-                          🕒 {formatTimeAgo(activity.timestamp)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted">No recent activity</p>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
+                )}
+              </Card.Body>
+            </Card>
+          )}
         </Col>
       </Row>
-
-      {}
-      <Row className="mt-5">
-        <Col>
-          <div className="dashboard-footer text-center py-3 border-top">
-            <small className="text-muted">
-              © 2025 Child Protection & Support Portal | Admin Control System | Secure | Audited
-            </small>
-          </div>
-        </Col>
-      </Row>
-      </div>
+    </div>
   );
 };
 
-const getStatusColor = (status: string): string => {
-  const statusUpper = status.toUpperCase();
-  if (statusUpper.includes('REPORTED')) return '#4CAF50';
-  if (statusUpper.includes('REVIEW')) return '#FFC107';
-  if (statusUpper.includes('ASSIGNED')) return '#2196F3';
-  if (statusUpper.includes('INVESTIGATING')) return '#FF9800';
-  if (statusUpper.includes('RESOLVED')) return '#9C27B0';
-  if (statusUpper.includes('CLOSED')) return '#424242';
-  return '#757575';
-};
-
 export default AdminDashboard;
-

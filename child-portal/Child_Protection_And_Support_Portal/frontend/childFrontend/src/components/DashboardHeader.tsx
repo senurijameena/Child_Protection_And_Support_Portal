@@ -250,26 +250,51 @@ const DashboardHeader: React.FC = () => {
         'Content-Type': 'application/json'
       };
 
-      const [casesRes, approvalsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/cases/stats`, { headers }),
-        fetch(`${API_BASE_URL}/api/admin/pending-approvals`, { headers })
-      ]);
+      // Use the analytics dashboard endpoint which returns all metrics
+      const dashboardRes = await fetch(`${API_BASE_URL}/api/analytics/dashboard`, { headers });
 
       let liveCases = 0;
       let newCasesToday = 0;
       let emergencyCases = 0;
       let pendingApprovals = 0;
 
-      if (casesRes.ok) {
-        const casesData = await casesRes.json();
-        liveCases = casesData.active || casesData.activeCases || 0;
-        newCasesToday = casesData.today || casesData.todayCases || 0;
-        emergencyCases = casesData.emergency || casesData.emergencyCases || 0;
-      }
+      if (dashboardRes.ok) {
+        const dashboardData = await dashboardRes.json();
+        // Map backend response to frontend state
+        liveCases = dashboardData.activeCases || 0;
+        emergencyCases = dashboardData.emergencyCases || 0;
+        pendingApprovals = dashboardData.pendingApprovals || 0;
+        
+        // Calculate new cases today from casesByStatus if available
+        if (dashboardData.casesByStatus) {
+          const today = new Date().toISOString().split('T')[0];
+          // This is an approximation - backend should provide this
+          newCasesToday = 0;
+        }
+      } else {
+        // Fallback: try individual endpoints
+        const [casesRes, approvalsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/cases/all`, { headers }).catch(() => null),
+          fetch(`${API_BASE_URL}/api/admin/pending-approvals`, { headers }).catch(() => null)
+        ]);
 
-      if (approvalsRes.ok) {
-        const approvalsData = await approvalsRes.json();
-        pendingApprovals = Array.isArray(approvalsData) ? approvalsData.length : (approvalsData.count || 0);
+        if (casesRes?.ok) {
+          const casesData = await casesRes.json();
+          if (Array.isArray(casesData)) {
+            liveCases = casesData.filter((c: any) => 
+              c.status === 'REPORTED' || 
+              c.status === 'UNDER_REVIEW' || 
+              c.status === 'ASSIGNED' || 
+              c.status === 'INVESTIGATING'
+            ).length;
+            emergencyCases = casesData.filter((c: any) => c.priority === 'URGENT' || c.priority === 'EMERGENCY').length;
+          }
+        }
+
+        if (approvalsRes?.ok) {
+          const approvalsData = await approvalsRes.json();
+          pendingApprovals = Array.isArray(approvalsData) ? approvalsData.length : (approvalsData.count || 0);
+        }
       }
 
       setQuickStats({
@@ -400,7 +425,6 @@ const DashboardHeader: React.FC = () => {
   return (
     <>
       <Navbar expand="lg" className="dashboard-header" sticky="top">
-        {}
         <div className="header-quote-banner">
           <div className="quote-content">
             Working together to prevent harm and ensure child well-being
@@ -409,8 +433,8 @@ const DashboardHeader: React.FC = () => {
         
         <Container fluid className="header-main-content">
           <div className="header-left-section">
-          <Navbar.Brand as={Link} to={getDashboardPath()} className="logo-brand">
-            <div className="logo-container">
+            <Navbar.Brand as={Link} to={getDashboardPath()} className="logo-brand">
+              <div className="logo-container">
                 <span className="logo-emoji">🛡️</span>
                 <div className="brand-text-container">
                   <span className="system-name">
@@ -423,71 +447,78 @@ const DashboardHeader: React.FC = () => {
                      'Public User Dashboard'}
                   </span>
                 </div>
-            </div>
-          </Navbar.Brand>
+              </div>
+            </Navbar.Brand>
           </div>
 
           {user?.role === 'ADMIN' && (
-            <div className="header-center-section d-none d-lg-flex align-items-center gap-4">
-              {loadingQuickStats ? (
-                <Spinner animation="border" size="sm" />
-              ) : (
-                <>
-                  <div className="quick-stat-item">
-                    <span className="quick-stat-icon">📊</span>
-                    <div className="quick-stat-content">
-                      <span className="quick-stat-label">Live Cases</span>
-                      <span className="quick-stat-value">
+            <div className="header-quick-stats-section d-none d-xl-flex">
+              <div className="quick-stat-item" onClick={() => navigate('/admin/cases/all')} style={{ cursor: 'pointer' }}>
+                <span className="quick-stat-icon">📊</span>
+                <div className="quick-stat-content">
+                  <span className="quick-stat-label">Live Cases</span>
+                  <span className="quick-stat-value">
+                    {loadingQuickStats ? (
+                      <Spinner animation="border" size="sm" />
+                    ) : (
+                      <>
                         {quickStats?.liveCases || 0}
                         {quickStats && quickStats.newCasesToday > 0 && (
-                          <Badge bg="success" className="ms-2 quick-stat-badge">
-                            +{quickStats.newCasesToday} new today
+                          <Badge bg="success" className="quick-stat-badge">
+                            +{quickStats.newCasesToday}
                           </Badge>
                         )}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="quick-stat-item emergency-stat">
-                    <span className="quick-stat-icon">🚨</span>
-                    <div className="quick-stat-content">
-                      <span className="quick-stat-label">Emergency</span>
-                      <span className="quick-stat-value emergency-blink">
-                        {quickStats?.emergencyCases || 0}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="quick-stat-item">
-                    <span className="quick-stat-icon">👥</span>
-                    <div className="quick-stat-content">
-                      <span className="quick-stat-label">Pending Approvals</span>
-                      <span className="quick-stat-value">
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="quick-stat-item emergency-stat" onClick={() => navigate('/admin/cases/emergency')} style={{ cursor: 'pointer' }}>
+                <span className="quick-stat-icon">🚨</span>
+                <div className="quick-stat-content">
+                  <span className="quick-stat-label">Emergency</span>
+                  <span className="quick-stat-value emergency-blink">
+                    {loadingQuickStats ? (
+                      <Spinner animation="border" size="sm" />
+                    ) : (
+                      quickStats?.emergencyCases || 0
+                    )}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="quick-stat-item" onClick={() => navigate('/admin/users')} style={{ cursor: 'pointer' }}>
+                <span className="quick-stat-icon">👥</span>
+                <div className="quick-stat-content">
+                  <span className="quick-stat-label">Pending</span>
+                  <span className="quick-stat-value">
+                    {loadingQuickStats ? (
+                      <Spinner animation="border" size="sm" />
+                    ) : (
+                      <>
                         {quickStats?.pendingApprovals || 0}
                         {quickStats && quickStats.pendingApprovals > 0 && (
-                          <Badge bg="danger" className="ms-2 quick-stat-badge">
+                          <Badge bg="danger" className="quick-stat-badge">
                             {quickStats.pendingApprovals}
                           </Badge>
                         )}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
-          {}
           <Navbar.Toggle 
             aria-controls="dashboard-nav" 
             onClick={() => setShowMobileMenu(true)}
             className="mobile-toggle"
           />
 
-          {}
           <Navbar.Collapse id="dashboard-nav">
-            <div className="header-right-section ms-auto d-flex align-items-center gap-3">
-              {}
+            <div className="header-right-section">
               {user?.role === 'PUBLIC' && (
                 <div className="header-location-time">
                   <span className="location-icon">📍</span>
@@ -503,7 +534,6 @@ const DashboardHeader: React.FC = () => {
                 </div>
               )}
 
-              {}
               <Dropdown align="end">
                 <Dropdown.Toggle variant="link" className="user-info-toggle p-0">
                   <div className="user-info-container">
@@ -600,7 +630,6 @@ const DashboardHeader: React.FC = () => {
                 </Dropdown.Menu>
               </Dropdown>
 
-              {}
               <NotificationDropdown 
                 show={showNotifications}
                 onToggle={(isOpen) => setShowNotifications(isOpen)}
@@ -610,7 +639,6 @@ const DashboardHeader: React.FC = () => {
                 onMarkAllAsRead={handleMarkAllAsRead}
               />
 
-              {}
               <Button
                 variant="link"
                 className="logout-btn p-0"

@@ -614,7 +614,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ userType }) => {
               <Nav.Link 
                 as={Link} 
                 to="/admin/help-requests/all" 
-                className={`sidebar-sublink ${isActive('/admin/help-requests/all') ? 'active' : ''}`}
+                className={`sidebar-sublink ${isActive('/admin/help-requests') ? 'active' : ''}`}
               >
                 <i className="bi bi-list-ul me-2"></i>
                 All Help Requests

@@ -3,7 +3,7 @@ import {
   Row, Col, Card, Button, Spinner, Alert,
   Form, Table, Badge, InputGroup, Dropdown
 } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { helpRequestService } from '../../services/helpRequestService';
 import './HelpRequestManagement.css';
 
@@ -27,6 +27,7 @@ interface HelpRequest {
 
 const HelpRequestManagement: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([]);
@@ -36,6 +37,19 @@ const HelpRequestManagement: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
+  
+  // Set default filter based on route
+  useEffect(() => {
+    if (location.pathname.includes('/marketplace')) {
+      setStatusFilter('PENDING');
+    } else if (location.pathname.includes('/assigned')) {
+      setStatusFilter('ASSIGNED');
+    } else if (location.pathname.includes('/completed')) {
+      setStatusFilter('COMPLETED');
+    } else {
+      setStatusFilter('ALL');
+    }
+  }, [location.pathname]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);

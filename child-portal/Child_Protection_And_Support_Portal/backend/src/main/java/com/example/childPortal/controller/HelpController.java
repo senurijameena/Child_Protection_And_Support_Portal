@@ -40,6 +40,12 @@ public class HelpController {
     public ResponseEntity<List<HelpRequestDTO>> getMyHelpRequests(@AuthenticationPrincipal String userId) { 
         List<HelpRequestDTO> requests = helpRequestService.getHelpRequestsByRequester(userId); 
         return ResponseEntity.ok(requests); 
+    }
+
+    @GetMapping("/worker/{workerId}") 
+    public ResponseEntity<List<HelpRequestDTO>> getHelpRequestsByWorker(@PathVariable String workerId) { 
+        List<HelpRequestDTO> requests = helpRequestService.getHelpRequestsByWorker(workerId); 
+        return ResponseEntity.ok(requests); 
     } 
  
     @GetMapping("/all") 

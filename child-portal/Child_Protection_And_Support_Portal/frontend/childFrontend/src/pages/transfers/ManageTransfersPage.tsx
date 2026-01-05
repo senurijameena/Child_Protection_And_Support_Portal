@@ -650,14 +650,6 @@ const ManageTransfersPage: React.FC = () => {
               </td>
               <td>
                 <div className="d-flex gap-1">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => navigate(`/transfers/requests/${request.id}`)}
-                  >
-                    <i className="bi bi-eye"></i>
-                  </Button>
-                  
                   {request.status === 'PENDING' && (
                     <>
                       {(activeTab === 'to_me' || isAdmin) && (
@@ -768,14 +760,6 @@ const ManageTransfersPage: React.FC = () => {
               </div>
               
               <div className="d-flex justify-content-between align-items-center">
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() => navigate(`/transfers/requests/${request.id}`)}
-                >
-                  View Details
-                </Button>
-                
                 {request.status === 'PENDING' && (
                   <div className="d-flex gap-1">
                     {(activeTab === 'to_me' || isAdmin) && (

@@ -13,7 +13,6 @@ import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
 import com.example.childPortal.service.NotificationService;
-import com.example.childPortal.service.SequenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,6 @@ public class CaseServiceImpl implements CaseService {
     @Autowired private CaseRepository caseRepository;
     @Autowired private UserRepository userRepository;
     @Autowired(required = false) private NotificationService notificationService;
-    @Autowired private SequenceService sequenceService;
 
     @Override
     @Transactional
@@ -92,14 +90,95 @@ public class CaseServiceImpl implements CaseService {
                 caseEntity.setReporterName("Anonymous Reporter");
             }
 
-            Case savedCase = caseRepository.save(caseEntity);
+            // Generate sequential tracking ID based on anonymous status (before saving)
+            // Use synchronized block to prevent race conditions when generating IDs
+            String prefix = request.isAnonymous() ? "ANON C-" : "CASE-";
+            String trackingId;
             
-            // Generate sequential tracking ID
-            long caseNumber = sequenceService.getNextSequence("case_sequence");
-            String prefix = request.isAnonymous() ? "ANON-" : "CASE-";
-            String trackingId = prefix + String.format("%04d", caseNumber);
-            savedCase.setTrackingId(trackingId);
-            savedCase = caseRepository.save(savedCase);
+            synchronized (CaseServiceImpl.class) {
+                // Query all cases to find the maximum tracking ID number
+                List<Case> allCases = caseRepository.findAll();
+                long maxNumber = 0;
+                java.util.Set<String> existingIds = new java.util.HashSet<>();
+                
+                // Collect all existing tracking IDs - access field directly to avoid getter fallback
+                for (Case existingCase : allCases) {
+                    String existingTrackingId = null;
+                    try {
+                        // Access the private trackingId field directly to avoid getter's fallback logic
+                        java.lang.reflect.Field field = Case.class.getDeclaredField("trackingId");
+                        field.setAccessible(true);
+                        existingTrackingId = (String) field.get(existingCase);
+                    } catch (Exception e) {
+                        // If reflection fails, use getter but filter out generated IDs
+                        String tid = existingCase.getTrackingId();
+                        // Only use if it matches our pattern (not a generated fallback)
+                        if (tid != null && (tid.startsWith("CASE-") || tid.startsWith("ANON C-"))) {
+                            existingTrackingId = tid;
+                        }
+                    }
+                    
+                    if (existingTrackingId != null && !existingTrackingId.isEmpty() && existingTrackingId.startsWith(prefix)) {
+                        existingIds.add(existingTrackingId);
+                        try {
+                            // Extract number from tracking ID (e.g., "CASE-0001" -> 1, "ANON C-0001" -> 1)
+                            String numberPart = existingTrackingId.substring(prefix.length()).trim();
+                            if (!numberPart.isEmpty()) {
+                                long number = Long.parseLong(numberPart);
+                                if (number > maxNumber) {
+                                    maxNumber = number;
+                                }
+                            }
+                        } catch (NumberFormatException ex) {
+                            // Skip invalid tracking IDs
+                            continue;
+                        }
+                    }
+                }
+                
+                // Generate next unique tracking ID
+                long nextNumber = maxNumber + 1;
+                trackingId = prefix + String.format("%04d", nextNumber);
+                
+                // Ensure uniqueness - if exists, increment until we find a free one
+                int attempts = 0;
+                while (existingIds.contains(trackingId) && attempts < 100) {
+                    nextNumber++;
+                    trackingId = prefix + String.format("%04d", nextNumber);
+                    attempts++;
+                }
+                
+                // Final check in database
+                try {
+                    if (caseRepository.existsByTrackingId(trackingId)) {
+                        // If still exists, find the actual max and use next
+                        long actualMax = 0;
+                        for (Case c : allCases) {
+                            try {
+                                java.lang.reflect.Field field = Case.class.getDeclaredField("trackingId");
+                                field.setAccessible(true);
+                                String tid = (String) field.get(c);
+                                if (tid != null && tid.startsWith(prefix)) {
+                                    String numPart = tid.substring(prefix.length()).trim();
+                                    if (!numPart.isEmpty()) {
+                                        long num = Long.parseLong(numPart);
+                                        if (num > actualMax) actualMax = num;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                continue;
+                            }
+                        }
+                        trackingId = prefix + String.format("%04d", actualMax + 1);
+                    }
+                } catch (Exception e) {
+                    // If existsByTrackingId method fails, we'll rely on the in-memory check
+                }
+            }
+            
+            caseEntity.setTrackingId(trackingId);
+            
+            Case savedCase = caseRepository.save(caseEntity);
             
             // Send notification (app notification only for anonymous, email + app for non-anonymous)
             if (notificationService != null && reporterUserId != null) {

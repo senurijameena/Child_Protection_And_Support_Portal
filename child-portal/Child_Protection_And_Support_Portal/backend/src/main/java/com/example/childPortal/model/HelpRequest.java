@@ -50,12 +50,9 @@ public class HelpRequest {
     }
 
     public String generateTrackingId() {
-        if (this.id != null && this.id.length() >= 4) {
-            String prefix = this.anonymous ? "ANON-" : "HELP-";
-            return prefix + this.id.substring(0, 4).toUpperCase();
-        }
-        String prefix = this.anonymous ? "ANON-" : "HELP-";
-        return prefix + (this.id != null ? this.id : "UNKNOWN");
+        // This is a fallback method - tracking IDs should be set in the service layer
+        String prefix = this.anonymous ? "ANON H-" : "HELP-";
+        return prefix + (this.id != null ? this.id.substring(0, Math.min(4, this.id.length())) : "UNKNOWN");
     }
 
     public String getIdentificationMarks() {

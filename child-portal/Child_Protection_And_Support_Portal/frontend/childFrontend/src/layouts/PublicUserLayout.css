@@ -1,10 +1,11 @@
 .public-user-layout {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: #faf5ff;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
   width: 100%;
+  padding-top: 70px; /* Account for fixed navbar */
 }
 
 .public-user-layout .dashboard-container {
@@ -21,6 +22,8 @@
   padding-right: 0;
   padding-left: 15px;
   padding-top: 0;
+  position: relative;
+  width: 100%;
 }
 
 .public-user-layout .main-content-column {
@@ -28,16 +31,29 @@
   padding-right: 15px;
   padding-top: 0;
   overflow-x: hidden;
-  height: calc(100vh - 50px);
+  min-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
+  margin-left: 0;
+}
+
+/* Account for fixed sidebar on large screens */
+@media (min-width: 992px) {
+  .public-user-layout .main-content-column {
+    margin-left: 265px; /* 250px sidebar + 15px padding */
+  }
+  
+  .public-user-layout .sidebar-column {
+    width: 250px;
+    flex: 0 0 250px;
+  }
 }
 
 .public-user-layout .dashboard-content {
-  background-color: white;
+  background-color: #ffffff;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(196, 154, 255, 0.15);
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;

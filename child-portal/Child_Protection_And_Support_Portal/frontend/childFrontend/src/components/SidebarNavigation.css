@@ -2,9 +2,11 @@
 .sidebar-navigation {
   background: white;
   border-right: 1px solid #e3e6f0;
-  height: calc(100vh - 50px);
-  position: sticky;
-  top: 50px;
+  height: calc(100vh - 70px);
+  position: fixed;
+  top: 70px;
+  left: 0;
+  width: 250px;
   overflow-y: auto;
   padding: 1rem 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
@@ -12,50 +14,54 @@
 }
 
 .sidebar-navigation.public-user-sidebar {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  border-right: none;
-  color: white;
+  background: linear-gradient(180deg, #e8d5ff 0%, #d4b3ff 50%, #c19aff 100%);
+  border-right: 2px solid rgba(196, 154, 255, 0.5);
+  color: #6b46c1;
+  box-shadow: 2px 0 10px rgba(196, 154, 255, 0.2);
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-title {
-  color: white;
+  color: #6b46c1;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-user-info {
-  color: rgba(255, 255, 255, 0.9);
+  color: #6b46c1;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-user-info small {
-  color: rgba(255, 255, 255, 0.8);
+  color: #8b5cf6;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link {
-  color: white !important;
+  color: #6b46c1 !important;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link:hover {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  color: white !important;
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  color: #6b46c1 !important;
+  box-shadow: 0 2px 8px rgba(196, 154, 255, 0.3);
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link.active {
-  background-color: rgba(255, 255, 255, 0.25) !important;
-  color: white !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  color: #6b46c1 !important;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(196, 154, 255, 0.4);
+  border-left: 3px solid #8b5cf6;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-icon {
-  color: white;
+  color: #6b46c1;
   font-size: 1.2rem;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-text {
-  color: white;
+  color: #6b46c1;
   font-weight: 500;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(196, 154, 255, 0.4);
 }
 
 .sidebar-header {
@@ -305,9 +311,16 @@
   .sidebar-navigation {
     height: auto;
     position: static;
+    top: auto;
+    left: auto;
     border-right: none;
     border-bottom: 1px solid #e3e6f0;
     padding: 0.5rem 0;
+  }
+  
+  .sidebar-navigation.public-user-sidebar {
+    position: static;
+    height: auto;
   }
   
   .sidebar-header {

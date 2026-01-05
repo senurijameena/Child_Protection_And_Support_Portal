@@ -11,7 +11,6 @@ import com.example.childPortal.repository.HelpRequestRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.HelpRequestService;
 import com.example.childPortal.service.NotificationService;
-import com.example.childPortal.service.SequenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -32,9 +31,6 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     
     @Autowired(required = false)
     private NotificationService notificationService;
-    
-    @Autowired
-    private SequenceService sequenceService;
 
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
@@ -80,14 +76,36 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                 helpRequest.setRequesterName(reporterOpt.get().getFullName());
             }
 
-            HelpRequest savedHelpRequest = helpRequestRepository.save(helpRequest);
+            // Generate sequential tracking ID based on anonymous status (before saving)
+            // Extract max number from existing tracking IDs to ensure proper sequencing
+            String prefix = helpRequestDTO.isAnonymous() ? "ANON H-" : "HELP-";
+            // Use regex to find tracking IDs starting with the prefix (only non-null trackingIds will match)
+            String regexPrefix = "^" + java.util.regex.Pattern.quote(prefix);
+            List<HelpRequest> existingRequests = helpRequestRepository.findByTrackingIdStartingWith(regexPrefix);
+            long maxNumber = 0;
             
-            // Generate sequential tracking ID
-            long helpNumber = sequenceService.getNextSequence("help_request_sequence");
-            String prefix = helpRequestDTO.isAnonymous() ? "ANON-" : "HELP-";
-            String trackingId = prefix + String.format("%05d", helpNumber);
-            savedHelpRequest.setTrackingId(trackingId);
-            savedHelpRequest = helpRequestRepository.save(savedHelpRequest);
+            for (HelpRequest existingRequest : existingRequests) {
+                // The query already filters by trackingId pattern, so these should all have valid trackingIds
+                String existingTrackingId = existingRequest.getTrackingId();
+                if (existingTrackingId != null && existingTrackingId.startsWith(prefix)) {
+                    try {
+                        // Extract number from tracking ID (e.g., "HELP-0001" -> 1, "ANON H-0001" -> 1)
+                        String numberPart = existingTrackingId.substring(prefix.length());
+                        long number = Long.parseLong(numberPart);
+                        if (number > maxNumber) {
+                            maxNumber = number;
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip invalid tracking IDs
+                    }
+                }
+            }
+            
+            long nextNumber = maxNumber + 1;
+            String trackingId = prefix + String.format("%04d", nextNumber);
+            helpRequest.setTrackingId(trackingId);
+            
+            HelpRequest savedHelpRequest = helpRequestRepository.save(helpRequest);
             
             // Send notification (app notification only for anonymous, email + app for non-anonymous)
             if (notificationService != null && requesterUserId != null) {
@@ -187,6 +205,13 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     @Override
     public List<HelpRequestDTO> searchHelpRequestsByLocation(String location) {
         return helpRequestRepository.findByLocationContainingIgnoreCase(location).stream()
+                .map(this::convertToFilteredDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<HelpRequestDTO> getHelpRequestsByWorker(String workerId) {
+        return helpRequestRepository.findByAssignedWorkerId(workerId).stream()
                 .map(this::convertToFilteredDTO)
                 .collect(Collectors.toList());
     }

@@ -3,9 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "cd childFrontend && npm run dev",
-    "build": "cd childFrontend && npm run build",
-    "lint": "cd childFrontend && npm run lint",
-    "preview": "cd childFrontend && npm run preview"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   }
 }

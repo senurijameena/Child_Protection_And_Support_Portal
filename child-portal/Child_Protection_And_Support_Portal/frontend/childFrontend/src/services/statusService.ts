@@ -30,17 +30,23 @@ export const statusService = {
   getStatusStatistics: (role: string) => 
     api.get(`/api/status/statistics/${role}`),
 
-  setAvailable: (note?: string) => 
-    api.post('/api/status/available', null, { params: note ? { note } : {} }),
+  setAvailable: (note?: string) => {
+    const params: any = {};
+    if (note) params.note = note;
+    return api.post('/api/status/available', {}, { params });
+  },
 
-  setBusy: (note?: string) => 
-    api.post('/api/status/busy', null, { params: note ? { note } : {} }),
+  setBusy: (note?: string) => {
+    const params: any = {};
+    if (note) params.note = note;
+    return api.post('/api/status/busy', {}, { params });
+  },
 
   setOffDuty: (note?: string, expectedReturn?: string) => {
     const params: any = {};
     if (note) params.note = note;
     if (expectedReturn) params.expectedReturn = expectedReturn;
-    return api.post('/api/status/off-duty', null, { params });
+    return api.post('/api/status/off-duty', {}, { params });
   },
 
   setEmergencyOnly: (note?: string) => 

@@ -209,12 +209,13 @@ const PublicUserDashboard: React.FC = () => {
   };
 
   const getStatusColor = (status?: string): string => {
-    if (!status) return '#6c757d';
+    if (!status) return '#64748B'; // Disabled Text - Slate Blue
     const statusUpper = status.toUpperCase();
-    if (statusUpper === 'URGENT' || statusUpper === 'EMERGENCY') return '#dc3545';
-    if (statusUpper === 'ASSIGNED' || statusUpper === 'IN_PROGRESS') return '#28a745';
-    if (statusUpper === 'UNDER_REVIEW') return '#ffc107';
-    return '#6c757d';
+    if (statusUpper === 'URGENT' || statusUpper === 'EMERGENCY') return '#EF4444'; // Danger - Red
+    if (statusUpper === 'ASSIGNED' || statusUpper === 'IN_PROGRESS') return '#22D3EE'; // Success - Cyan Blue
+    if (statusUpper === 'UNDER_REVIEW') return '#FBBF24'; // Warning - Amber
+    if (statusUpper === 'RESOLVED' || statusUpper === 'COMPLETED' || statusUpper === 'CLOSED') return '#22D3EE'; // Success - Cyan Blue
+    return '#64748B'; // Disabled Text - Slate Blue
   };
 
   // Calculate statistics

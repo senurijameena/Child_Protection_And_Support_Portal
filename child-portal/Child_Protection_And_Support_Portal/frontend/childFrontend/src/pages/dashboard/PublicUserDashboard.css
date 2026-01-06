@@ -1,18 +1,37 @@
 .public-user-dashboard {
-  padding: 0;
-  background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
+  padding: 0 !important;
+  background: #0F172A !important; /* PRIMARY DEEP BLUE - Midnight Navy */
   min-height: 100vh;
-  padding: 2rem 0;
+  padding: 2rem 0 !important;
+  color: #F1F5F9 !important; /* Primary Text */
+}
+
+/* Override global dashboard-content styles */
+.public-user-layout .dashboard-content .public-user-dashboard {
+  background: transparent !important; /* Transparent since parent has the background */
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure all text in dashboard is visible */
+.public-user-dashboard * {
+  color: inherit;
+}
+
+.public-user-dashboard .text-muted,
+.public-user-dashboard .text-muted * {
+  color: #CBD5E1 !important; /* Secondary Text */
 }
 
 .dashboard-header-section {
   margin-bottom: 2rem;
   padding: 2rem;
-  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
+  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.4);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.4) !important;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
+  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
+  color: #F1F5F9 !important; /* Primary Text */
 }
 
 .dashboard-title {
@@ -52,15 +71,16 @@
 }
 
 .quick-action-card-main {
-  border: none;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);
-  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
+  border: none !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4) !important;
+  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
   height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 20px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
+  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
+  color: #F1F5F9 !important; /* Primary Text */
 }
 
 .quick-action-card-main::before {
@@ -125,15 +145,16 @@
 }
 
 .stat-card {
-  border: none;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4);
-  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4) !important;
+  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
   height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 16px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
+  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
+  color: #F1F5F9 !important; /* Primary Text */
 }
 
 .stat-card::before {
@@ -207,66 +228,91 @@
 }
 
 /* Modern gradient theme for Card components */
-.public-user-dashboard .card {
-  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
-  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
+.public-user-dashboard .card,
+.public-user-layout .dashboard-content .card {
+  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
+  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4) !important;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  color: #F1F5F9 !important; /* Primary Text */
 }
 
-.public-user-dashboard .card:hover {
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
+.public-user-dashboard .card:hover,
+.public-user-layout .dashboard-content .card:hover {
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3) !important;
   transform: translateY(-2px);
-  border-color: #60A5FA; /* LIGHT ACCENT */
+  border-color: #60A5FA !important; /* LIGHT ACCENT */
 }
 
-.public-user-dashboard .card-header {
-  background: rgba(15, 23, 42, 0.5); /* PRIMARY DEEP BLUE with opacity */
-  border-bottom: 2px solid rgba(59, 130, 246, 0.3); /* ACCENT BLUE border */
-  color: #F1F5F9; /* Primary Text */
+.public-user-dashboard .card-header,
+.public-user-layout .dashboard-content .card-header {
+  background: rgba(15, 23, 42, 0.5) !important; /* PRIMARY DEEP BLUE with opacity */
+  border-bottom: 2px solid rgba(59, 130, 246, 0.3) !important; /* ACCENT BLUE border */
+  color: #F1F5F9 !important; /* Primary Text */
   font-weight: 700;
   font-size: 1.1rem;
   padding: 1.25rem 1.5rem;
   border-radius: 16px 16px 0 0;
 }
 
-.public-user-dashboard .card-body {
-  background: transparent;
-  color: #F1F5F9; /* Primary Text */
+.public-user-dashboard .card-body,
+.public-user-layout .dashboard-content .card-body {
+  background: transparent !important;
+  color: #F1F5F9 !important; /* Primary Text */
   padding: 1.5rem;
 }
 
-.public-user-dashboard .card-title {
-  color: #F1F5F9; /* Primary Text */
+.public-user-dashboard .card-title,
+.public-user-layout .dashboard-content .card-title {
+  color: #F1F5F9 !important; /* Primary Text */
   font-weight: 700;
 }
 
-.public-user-dashboard .text-muted {
+.public-user-dashboard .text-muted,
+.public-user-layout .dashboard-content .text-muted {
   color: #CBD5E1 !important; /* Secondary Text */
 }
 
-.public-user-dashboard .border-bottom {
+.public-user-dashboard .border-bottom,
+.public-user-layout .dashboard-content .border-bottom {
   border-color: rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
 }
 
-.public-user-dashboard .btn-primary {
-  background: #3B82F6; /* ACCENT BLUE - Royal Blue */
-  border: none;
+.public-user-dashboard h5,
+.public-user-layout .dashboard-content h5 {
+  color: #F1F5F9 !important; /* Primary Text */
+}
+
+.public-user-dashboard .fw-bold,
+.public-user-layout .dashboard-content .fw-bold {
+  color: #F1F5F9 !important; /* Primary Text */
+}
+
+.public-user-dashboard .small,
+.public-user-layout .dashboard-content .small {
+  color: #CBD5E1 !important; /* Secondary Text */
+}
+
+.public-user-dashboard .btn-primary,
+.public-user-layout .dashboard-content .btn-primary {
+  background: #3B82F6 !important; /* ACCENT BLUE - Royal Blue */
+  border: none !important;
   border-radius: 10px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  color: #F1F5F9; /* Primary Text */
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  color: #F1F5F9 !important; /* Primary Text */
 }
 
-.public-user-dashboard .btn-primary:hover {
+.public-user-dashboard .btn-primary:hover,
+.public-user-layout .dashboard-content .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  background: #60A5FA; /* LIGHT ACCENT - Sky Blue */
-  color: #0F172A; /* PRIMARY DEEP BLUE for contrast */
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+  background: #60A5FA !important; /* LIGHT ACCENT - Sky Blue */
+  color: #0F172A !important; /* PRIMARY DEEP BLUE for contrast */
 }
 
 .public-user-dashboard .btn-warning {
@@ -287,21 +333,23 @@
   color: #0F172A; /* PRIMARY DEEP BLUE */
 }
 
-.public-user-dashboard .btn-outline-primary {
-  border: 2px solid #3B82F6; /* ACCENT BLUE */
-  color: #3B82F6; /* ACCENT BLUE */
+.public-user-dashboard .btn-outline-primary,
+.public-user-layout .dashboard-content .btn-outline-primary {
+  border: 2px solid #3B82F6 !important; /* ACCENT BLUE */
+  color: #3B82F6 !important; /* ACCENT BLUE */
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
-  background: transparent;
+  background: transparent !important;
 }
 
-.public-user-dashboard .btn-outline-primary:hover {
-  background: #3B82F6; /* ACCENT BLUE */
-  border-color: #3B82F6; /* ACCENT BLUE */
-  color: #F1F5F9; /* Primary Text */
+.public-user-dashboard .btn-outline-primary:hover,
+.public-user-layout .dashboard-content .btn-outline-primary:hover {
+  background: #3B82F6 !important; /* ACCENT BLUE */
+  border-color: #3B82F6 !important; /* ACCENT BLUE */
+  color: #F1F5F9 !important; /* Primary Text */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 
 .public-user-dashboard .btn-outline-warning {

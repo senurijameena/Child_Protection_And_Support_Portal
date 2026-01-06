@@ -1,6 +1,6 @@
 .public-user-dashboard {
   padding: 0;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+  background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
   min-height: 100vh;
   padding: 2rem 0;
 }
@@ -8,25 +8,22 @@
 .dashboard-header-section {
   margin-bottom: 2rem;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(30, 58, 138, 0.2);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
 }
 
 .dashboard-title {
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #F1F5F9; /* Primary Text */
   margin-bottom: 0.5rem;
 }
 
 .dashboard-subtitle {
-  color: #64748b;
+  color: #CBD5E1; /* Secondary Text */
   font-size: 1.1rem;
   margin-bottom: 0;
   font-weight: 500;
@@ -46,23 +43,24 @@
 .help-request-item:hover,
 .notification-item:hover,
 .activity-item:hover {
-  background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%);
+  background: #334155; /* Hover BG - Blue Gray */
   border-radius: 12px;
   padding: 0.75rem;
   margin: 0.25rem 0;
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .quick-action-card-main {
   border: none;
-  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.25);
-  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);
+  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
   height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 20px;
   overflow: hidden;
   position: relative;
+  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
 }
 
 .quick-action-card-main::before {
@@ -72,12 +70,13 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  background: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%); /* ACCENT BLUE to LIGHT ACCENT */
 }
 
 .quick-action-card-main:hover {
   transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(30, 64, 175, 0.35);
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4);
+  border-color: #60A5FA; /* LIGHT ACCENT */
 }
 
 .quick-action-icon-main {
@@ -93,14 +92,12 @@
 .quick-action-card-main .card-title {
   font-size: 1.75rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #F1F5F9; /* Primary Text */
 }
 
 .quick-action-card-main .card-text {
   font-size: 1rem;
+  color: #CBD5E1; /* Secondary Text */
 }
 
 .quick-action-card {
@@ -129,13 +126,14 @@
 
 .stat-card {
   border: none;
-  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.2);
-  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4);
+  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
   height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 16px;
   overflow: hidden;
   position: relative;
+  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
 }
 
 .stat-card::before {
@@ -145,12 +143,13 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  background: linear-gradient(180deg, #3B82F6 0%, #60A5FA 100%); /* ACCENT BLUE to LIGHT ACCENT */
 }
 
 .stat-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(30, 64, 175, 0.3);
+  box-shadow: 0 16px 32px rgba(59, 130, 246, 0.4);
+  border-color: #60A5FA; /* LIGHT ACCENT */
 }
 
 .stat-card .card-body {
@@ -178,7 +177,7 @@
 
 .stat-label {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #CBD5E1; /* Secondary Text */
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 0.75rem;
@@ -188,59 +187,45 @@
 .stat-value {
   font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #F1F5F9; /* Primary Text */
 }
 
 .stat-card-primary .stat-value {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #3B82F6; /* ACCENT BLUE - Royal Blue */
 }
 
 .stat-card-warning .stat-value {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #FBBF24; /* Warning - Amber */
 }
 
 .stat-card-success .stat-value {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #22D3EE; /* Success - Cyan Blue */
 }
 
 .stat-card-info .stat-value {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #60A5FA; /* LIGHT ACCENT - Sky Blue */
 }
 
 /* Modern gradient theme for Card components */
 .public-user-dashboard .card {
-  background: rgba(255, 255, 255, 0.95);
-  border: none;
+  background: #1E293B; /* SECONDARY BLUE - Steel Blue */
+  border: 1px solid rgba(59, 130, 246, 0.2); /* ACCENT BLUE border */
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.12);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
 .public-user-dashboard .card:hover {
-  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
   transform: translateY(-2px);
+  border-color: #60A5FA; /* LIGHT ACCENT */
 }
 
 .public-user-dashboard .card-header {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-  color: #667eea;
+  background: rgba(15, 23, 42, 0.5); /* PRIMARY DEEP BLUE with opacity */
+  border-bottom: 2px solid rgba(59, 130, 246, 0.3); /* ACCENT BLUE border */
+  color: #F1F5F9; /* Primary Text */
   font-weight: 700;
   font-size: 1.1rem;
   padding: 1.25rem 1.5rem;
@@ -249,90 +234,91 @@
 
 .public-user-dashboard .card-body {
   background: transparent;
-  color: #1e293b;
+  color: #F1F5F9; /* Primary Text */
   padding: 1.5rem;
 }
 
 .public-user-dashboard .card-title {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #F1F5F9; /* Primary Text */
   font-weight: 700;
 }
 
 .public-user-dashboard .text-muted {
-  color: #64748b !important;
+  color: #CBD5E1 !important; /* Secondary Text */
 }
 
 .public-user-dashboard .border-bottom {
-  border-color: rgba(102, 126, 234, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
 }
 
 .public-user-dashboard .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #3B82F6; /* ACCENT BLUE - Royal Blue */
   border: none;
   border-radius: 10px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  color: #F1F5F9; /* Primary Text */
 }
 
 .public-user-dashboard .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: #60A5FA; /* LIGHT ACCENT - Sky Blue */
+  color: #0F172A; /* PRIMARY DEEP BLUE for contrast */
 }
 
 .public-user-dashboard .btn-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: #FBBF24; /* Warning - Amber */
   border: none;
   border-radius: 10px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-  color: white;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  color: #0F172A; /* PRIMARY DEEP BLUE for contrast */
 }
 
 .public-user-dashboard .btn-warning:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-  color: white;
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+  background: #FCD34D;
+  color: #0F172A; /* PRIMARY DEEP BLUE */
 }
 
 .public-user-dashboard .btn-outline-primary {
-  border: 2px solid #667eea;
-  color: #667eea;
+  border: 2px solid #3B82F6; /* ACCENT BLUE */
+  color: #3B82F6; /* ACCENT BLUE */
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
+  background: transparent;
 }
 
 .public-user-dashboard .btn-outline-primary:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: transparent;
-  color: white;
+  background: #3B82F6; /* ACCENT BLUE */
+  border-color: #3B82F6; /* ACCENT BLUE */
+  color: #F1F5F9; /* Primary Text */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .public-user-dashboard .btn-outline-warning {
-  border: 2px solid #f59e0b;
-  color: #f59e0b;
+  border: 2px solid #FBBF24; /* Warning - Amber */
+  color: #FBBF24; /* Warning - Amber */
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
+  background: transparent;
 }
 
 .public-user-dashboard .btn-outline-warning:hover {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  border-color: transparent;
-  color: white;
+  background: #FBBF24; /* Warning - Amber */
+  border-color: #FBBF24; /* Warning - Amber */
+  color: #0F172A; /* PRIMARY DEEP BLUE */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -340,7 +326,7 @@
     padding: 1rem 0;
     overflow-x: hidden;
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
   }
 
   .dashboard-header-section {
@@ -376,7 +362,7 @@
 @media (max-width: 576px) {
   .public-user-dashboard {
     padding: 0.5rem 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
   }
 
   .dashboard-header-section {
@@ -420,9 +406,9 @@
 }
 
 .public-user-dashboard .alert-danger {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
-  color: #dc2626;
-  border-left: 4px solid #dc2626;
+  background: rgba(239, 68, 68, 0.1); /* Danger with opacity */
+  color: #EF4444; /* Danger - Red */
+  border-left: 4px solid #EF4444; /* Danger - Red */
 }
 
 /* Badge styling */
@@ -437,14 +423,14 @@
 
 /* Link button styling */
 .public-user-dashboard .btn-link {
-  color: #667eea;
+  color: #60A5FA; /* LIGHT ACCENT - Sky Blue */
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .public-user-dashboard .btn-link:hover {
-  color: #764ba2;
+  color: #3B82F6; /* ACCENT BLUE - Royal Blue */
   text-decoration: underline;
   transform: translateX(4px);
 }

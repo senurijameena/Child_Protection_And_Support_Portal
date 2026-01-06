@@ -1,6 +1,6 @@
 .public-user-layout {
   min-height: 100vh;
-  background-color: #faf5ff;
+  background-color: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -50,13 +50,14 @@
 }
 
 .public-user-layout .dashboard-content {
-  background-color: #ffffff;
+  background-color: #1E293B; /* SECONDARY BLUE - Steel Blue */
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(196, 154, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  color: #F1F5F9; /* Primary Text */
 }
 
 .public-user-layout .row {

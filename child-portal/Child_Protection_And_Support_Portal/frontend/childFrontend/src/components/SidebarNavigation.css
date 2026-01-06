@@ -12,50 +12,51 @@
 }
 
 .sidebar-navigation.public-user-sidebar {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
   border-right: none;
-  color: white;
+  color: #F1F5F9; /* Primary Text */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-title {
-  color: white;
+  color: #F1F5F9; /* Primary Text */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-user-info {
-  color: rgba(255, 255, 255, 0.9);
+  color: #CBD5E1; /* Secondary Text */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-user-info small {
-  color: rgba(255, 255, 255, 0.8);
+  color: #CBD5E1; /* Secondary Text */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link {
-  color: white !important;
+  color: #F1F5F9 !important; /* Primary Text */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link:hover {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  color: white !important;
+  background-color: #334155 !important; /* Hover BG - Blue Gray */
+  color: #60A5FA !important; /* LIGHT ACCENT - Sky Blue */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link.active {
-  background-color: rgba(255, 255, 255, 0.25) !important;
-  color: white !important;
+  background-color: #3B82F6 !important; /* ACCENT BLUE - Royal Blue */
+  color: #F1F5F9 !important; /* Primary Text */
   font-weight: 600;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-icon {
-  color: white;
+  color: #60A5FA; /* LIGHT ACCENT - Sky Blue */
   font-size: 1.2rem;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-text {
-  color: white;
+  color: #F1F5F9; /* Primary Text */
   font-weight: 500;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.5); /* SECONDARY BLUE with opacity */
 }
 
 .sidebar-header {
@@ -418,17 +419,30 @@
 }
 
 .sidebar-navigation::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1E293B; /* SECONDARY BLUE */
   border-radius: 3px;
 }
 
 .sidebar-navigation::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #475569; /* Active BG - Slate Blue */
   border-radius: 3px;
 }
 
 .sidebar-navigation::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: #60A5FA; /* LIGHT ACCENT - Sky Blue */
+}
+
+/* Public user sidebar scrollbar */
+.sidebar-navigation.public-user-sidebar::-webkit-scrollbar-track {
+  background: #1E293B; /* SECONDARY BLUE */
+}
+
+.sidebar-navigation.public-user-sidebar::-webkit-scrollbar-thumb {
+  background: #475569; /* Active BG - Slate Blue */
+}
+
+.sidebar-navigation.public-user-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #60A5FA; /* LIGHT ACCENT - Sky Blue */
 }
 
 

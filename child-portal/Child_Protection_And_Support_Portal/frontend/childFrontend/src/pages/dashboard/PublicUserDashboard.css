@@ -1,16 +1,19 @@
 .public-user-dashboard {
   padding: 0 !important;
-  background: #0F172A !important; /* PRIMARY DEEP BLUE - Midnight Navy */
+  padding-top: 0 !important; /* Remove top padding to align with sidebar */
+  background: #F8F9FA !important; /* Light background */
   min-height: 100vh;
-  padding: 2rem 0 !important;
-  color: #F1F5F9 !important; /* Primary Text */
+  padding-bottom: 2rem !important;
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 /* Override global dashboard-content styles */
 .public-user-layout .dashboard-content .public-user-dashboard {
   background: transparent !important; /* Transparent since parent has the background */
   padding: 0 !important;
+  padding-top: 0 !important; /* Ensure no top padding */
   margin: 0 !important;
+  margin-top: 0 !important; /* Ensure no top margin */
 }
 
 /* Ensure all text in dashboard is visible */
@@ -20,29 +23,30 @@
 
 .public-user-dashboard .text-muted,
 .public-user-dashboard .text-muted * {
-  color: #CBD5E1 !important; /* Secondary Text */
+  color: #6B7280 !important; /* Secondary Text - Gray for light theme */
 }
 
 .dashboard-header-section {
+  margin-top: 0 !important; /* Start at top */
   margin-bottom: 2rem;
   padding: 2rem;
-  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
+  background: #FFFFFF !important; /* White background for light theme */
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.4) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
-  color: #F1F5F9 !important; /* Primary Text */
+  border: 1px solid #E5E7EB !important; /* Light border */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .dashboard-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #F1F5F9; /* Primary Text */
+  color: #1F2937; /* Dark text for light theme */
   margin-bottom: 0.5rem;
 }
 
 .dashboard-subtitle {
-  color: #CBD5E1; /* Secondary Text */
+  color: #6B7280; /* Secondary Text - Gray for light theme */
   font-size: 1.1rem;
   margin-bottom: 0;
   font-weight: 500;
@@ -62,25 +66,25 @@
 .help-request-item:hover,
 .notification-item:hover,
 .activity-item:hover {
-  background: #334155; /* Hover BG - Blue Gray */
+  background: #F3F4F6; /* Hover BG - Light gray */
   border-radius: 12px;
   padding: 0.75rem;
   margin: 0.25rem 0;
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .quick-action-card-main {
   border: none !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4) !important;
-  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  background: #FFFFFF !important; /* White background for light theme */
   height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 20px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
-  color: #F1F5F9 !important; /* Primary Text */
+  border: 1px solid #E5E7EB !important; /* Light border */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .quick-action-card-main::before {
@@ -90,13 +94,13 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%); /* ACCENT BLUE to LIGHT ACCENT */
+  background: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%); /* Blue gradient accent */
 }
 
 .quick-action-card-main:hover {
   transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4);
-  border-color: #60A5FA; /* LIGHT ACCENT */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  border-color: #3B82F6; /* Blue accent */
 }
 
 .quick-action-icon-main {
@@ -112,12 +116,12 @@
 .quick-action-card-main .card-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #F1F5F9; /* Primary Text */
+  color: #1F2937; /* Dark text for light theme */
 }
 
 .quick-action-card-main .card-text {
   font-size: 1rem;
-  color: #CBD5E1; /* Secondary Text */
+  color: #6B7280; /* Secondary Text - Gray for light theme */
 }
 
 .quick-action-card {
@@ -146,15 +150,15 @@
 
 .stat-card {
   border: none !important;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4) !important;
-  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  background: #FFFFFF !important; /* White background for light theme */
   height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 16px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
-  color: #F1F5F9 !important; /* Primary Text */
+  border: 1px solid #E5E7EB !important; /* Light border */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .stat-card::before {
@@ -169,8 +173,8 @@
 
 .stat-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(59, 130, 246, 0.4);
-  border-color: #60A5FA; /* LIGHT ACCENT */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  border-color: #3B82F6; /* Blue accent */
 }
 
 .stat-card .card-body {
@@ -198,7 +202,7 @@
 
 .stat-label {
   font-size: 0.875rem;
-  color: #CBD5E1; /* Secondary Text */
+  color: #6B7280; /* Secondary Text - Gray for light theme */
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 0.75rem;
@@ -208,7 +212,7 @@
 .stat-value {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #F1F5F9; /* Primary Text */
+  color: #1F2937; /* Dark text for light theme */
 }
 
 .stat-card-primary .stat-value {
@@ -227,30 +231,30 @@
   color: #60A5FA; /* LIGHT ACCENT - Sky Blue */
 }
 
-/* Modern gradient theme for Card components */
+/* Modern light theme for Card components */
 .public-user-dashboard .card,
 .public-user-layout .dashboard-content .card {
-  background: #1E293B !important; /* SECONDARY BLUE - Steel Blue */
-  border: 1px solid rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
+  background: #FFFFFF !important; /* White background for light theme */
+  border: 1px solid #E5E7EB !important; /* Light border */
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.4) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  color: #F1F5F9 !important; /* Primary Text */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .public-user-dashboard .card:hover,
 .public-user-layout .dashboard-content .card:hover {
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
   transform: translateY(-2px);
-  border-color: #60A5FA !important; /* LIGHT ACCENT */
+  border-color: #3B82F6 !important; /* Blue accent */
 }
 
 .public-user-dashboard .card-header,
 .public-user-layout .dashboard-content .card-header {
-  background: rgba(15, 23, 42, 0.5) !important; /* PRIMARY DEEP BLUE with opacity */
-  border-bottom: 2px solid rgba(59, 130, 246, 0.3) !important; /* ACCENT BLUE border */
-  color: #F1F5F9 !important; /* Primary Text */
+  background: #F9FAFB !important; /* Light gray background */
+  border-bottom: 2px solid #E5E7EB !important; /* Light border */
+  color: #1F2937 !important; /* Dark text for light theme */
   font-weight: 700;
   font-size: 1.1rem;
   padding: 1.25rem 1.5rem;
@@ -260,39 +264,39 @@
 .public-user-dashboard .card-body,
 .public-user-layout .dashboard-content .card-body {
   background: transparent !important;
-  color: #F1F5F9 !important; /* Primary Text */
+  color: #1F2937 !important; /* Dark text for light theme */
   padding: 1.5rem;
 }
 
 .public-user-dashboard .card-title,
 .public-user-layout .dashboard-content .card-title {
-  color: #F1F5F9 !important; /* Primary Text */
+  color: #1F2937 !important; /* Dark text for light theme */
   font-weight: 700;
 }
 
 .public-user-dashboard .text-muted,
 .public-user-layout .dashboard-content .text-muted {
-  color: #CBD5E1 !important; /* Secondary Text */
+  color: #6B7280 !important; /* Secondary Text - Gray for light theme */
 }
 
 .public-user-dashboard .border-bottom,
 .public-user-layout .dashboard-content .border-bottom {
-  border-color: rgba(59, 130, 246, 0.2) !important; /* ACCENT BLUE border */
+  border-color: #E5E7EB !important; /* Light border */
 }
 
 .public-user-dashboard h5,
 .public-user-layout .dashboard-content h5 {
-  color: #F1F5F9 !important; /* Primary Text */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .public-user-dashboard .fw-bold,
 .public-user-layout .dashboard-content .fw-bold {
-  color: #F1F5F9 !important; /* Primary Text */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .public-user-dashboard .small,
 .public-user-layout .dashboard-content .small {
-  color: #CBD5E1 !important; /* Secondary Text */
+  color: #6B7280 !important; /* Secondary Text - Gray for light theme */
 }
 
 .public-user-dashboard .btn-primary,
@@ -310,27 +314,27 @@
 .public-user-dashboard .btn-primary:hover,
 .public-user-layout .dashboard-content .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
-  background: #60A5FA !important; /* LIGHT ACCENT - Sky Blue */
-  color: #0F172A !important; /* PRIMARY DEEP BLUE for contrast */
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3) !important;
+  background: #2563EB !important; /* Darker blue on hover */
+  color: #FFFFFF !important; /* White text */
 }
 
 .public-user-dashboard .btn-warning {
-  background: #FBBF24; /* Warning - Amber */
+  background: #F59E0B; /* Warning - Amber */
   border: none;
   border-radius: 10px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-  color: #0F172A; /* PRIMARY DEEP BLUE for contrast */
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  color: #FFFFFF; /* White text for contrast */
 }
 
 .public-user-dashboard .btn-warning:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
-  background: #FCD34D;
-  color: #0F172A; /* PRIMARY DEEP BLUE */
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  background: #D97706;
+  color: #FFFFFF; /* White text */
 }
 
 .public-user-dashboard .btn-outline-primary,
@@ -345,9 +349,9 @@
 
 .public-user-dashboard .btn-outline-primary:hover,
 .public-user-layout .dashboard-content .btn-outline-primary:hover {
-  background: #3B82F6 !important; /* ACCENT BLUE */
-  border-color: #3B82F6 !important; /* ACCENT BLUE */
-  color: #F1F5F9 !important; /* Primary Text */
+  background: #3B82F6 !important; /* Blue */
+  border-color: #3B82F6 !important; /* Blue */
+  color: #FFFFFF !important; /* White text */
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
@@ -362,11 +366,11 @@
 }
 
 .public-user-dashboard .btn-outline-warning:hover {
-  background: #FBBF24; /* Warning - Amber */
-  border-color: #FBBF24; /* Warning - Amber */
-  color: #0F172A; /* PRIMARY DEEP BLUE */
+  background: #F59E0B; /* Warning - Amber */
+  border-color: #F59E0B; /* Warning - Amber */
+  color: #FFFFFF; /* White text */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -374,7 +378,7 @@
     padding: 1rem 0;
     overflow-x: hidden;
     width: 100%;
-    background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
+    background: #F8F9FA; /* Light background */
   }
 
   .dashboard-header-section {
@@ -410,7 +414,7 @@
 @media (max-width: 576px) {
   .public-user-dashboard {
     padding: 0.5rem 0;
-    background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
+    background: #F8F9FA; /* Light background */
   }
 
   .dashboard-header-section {
@@ -454,9 +458,9 @@
 }
 
 .public-user-dashboard .alert-danger {
-  background: rgba(239, 68, 68, 0.1); /* Danger with opacity */
-  color: #EF4444; /* Danger - Red */
-  border-left: 4px solid #EF4444; /* Danger - Red */
+  background: #FEE2E2; /* Light red background */
+  color: #DC2626; /* Darker red text */
+  border-left: 4px solid #DC2626; /* Red border */
 }
 
 /* Badge styling */
@@ -471,14 +475,14 @@
 
 /* Link button styling */
 .public-user-dashboard .btn-link {
-  color: #60A5FA; /* LIGHT ACCENT - Sky Blue */
+  color: #3B82F6; /* Blue */
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .public-user-dashboard .btn-link:hover {
-  color: #3B82F6; /* ACCENT BLUE - Royal Blue */
+  color: #2563EB; /* Darker blue */
   text-decoration: underline;
   transform: translateX(4px);
 }

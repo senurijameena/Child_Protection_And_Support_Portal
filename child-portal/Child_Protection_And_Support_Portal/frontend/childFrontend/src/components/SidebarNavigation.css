@@ -3,8 +3,7 @@
   background: white;
   border-right: 1px solid #e3e6f0;
   height: calc(100vh - 80px);
-  position: sticky;
-  top: 80px;
+  position: relative;
   overflow-y: auto;
   padding: 1rem 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
@@ -12,51 +11,54 @@
 }
 
 .sidebar-navigation.public-user-sidebar {
-  background: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
-  border-right: none;
-  color: #F1F5F9; /* Primary Text */
+  background: #FFFFFF; /* White background for light theme */
+  border-right: 1px solid #E5E7EB; /* Light border */
+  color: #1F2937; /* Dark text for light theme */
+  padding-top: 0 !important; /* Remove top padding to align with main content */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-title {
-  color: #F1F5F9; /* Primary Text */
+  color: #1F2937; /* Dark text for light theme */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-user-info {
-  color: #CBD5E1; /* Secondary Text */
+  color: #6B7280; /* Secondary Text - Gray for light theme */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-user-info small {
-  color: #CBD5E1; /* Secondary Text */
+  color: #6B7280; /* Secondary Text - Gray for light theme */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link {
-  color: #F1F5F9 !important; /* Primary Text */
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link:hover {
-  background-color: #334155 !important; /* Hover BG - Blue Gray */
-  color: #60A5FA !important; /* LIGHT ACCENT - Sky Blue */
+  background-color: #F3F4F6 !important; /* Hover BG - Light gray */
+  color: #3B82F6 !important; /* Blue accent */
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-link.active {
-  background-color: #3B82F6 !important; /* ACCENT BLUE - Royal Blue */
-  color: #F1F5F9 !important; /* Primary Text */
+  background-color: #3B82F6 !important; /* Blue accent */
+  color: #FFFFFF !important; /* White text */
   font-weight: 600;
   box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-icon {
-  color: #60A5FA; /* LIGHT ACCENT - Sky Blue */
+  color: #3B82F6; /* Blue accent */
   font-size: 1.2rem;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-text {
-  color: #F1F5F9; /* Primary Text */
+  color: #1F2937; /* Dark text for light theme */
   font-weight: 500;
 }
 
 .sidebar-navigation.public-user-sidebar .sidebar-header {
-  border-bottom: 1px solid rgba(30, 41, 59, 0.5); /* SECONDARY BLUE with opacity */
+  border-bottom: 1px solid #E5E7EB; /* Light border */
+  padding-top: 0 !important; /* Remove top padding to align with main content */
+  margin-top: 0 !important; /* Remove top margin */
 }
 
 .sidebar-header {
@@ -434,15 +436,15 @@
 
 /* Public user sidebar scrollbar */
 .sidebar-navigation.public-user-sidebar::-webkit-scrollbar-track {
-  background: #1E293B; /* SECONDARY BLUE */
+  background: #F3F4F6; /* Light gray */
 }
 
 .sidebar-navigation.public-user-sidebar::-webkit-scrollbar-thumb {
-  background: #475569; /* Active BG - Slate Blue */
+  background: #D1D5DB; /* Gray */
 }
 
 .sidebar-navigation.public-user-sidebar::-webkit-scrollbar-thumb:hover {
-  background: #60A5FA; /* LIGHT ACCENT - Sky Blue */
+  background: #9CA3AF; /* Darker gray */
 }
 
 

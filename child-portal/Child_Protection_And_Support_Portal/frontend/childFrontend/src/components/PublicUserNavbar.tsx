@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar, Container, Dropdown, Badge } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { notificationService } from '../services/notificationService';
@@ -172,12 +171,14 @@ const PublicUserNavbar: React.FC = () => {
   };
 
   return (
-    <Navbar className="public-user-navbar" expand="lg" fixed="top">
-      <Container fluid className="navbar-container">
+    <nav className="public-user-navbar">
+      <div className="navbar-container">
         <div className="navbar-brand-section" onClick={() => navigate('/public/dashboard')} style={{ cursor: 'pointer' }}>
           <div className="navbar-logo-wrapper">
-            <span className="navbar-logo">🛡️</span>
-            <div className="logo-glow"></div>
+            <img src="/images/logo.png" alt="Logo" className="navbar-logo" onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.style.display = 'none';
+            }} />
           </div>
           <div className="navbar-title-wrapper">
             <span className="navbar-title-main">Child Protection Portal</span>
@@ -185,140 +186,153 @@ const PublicUserNavbar: React.FC = () => {
         </div>
         
         <div className="navbar-nav-section">
-          <Navbar.Collapse id="basic-navbar-nav">
-            <div className="navbar-nav-links">
-              <Link 
-                to="/public/dashboard"
-                className="nav-link-btn" 
-              >
-                📊 Dashboard
-              </Link>
-              <Link 
-                to="/report-case"
-                className="nav-link-btn" 
-              >
-                📄 Report Case
-              </Link>
-              <Link 
-                to="/request-help"
-                className="nav-link-btn" 
-              >
-                ❤️ Request Help
-              </Link>
-              <Link 
-                to="/messages"
-                className="nav-link-btn" 
-              >
-                💬 Messages
-              </Link>
-              <Link 
-                to="/feedback"
-                className="nav-link-btn" 
-              >
-                ⭐ Feedback
-              </Link>
-            </div>
-          </Navbar.Collapse>
+          <div className="navbar-nav-links">
+            <Link 
+              to="/public/dashboard"
+              className="nav-link-btn" 
+            >
+              📊 Dashboard
+            </Link>
+            <Link 
+              to="/report-case"
+              className="nav-link-btn" 
+            >
+              📄 Report Case
+            </Link>
+            <Link 
+              to="/request-help"
+              className="nav-link-btn" 
+            >
+              ❤️ Request Help
+            </Link>
+            <Link 
+              to="/messages"
+              className="nav-link-btn" 
+            >
+              💬 Messages
+            </Link>
+            <Link 
+              to="/feedback"
+              className="nav-link-btn" 
+            >
+              ⭐ Feedback
+            </Link>
+          </div>
         </div>
         
         <div className="navbar-right-section">
           {/* Notification Bell */}
-          <Dropdown align="end" show={showNotifications} onToggle={handleDropdownToggle}>
-            <Dropdown.Toggle 
-              as="button" 
+          <div className="notification-dropdown-wrapper">
+            <button 
               className="navbar-icon-btn notification-btn"
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+              onClick={() => setShowNotifications(!showNotifications)}
+              aria-expanded={showNotifications}
             >
               <span className="navbar-icon">🔔</span>
-              <Badge bg="danger" className="notification-badge">
-                ({unreadCount > 0 ? unreadCount : 3})
-              </Badge>
-            </Dropdown.Toggle>
-            <Dropdown.Menu className="notification-dropdown-menu">
-              <Dropdown.Header className="notification-dropdown-header">
-                🔔 NOTIFICATIONS ({unreadCount})
-              </Dropdown.Header>
-              {notifications.length > 0 ? (
-                <div className="notification-list">
-                  {notifications.slice(0, 5).map((notification) => (
-                    <Dropdown.Item
-                      key={notification.id}
-                      className={`notification-item ${!notification.read ? 'unread' : ''}`}
-                      onClick={(e) => {
-                        if (notification.caseId) {
-                          navigate(`/cases/${notification.caseId}`);
-                        } else if (notification.helpRequestId) {
-                          navigate(`/help-requests/${notification.helpRequestId}`);
-                        }
-                        if (!notification.read) {
-                          handleMarkAsRead(notification.id, e);
-                        }
-                        setShowNotifications(false);
-                      }}
-                    >
-                      <div className="notification-item-content">
-                        <span className="notification-icon">{getNotificationIcon(notification.type)}</span>
-                        <span className="notification-text">
-                          {formatNotificationMessage(notification)}
-                        </span>
-                      </div>
-                    </Dropdown.Item>
-                  ))}
+              <span className="notification-badge">
+                {unreadCount > 0 ? unreadCount : 3}
+              </span>
+            </button>
+            {showNotifications && (
+              <div className="notification-dropdown-menu">
+                <div className="notification-dropdown-header">
+                  🔔 NOTIFICATIONS ({unreadCount})
                 </div>
-              ) : (
-                <Dropdown.ItemText className="notification-empty">
-                  No new notifications
-                </Dropdown.ItemText>
-              )}
-              <Dropdown.Divider />
-              <Dropdown.Item 
-                className="notification-view-all"
-                onClick={() => {
-                  navigate('/notifications');
-                  setShowNotifications(false);
-                }}
-              >
-                View All Notifications
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+                {notifications.length > 0 ? (
+                  <div className="notification-list">
+                    {notifications.slice(0, 5).map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                        onClick={() => {
+                          if (notification.caseId) {
+                            navigate(`/cases/${notification.caseId}`);
+                          } else if (notification.helpRequestId) {
+                            navigate(`/help-requests/${notification.helpRequestId}`);
+                          }
+                          if (!notification.read) {
+                            handleMarkAsRead(notification.id, {} as React.MouseEvent);
+                          }
+                          setShowNotifications(false);
+                        }}
+                      >
+                        <div className="notification-item-content">
+                          <span className="notification-icon">{getNotificationIcon(notification.type)}</span>
+                          <span className="notification-text">
+                            {formatNotificationMessage(notification)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="notification-empty">
+                    No new notifications
+                  </div>
+                )}
+                <div className="notification-divider"></div>
+                <div 
+                  className="notification-view-all"
+                  onClick={() => {
+                    navigate('/notifications');
+                    setShowNotifications(false);
+                  }}
+                >
+                  View All Notifications
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User Dropdown */}
-          <Dropdown align="end">
-            <Dropdown.Toggle as="div" className="navbar-icon-btn user-btn">
+          <div className="user-dropdown-wrapper">
+            <button 
+              className="navbar-icon-btn user-btn"
+              onClick={() => {
+                const toggle = document.querySelector('.user-dropdown-menu') as HTMLElement;
+                if (toggle) {
+                  toggle.style.display = toggle.style.display === 'none' ? 'block' : 'none';
+                }
+              }}
+            >
               <span className="navbar-icon">👤</span>
               <span className="user-name">{getUserDisplayName()}</span>
               <span className="dropdown-arrow">▼</span>
-            </Dropdown.Toggle>
-            <Dropdown.Menu align="end" className="user-dropdown-menu">
-              <Dropdown.Header>
-                <div className="user-dropdown-header">
-                  <strong>{getUserDisplayName()}</strong>
-                  <small className="text-muted d-block">{user?.email || ''}</small>
-                </div>
-              </Dropdown.Header>
-              <Dropdown.Divider />
-              <Dropdown.Item onClick={() => navigate('/profile')}>
+            </button>
+            <div className="user-dropdown-menu" style={{ display: 'none' }}>
+              <div className="user-dropdown-header">
+                <strong>{getUserDisplayName()}</strong>
+                <small className="text-muted" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>{user?.email || ''}</small>
+              </div>
+              <div className="notification-divider"></div>
+              <div 
+                className="dropdown-item"
+                onClick={() => navigate('/profile')}
+              >
                 <i className="bi bi-person me-2"></i>
                 Profile
-              </Dropdown.Item>
-              <Dropdown.Item onClick={() => navigate('/settings')}>
+              </div>
+              <div 
+                className="dropdown-item"
+                onClick={() => navigate('/settings')}
+              >
                 <i className="bi bi-gear me-2"></i>
                 Settings
-              </Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Item onClick={handleLogout}>
+              </div>
+              <div className="notification-divider"></div>
+              <div 
+                className="dropdown-item"
+                onClick={handleLogout}
+              >
                 <i className="bi bi-box-arrow-right me-2"></i>
                 Logout
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+              </div>
+            </div>
+          </div>
 
         </div>
-        
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-      </Container>
-    </Navbar>
+      </div>
+    </nav>
   );
 };
 

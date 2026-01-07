@@ -1,95 +1,119 @@
 .public-user-layout {
   min-height: 100vh;
-  background-color: #0F172A; /* PRIMARY DEEP BLUE - Midnight Navy */
+  background-color: #F8F9FA; /* Light background */
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
   width: 100%;
-  padding-top: 70px; /* Account for fixed navbar */
+}
+
+/* Fixed header at top */
+.public-user-layout .dashboard-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  width: 100%;
 }
 
 .public-user-layout .dashboard-container {
   flex: 1;
-  padding-top: 0;
+  padding-top: 80px !important; /* Space for fixed header */
   padding-bottom: 20px;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
   display: flex;
   flex-direction: column;
   width: 100%;
   overflow-x: hidden;
 }
 
-.public-user-layout .sidebar-column {
-  padding-right: 0;
-  padding-left: 15px;
-  padding-top: 0;
-  position: relative;
-  width: 100%;
-}
-
-.public-user-layout .main-content-column {
-  padding-left: 15px;
-  padding-right: 15px;
-  padding-top: 0;
-  overflow-x: hidden;
-  min-height: calc(100vh - 70px);
-  display: flex;
-  flex-direction: column;
-  margin-left: 0;
-}
-
-/* Account for fixed sidebar on large screens */
-@media (min-width: 992px) {
-  .public-user-layout .main-content-column {
-    margin-left: 265px; /* 250px sidebar + 15px padding */
-  }
-  
-  .public-user-layout .sidebar-column {
-    width: 250px;
-    flex: 0 0 250px;
-  }
-}
-
-.public-user-layout .dashboard-content {
-  background-color: #0F172A !important; /* PRIMARY DEEP BLUE - Midnight Navy */
-  border-radius: 8px;
-  padding: 24px !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3) !important;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  color: #F1F5F9 !important; /* Primary Text */
-}
-
-/* Override global dashboard-content styles from App.css */
-.public-user-layout .dashboard-container .dashboard-content {
-  background-color: #0F172A !important; /* PRIMARY DEEP BLUE - Midnight Navy */
-  padding: 24px !important;
-  color: #F1F5F9 !important; /* Primary Text */
+/* Remove Bootstrap Container default padding that might offset alignment */
+.public-user-layout .dashboard-container.container-fluid {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 .public-user-layout .row {
   margin-left: 0;
   margin-right: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-start; /* Align sidebar and content to top */
+  width: 100%;
 }
 
-.public-user-layout .row > [class*="col-"] {
+.public-user-layout .sidebar-column {
   padding-left: 15px;
   padding-right: 15px;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+  position: relative;
+  align-self: flex-start;
+}
+
+.public-user-layout .main-content-column {
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+  overflow-x: hidden;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+}
+
+/* Sidebar and main content side by side on large screens */
+@media (min-width: 992px) {
+  .public-user-layout .sidebar-column {
+    width: 250px;
+    flex: 0 0 250px;
+    padding-right: 15px;
+  }
+  
+  .public-user-layout .main-content-column {
+    flex: 1;
+    margin-left: 0;
+    padding-left: 15px;
+  }
+}
+
+.public-user-layout .dashboard-content {
+  background-color: #F8F9FA !important; /* Light background */
+  border-radius: 8px;
+  padding: 24px !important;
+  margin-top: 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: #1F2937 !important; /* Dark text for light theme */
+}
+
+/* Override global dashboard-content styles from App.css */
+.public-user-layout .dashboard-container .dashboard-content {
+  background-color: #F8F9FA !important; /* Light background */
+  padding: 24px !important;
+  color: #1F2937 !important; /* Dark text for light theme */
 }
 
 @media (max-width: 991px) {
   .public-user-layout .sidebar-column {
+    width: 100%;
     padding-left: 15px;
     padding-right: 15px;
     margin-bottom: 20px;
   }
   
   .public-user-layout .main-content-column {
+    width: 100%;
     padding-left: 15px;
     padding-right: 15px;
     height: auto;
+    margin-left: 0 !important;
   }
 
   .public-user-layout .dashboard-content {
@@ -97,11 +121,6 @@
     border-radius: 0;
     min-height: auto;
     height: auto;
-  }
-
-  .public-user-layout .row > [class*="col-"] {
-    padding-left: 15px;
-    padding-right: 15px;
   }
 }
 

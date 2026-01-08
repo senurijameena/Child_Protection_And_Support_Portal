@@ -1,0 +1,160 @@
+.police-registration {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.registration-container {
+  border-radius: 16px;
+  background: white;
+}
+
+.progress-section {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.progress-section .progress {
+  border-radius: 10px;
+  background-color: #e9ecef;
+}
+
+.step-indicators {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.step-indicators span {
+  color: #6c757d;
+  transition: color 0.3s ease;
+}
+
+.step-indicators span.active {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.step-card {
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  background: #f8f9fa;
+}
+
+.step-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.file-upload-area {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-upload-area:hover {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.upload-placeholder {
+  width: 100%;
+}
+
+.upload-placeholder i {
+  color: #6c757d;
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.image-preview img {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.department-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.password-requirements {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #dc3545;
+}
+
+.password-requirements small {
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+}
+
+.form-navigation {
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.form-navigation .btn {
+  min-width: 120px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+
+@media (max-width: 768px) {
+  .police-registration {
+    padding: 1rem;
+  }
+
+  .registration-container .card-body {
+    padding: 2rem 1.5rem !important;
+  }
+
+  .step-indicators {
+    font-size: 0.7rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .department-options {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .file-upload-area {
+    min-height: 150px;
+    padding: 1rem;
+  }
+
+  .form-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-navigation .btn {
+    width: 100%;
+  }
+}
+

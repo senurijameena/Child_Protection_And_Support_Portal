@@ -1,0 +1,66 @@
+.dashboard-layout {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.dashboard-container {
+  flex: 1;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.sidebar-column {
+  padding-right: 0;
+  padding-left: 15px;
+}
+
+.main-content-column {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.dashboard-content {
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  min-height: calc(100vh - 200px);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+
+.dashboard-layout .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.dashboard-layout .row > [class*="col-"] {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+@media (max-width: 991px) {
+  .sidebar-column {
+    padding-left: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .main-content-column {
+    padding-left: 15px;
+  }
+}
+

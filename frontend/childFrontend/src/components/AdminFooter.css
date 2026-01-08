@@ -1,0 +1,148 @@
+.admin-footer {
+  background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+  color: #ffffff;
+  border-top: 3px solid #5c6bc0;
+  margin-top: auto;
+  box-shadow: 0 -4px 12px rgba(26, 35, 126, 0.2);
+}
+
+.admin-footer-title {
+  color: #ffd54f;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.admin-footer-links {
+  margin: 0;
+  padding: 0;
+}
+
+.admin-footer-links li {
+  transition: transform 0.2s ease;
+}
+
+.admin-footer-links li:hover {
+  transform: translateX(5px);
+}
+
+.admin-footer-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  padding: 0.25rem 0;
+}
+
+.admin-footer-link:hover {
+  color: #ffd54f;
+  text-decoration: none;
+}
+
+.admin-footer-info {
+  margin: 0;
+  padding: 0;
+}
+
+.admin-footer-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.admin-footer-value {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-footer-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-footer-support {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.admin-footer-support strong {
+  color: #ffd54f;
+  font-weight: 600;
+}
+
+.admin-footer-security {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #ffd54f;
+}
+
+.admin-footer-bottom {
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+.admin-footer-bottom p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.admin-footer-bottom strong {
+  color: #ffd54f;
+}
+
+.admin-footer-legal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-footer-legal .admin-footer-link {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.admin-footer-legal .admin-footer-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffd54f;
+}
+
+
+@media (max-width: 992px) {
+  .admin-footer-bottom {
+    text-align: center;
+  }
+
+  .admin-footer-bottom .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .admin-footer-legal {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-footer {
+    padding: 1.5rem 0;
+  }
+
+  .admin-footer-title {
+    font-size: 0.85rem;
+  }
+
+  .admin-footer-link {
+    font-size: 0.85rem;
+  }
+}
+

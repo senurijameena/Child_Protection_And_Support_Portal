@@ -1,0 +1,114 @@
+.registration-success-page {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  min-height: 100vh;
+}
+
+.success-card {
+  max-width: 900px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: white;
+}
+
+.success-icon {
+  animation: bounce 1s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.info-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: none;
+}
+
+.success-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.success-badges .badge {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.user-info-card {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.action-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.action-icon {
+  transition: transform 0.3s ease;
+}
+
+.action-card:hover .action-icon {
+  transform: scale(1.1);
+}
+
+.tips-card {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 12px;
+}
+
+.tips-card ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tips-card li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.tips-card li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #ffc107;
+  font-weight: bold;
+}
+
+
+@media (max-width: 768px) {
+  .success-card .card-body {
+    padding: 2rem 1.5rem !important;
+  }
+
+  .display-4 {
+    font-size: 2rem;
+  }
+
+  .success-badges {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .success-badges .badge {
+    width: 100%;
+    text-align: center;
+  }
+}
+

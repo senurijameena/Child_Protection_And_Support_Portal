@@ -1,0 +1,40 @@
+.my-cases-page {
+  padding: 1rem 0;
+}
+
+.case-card {
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.case-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.case-card .card-body {
+  padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .my-cases-page .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .my-cases-page .d-flex.justify-content-between > div {
+    width: 100%;
+  }
+
+  .my-cases-page .d-flex.gap-2 {
+    flex-direction: column;
+  }
+
+  .case-card .d-flex.gap-2 {
+    flex-direction: column;
+  }
+
+  .case-card .d-flex.gap-2 > * {
+    width: 100%;
+  }
+}

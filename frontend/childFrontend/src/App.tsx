@@ -15,6 +15,8 @@ import PoliceRegistrationSuccessPage from './pages/registration/PoliceRegistrati
 import SocialWorkerRegistrationSuccessPage from './pages/registration/SocialWorkerRegistrationSuccessPage';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminLayout from './layouts/AdminLayout';
+import PoliceDashboard from './pages/dashboard/PoliceDashboard';
+import PoliceLayout from './layouts/PoliceLayout';
 import PublicUserDashboard from './pages/dashboard/PublicUserDashboard';
 import PublicUserLayout from './layouts/PublicUserLayout';
 import SocialWorkerDashboard from './pages/dashboard/SocialWorkerDashboard';
@@ -73,10 +75,10 @@ function App() {
           element={
             <ProtectedRoute>
               {user?.role === 'ADMIN' ? <Navigate to="/admin/dashboard" replace /> :
-               user?.role === 'POLICE' ? <Navigate to="/police/dashboard" replace /> :
-               user?.role === 'SOCIAL_WORKER' ? <Navigate to="/social-worker/dashboard" replace /> :
-               user?.role === 'PUBLIC' ? <Navigate to="/public/dashboard" replace /> :
-               <Navigate to="/login" replace />}
+                user?.role === 'POLICE' ? <Navigate to="/police/dashboard" replace /> :
+                  user?.role === 'SOCIAL_WORKER' ? <Navigate to="/social-worker/dashboard" replace /> :
+                    user?.role === 'PUBLIC' ? <Navigate to="/public/dashboard" replace /> :
+                      <Navigate to="/login" replace />}
             </ProtectedRoute>
           }
         />
@@ -145,6 +147,22 @@ function App() {
           <Route path="/notifications" element={<NotificationCenterPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
           {/* Other public user routes will be added as pages are created */}
+        </Route>
+
+        {/* Police Routes */}
+        <Route
+          element={
+            <ProtectedRoute requiredRole="POLICE">
+              <PoliceLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/police/dashboard" element={<PoliceDashboard />} />
+          <Route path="/police/assignments/active" element={<MyCasesPage />} />
+          <Route path="/police/assignments/emergency" element={<MyCasesPage />} />
+          <Route path="/police/assignments/history" element={<MyCasesPage />} />
+          <Route path="/police/cases/search" element={<MyCasesPage />} />
+          {/* Add more specific routes as needed */}
         </Route>
 
         {/* Social Worker Routes */}

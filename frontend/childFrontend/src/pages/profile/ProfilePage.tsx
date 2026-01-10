@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Row, Col, Button, Form, Alert, Spinner, Badge } from 'react-bootstrap';
+import { Container, Card, Row, Col, Button, Form, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { userService } from '../../services/userService';
-import { caseService } from '../../services/caseService';
-import { helpRequestService } from '../../services/helpRequestService';
-import feedbackService from '../../services/feedbackService';
 import './ProfilePage.css';
 
 interface UserProfile {
@@ -22,12 +19,7 @@ interface UserProfile {
   autoDeleteAfterYears?: number;
 }
 
-interface AccountStats {
-  memberSince: string;
-  totalCases: number;
-  helpRequests: number;
-  feedbackGiven: number;
-}
+
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -51,12 +43,7 @@ const ProfilePage: React.FC = () => {
     autoDeleteAfterYears: 1,
   });
 
-  const [stats, setStats] = useState<AccountStats>({
-    memberSince: '',
-    totalCases: 0,
-    helpRequests: 0,
-    feedbackGiven: 0,
-  });
+
 
   const [isEditing, setIsEditing] = useState(false);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
@@ -100,29 +87,6 @@ const ProfilePage: React.FC = () => {
       } catch (err) {
         console.error('Error fetching profile:', err);
       }
-
-      // Fetch stats
-      const [casesResponse, helpRequestsResponse, feedbackResponse] = await Promise.all([
-        caseService.getMyCases().catch(() => ({ data: [] })),
-        helpRequestService.getMyRequests().catch(() => ({ data: [] })),
-        feedbackService.getFeedbackByUser(userId).catch(() => []),
-      ]);
-
-      const cases = Array.isArray(casesResponse.data) ? casesResponse.data : [];
-      const helpRequests = Array.isArray(helpRequestsResponse.data) ? helpRequestsResponse.data : [];
-      const feedback = Array.isArray(feedbackResponse) ? feedbackResponse : [];
-
-      // Calculate memberSince from profile data or currentUser
-      const memberSince = (profileData?.createdAt || profileData?.registrationDate || currentUser?.createdAt || new Date().toISOString());
-      const memberSinceDate = new Date(memberSince);
-      const memberSinceFormatted = memberSinceDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-
-      setStats({
-        memberSince: memberSinceFormatted,
-        totalCases: cases.length,
-        helpRequests: helpRequests.length,
-        feedbackGiven: feedback.length,
-      });
 
     } catch (err: any) {
       console.error('Error fetching profile data:', err);
@@ -307,7 +271,7 @@ const ProfilePage: React.FC = () => {
 
         <Row className="mb-4 g-3">
           {/* Profile Photo */}
-          <Col md={6} lg={4}>
+          <Col md={12}>
             <Card className="profile-photo-card h-100">
               <Card.Body className="text-center">
                 <div className="profile-photo-container mb-3">
@@ -340,33 +304,6 @@ const ProfilePage: React.FC = () => {
                 {isEditing && (
                   <small className="text-muted">Click photo to upload</small>
                 )}
-              </Card.Body>
-            </Card>
-          </Col>
-
-          {/* Account Stats */}
-          <Col md={6} lg={4}>
-            <Card className="account-stats-card h-100">
-              <Card.Body>
-                <h5 className="mb-4">📊 ACCOUNT STATS</h5>
-                <div className="stats-list">
-                  <div className="stat-item">
-                    <span className="stat-label">Member Since:</span>
-                    <span className="stat-value">{stats.memberSince}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Total Cases:</span>
-                    <span className="stat-value">{stats.totalCases}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Help Requests:</span>
-                    <span className="stat-value">{stats.helpRequests}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Feedback Given:</span>
-                    <span className="stat-value">{stats.feedbackGiven}</span>
-                  </div>
-                </div>
               </Card.Body>
             </Card>
           </Col>

@@ -23,76 +23,75 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class DashboardController {
 
-    @Autowired
-    private CaseService caseService;
+        @Autowired
+        private CaseService caseService;
 
-    @Autowired
-    private HelpRequestService helpRequestService;
+        @Autowired
+        private HelpRequestService helpRequestService;
 
-    @Autowired
-    private ServiceOfferService serviceOfferService;
+        @Autowired
+        private ServiceOfferService serviceOfferService;
 
-    @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
-        Map<String, Object> stats = new HashMap<>();
+        @GetMapping("/stats")
+        public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
+                Map<String, Object> stats = new HashMap<>();
 
-        List<CaseDTO> userCases = caseService.getCasesByReporter(userId);
-        long activeCases = userCases.stream()
-                .filter(c -> c.getStatus() == CaseStatus.REPORTED || 
-                            c.getStatus() == CaseStatus.UNDER_REVIEW || 
-                            c.getStatus() == CaseStatus.ASSIGNED ||
-                            c.getStatus() == CaseStatus.INVESTIGATING)
-                .count();
-        long resolvedCases = userCases.stream()
-                .filter(c -> c.getStatus() == CaseStatus.RESOLVED || c.getStatus() == CaseStatus.CLOSED)
-                .count();
+                List<CaseDTO> userCases = caseService.getCasesByReporter(userId);
+                long activeCases = userCases.stream()
+                                .filter(c -> c.getStatus() == CaseStatus.REPORTED ||
+                                                c.getStatus() == CaseStatus.UNDER_REVIEW ||
+                                                c.getStatus() == CaseStatus.ASSIGNED ||
+                                                c.getStatus() == CaseStatus.INVESTIGATING)
+                                .count();
+                long resolvedCases = userCases.stream()
+                                .filter(c -> c.getStatus() == CaseStatus.RESOLVED || c.getStatus() == CaseStatus.CLOSED)
+                                .count();
 
-        List<HelpRequestDTO> userRequests = helpRequestService.getHelpRequestsByRequester(userId);
-        long pendingRequests = userRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.REQUESTED || 
-                            r.getStatus() == RequestStatus.UNDER_REVIEW)
-                .count();
-        long activeRequests = userRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.ASSIGNED || 
-                            r.getStatus() == RequestStatus.IN_PROGRESS)
-                .count();
+                List<HelpRequestDTO> userRequests = helpRequestService.getHelpRequestsByRequester(userId);
+                long pendingRequests = userRequests.stream()
+                                .filter(r -> r.getStatus() == RequestStatus.REQUESTED ||
+                                                r.getStatus() == RequestStatus.UNDER_REVIEW)
+                                .count();
+                long activeRequests = userRequests.stream()
+                                .filter(r -> r.getStatus() == RequestStatus.ASSIGNED ||
+                                                r.getStatus() == RequestStatus.IN_PROGRESS)
+                                .count();
 
-        List<ServiceOfferDTO> userOffers = serviceOfferService.getOffersForUser(userId);
- 
-        long pendingOffers = userOffers.stream()
-                .filter(o -> o.getOfferedToUserId() != null && 
-                            o.getOfferedToUserId().equals(userId) &&
-                            o.getStatus() == OfferStatus.PENDING)
-                .count();
-        long acceptedServices = userOffers.stream()
-                .filter(o -> o.getOfferedToUserId() != null && 
-                            o.getOfferedToUserId().equals(userId) &&
-                            o.getStatus() == OfferStatus.ACCEPTED)
-                .count();
+                List<ServiceOfferDTO> userOffers = serviceOfferService.getOffersForUser(userId);
 
-        stats.put("activeCases", activeCases);
-        stats.put("pendingRequests", pendingRequests);
-        stats.put("pendingOffers", pendingOffers);
-        stats.put("totalCases", (long) userCases.size());
-        stats.put("totalRequests", (long) userRequests.size());
-        stats.put("totalOffers", (long) userOffers.stream()
-                .filter(o -> o.getOfferedToUserId() != null && o.getOfferedToUserId().equals(userId))
-                .count());
-        stats.put("resolvedCases", resolvedCases);
-        stats.put("activeRequests", activeRequests);
-        stats.put("acceptedServices", acceptedServices);
+                long pendingOffers = userOffers.stream()
+                                .filter(o -> o.getOfferedToUserId() != null &&
+                                                o.getOfferedToUserId().equals(userId) &&
+                                                o.getStatus() == OfferStatus.PENDING)
+                                .count();
+                long acceptedServices = userOffers.stream()
+                                .filter(o -> o.getOfferedToUserId() != null &&
+                                                o.getOfferedToUserId().equals(userId) &&
+                                                o.getStatus() == OfferStatus.ACCEPTED)
+                                .count();
 
-        long anonymousCases = userCases.stream()
-                .filter(c -> c.isAnonymous())
-                .count();
-        long anonymousRequests = userRequests.stream()
-                .filter(r -> r.isAnonymous())
-                .count();
-        stats.put("anonymousCases", anonymousCases);
-        stats.put("anonymousRequests", anonymousRequests);
-        stats.put("totalAnonymous", anonymousCases + anonymousRequests);
+                stats.put("activeCases", activeCases);
+                stats.put("pendingRequests", pendingRequests);
+                stats.put("pendingOffers", pendingOffers);
+                stats.put("totalCases", (long) userCases.size());
+                stats.put("totalRequests", (long) userRequests.size());
+                stats.put("totalOffers", (long) userOffers.stream()
+                                .filter(o -> o.getOfferedToUserId() != null && o.getOfferedToUserId().equals(userId))
+                                .count());
+                stats.put("resolvedCases", resolvedCases);
+                stats.put("activeRequests", activeRequests);
+                stats.put("acceptedServices", acceptedServices);
 
-        return ResponseEntity.ok(stats);
-    }
+                long anonymousCases = userCases.stream()
+                                .filter(c -> c.isAnonymous())
+                                .count();
+                long anonymousRequests = userRequests.stream()
+                                .filter(r -> r.isAnonymous())
+                                .count();
+                stats.put("anonymousCases", anonymousCases);
+                stats.put("anonymousRequests", anonymousRequests);
+                stats.put("totalAnonymous", anonymousCases + anonymousRequests);
+
+                return ResponseEntity.ok(stats);
+        }
 }
-

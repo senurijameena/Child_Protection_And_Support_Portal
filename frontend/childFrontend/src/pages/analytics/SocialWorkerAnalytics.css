@@ -1,0 +1,235 @@
+.sw-analytics-dashboard {
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    min-height: 100%;
+}
+
+.sw-analytics-header {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.sw-analytics-title {
+    font-size: 1.75rem;
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.sw-analytics-subtitle {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* Period Selection */
+.period-selection {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.period-label {
+    font-weight: 600;
+    color: #495057;
+    margin-right: 1rem;
+}
+
+.period-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.period-btn {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.period-btn:hover {
+    background-color: #e9ecef;
+}
+
+.period-btn.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+.refresh-btn {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.refresh-btn:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Key Metrics Cards */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    text-align: center;
+    border-top: 4px solid transparent;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+.metric-card.total {
+    border-top-color: #0d6efd;
+}
+
+.metric-card.completed {
+    border-top-color: #198754;
+}
+
+.metric-card.rate {
+    border-top-color: #ffc107;
+}
+
+.metric-card.rating {
+    border-top-color: #6f42c1;
+}
+
+.metric-title {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.metric-subtitle {
+    font-size: 0.85rem;
+    color: #adb5bd;
+    margin-top: 0.25rem;
+}
+
+/* Charts Sections */
+.chart-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #343a40;
+}
+
+.chart-insight {
+    font-size: 0.9rem;
+    color: #198754;
+    background-color: #d1e7dd;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.chart-container {
+    min-height: 300px;
+}
+
+.donuts-grid {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.donut-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px;
+}
+
+.donut-label {
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+/* Custom Progress Bars for Distribution */
+.dist-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.dist-bar-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.dist-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.dist-label {
+    font-weight: 600;
+}
+
+.dist-count {
+    color: #6c757d;
+}
+
+.progress-track {
+    height: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .period-selection {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Card, 
-  Button, 
-  Form, 
-  Row, 
-  Col, 
+import {
+  Container,
+  Card,
+  Button,
+  Form,
+  Row,
+  Col,
   Badge,
   Alert,
   Spinner,
@@ -144,7 +144,7 @@ const MyCasesPage: React.FC = () => {
       filtered = filtered.filter(c => {
         const casePriority = (c.priority || '').toUpperCase().trim();
         const isEmergency = c.emergency === true;
-        
+
         if (filterPriority === 'URGENT') {
           // URGENT includes emergency cases or HIGH priority
           return isEmergency || casePriority === 'HIGH' || casePriority === 'URGENT';
@@ -159,16 +159,16 @@ const MyCasesPage: React.FC = () => {
     if (filters.date !== 'ALL') {
       const now = new Date();
       now.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-      
+
       filtered = filtered.filter(c => {
         if (!c.reportDate) return false;
-        
+
         try {
           const reportDate = new Date(c.reportDate);
           if (isNaN(reportDate.getTime())) return false; // Invalid date
-          
+
           reportDate.setHours(0, 0, 0, 0); // Reset time to start of day
-          
+
           switch (filters.date) {
             case 'TODAY':
               return reportDate.getTime() === now.getTime();
@@ -206,12 +206,12 @@ const MyCasesPage: React.FC = () => {
         const caseDescription = (c.caseDescription || '').toLowerCase();
         const location = (c.location || '').toLowerCase();
         const caseId = (c.id || '').toLowerCase();
-        
+
         return trackingId.includes(query) ||
-               caseType.includes(query) ||
-               caseDescription.includes(query) ||
-               location.includes(query) ||
-               caseId.includes(query);
+          caseType.includes(query) ||
+          caseDescription.includes(query) ||
+          location.includes(query) ||
+          caseId.includes(query);
       });
     }
 
@@ -445,7 +445,7 @@ const MyCasesPage: React.FC = () => {
         {/* Cases List */}
         <div className="mb-3">
           <h5 className="mb-3">CASES LIST: ({filteredCases.length} {filteredCases.length === 1 ? 'case' : 'cases'})</h5>
-          
+
           {paginatedCases.length === 0 ? (
             <Card>
               <Card.Body className="text-center py-5">
@@ -535,16 +535,16 @@ const MyCasesPage: React.FC = () => {
                         ⭐ Give Feedback
                       </Button>
                     )}
-                    {caseItem.status?.toUpperCase() !== 'RESOLVED' && 
-                     caseItem.status?.toUpperCase() !== 'CLOSED' && (
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleDeclineClick(caseItem)}
-                      >
-                        ❌ Decline/Close
-                      </Button>
-                    )}
+                    {caseItem.status?.toUpperCase() !== 'RESOLVED' &&
+                      caseItem.status?.toUpperCase() !== 'CLOSED' && (
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleDeclineClick(caseItem)}
+                        >
+                          ❌ Decline/Close
+                        </Button>
+                      )}
                   </div>
                 </Card.Body>
               </Card>

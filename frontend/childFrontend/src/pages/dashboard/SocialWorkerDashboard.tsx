@@ -11,6 +11,8 @@ import { helpRequestService } from '../../services/helpRequestService';
 import { adminService } from '../../services/adminService';
 import { serviceOfferService } from '../../services/serviceOfferService';
 import { messageService } from '../../services/messageService';
+import SocialWorkerAnalytics from '../analytics/SocialWorkerAnalytics';
+import FollowUpDashboard from '../dashboard/FollowUpDashboard';
 import './SocialWorkerDashboard.css';
 
 interface SocialWorkerDashboardProps {
@@ -31,9 +33,9 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const user = authService.getCurrentUser();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  
+
   const [profile, setProfile] = useState<SocialWorkerProfile | null>(null);
-  
+
   const [myRequestsCount, setMyRequestsCount] = useState(0);
   const [assignedChildrenCount, setAssignedChildrenCount] = useState(0);
   const [messagesCount, setMessagesCount] = useState(0);
@@ -45,28 +47,32 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
-  // Close notifications dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showNotifications) {
-        const target = event.target as HTMLElement;
-        if (!target.closest('.notifications-wrapper')) {
-          setShowNotifications(false);
-        }
+      const target = event.target as HTMLElement;
+
+      if (showNotifications && !target.closest('.notifications-wrapper')) {
+        setShowNotifications(false);
+      }
+
+      if (showStatusDropdown && !target.closest('.status-dropdown-wrapper')) {
+        setShowStatusDropdown(false);
       }
     };
 
-    if (showNotifications) {
+    if (showNotifications || showStatusDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [showNotifications]);
-  
+  }, [showNotifications, showStatusDropdown]);
+
   const [currentStatus, setCurrentStatus] = useState<string>('AVAILABLE');
-  
+
   const [activeRequestsCount, setActiveRequestsCount] = useState(0);
   const [urgentRequestsCount, setUrgentRequestsCount] = useState(0);
   const [workloadDistribution, setWorkloadDistribution] = useState<{ [key: string]: { current: number; max: number } }>({});
@@ -83,10 +89,10 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!user?.id) return;
-      
+
       try {
         setLoading(true);
-        
+
         try {
           const profileResponse = await socialWorkerService.getSocialWorkerProfile(user.id);
           if (profileResponse) {
@@ -130,23 +136,23 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
 
         try {
           const requestsResponse = await api.get(`/api/help-requests/worker/${user.id}`);
-          const requests = Array.isArray(requestsResponse.data) ? requestsResponse.data : 
-                         (requestsResponse.data?.data || requestsResponse.data?.requests || []);
-          const activeRequests = requests.filter((r: any) => 
+          const requests = Array.isArray(requestsResponse.data) ? requestsResponse.data :
+            (requestsResponse.data?.data || requestsResponse.data?.requests || []);
+          const activeRequests = requests.filter((r: any) =>
             r.status && !['COMPLETED', 'REJECTED', 'CLOSED'].includes(r.status.toUpperCase())
           );
           setMyRequestsCount(activeRequests.length);
           setActiveRequestsCount(activeRequests.length);
-          
-          const urgentRequests = activeRequests.filter((r: any) => 
+
+          const urgentRequests = activeRequests.filter((r: any) =>
             r.priority === 'HIGH' || r.priority === 'URGENT' || r.emergency === true
           );
           setUrgentRequestsCount(urgentRequests.length);
           setEmergencyAlertsCount(urgentRequests.length);
-          
+
           // Calculate current workload (total active requests)
           setCurrentWorkload(activeRequests.length);
-          
+
           const workload: { [key: string]: { current: number; max: number } } = {
             'Food': { current: 0, max: 10 },
             'Education': { current: 0, max: 10 },
@@ -154,7 +160,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             'Shelter': { current: 0, max: 10 },
             'Counseling': { current: 0, max: 10 }
           };
-          
+
           activeRequests.forEach((r: any) => {
             const helpType = r.helpType || r.serviceType || '';
             if (helpType) {
@@ -183,7 +189,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
         try {
           const assignmentsResponse = await socialWorkerService.getActiveAssignments(user.id);
           const assignments = Array.isArray(assignmentsResponse) ? assignmentsResponse :
-                            (assignmentsResponse?.data || assignmentsResponse?.assignments || []);
+            (assignmentsResponse?.data || assignmentsResponse?.assignments || []);
           setAssignedChildrenCount(assignments.length);
         } catch (error) {
           console.error('Error fetching assigned children:', error);
@@ -211,26 +217,26 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
         try {
           const activityResponse = await timelineService.getRecentActivity(5);
           const activities = Array.isArray(activityResponse.data) ? activityResponse.data :
-                            (activityResponse.data?.data || activityResponse.data?.activities || []);
-          
+            (activityResponse.data?.data || activityResponse.data?.activities || []);
+
           const formattedActivities = activities.map((activity: any) => {
             const date = activity.timestamp || activity.createdAt || new Date().toISOString();
-            const time = new Date(date).toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit', 
-              hour12: true 
+            const time = new Date(date).toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
             });
-            
+
             let message = activity.description || activity.message || activity.eventType || 'Activity';
             const isEmergency = activity.priority === 'HIGH' || activity.priority === 'URGENT' || activity.emergency;
-            
+
             return {
               time,
               message,
               type: isEmergency ? 'emergency' : 'normal'
             };
           });
-          
+
           // If no activities from API, create sample recent activity
           if (formattedActivities.length === 0) {
             const now = new Date();
@@ -242,7 +248,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
               }
             );
           }
-          
+
           setRecentActivity(formattedActivities);
         } catch (error) {
           console.error('Error fetching recent activity:', error);
@@ -263,7 +269,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     };
 
     fetchDashboardData();
-    
+
     // Refresh data every 30 seconds
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
@@ -308,7 +314,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     try {
       await notificationService.markAsRead(notificationId);
       // Update local state
-      setNotifications(prev => prev.map(n => 
+      setNotifications(prev => prev.map(n =>
         n.id === notificationId ? { ...n, read: true } : n
       ));
       // Update count
@@ -329,7 +335,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   };
 
   const handleAnalytics = () => {
-    navigate('/analytics');
+    setActiveSection('analytics');
   };
 
   const handleSettings = () => {
@@ -340,15 +346,15 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     if (!user?.id) return;
     try {
       const response = await api.get(`/api/help-requests/worker/${user.id}`);
-      const requests = Array.isArray(response.data) ? response.data : 
-                     (response.data?.data || response.data?.requests || []);
+      const requests = Array.isArray(response.data) ? response.data :
+        (response.data?.data || response.data?.requests || []);
       setHelpRequests(requests);
     } catch (error) {
       console.error('Error fetching help requests:', error);
       // Fallback: try using helpRequestService
       try {
         const allRequests = await helpRequestService.getAllRequests();
-        const myRequests = Array.isArray(allRequests.data) 
+        const myRequests = Array.isArray(allRequests.data)
           ? allRequests.data.filter((r: any) => r.assignedWorkerId === user.id)
           : [];
         setHelpRequests(myRequests);
@@ -372,7 +378,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     if (requestFilter !== 'all') {
       switch (requestFilter) {
         case 'active':
-          filtered = filtered.filter(r => 
+          filtered = filtered.filter(r =>
             r.status === 'ASSIGNED' || r.status === 'IN_PROGRESS' || r.status === 'UNDER_REVIEW'
           );
           break;
@@ -380,7 +386,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
           filtered = filtered.filter(r => r.status === 'COMPLETED');
           break;
         case 'urgent':
-          filtered = filtered.filter(r => 
+          filtered = filtered.filter(r =>
             r.priority === 'HIGH' || r.priority === 'URGENT' || r.emergency === true
           );
           break;
@@ -412,35 +418,13 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     if (!fromStatus || fromStatus === '' || fromStatus === 'undefined') {
       return true;
     }
-    
+
     // Can't transition to the same status
     if (fromStatus === toStatus) {
       return false;
     }
-    
-    // Valid transitions based on backend rules:
-    // AVAILABLE → BUSY, OFF_DUTY, EMERGENCY_ONLY
-    // BUSY → AVAILABLE, OFF_DUTY, EMERGENCY_ONLY
-    // OFF_DUTY → AVAILABLE, EMERGENCY_ONLY (NOT BUSY!)
-    // EMERGENCY_ONLY → AVAILABLE, BUSY, OFF_DUTY
-    
-    const fromUpper = fromStatus.toUpperCase();
-    const toUpper = toStatus.toUpperCase();
-    
-    if (fromUpper === 'AVAILABLE') {
-      return ['BUSY', 'OFF_DUTY', 'EMERGENCY_ONLY'].includes(toUpper);
-    }
-    if (fromUpper === 'BUSY') {
-      return ['AVAILABLE', 'OFF_DUTY', 'EMERGENCY_ONLY'].includes(toUpper);
-    }
-    if (fromUpper === 'OFF_DUTY') {
-      return ['AVAILABLE', 'EMERGENCY_ONLY'].includes(toUpper);
-    }
-    if (fromUpper === 'EMERGENCY_ONLY') {
-      return ['AVAILABLE', 'BUSY', 'OFF_DUTY'].includes(toUpper);
-    }
-    
-    // For unknown statuses, allow transition (let backend validate)
+
+    // We now support auto-transitions, so we allow more changes
     return true;
   };
 
@@ -451,40 +435,40 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
       return;
     }
 
-    // Check if transition is valid before making the request
-    if (!isValidTransition(currentStatus, newStatus)) {
-      let message = `Cannot change status from ${currentStatus} to ${newStatus}. `;
-      if (currentStatus === 'OFF_DUTY' && newStatus === 'BUSY') {
-        message += 'You must first change to AVAILABLE, then to BUSY.';
-      } else {
-        message += 'Please select a valid status transition.';
-      }
-      alert(message);
-      return;
-    }
-
     try {
       console.log(`[STATUS CHANGE] Attempting to change from ${currentStatus} to: ${newStatus}`);
-      
+
+      // Auto-transition logic: OFF_DUTY -> BUSY requires passing through AVAILABLE
+      if (currentStatus === 'OFF_DUTY' && newStatus === 'BUSY') {
+        console.log('[STATUS CHANGE] Auto-transition: Switching to AVAILABLE first...');
+        try {
+          await statusService.setAvailable();
+          // Small delay to ensure backend processes it
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err) {
+          console.warn('[STATUS CHANGE] Intermediate switch to AVAILABLE failed, trying direct switch anyway...', err);
+        }
+      }
+
       // Try POST methods first (they seem more reliable based on backend implementation)
       let response;
       let methodUsed = '';
-      
+
       try {
-      switch (newStatus) {
-        case 'AVAILABLE':
-          response = await statusService.setAvailable();
+        switch (newStatus) {
+          case 'AVAILABLE':
+            response = await statusService.setAvailable();
             methodUsed = 'POST /available';
-          break;
-        case 'BUSY':
-          response = await statusService.setBusy();
+            break;
+          case 'BUSY':
+            response = await statusService.setBusy();
             methodUsed = 'POST /busy';
-          break;
-        case 'OFF_DUTY':
-          response = await statusService.setOffDuty();
+            break;
+          case 'OFF_DUTY':
+            response = await statusService.setOffDuty();
             methodUsed = 'POST /off-duty';
-          break;
-        default:
+            break;
+          default:
             // Fallback to PUT method
             response = await statusService.changeOwnStatus({
               newStatus: newStatus
@@ -507,22 +491,22 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
           throw putError;
         }
       }
-      
+
       // Handle response - check both response.data and direct response
       const result = response?.data || response;
       console.log('[STATUS CHANGE] Final result:', result);
-      
+
       // Check if the response indicates success
       if (result) {
         // Check for explicit success field
         if (result.success === true || result.success === undefined) {
           // Success - update local state
-        setCurrentStatus(newStatus);
+          setCurrentStatus(newStatus);
           if (profile) {
             setProfile({ ...profile, status: newStatus });
           }
           console.log(`[STATUS CHANGE] ✅ Status successfully updated to ${newStatus}`);
-          
+
           // Refresh status from server to confirm
           setTimeout(async () => {
             try {
@@ -561,7 +545,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
         statusText: error?.response?.statusText,
         config: error?.config
       });
-      
+
       let errorMessage = 'Failed to update status. ';
       if (error?.response?.status === 401) {
         errorMessage += 'You are not authenticated. Please log in again.';
@@ -572,7 +556,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
       } else if (error?.message) {
         errorMessage = error.message;
       }
-      
+
       alert(`Error: ${errorMessage}`);
     }
   };
@@ -581,6 +565,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     { id: 'dashboard', icon: '📊', label: 'DASHBOARD', count: null },
     { id: 'my-requests', icon: '📋', label: 'MY REQUESTS', count: myRequestsCount },
     { id: 'messages', icon: '📨', label: 'MESSAGES', count: messagesCount },
+    { id: 'follow-ups', icon: '📅', label: 'FOLLOW-UPS', count: null },
     { id: 'transfer-requests', icon: '🔄', label: 'TRANSFER REQUESTS', count: transferRequestsCount },
     { id: 'service-packages', icon: '📦', label: 'SERVICE PACKAGES', count: null },
   ];
@@ -589,18 +574,71 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     <div className="social-worker-dashboard">
       {/* Top Header Bar */}
       <header className="dashboard-top-header">
-          <div className="header-left">
+        <div className="header-left">
           <span className="logo-icon">🏠</span>
           <span className="logo-text">CHILD PROTECTION & SUPPORT PORTAL</span>
-          </div>
-          <div className="header-right">
+        </div>
+        <div className="header-right">
           <div className="user-info-header">
             <span className="user-icon">👤</span>
             <span className="user-name">{user?.name || 'Jane Smith'}</span>
           </div>
+          <div className="status-dropdown-wrapper" style={{ position: 'relative' }}>
+            <button
+              className={`header-action-btn status-nav-btn status-${currentStatus.toLowerCase()}`}
+              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+              title="Change Availability Status"
+            >
+              <div className={`status-dot dot-${currentStatus.toLowerCase().replace('_', '-')}`}></div>
+              <span className="status-label-text">
+                {currentStatus === 'OFF_DUTY' ? 'On Leave' : currentStatus.charAt(0) + currentStatus.slice(1).toLowerCase().replace('_', ' ')}
+              </span>
+              <span className="dropdown-arrow">▾</span>
+            </button>
+
+            {showStatusDropdown && (
+              <div className="status-nav-dropdown">
+                <div className="dropdown-header">SET AVAILABILITY</div>
+                <button
+                  className={`status-dropdown-item ${currentStatus === 'AVAILABLE' ? 'active' : ''}`}
+                  onClick={() => { handleStatusChange('AVAILABLE'); setShowStatusDropdown(false); }}
+                >
+                  <div className="status-dot dot-available"></div>
+                  <div className="status-info">
+                    <span className="status-name">Available</span>
+                    <span className="status-desc">Ready for new requests</span>
+                  </div>
+                  {currentStatus === 'AVAILABLE' && <span className="active-check">✓</span>}
+                </button>
+                <button
+                  className={`status-dropdown-item ${currentStatus === 'BUSY' ? 'active' : ''}`}
+                  onClick={() => { handleStatusChange('BUSY'); setShowStatusDropdown(false); }}
+                >
+                  <div className="status-dot dot-busy"></div>
+                  <div className="status-info">
+                    <span className="status-name">Busy</span>
+                    <span className="status-desc">Currently working on cases</span>
+                  </div>
+                  {currentStatus === 'BUSY' && <span className="active-check">✓</span>}
+                </button>
+                <button
+                  className={`status-dropdown-item ${currentStatus === 'OFF_DUTY' ? 'active' : ''}`}
+                  onClick={() => { handleStatusChange('OFF_DUTY'); setShowStatusDropdown(false); }}
+                >
+                  <div className="status-dot dot-off-duty"></div>
+                  <div className="status-info">
+                    <span className="status-name">On Leave</span>
+                    <span className="status-desc">Away from work</span>
+                  </div>
+                  {currentStatus === 'OFF_DUTY' && <span className="active-check">✓</span>}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="notifications-wrapper" style={{ position: 'relative' }}>
-            <button 
-              className="header-action-btn notifications-btn" 
+            <button
+              className="header-action-btn notifications-btn"
               onClick={handleNotifications}
               title="Notifications"
             >
@@ -609,7 +647,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 <span className="notification-badge">{notificationsCount}</span>
               )}
             </button>
-            
+
             {showNotifications && (
               <NotificationsDropdown
                 notifications={notifications}
@@ -621,22 +659,22 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
               />
             )}
           </div>
-            <button 
-            className="header-action-btn analytics-btn" 
+          <button
+            className="header-action-btn analytics-btn"
             onClick={handleAnalytics}
             title="Analytics"
-            >
+          >
             <span className="action-icon">📊</span>
-            </button>
-            <button 
-            className="header-action-btn settings-btn" 
+          </button>
+          <button
+            className="header-action-btn settings-btn"
             onClick={handleSettings}
             title="Settings"
-            >
+          >
             <span className="action-icon">⚙️</span>
-            </button>
-            <button 
-            className="header-action-btn logout-btn" 
+          </button>
+          <button
+            className="header-action-btn logout-btn"
             onClick={handleLogout}
             title="Logout"
           >
@@ -657,12 +695,12 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 <span className="profile-icon">👤</span>
                 <div className="profile-info">
                   <div className="profile-name">{profile?.name || user?.name || 'Jane Doe'}</div>
-              {profile?.licenseNumber && (
+                  {profile?.licenseNumber && (
                     <div className="profile-license">
-                  <span className="detail-icon">⭐</span>
-                  <span className="detail-text">Licensed Social Worker</span>
-                </div>
-              )}
+                      <span className="detail-icon">⭐</span>
+                      <span className="detail-text">Licensed Social Worker</span>
+                    </div>
+                  )}
                   <div className="profile-id-org">
                     <span className="profile-id-badge">🆔 {profile?.workerId || `SW-${user?.id?.slice(0, 3).toUpperCase() || '001'}`}</span>
                     <span className="profile-org-badge">🏢 {profile?.organization || "Hope Foundation"}</span>
@@ -687,7 +725,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 {item.count !== null && item.count !== undefined && item.count > 0 && (
                   <span className="sidebar-count">({item.count})</span>
                 )}
-            </button>
+              </button>
             ))}
           </nav>
 
@@ -717,8 +755,8 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             <div className="workload-label">📊 WORKLOAD:</div>
             <div className="workload-value">{currentWorkload}/{maxWorkload}</div>
             <div className="workload-bar-container">
-              <div 
-                className="workload-bar" 
+              <div
+                className="workload-bar"
                 style={{ width: `${Math.min((currentWorkload / maxWorkload) * 100, 100)}%` }}
               ></div>
             </div>
@@ -727,7 +765,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
 
         {/* Dynamic Main Content Area */}
         <main className="dashboard-main-content">
-        <div className="content-wrapper">
+          <div className="content-wrapper">
             {loading && (
               <div className="dashboard-loading">
                 <p>Loading dashboard data...</p>
@@ -772,8 +810,8 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                           <div key={serviceType} className="workload-item">
                             <div className="workload-label">{serviceType}:</div>
                             <div className="workload-bar-container">
-                              <div 
-                                className="workload-bar" 
+                              <div
+                                className="workload-bar"
                                 style={{ width: `${percentage}%` }}
                               ></div>
                             </div>
@@ -792,8 +830,8 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                     <div className="activity-list">
                       {recentActivity.length > 0 ? (
                         recentActivity.map((activity, index) => (
-                          <div 
-                            key={index} 
+                          <div
+                            key={index}
                             className={`activity-item ${activity.type === 'emergency' ? 'activity-emergency' : ''}`}
                           >
                             <span className="activity-time">{activity.time}</span>
@@ -831,7 +869,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             {!loading && activeSection === 'transfer-requests' && (
               <TransferRequestsSection
                 user={user}
-                onRefresh={() => {}}
+                onRefresh={() => { }}
               />
             )}
             {!loading && activeSection === 'service-packages' && (
@@ -844,10 +882,12 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 user={user}
               />
             )}
+            {!loading && activeSection === 'follow-ups' && (
+              <FollowUpDashboard />
+            )}
             {!loading && activeSection === 'analytics' && (
-              <div>
-                <h1>Analytics</h1>
-                <p>Analytics content will appear here.</p>
+              <div className="analytics-section-wrapper">
+                <SocialWorkerAnalytics />
               </div>
             )}
             {!loading && activeSection === 'profile' && (
@@ -862,8 +902,8 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 <p>Feedback content will appear here.</p>
               </div>
             )}
-        </div>
-      </main>
+          </div>
+        </main>
       </div>
     </div>
   );
@@ -952,7 +992,7 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
       setSelectedRequest(request);
       setShowDetailsModal(true);
       setLoadingDetails(true);
-      
+
       // Fetch full request details
       try {
         const response = await helpRequestService.getHelpRequest(requestId);
@@ -979,17 +1019,17 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
 
   // Calculate statistics
   const totalRequests = requests.length;
-  const activeRequests = requests.filter(r => 
+  const activeRequests = requests.filter(r =>
     r.status === 'IN_PROGRESS' || r.status === 'ASSIGNED' || r.status === 'UNDER_REVIEW'
   ).length;
-  const urgentRequests = requests.filter(r => 
+  const urgentRequests = requests.filter(r =>
     (r.priority === 'HIGH' || r.priority === 'URGENT' || r.emergency === true) &&
     (r.status === 'IN_PROGRESS' || r.status === 'ASSIGNED' || r.status === 'UNDER_REVIEW')
   ).length;
-  const pendingRequests = requests.filter(r => 
+  const pendingRequests = requests.filter(r =>
     r.status === 'ASSIGNED' || r.status === 'UNDER_REVIEW'
   ).length;
-  const completedRequests = requests.filter(r => 
+  const completedRequests = requests.filter(r =>
     r.status === 'COMPLETED'
   ).length;
 
@@ -1002,11 +1042,11 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   const getStatusDisplay = (status: string, priority?: string) => {
     const statusUpper = status?.toUpperCase() || '';
     const isUrgent = priority === 'HIGH' || priority === 'URGENT';
-    
+
     if (isUrgent && (statusUpper === 'ASSIGNED' || statusUpper === 'IN_PROGRESS')) {
       return <span className="table-status-badge status-urgent">🔴 URGENT</span>;
     }
-    
+
     switch (statusUpper) {
       case 'IN_PROGRESS':
         return <span className="table-status-badge status-active">🟢 ACTIVE</span>;
@@ -1505,12 +1545,12 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
       } else if (diffDays === 1) {
         return `Yesterday ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
       } else {
-        return date.toLocaleString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
         });
       }
     } catch {
@@ -1694,7 +1734,7 @@ const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
       // Fetch service offers created by this worker
       const response = await serviceOfferService.getOffersByWorker(user.id);
       // Filter to get active packages (you may need to adjust this based on your data structure)
-      const activePackages = (response.data || []).filter((pkg: any) => 
+      const activePackages = (response.data || []).filter((pkg: any) =>
         pkg.status === 'ACTIVE' || pkg.status === 'PENDING' || !pkg.status
       );
       setPackages(activePackages);
@@ -1824,7 +1864,7 @@ const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
                   <div className="package-services">
                     <span className="package-label">Services:</span>
                     <span className="package-services-list">
-                      {Array.isArray(pkg.services) 
+                      {Array.isArray(pkg.services)
                         ? pkg.services.join(', ')
                         : (pkg.serviceDescription || 'No services specified')}
                     </span>
@@ -2183,7 +2223,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch all packages
       const packagesResponse = await serviceOfferService.getOffersByWorker(user.id);
       setAllPackages(packagesResponse.data || []);
@@ -2214,21 +2254,21 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
 
   const updateEstimates = () => {
     if (!selectedPackage) return;
-    
+
     let baseTime = 10;
     let baseCost = 200;
-    
+
     // Adjust based on customizations
     if (customizations['wheelchair']) baseTime += 2;
     if (customizations['extend']) baseTime += 3;
     if (customizations['counseling']) baseTime += 2;
     if (customizations['school']) baseTime += 1;
-    
+
     if (customizations['wheelchair']) baseCost += 50;
     if (customizations['extend']) baseCost += 100;
     if (customizations['counseling']) baseCost += 50;
     if (customizations['school']) baseCost += 50;
-    
+
     setEstimatedTime(`${baseTime}-${baseTime + 3} hours`);
     setEstimatedCost(`$${baseCost}-${baseCost + 100}`);
   };
@@ -2236,7 +2276,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
   const checkAgeMatch = (packageAgeRange: string, requestAge?: number) => {
     if (!requestAge) return true;
     if (packageAgeRange === 'All' || packageAgeRange === '0-18') return true;
-    
+
     const [min, max] = packageAgeRange.split('-').map(Number);
     return requestAge >= min && requestAge <= max;
   };
@@ -2316,7 +2356,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
                       const ageMatch = checkAgeMatch(pkg.ageRange || '0-18', requestAge);
                       const genderMatch = checkGenderMatch(pkg.gender || 'All', requestGender);
                       const isSelected = selectedPackage?.id === pkg.id;
-                      
+
                       return (
                         <div
                           key={pkg.id}
@@ -2363,7 +2403,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
                         <input
                           type="checkbox"
                           checked={customizations['wheelchair'] || false}
-                          onChange={(e) => setCustomizations({...customizations, wheelchair: e.target.checked})}
+                          onChange={(e) => setCustomizations({ ...customizations, wheelchair: e.target.checked })}
                         />
                         <span>Include wheelchair accessibility assessment</span>
                       </label>
@@ -2371,7 +2411,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
                         <input
                           type="checkbox"
                           checked={customizations['extend'] || false}
-                          onChange={(e) => setCustomizations({...customizations, extend: e.target.checked})}
+                          onChange={(e) => setCustomizations({ ...customizations, extend: e.target.checked })}
                         />
                         <span>Extend shelter to 14 days (emergency)</span>
                       </label>
@@ -2379,7 +2419,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
                         <input
                           type="checkbox"
                           checked={customizations['counseling'] || false}
-                          onChange={(e) => setCustomizations({...customizations, counseling: e.target.checked})}
+                          onChange={(e) => setCustomizations({ ...customizations, counseling: e.target.checked })}
                         />
                         <span>Add family counseling sessions</span>
                       </label>
@@ -2387,7 +2427,7 @@ const ApplyPackageModal: React.FC<ApplyPackageModalProps> = ({
                         <input
                           type="checkbox"
                           checked={customizations['school'] || false}
-                          onChange={(e) => setCustomizations({...customizations, school: e.target.checked})}
+                          onChange={(e) => setCustomizations({ ...customizations, school: e.target.checked })}
                         />
                         <span>Include school enrollment assistance</span>
                       </label>
@@ -2790,9 +2830,9 @@ const NewTransferModal: React.FC<NewTransferModalProps> = ({
       setLoading(true);
       // Fetch active help requests
       const requestsResponse = await api.get(`/api/help-requests/worker/${user.id}`);
-      const requests = Array.isArray(requestsResponse.data) ? requestsResponse.data : 
-                     (requestsResponse.data?.data || requestsResponse.data?.requests || []);
-      const active = requests.filter((r: any) => 
+      const requests = Array.isArray(requestsResponse.data) ? requestsResponse.data :
+        (requestsResponse.data?.data || requestsResponse.data?.requests || []);
+      const active = requests.filter((r: any) =>
         r.status === 'IN_PROGRESS' || r.status === 'ASSIGNED'
       );
       setActiveRequests(active);
@@ -3122,7 +3162,7 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   const childName = requestDetails?.childName || requestDetails?.peopleDetails?.name || '';
   const childAge = requestDetails?.approximateAge || requestDetails?.peopleDetails?.age || 'N/A';
   const childGender = requestDetails?.gender || requestDetails?.peopleDetails?.gender || 'N/A';
-  
+
   // Mock timeline data - in real app, this would come from the API
   const timeline = [
     { time: formatTimeOnly(requestDetails?.requestDate || requestDetails?.createdAt), event: 'Request submitted' },
@@ -3374,7 +3414,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           </button>
         )}
       </div>
-      
+
       <div className="notifications-list">
         {loading ? (
           <div className="notifications-loading">Loading notifications...</div>
@@ -3411,7 +3451,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                 ))}
               </>
             )}
-            
+
             {readNotifications.length > 0 && (
               <>
                 {unreadNotifications.length > 0 && (
@@ -3436,7 +3476,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           </>
         )}
       </div>
-      
+
       <div className="notifications-footer">
         <button className="view-all-notifications-btn" onClick={() => {
           // Could navigate to a full notifications page if needed

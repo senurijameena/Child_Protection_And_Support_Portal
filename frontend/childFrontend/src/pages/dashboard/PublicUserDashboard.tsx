@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Row, 
-  Col, 
-  Card, 
-  Button, 
-  Alert, 
+import {
+  Row,
+  Col,
+  Card,
+  Button,
+  Alert,
   Spinner,
   Badge
 } from 'react-bootstrap';
@@ -75,7 +75,7 @@ const PublicUserDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch user profile for last login
       if (user?.id) {
         try {
@@ -112,8 +112,8 @@ const PublicUserDashboard: React.FC = () => {
       // Fetch notifications
       try {
         const notificationsResponse = await notificationService.getUnreadNotifications();
-        const notificationsData = Array.isArray(notificationsResponse.data) 
-          ? notificationsResponse.data.slice(0, 5) 
+        const notificationsData = Array.isArray(notificationsResponse.data)
+          ? notificationsResponse.data.slice(0, 5)
           : [];
         setNotifications(notificationsData);
       } catch (err) {
@@ -148,16 +148,16 @@ const PublicUserDashboard: React.FC = () => {
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins} minutes ago`;
     if (diffHours < 24) {
-      return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit', 
-        hour12: true 
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
       });
     }
-    if (diffDays === 1) return 'Yesterday, ' + date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit', 
-      hour12: true 
+    if (diffDays === 1) return 'Yesterday, ' + date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
     });
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -219,25 +219,19 @@ const PublicUserDashboard: React.FC = () => {
   };
 
   // Calculate statistics
-  const totalCases = cases.length;
+
   const activeCases = cases.filter(c => {
     const status = c.status?.toUpperCase();
     return status && !['RESOLVED', 'CLOSED', 'REJECTED'].includes(status);
   });
-  const resolvedCases = cases.filter(c => {
-    const status = c.status?.toUpperCase();
-    return status && ['RESOLVED', 'CLOSED'].includes(status);
-  }).length;
 
-  const totalHelpRequests = helpRequests.length;
+
+
   const activeHelpRequests = helpRequests.filter(hr => {
     const status = hr.status?.toUpperCase();
     return status && !['COMPLETED', 'REJECTED'].includes(status);
   });
-  const resolvedHelpRequests = helpRequests.filter(hr => {
-    const status = hr.status?.toUpperCase();
-    return status && ['COMPLETED'].includes(status);
-  }).length;
+
 
   if (loading) {
     return (
@@ -277,8 +271,8 @@ const PublicUserDashboard: React.FC = () => {
               <Card.Text className="text-muted mb-3">
                 Report a new child protection case
               </Card.Text>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 size="lg"
                 onClick={() => navigate('/report-case')}
                 className="w-100"
@@ -296,8 +290,8 @@ const PublicUserDashboard: React.FC = () => {
               <Card.Text className="text-muted mb-3">
                 Request assistance or support for a child in need
               </Card.Text>
-              <Button 
-                variant="warning" 
+              <Button
+                variant="warning"
                 size="lg"
                 onClick={() => navigate('/request-help')}
                 className="w-100"
@@ -309,53 +303,7 @@ const PublicUserDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Statistics Cards */}
-      <Row className="mb-4">
-        <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-primary">
-            <Card.Body>
-              <div className="stat-icon">🛡️</div>
-              <div className="stat-content">
-                <div className="stat-label">Total Cases</div>
-                <div className="stat-value">{totalCases}</div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-warning">
-            <Card.Body>
-              <div className="stat-icon">📋</div>
-              <div className="stat-content">
-                <div className="stat-label">Active Cases</div>
-                <div className="stat-value">{activeCases.length}</div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-success">
-            <Card.Body>
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <div className="stat-label">Resolved Cases</div>
-                <div className="stat-value">{resolvedCases}</div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={6} lg={3} className="mb-3">
-          <Card className="stat-card stat-card-info">
-            <Card.Body>
-              <div className="stat-icon">❤️</div>
-              <div className="stat-content">
-                <div className="stat-label">Help Requests</div>
-                <div className="stat-value">{totalHelpRequests}</div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+
 
       {/* Active Cases and Help Requests */}
       <Row className="mb-4">
@@ -378,8 +326,8 @@ const PublicUserDashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="d-flex align-items-center gap-2 mb-2">
-                        <Badge 
-                          bg={getStatusBadgeVariant(caseItem.status)} 
+                        <Badge
+                          bg={getStatusBadgeVariant(caseItem.status)}
                           style={{ backgroundColor: getStatusColor(caseItem.status) }}
                         >
                           {getStatusDisplay(caseItem.status)}
@@ -393,8 +341,8 @@ const PublicUserDashboard: React.FC = () => {
                           Assigned: Officer {caseItem.assignedOfficerId.slice(0, 8)}
                         </div>
                       )}
-                      <Button 
-                        variant="outline-primary" 
+                      <Button
+                        variant="outline-primary"
                         size="sm"
                         onClick={() => navigate(`/cases/${caseItem.id}`)}
                       >
@@ -402,8 +350,8 @@ const PublicUserDashboard: React.FC = () => {
                       </Button>
                     </div>
                   ))}
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="p-0 mt-2"
                     onClick={() => navigate('/cases/my-cases')}
                   >
@@ -440,7 +388,7 @@ const PublicUserDashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="d-flex align-items-center gap-2 mb-2">
-                        <Badge 
+                        <Badge
                           bg={getStatusBadgeVariant(request.status)}
                           style={{ backgroundColor: getStatusColor(request.status) }}
                         >
@@ -452,8 +400,8 @@ const PublicUserDashboard: React.FC = () => {
                           Assigned: Worker {request.assignedWorkerId.slice(0, 8)}
                         </div>
                       )}
-                      <Button 
-                        variant="outline-warning" 
+                      <Button
+                        variant="outline-warning"
                         size="sm"
                         onClick={() => navigate(`/help-requests/${request.id}`)}
                       >
@@ -461,8 +409,8 @@ const PublicUserDashboard: React.FC = () => {
                       </Button>
                     </div>
                   ))}
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="p-0 mt-2"
                     onClick={() => navigate('/help-requests/my-requests')}
                   >
@@ -495,9 +443,9 @@ const PublicUserDashboard: React.FC = () => {
                     <div key={notification.id} className="notification-item mb-3 pb-3 border-bottom">
                       <div className="fw-bold small mb-1">{notification.title || 'Notification'}</div>
                       <div className="text-muted small mb-2">{notification.message || ''}</div>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
+                      <Button
+                        variant="link"
+                        size="sm"
                         className="p-0"
                         onClick={() => navigate('/notifications')}
                       >
@@ -505,8 +453,8 @@ const PublicUserDashboard: React.FC = () => {
                       </Button>
                     </div>
                   ))}
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="p-0 mt-2"
                     onClick={() => navigate('/notifications')}
                   >
@@ -540,13 +488,7 @@ const PublicUserDashboard: React.FC = () => {
                       <div className="small">{activity.description || activity.eventType || 'Activity'}</div>
                     </div>
                   ))}
-                  <Button 
-                    variant="link" 
-                    className="p-0 mt-2"
-                    onClick={() => navigate('/analytics')}
-                  >
-                    See All →
-                  </Button>
+
                 </>
               ) : (
                 <>

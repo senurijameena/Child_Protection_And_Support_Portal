@@ -152,7 +152,6 @@ const MyHelpRequestsPage: React.FC = () => {
       filtered = filtered.filter(r => r.status?.toUpperCase() === filters.status.toUpperCase());
     }
 
-    // Type filter
     if (filters.type !== 'ALL') {
       filtered = filtered.filter(r => r.helpType?.toUpperCase() === filters.type.toUpperCase());
     }

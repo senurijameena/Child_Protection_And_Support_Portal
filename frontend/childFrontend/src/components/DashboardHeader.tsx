@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Navbar, 
-  Nav, 
-  Button, 
-  Dropdown, 
+import {
+  Container,
+  Navbar,
+  Nav,
+  Button,
+  Dropdown,
   Badge,
   Offcanvas,
   Spinner
@@ -62,29 +62,19 @@ const DashboardHeader: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [quickStats, setQuickStats] = useState<QuickStats | null>(null);
   const [loadingQuickStats, setLoadingQuickStats] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [liveLocation, setLiveLocation] = useState<string | null>(null);
-  const [locationLoading, setLocationLoading] = useState(false);
+
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
-    
+
     if (currentUser) {
       fetchUserProfile(currentUser.id);
       fetchUnreadNotifications();
       fetchNotifications();
-      
-      // Get live location for public users
-      if (currentUser.role === 'PUBLIC') {
-        getLiveLocation();
-        // Update location every 5 minutes
-        const locationInterval = setInterval(getLiveLocation, 300000);
-        return () => {
-          clearInterval(locationInterval);
-        };
-      }
-      
+
+
+
       if (currentUser.role === 'ADMIN') {
         fetchQuickStats();
         const statsInterval = setInterval(fetchQuickStats, 30000); // Update every 30 seconds
@@ -93,16 +83,13 @@ const DashboardHeader: React.FC = () => {
         };
       }
     }
-    
+
     const interval = setInterval(() => {
       setUser(authService.getCurrentUser());
-      setCurrentTime(new Date());
     }, 60000);
 
-    const timeInterval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    
+
+
     const handleNotificationRefresh = () => {
       fetchUnreadNotifications();
       fetchNotifications();
@@ -116,15 +103,12 @@ const DashboardHeader: React.FC = () => {
         fetchUserProfile(updatedUser.id);
       }
     };
-    
+
     window.addEventListener('notificationRefresh', handleNotificationRefresh);
     window.addEventListener('userProfileUpdated', handleUserProfileUpdate);
-    
+
     return () => {
       clearInterval(interval);
-      if (timeInterval) {
-        clearInterval(timeInterval);
-      }
       window.removeEventListener('notificationRefresh', handleNotificationRefresh);
       window.removeEventListener('userProfileUpdated', handleUserProfileUpdate);
     };
@@ -139,66 +123,7 @@ const DashboardHeader: React.FC = () => {
     }
   };
 
-  const getLiveLocation = () => {
-    if (!navigator.geolocation) {
-      console.log('Geolocation is not supported by this browser.');
-      return;
-    }
 
-    setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          
-          // Use OpenStreetMap Nominatim API for reverse geocoding
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            {
-              headers: {
-                'User-Agent': 'ChildProtectionPortal/1.0'
-              }
-            }
-          );
-          
-          if (response.ok) {
-            const data = await response.json();
-            const address = data.address;
-            
-            // Try to get city, town, village, or suburb
-            const locationName = 
-              address.city || 
-              address.town || 
-              address.village || 
-              address.suburb || 
-              address.county ||
-              address.state ||
-              `${address.city || address.town || address.village || 'Location'}, ${address.country || ''}`;
-            
-            setLiveLocation(locationName);
-          } else {
-            // Fallback: show coordinates if reverse geocoding fails
-            setLiveLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          }
-        } catch (error) {
-          console.error('Error getting location name:', error);
-          setLiveLocation(null);
-        } finally {
-          setLocationLoading(false);
-        }
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        setLocationLoading(false);
-        setLiveLocation(null);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // Cache for 5 minutes
-      }
-    );
-  };
 
   const fetchUnreadNotifications = async () => {
     try {
@@ -213,7 +138,7 @@ const DashboardHeader: React.FC = () => {
     try {
       const response = await notificationService.getNotifications();
       const apiNotifications = response.data || [];
-      
+
       // Transform API response to match Notification interface
       // Sort by most recent first, limit to 6
       const transformedNotifications: Notification[] = apiNotifications
@@ -232,7 +157,7 @@ const DashboardHeader: React.FC = () => {
           type: notif.type,
           actionUrl: notif.actionUrl
         }));
-      
+
       setNotifications(transformedNotifications);
     } catch (error) {
       console.error('Error fetching notification list:', error);
@@ -241,7 +166,7 @@ const DashboardHeader: React.FC = () => {
 
   const fetchQuickStats = async () => {
     if (user?.role !== 'ADMIN') return;
-    
+
     try {
       setLoadingQuickStats(true);
       const token = localStorage.getItem('authToken');
@@ -264,7 +189,7 @@ const DashboardHeader: React.FC = () => {
         liveCases = dashboardData.activeCases || 0;
         emergencyCases = dashboardData.emergencyCases || 0;
         pendingApprovals = dashboardData.pendingApprovals || 0;
-        
+
         // Calculate new cases today from casesByStatus if available
         if (dashboardData.casesByStatus) {
           const today = new Date().toISOString().split('T')[0];
@@ -281,10 +206,10 @@ const DashboardHeader: React.FC = () => {
         if (casesRes?.ok) {
           const casesData = await casesRes.json();
           if (Array.isArray(casesData)) {
-            liveCases = casesData.filter((c: any) => 
-              c.status === 'REPORTED' || 
-              c.status === 'UNDER_REVIEW' || 
-              c.status === 'ASSIGNED' || 
+            liveCases = casesData.filter((c: any) =>
+              c.status === 'REPORTED' ||
+              c.status === 'UNDER_REVIEW' ||
+              c.status === 'ASSIGNED' ||
               c.status === 'INVESTIGATING'
             ).length;
             emergencyCases = casesData.filter((c: any) => c.priority === 'URGENT' || c.priority === 'EMERGENCY').length;
@@ -430,7 +355,7 @@ const DashboardHeader: React.FC = () => {
             Working together to prevent harm and ensure child well-being
           </div>
         </div>
-        
+
         <Container fluid className="header-main-content">
           <div className="header-left-section">
             <Navbar.Brand as={Link} to={getDashboardPath()} className="logo-brand">
@@ -441,10 +366,10 @@ const DashboardHeader: React.FC = () => {
                     {user?.role === 'ADMIN' ? 'Child Protection Portal' : 'Child Protection and Support Portal'}
                   </span>
                   <span className="dashboard-title">
-                    {user?.role === 'ADMIN' ? 'Admin Dashboard' : 
-                     user?.role === 'POLICE' ? 'Police Officer Dashboard' :
-                     user?.role === 'SOCIAL_WORKER' ? 'Social Worker Dashboard' :
-                     'Public User Dashboard'}
+                    {user?.role === 'ADMIN' ? 'Admin Dashboard' :
+                      user?.role === 'POLICE' ? 'Police Officer Dashboard' :
+                        user?.role === 'SOCIAL_WORKER' ? 'Social Worker Dashboard' :
+                          'Public User Dashboard'}
                   </span>
                 </div>
               </div>
@@ -473,7 +398,7 @@ const DashboardHeader: React.FC = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="quick-stat-item emergency-stat" onClick={() => navigate('/admin/cases/emergency')} style={{ cursor: 'pointer' }}>
                 <span className="quick-stat-icon">🚨</span>
                 <div className="quick-stat-content">
@@ -487,7 +412,7 @@ const DashboardHeader: React.FC = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="quick-stat-item" onClick={() => navigate('/admin/users')} style={{ cursor: 'pointer' }}>
                 <span className="quick-stat-icon">👥</span>
                 <div className="quick-stat-content">
@@ -511,36 +436,23 @@ const DashboardHeader: React.FC = () => {
             </div>
           )}
 
-          <Navbar.Toggle 
-            aria-controls="dashboard-nav" 
+          <Navbar.Toggle
+            aria-controls="dashboard-nav"
             onClick={() => setShowMobileMenu(true)}
             className="mobile-toggle"
           />
 
           <Navbar.Collapse id="dashboard-nav">
             <div className="header-right-section">
-              {user?.role === 'PUBLIC' && (
-                <div className="header-location-time">
-                  <span className="location-icon">📍</span>
-                  <span className="location-text">
-                    {locationLoading ? (
-                      <Spinner animation="border" size="sm" className="me-1" />
-                    ) : (
-                      liveLocation || userProfile?.city || userProfile?.address || (user as any)?.address || 'Location not set'
-                    )}
-                  </span>
-                  <span className="time-icon ms-2">🕒</span>
-                  <span className="time-text">{currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-                </div>
-              )}
+
 
               <Dropdown align="end">
                 <Dropdown.Toggle variant="link" className="user-info-toggle p-0">
                   <div className="user-info-container">
                     {user?.profileImage || userProfile?.profilePhoto ? (
-                      <img 
-                        src={user?.profileImage || userProfile?.profilePhoto} 
-                        alt={user?.name || 'User'} 
+                      <img
+                        src={user?.profileImage || userProfile?.profilePhoto}
+                        alt={user?.name || 'User'}
                         className="user-profile-photo"
                       />
                     ) : (
@@ -558,19 +470,19 @@ const DashboardHeader: React.FC = () => {
                   <Dropdown.Header className="user-info-dropdown-header">
                     <div className="user-info-name">
                       {user?.profileImage ? (
-                        <img 
-                          src={user.profileImage} 
-                          alt={user.name || 'Admin'} 
+                        <img
+                          src={user.profileImage}
+                          alt={user.name || 'Admin'}
                           className="avatar-img"
                           style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }}
                         />
                       ) : (
-                        <div 
+                        <div
                           className="avatar-placeholder"
-                          style={{ 
-                            width: '48px', 
-                            height: '48px', 
-                            borderRadius: '50%', 
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
                             background: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
                             display: 'flex',
                             alignItems: 'center',
@@ -589,8 +501,8 @@ const DashboardHeader: React.FC = () => {
                         <div className="user-email">
                           {user?.role === 'ADMIN' ? 'Role: ADMIN' : user?.email || ''}
                         </div>
-              </div>
-            </div>
+                      </div>
+                    </div>
                   </Dropdown.Header>
                   <Dropdown.Divider />
                   <div className="user-info-details">
@@ -612,7 +524,7 @@ const DashboardHeader: React.FC = () => {
                         <span className="detail-value">ADMIN</span>
                       </div>
                     )}
-              </div>
+                  </div>
                   <Dropdown.Divider />
                   {user?.role !== 'ADMIN' && (
                     <Dropdown.Item as={Link} to="/profile" className="dropdown-menu-item">
@@ -620,8 +532,8 @@ const DashboardHeader: React.FC = () => {
                       <span className="menu-text">View Profile</span>
                     </Dropdown.Item>
                   )}
-                  <Dropdown.Item 
-                    onClick={handleLogout} 
+                  <Dropdown.Item
+                    onClick={handleLogout}
                     className="dropdown-menu-item logout-item"
                   >
                     <span className="menu-icon">🚪</span>
@@ -630,7 +542,7 @@ const DashboardHeader: React.FC = () => {
                 </Dropdown.Menu>
               </Dropdown>
 
-              <NotificationDropdown 
+              <NotificationDropdown
                 show={showNotifications}
                 onToggle={(isOpen) => setShowNotifications(isOpen)}
                 notifications={notifications}
@@ -652,16 +564,16 @@ const DashboardHeader: React.FC = () => {
         </Container>
       </Navbar>
 
-      {}
+      { }
       <Offcanvas show={showMobileMenu} onHide={handleCloseMobileMenu} placement="end">
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>
             <div className="mobile-menu-header">
               <div className="user-avatar">
                 {user.profileImage ? (
-                  <img 
-                    src={user.profileImage} 
-                    alt={user.name} 
+                  <img
+                    src={user.profileImage}
+                    alt={user.name}
                     className="avatar-img"
                   />
                 ) : (
@@ -687,29 +599,29 @@ const DashboardHeader: React.FC = () => {
               <i className="bi bi-person-circle me-2"></i>
               My Profile
             </Nav.Link>
-            
+
             <hr className="my-2" />
-            
+
             <h6 className="px-3 mt-3 text-muted">Quick Actions</h6>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               className="mb-2"
               onClick={() => { handleQuickAction('report'); handleCloseMobileMenu(); }}
             >
               <i className="bi bi-file-earmark-plus me-2"></i>
               Report Case
             </Button>
-            <Button 
-              variant="warning" 
+            <Button
+              variant="warning"
               className="mb-4"
               onClick={() => { handleQuickAction('help'); handleCloseMobileMenu(); }}
             >
               <i className="bi bi-question-circle me-2"></i>
               Request Help
             </Button>
-            
+
             <hr className="my-2" />
-            
+
             <Nav.Link as={Link} to="/notifications" onClick={handleCloseMobileMenu}>
               <i className="bi bi-bell me-2"></i>
               Notifications
@@ -727,11 +639,11 @@ const DashboardHeader: React.FC = () => {
               <i className="bi bi-question-circle me-2"></i>
               Help & Support
             </Nav.Link>
-            
+
             <hr className="my-2" />
-            
-            <Button 
-              variant="outline-danger" 
+
+            <Button
+              variant="outline-danger"
               onClick={handleLogout}
               className="mt-3"
             >

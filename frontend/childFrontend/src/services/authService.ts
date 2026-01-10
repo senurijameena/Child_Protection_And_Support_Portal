@@ -50,7 +50,7 @@ const mapBackendRoleToFrontend = (backendRole: string): UserRole => {
     'POLICE': 'POLICE',
     'SOCIAL_WORKER': 'SOCIAL_WORKER'
   };
-  
+
   return roleMap[backendRole?.toUpperCase()] || 'PUBLIC';
 };
 
@@ -61,7 +61,10 @@ export const authService = {
       console.log('Login request:', { email: credentials.email });
       const response = await api.post('/api/auth/login', credentials);
       console.log('Login response:', response.data);
-      
+      console.log('Raw Role from backend:', response.data.role);
+      const mappedRole = mapBackendRoleToFrontend(response.data.role || 'PU');
+      console.log('Mapped Role:', mappedRole);
+
       // Check if login was successful - backend returns approved=true and token when successful
       if (response.data && response.data.approved === true && response.data.token) {
         if (!response.data.token || response.data.token.trim() === '') {
@@ -71,7 +74,7 @@ export const authService = {
             message: 'Invalid token received from server'
           };
         }
-        
+
         localStorage.setItem('authToken', response.data.token);
 
         const userData: UserData = {
@@ -85,14 +88,14 @@ export const authService = {
         };
 
         localStorage.setItem('user', JSON.stringify(userData));
- 
+
         if (userData.role === 'POLICE' && response.data.badgeNumber) {
           localStorage.setItem('badgeNumber', response.data.badgeNumber);
         }
         if (userData.role === 'SOCIAL_WORKER' && response.data.licenseNumber) {
           localStorage.setItem('licenseNumber', response.data.licenseNumber);
         }
-        
+
         return {
           success: true,
           token: response.data.token,
@@ -100,7 +103,7 @@ export const authService = {
           message: response.data.message || 'Login successful'
         };
       }
-      
+
       // Handle failed login - backend returns approved=false with a message
       const errorMessage = response.data?.message || 'Login failed. Please check your credentials.';
       console.error('Login failed:', errorMessage);
@@ -169,7 +172,7 @@ export const authService = {
           message: response.data.message || 'Registration successful'
         };
       }
-      
+
       return {
         success: false,
         message: response.data.message || 'Registration failed'
@@ -214,7 +217,7 @@ export const authService = {
           message: response.data.message || 'Registration successful'
         };
       }
-      
+
       return {
         success: false,
         message: response.data.message || 'Registration failed'
@@ -257,7 +260,7 @@ export const authService = {
           message: response.data.message || 'Registration successful'
         };
       }
-      
+
       return {
         success: false,
         message: response.data.message || 'Registration failed'
@@ -309,7 +312,7 @@ export const authService = {
   getDashboardPath(): string {
     const user = this.getCurrentUser();
     if (!user) return '/login';
-    
+
     switch (user.role) {
       case 'ADMIN':
         return '/admin/dashboard';
@@ -327,14 +330,14 @@ export const authService = {
   getRoleGreeting(): string {
     const user = this.getCurrentUser();
     if (!user) return 'Welcome';
-    
+
     const hour = new Date().getHours();
     let greeting = '';
-    
+
     if (hour < 12) greeting = 'Good Morning';
     else if (hour < 18) greeting = 'Good Afternoon';
     else greeting = 'Good Evening';
-    
+
     switch (user.role) {
       case 'ADMIN':
         return `${greeting}, Administrator`;

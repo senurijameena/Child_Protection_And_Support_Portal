@@ -9,6 +9,7 @@ com\example\childPortal\service\impl\CaseServiceImpl.class
 com\example\childPortal\controller\PoliceDashboardController.class
 com\example\childPortal\model\Case$CaseStatus.class
 com\example\childPortal\service\impl\SequenceServiceImpl.class
+com\example\childPortal\model\FollowUp.class
 com\example\childPortal\controller\NotificationController.class
 com\example\childPortal\controller\UserController.class
 com\example\childPortal\service\impl\AnonymityServiceImpl.class
@@ -19,6 +20,7 @@ com\example\childPortal\dto\CaseTimelineDTO.class
 com\example\childPortal\repository\ServiceOfferRepository.class
 com\example\childPortal\controller\AnonymityController.class
 com\example\childPortal\repository\CaseRepository.class
+com\example\childPortal\service\FollowUpService.class
 com\example\childPortal\dto\FileUploadDTO.class
 com\example\childPortal\service\impl\FeedbackServiceImpl.class
 com\example\childPortal\service\AnonymityService.class
@@ -85,6 +87,7 @@ com\example\childPortal\security\JwtUtil.class
 com\example\childPortal\model\HelpRequest$RequestStatus.class
 com\example\childPortal\dto\ServiceOfferDTO.class
 com\example\childPortal\controller\AnnouncementController.class
+com\example\childPortal\controller\FollowUpController.class
 com\example\childPortal\controller\SearchController.class
 com\example\childPortal\controller\TestController.class
 com\example\childPortal\dto\DuplicateDetectionDTO.class
@@ -115,6 +118,7 @@ com\example\childPortal\dto\CaseDTO.class
 com\example\childPortal\model\ServiceOffer$OfferStatus.class
 com\example\childPortal\service\impl\MessageServiceImpl.class
 com\example\childPortal\dto\ReportRequestDTO.class
+com\example\childPortal\repository\FollowUpRepository.class
 com\example\childPortal\repository\HelpRequestRepository.class
 com\example\childPortal\ChildPortalApplication.class
 com\example\childPortal\model\HelpRequestAssignment.class

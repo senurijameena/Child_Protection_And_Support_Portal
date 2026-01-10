@@ -43,7 +43,8 @@ public class Case {
         INVESTIGATING,
         RESOLVED,
         CLOSED,
-        REJECTED
+        REJECTED,
+        CANCELLED
     }
 
     public Case() {

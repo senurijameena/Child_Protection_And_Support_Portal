@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/help-requests")
-
 public class HelpController {
     @Autowired
     private HelpRequestService helpRequestService;
@@ -34,6 +33,15 @@ public class HelpController {
 
     @GetMapping("/my-requests")
     public ResponseEntity<List<HelpRequestDTO>> getMyHelpRequests(@AuthenticationPrincipal String userId) {
+        // Fallback for userId if @AuthenticationPrincipal is failing to resolve
+        if (userId == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                userId = auth.getName();
+            }
+        }
+
         List<HelpRequestDTO> requests = helpRequestService.getHelpRequestsByRequester(userId);
         return ResponseEntity.ok(requests);
     }

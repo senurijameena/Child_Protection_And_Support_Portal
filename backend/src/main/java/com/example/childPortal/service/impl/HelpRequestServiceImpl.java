@@ -58,6 +58,12 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
             HelpRequest helpRequest = new HelpRequest();
             helpRequest.setRequesterUserId(requesterUserId);
+
+            String name = "Unknown";
+            if (requesterUserId != null) {
+                name = userRepository.findById(requesterUserId).map(User::getFullName).orElse("Unknown");
+            }
+            helpRequest.setRequesterName(name);
             helpRequest.setAnonymous(helpRequestDTO.isAnonymous());
             helpRequest.setApproximateAge(helpRequestDTO.getApproximateAge());
             helpRequest.setGender(helpRequestDTO.getGender());
@@ -69,11 +75,6 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
             helpRequest
                     .setPriority(helpRequestDTO.getPriority() != null ? helpRequestDTO.getPriority() : Priority.MEDIUM);
-
-            Optional<User> reporterOpt = userRepository.findById(requesterUserId);
-            if (reporterOpt.isPresent()) {
-                helpRequest.setRequesterName(reporterOpt.get().getFullName());
-            }
 
             // Generate sequential tracking ID based on anonymous status (before saving)
             // Extract max number from existing tracking IDs to ensure proper sequencing
@@ -130,6 +131,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Override
     public List<HelpRequestDTO> getHelpRequestsByRequester(String requesterUserId) {
+        if (requesterUserId == null || requesterUserId.isEmpty() || "anonymousUser".equals(requesterUserId)) {
+            return java.util.Collections.emptyList();
+        }
         return helpRequestRepository.findByRequesterUserId(requesterUserId).stream()
                 .map(this::convertToFilteredDTO)
                 .collect(Collectors.toList());
@@ -239,26 +243,38 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         dto.setPriority(helpRequest.getPriority());
 
         try {
-            String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
-            Optional<User> currentUserOpt = userRepository.findById(currentUserId);
-            Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext()
+                    .getAuthentication();
+            String currentUserId = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+
+            Role userRole = Role.PU;
+            if (currentUserId != null && !currentUserId.equals("anonymousUser")) {
+                Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+                userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+            }
 
             if (helpRequest.isAnonymous()) {
-                if (userRole == Role.ADMIN ||
-                        (helpRequest.getRequesterUserId() != null &&
-                                helpRequest.getRequesterUserId().equals(currentUserId))) {
-                    dto.setRequesterName(helpRequest.getRequesterName());
+                boolean canSeeName = (userRole == Role.ADMIN) ||
+                        (currentUserId != null &&
+                                helpRequest.getRequesterUserId() != null &&
+                                helpRequest.getRequesterUserId().equals(currentUserId));
+
+                if (canSeeName) {
+                    dto.setRequesterName(
+                            helpRequest.getRequesterName() != null ? helpRequest.getRequesterName() : "Anonymous");
                 } else {
                     dto.setRequesterName("Anonymous Requester");
                 }
             } else {
-                dto.setRequesterName(helpRequest.getRequesterName());
+                dto.setRequesterName(
+                        helpRequest.getRequesterName() != null ? helpRequest.getRequesterName() : "Unknown Requester");
             }
         } catch (Exception e) {
             if (helpRequest.isAnonymous()) {
                 dto.setRequesterName("Anonymous Requester");
             } else {
-                dto.setRequesterName(helpRequest.getRequesterName());
+                dto.setRequesterName(
+                        helpRequest.getRequesterName() != null ? helpRequest.getRequesterName() : "Unknown Requester");
             }
         }
 

@@ -1,8 +1,9 @@
 package com.example.childPortal.model;
 
 public enum Priority {
-        
-LOW, 
-MEDIUM, 
-HIGH 
+
+    LOW,
+    MEDIUM,
+    HIGH,
+    URGENT
 }

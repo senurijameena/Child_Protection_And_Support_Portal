@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Card, 
-  Button, 
-  Form, 
-  Row, 
-  Col, 
+import {
+  Container,
+  Card,
+  Button,
+  Form,
+  Row,
+  Col,
   Badge,
   Alert,
   Spinner,
@@ -107,7 +107,7 @@ const MyHelpRequestsPage: React.FC = () => {
       const response = await helpRequestService.getMyRequests();
       const requestsData = Array.isArray(response.data) ? response.data : [];
       setRequests(requestsData);
-      
+
       // Fetch service offers for each request
       if (requestsData.length > 0) {
         const offersMap: Record<string, ServiceOffer[]> = {};
@@ -139,11 +139,13 @@ const MyHelpRequestsPage: React.FC = () => {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.trackingId?.toLowerCase().includes(query) ||
         r.helpType?.toLowerCase().includes(query) ||
         r.description?.toLowerCase().includes(query) ||
-        r.location?.toLowerCase().includes(query)
+        (typeof r.location === 'string'
+          ? r.location.toLowerCase().includes(query)
+          : (r.location as any)?.address?.toLowerCase().includes(query))
       );
     }
 
@@ -269,16 +271,16 @@ const MyHelpRequestsPage: React.FC = () => {
     if (offers.length === 0) {
       return { status: 'NONE', message: '⏳ No service offer yet' };
     }
-    
+
     const pendingOffer = offers.find(o => o.status?.toUpperCase() === 'PENDING');
     const acceptedOffer = offers.find(o => o.status?.toUpperCase() === 'ACCEPTED');
     const completedOffer = offers.find(o => o.status?.toUpperCase() === 'COMPLETED');
-    
+
     if (pendingOffer) {
       return { status: 'PENDING', offer: pendingOffer, message: '📋 SERVICE OFFER: Received (Pending Your Response)' };
     }
     if (acceptedOffer) {
-      const scheduledDate = acceptedOffer.scheduledDateTime 
+      const scheduledDate = acceptedOffer.scheduledDateTime
         ? new Date(acceptedOffer.scheduledDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : 'TBD';
       return { status: 'ACCEPTED', offer: acceptedOffer, message: `✅ SERVICE OFFER: Accepted (Scheduled for ${scheduledDate})` };
@@ -286,7 +288,7 @@ const MyHelpRequestsPage: React.FC = () => {
     if (completedOffer) {
       return { status: 'COMPLETED', offer: completedOffer, message: '✅ SERVICE OFFER: Completed (Service provided)' };
     }
-    
+
     return { status: 'OTHER', message: '📋 SERVICE OFFER: Available' };
   };
 
@@ -385,7 +387,7 @@ const MyHelpRequestsPage: React.FC = () => {
         {/* Requests List */}
         <div className="mb-3">
           <h5 className="mb-3">REQUESTS LIST: ({filteredRequests.length} {filteredRequests.length === 1 ? 'request' : 'requests'})</h5>
-          
+
           {filteredRequests.length === 0 ? (
             <Card>
               <Card.Body className="text-center py-5">
@@ -400,7 +402,7 @@ const MyHelpRequestsPage: React.FC = () => {
               const isRejected = statusUpper === 'REJECTED';
               const isAssigned = statusUpper === 'ASSIGNED' || statusUpper === 'IN_PROGRESS';
               const hasPendingOffer = offerStatus.status === 'PENDING';
-              
+
               return (
                 <Card key={request.id} className="mb-3 help-request-card">
                   <Card.Body>
@@ -448,9 +450,9 @@ const MyHelpRequestsPage: React.FC = () => {
                       {offerStatus.status === 'NONE' && isRejected ? (
                         <div className="text-muted">❌ No offer - Request rejected</div>
                       ) : (
-                        <div className={offerStatus.status === 'PENDING' ? 'text-warning' : 
-                                       offerStatus.status === 'ACCEPTED' || offerStatus.status === 'COMPLETED' ? 'text-success' : 
-                                       'text-muted'}>
+                        <div className={offerStatus.status === 'PENDING' ? 'text-warning' :
+                          offerStatus.status === 'ACCEPTED' || offerStatus.status === 'COMPLETED' ? 'text-success' :
+                            'text-muted'}>
                           {offerStatus.message}
                         </div>
                       )}
@@ -474,7 +476,7 @@ const MyHelpRequestsPage: React.FC = () => {
                       >
                         📋 View Details
                       </Button>
-                      
+
                       {hasPendingOffer && (
                         <Button
                           variant="outline-warning"
@@ -484,7 +486,7 @@ const MyHelpRequestsPage: React.FC = () => {
                           📋 Review Offer
                         </Button>
                       )}
-                      
+
                       {hasPendingOffer && isAssigned && request.assignedWorkerId && (
                         <Button
                           variant="outline-success"
@@ -494,7 +496,7 @@ const MyHelpRequestsPage: React.FC = () => {
                           💬 Message Worker
                         </Button>
                       )}
-                      
+
                       {!isCompleted && !isRejected && !hasPendingOffer && statusUpper === 'UNDER_REVIEW' && (
                         <>
                           <Button
@@ -509,7 +511,15 @@ const MyHelpRequestsPage: React.FC = () => {
                             size="sm"
                             onClick={() => {
                               if (window.confirm('Are you sure you want to cancel this request?')) {
-                                // Handle cancel
+                                helpRequestService.updateStatus(request.id, 'CANCELLED')
+                                  .then(() => {
+                                    alert('Request cancelled successfully');
+                                    fetchHelpRequests();
+                                  })
+                                  .catch(err => {
+                                    console.error('Error cancelling request:', err);
+                                    alert('Failed to cancel request');
+                                  });
                               }
                             }}
                           >
@@ -517,7 +527,7 @@ const MyHelpRequestsPage: React.FC = () => {
                           </Button>
                         </>
                       )}
-                      
+
                       {offerStatus.status === 'ACCEPTED' && (
                         <>
                           <Button
@@ -536,7 +546,7 @@ const MyHelpRequestsPage: React.FC = () => {
                           </Button>
                         </>
                       )}
-                      
+
                       {isCompleted && (
                         <>
                           <Button
@@ -557,7 +567,7 @@ const MyHelpRequestsPage: React.FC = () => {
                           </Button>
                         </>
                       )}
-                      
+
                       {isRejected && (
                         <Button
                           variant="outline-primary"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Row, Col, Card, Button, Spinner, Alert, 
-  Table, Badge, ButtonGroup
+import {
+  Row, Col, Card, Button, Spinner, Alert,
+  Table, Badge, ButtonGroup, Modal, Form
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { analyticsService } from '../../services/analyticsService';
@@ -56,11 +56,20 @@ interface PendingTransfer {
   toUserName?: string;
 }
 
+interface SocialWorker {
+  id: string;
+  userId: string;
+  fullName: string;
+  specialization: string;
+  availabilityStatus: string;
+  registrationDate?: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [stats, setStats] = useState<DashboardStats>({
     totalCases: 0,
     activeCases: 0,
@@ -82,16 +91,82 @@ const AdminDashboard: React.FC = () => {
   const [caseStatusDistribution, setCaseStatusDistribution] = useState<any[]>([]);
   const [helpRequestTypeDistribution, setHelpRequestTypeDistribution] = useState<any[]>([]);
 
+  const [socialWorkers, setSocialWorkers] = useState<SocialWorker[]>([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
+  const [assigning, setAssigning] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [workerSearchQuery, setWorkerSearchQuery] = useState('');
+
   useEffect(() => {
     fetchDashboardData();
+    fetchSocialWorkers();
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, [dateFilter]);
 
+  const fetchSocialWorkers = async () => {
+    try {
+      const workers = await adminService.getSocialWorkers();
+      if (Array.isArray(workers)) {
+        const mappedWorkers = workers.map((w: any) => {
+          const id = w.id || w.userId || 'unknown';
+          return {
+            id: id,
+            userId: w.userId || id,
+            fullName: w.fullName || w.name || `Social Worker (${id.substring(0, 5)})`,
+            specialization: Array.isArray(w.specializations) ? w.specializations.join(', ') : (w.specialization || 'General Social Work'),
+            availabilityStatus: w.available ? 'AVAILABLE' : 'BUSY',
+            registrationDate: w.registrationDate
+          };
+        });
+        setSocialWorkers(mappedWorkers);
+      }
+    } catch (err) {
+      console.error('Error fetching social workers:', err);
+    }
+  };
+
+  const handleOpenAssignModal = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setShowAssignModal(true);
+  };
+
+  const handleAssignWorker = async () => {
+    if (!selectedRequestId || !selectedWorkerId) return;
+
+    try {
+      setAssigning(true);
+      setError(null);
+      await helpRequestService.assignSocialWorker(selectedRequestId, selectedWorkerId);
+
+      setSuccessMessage('Help request assigned successfully!');
+      setShowAssignModal(false);
+      setSelectedRequestId(null);
+      setSelectedWorkerId('');
+      setWorkerSearchQuery('');
+
+      fetchDashboardData();
+
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error assigning worker:', err);
+      setError(err.response?.data?.message || 'Failed to assign help request');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const filteredWorkers = socialWorkers.filter(worker =>
+    worker.fullName.toLowerCase().includes(workerSearchQuery.toLowerCase()) ||
+    worker.specialization.toLowerCase().includes(workerSearchQuery.toLowerCase())
+  );
+
   const getDateRange = () => {
     const now = new Date();
     let startDate: Date;
-    
+
     switch (dateFilter) {
       case 'today':
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -105,7 +180,7 @@ const AdminDashboard: React.FC = () => {
       default:
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     }
-    
+
     return {
       startDate: startDate.toISOString(),
       endDate: now.toISOString()
@@ -181,7 +256,7 @@ const AdminDashboard: React.FC = () => {
       if (caseStatusDist.status === 'fulfilled' && caseStatusDist.value.data) {
         const statusData = caseStatusDist.value.data;
         let distribution: any[] = [];
-        
+
         if (Array.isArray(statusData)) {
           distribution = statusData;
         } else if (typeof statusData === 'object' && statusData !== null) {
@@ -199,7 +274,7 @@ const AdminDashboard: React.FC = () => {
       if (helpTypeDist.status === 'fulfilled' && helpTypeDist.value.data) {
         const typeData = helpTypeDist.value.data;
         let distribution: any[] = [];
-        
+
         if (Array.isArray(typeData)) {
           distribution = typeData;
         } else if (typeof typeData === 'object') {
@@ -229,10 +304,10 @@ const AdminDashboard: React.FC = () => {
           }));
           setRecentCases(cases);
 
-          const closed = casesResponse.data.filter((c: any) => 
+          const closed = casesResponse.data.filter((c: any) =>
             c.status === 'CLOSED' || c.status === 'RESOLVED'
           ).length;
-          const emergency = casesResponse.data.filter((c: any) => 
+          const emergency = casesResponse.data.filter((c: any) =>
             c.emergency || c.priority === 'URGENT'
           ).length;
           setStats(prev => ({ ...prev, closedCases: closed, emergencyCases: emergency }));
@@ -315,21 +390,21 @@ const AdminDashboard: React.FC = () => {
             <p className="dashboard-subtitle mb-0">Overview of cases, users, and help requests</p>
           </div>
           <ButtonGroup className="date-filter-group">
-            <Button 
+            <Button
               variant={dateFilter === 'today' ? 'primary' : 'outline-primary'}
               size="sm"
               onClick={() => setDateFilter('today')}
             >
               Today
             </Button>
-            <Button 
+            <Button
               variant={dateFilter === '7days' ? 'primary' : 'outline-primary'}
               size="sm"
               onClick={() => setDateFilter('7days')}
             >
               Last 7 Days
             </Button>
-            <Button 
+            <Button
               variant={dateFilter === '30days' ? 'primary' : 'outline-primary'}
               size="sm"
               onClick={() => setDateFilter('30days')}
@@ -343,6 +418,12 @@ const AdminDashboard: React.FC = () => {
       {error && (
         <Alert variant="danger" dismissible onClose={() => setError(null)}>
           {error}
+        </Alert>
+      )}
+
+      {successMessage && (
+        <Alert variant="success" dismissible onClose={() => setSuccessMessage(null)}>
+          {successMessage}
         </Alert>
       )}
 
@@ -480,10 +561,10 @@ const AdminDashboard: React.FC = () => {
           <Card className="dashboard-card mb-3">
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Recent Cases</h5>
-              <Button 
-                variant="link" 
-                size="sm" 
-                onClick={() => navigate('/admin/cases/all')} 
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => navigate('/admin/cases/all')}
                 className="p-0 text-primary"
                 style={{ textDecoration: 'none', fontWeight: 500 }}
               >
@@ -522,10 +603,10 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td>{c.assignedOfficerId ? `PO-${c.assignedOfficerId.substring(0, 2)}` : c.assignedWorkerId ? `SW-${c.assignedWorkerId.substring(0, 2)}` : '—'}</td>
                         <td>
-                          <Button 
-                            variant="link" 
-                            size="sm" 
-                            onClick={() => navigate(`/admin/cases/${c.id}`)} 
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => navigate(`/admin/cases/${c.id}`)}
                             className="p-0 text-primary"
                             style={{ textDecoration: 'none' }}
                           >
@@ -549,10 +630,10 @@ const AdminDashboard: React.FC = () => {
           <Card className="dashboard-card mb-3">
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Active Help Requests</h5>
-              <Button 
-                variant="link" 
-                size="sm" 
-                onClick={() => navigate('/admin/help-requests/all')} 
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => navigate('/admin/help-requests/all')}
                 className="p-0 text-primary"
                 style={{ textDecoration: 'none', fontWeight: 500 }}
               >
@@ -589,15 +670,28 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td>{hr.assignedWorkerId ? `SW-${hr.assignedWorkerId.substring(0, 2)}` : '—'}</td>
                         <td>
-                          <Button 
-                            variant="link" 
-                            size="sm" 
-                            onClick={() => navigate(`/admin/help-requests/${hr.id}`)} 
-                            className="p-0 text-primary"
-                            style={{ textDecoration: 'none' }}
-                          >
-                            View
-                          </Button>
+                          <div className="d-flex gap-2">
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={() => navigate(`/admin/help-requests/${hr.id}`)}
+                              className="p-0 text-primary"
+                              style={{ textDecoration: 'none' }}
+                            >
+                              View
+                            </Button>
+                            {!hr.assignedWorkerId && (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => handleOpenAssignModal(hr.id)}
+                                className="p-0 text-success"
+                                style={{ textDecoration: 'none' }}
+                              >
+                                Assign
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -654,9 +748,9 @@ const AdminDashboard: React.FC = () => {
                         <td>{transfer.fromUserName || transfer.fromUserId.substring(0, 6)}</td>
                         <td>{transfer.toUserName || transfer.toUserId.substring(0, 6)}</td>
                         <td>
-                          <Button 
-                            variant="link" 
-                            size="sm" 
+                          <Button
+                            variant="link"
+                            size="sm"
                             className="text-success p-0 me-2"
                             onClick={async () => {
                               try {
@@ -669,9 +763,9 @@ const AdminDashboard: React.FC = () => {
                           >
                             ✓
                           </Button>
-                          <Button 
-                            variant="link" 
-                            size="sm" 
+                          <Button
+                            variant="link"
+                            size="sm"
                             className="text-danger p-0"
                             onClick={async () => {
                               try {
@@ -701,6 +795,96 @@ const AdminDashboard: React.FC = () => {
           )}
         </Col>
       </Row>
+
+      {/* Assignment Modal */}
+      <Modal show={showAssignModal} onHide={() => { setShowAssignModal(false); setWorkerSearchQuery(''); }} centered size="lg">
+        <Modal.Header closeButton className="bg-primary text-white">
+          <Modal.Title>🤝 Assign Social Worker</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-4">
+            <h6 className="text-muted mb-2">Assigning Request ID: <code className="text-primary">{selectedRequestId}</code></h6>
+            <Form.Control
+              type="text"
+              placeholder="🔍 Search workers by name or specialization..."
+              value={workerSearchQuery}
+              onChange={(e) => setWorkerSearchQuery(e.target.value)}
+              className="mb-3 rounded-pill"
+            />
+          </div>
+
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <Table hover responsive borderless className="align-middle">
+              <thead className="bg-light sticky-top">
+                <tr>
+                  <th style={{ width: '40%' }}>Worker Name</th>
+                  <th style={{ width: '30%' }}>Specializations</th>
+                  <th style={{ width: '15%' }}>Registered</th>
+                  <th style={{ width: '15%' }} className="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredWorkers.length > 0 ? (
+                  filteredWorkers.map(worker => (
+                    <tr key={worker.id} className={selectedWorkerId === worker.id ? 'table-primary' : ''}>
+                      <td>
+                        <div className="fw-bold">{worker.fullName}</div>
+                        <small className="text-muted">ID: {worker.id.substring(0, 8)}</small>
+                      </td>
+                      <td>
+                        {worker.specialization.split(',').map((spec, idx) => (
+                          <Badge
+                            key={idx}
+                            bg="info"
+                            className="me-1 mb-1 fw-normal text-capitalize"
+                            style={{ fontSize: '0.75rem', backgroundColor: '#e0f2f1', color: '#00695c', border: '1px solid #b2dfdb' }}
+                          >
+                            {spec.trim().toLowerCase().replace(/_/g, ' ')}
+                          </Badge>
+                        ))}
+                      </td>
+                      <td>
+                        <small className="text-muted">
+                          {worker.registrationDate ? new Date(worker.registrationDate).toLocaleDateString() : 'N/A'}
+                        </small>
+                      </td>
+                      <td className="text-center">
+                        <Button
+                          variant={selectedWorkerId === worker.id ? 'primary' : 'outline-primary'}
+                          size="sm"
+                          onClick={() => setSelectedWorkerId(worker.id)}
+                          className="rounded-pill px-3"
+                        >
+                          {selectedWorkerId === worker.id ? 'Selected ✓' : 'Select'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center py-5 text-muted">
+                      No social workers found matching your search.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="bg-light">
+          <Button variant="outline-secondary" onClick={() => { setShowAssignModal(false); setWorkerSearchQuery(''); }} disabled={assigning}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleAssignWorker}
+            disabled={assigning || !selectedWorkerId}
+            className="px-4"
+          >
+            {assigning ? <><Spinner size="sm" className="me-2" /> Assigning...</> : 'Confirm Assignment'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8085';
+export const API_BASE_URL = 'http://localhost:8080';
 export const STATS_REFRESH_INTERVAL = 30000; // 30 seconds
 export const CASES_REFRESH_INTERVAL = 60000; // 1 minute
 export const FEEDBACK_REFRESH_INTERVAL = 30000; // 30 seconds

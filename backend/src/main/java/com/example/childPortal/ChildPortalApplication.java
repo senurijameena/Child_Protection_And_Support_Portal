@@ -10,4 +10,3 @@ public class ChildPortalApplication {
         SpringApplication.run(ChildPortalApplication.class, args);
     }
 }
-// Force restart trigger 2

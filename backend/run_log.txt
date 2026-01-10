@@ -1,0 +1,98 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.example:backend >-------------------------
+[INFO] Building backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.5.8:run (default-cli) > test-compile @ backend >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] skip non existing resourceDirectory C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 1 source file with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] <<< spring-boot:3.5.8:run (default-cli) < test-compile @ backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.8:run (default-cli) @ backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.8)
+
+2026-01-10T11:38:27.290+05:30  INFO 4532 --- [child-portal] [  restartedMain] c.e.childPortal.ChildPortalApplication   : Starting ChildPortalApplication using Java 25.0.1 with PID 4532 (C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\target\classes started by Janani Nethma in C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend)
+2026-01-10T11:38:27.293+05:30  INFO 4532 --- [child-portal] [  restartedMain] c.e.childPortal.ChildPortalApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-01-10T11:38:27.443+05:30  INFO 4532 --- [child-portal] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-01-10T11:38:27.444+05:30  INFO 4532 --- [child-portal] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-01-10T11:38:31.777+05:30  INFO 4532 --- [child-portal] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data MongoDB repositories in DEFAULT mode.
+2026-01-10T11:38:32.158+05:30  INFO 4532 --- [child-portal] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 354 ms. Found 15 MongoDB repository interfaces.
+2026-01-10T11:38:33.972+05:30  INFO 4532 --- [child-portal] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-01-10T11:38:34.022+05:30  INFO 4532 --- [child-portal] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-01-10T11:38:34.023+05:30  INFO 4532 --- [child-portal] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.49]
+2026-01-10T11:38:34.475+05:30  INFO 4532 --- [child-portal] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-01-10T11:38:34.480+05:30  INFO 4532 --- [child-portal] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 7020 ms
+2026-01-10T11:38:35.732+05:30  INFO 4532 --- [child-portal] [cby.mongodb.net] org.mongodb.driver.cluster               : Adding discovered server ac-4eizrxs-shard-00-01.epricby.mongodb.net:27017 to client view of cluster
+2026-01-10T11:38:35.800+05:30  INFO 4532 --- [child-portal] [cby.mongodb.net] org.mongodb.driver.cluster               : Adding discovered server ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017 to client view of cluster
+2026-01-10T11:38:35.829+05:30  INFO 4532 --- [child-portal] [  restartedMain] org.mongodb.driver.client                : MongoClient with metadata {"driver": {"name": "mongo-java-driver|sync|spring-boot", "version": "5.5.2"}, "os": {"type": "Windows", "name": "Windows 11", "architecture": "amd64", "version": "10.0"}, "platform": "Java/Oracle Corporation/25.0.1+8-LTS-27"} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=null, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=MongoCredential{mechanism=null, userName='childAdmin', source='admin', password=<hidden>, mechanismProperties=<hidden>}, transportSettings=null, commandListeners=[io.micrometer.core.instrument.binder.mongodb.MongoMetricsCommandListener@104fadb1], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, EnumCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@3c87f150, com.mongodb.Jep395RecordCodecProvider@41f6b1ae, com.mongodb.KotlinCodecProvider@df9cd9d]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[127.0.0.1:27017], srvHost=child-protection-portal.epricby.mongodb.net, srvServiceName=mongodb, mode=MULTIPLE, requiredClusterType=REPLICA_SET, requiredReplicaSetName='atlas-h4icqc-shard-0', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='30000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=0, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[io.micrometer.core.instrument.binder.mongodb.MongoMetricsConnectionPoolListener@60b6dbb6], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverMonitoringMode=AUTO, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=true, invalidHostNameAllowed=false, context=null}, applicationName='null', compressorList=[], uuidRepresentation=JAVA_LEGACY, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null, timeoutMS=null}
+2026-01-10T11:38:35.853+05:30  INFO 4532 --- [child-portal] [cby.mongodb.net] org.mongodb.driver.cluster               : Adding discovered server ac-4eizrxs-shard-00-00.epricby.mongodb.net:27017 to client view of cluster
+2026-01-10T11:38:36.414+05:30  WARN 4532 --- [child-portal] [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2026-01-10T11:38:37.334+05:30  INFO 4532 --- [child-portal] [ngodb.net:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017, type=REPLICA_SET_PRIMARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=25, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=766571900, minRoundTripTimeNanos=0, setName='atlas-h4icqc-shard-0', canonicalAddress=ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017, hosts=[ac-4eizrxs-shard-00-00.epricby.mongodb.net:27017, ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017, ac-4eizrxs-shard-00-01.epricby.mongodb.net:27017], passives=[], arbiters=[], primary='ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017', tagSet=TagSet{[Tag{name='availabilityZone', value='aps1-az2'}, Tag{name='diskState', value='READY'}, Tag{name='nodeType', value='ELECTABLE'}, Tag{name='provider', value='AWS'}, Tag{name='region', value='AP_SOUTH_1'}, Tag{name='workloadType', value='OPERATIONAL'}]}, electionId=7fffffff00000000000003b7, setVersion=328, topologyVersion=TopologyVersion{processId=6942c63aeeb96cd5e7ab4bb0, counter=6}, lastWriteDate=Sat Jan 10 11:38:39 IST 2026, lastUpdateTimeNanos=65963196170400}
+2026-01-10T11:38:37.337+05:30  INFO 4532 --- [child-portal] [ngodb.net:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=ac-4eizrxs-shard-00-00.epricby.mongodb.net:27017, type=REPLICA_SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=25, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=764072900, minRoundTripTimeNanos=0, setName='atlas-h4icqc-shard-0', canonicalAddress=ac-4eizrxs-shard-00-00.epricby.mongodb.net:27017, hosts=[ac-4eizrxs-shard-00-00.epricby.mongodb.net:27017, ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017, ac-4eizrxs-shard-00-01.epricby.mongodb.net:27017], passives=[], arbiters=[], primary='ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017', tagSet=TagSet{[Tag{name='availabilityZone', value='aps1-az1'}, Tag{name='diskState', value='READY'}, Tag{name='nodeType', value='ELECTABLE'}, Tag{name='provider', value='AWS'}, Tag{name='region', value='AP_SOUTH_1'}, Tag{name='workloadType', value='OPERATIONAL'}]}, electionId=null, setVersion=328, topologyVersion=TopologyVersion{processId=6942c5ef9e35c92c4b62ebc9, counter=4}, lastWriteDate=Sat Jan 10 11:38:39 IST 2026, lastUpdateTimeNanos=65963193572100}
+2026-01-10T11:38:37.343+05:30  INFO 4532 --- [child-portal] [ngodb.net:27017] org.mongodb.driver.cluster               : Discovered replica set primary ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017 with max election id 7fffffff00000000000003b7 and max set version 328
+2026-01-10T11:38:37.335+05:30  INFO 4532 --- [child-portal] [ngodb.net:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=ac-4eizrxs-shard-00-01.epricby.mongodb.net:27017, type=REPLICA_SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=25, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=763281000, minRoundTripTimeNanos=0, setName='atlas-h4icqc-shard-0', canonicalAddress=ac-4eizrxs-shard-00-01.epricby.mongodb.net:27017, hosts=[ac-4eizrxs-shard-00-00.epricby.mongodb.net:27017, ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017, ac-4eizrxs-shard-00-01.epricby.mongodb.net:27017], passives=[], arbiters=[], primary='ac-4eizrxs-shard-00-02.epricby.mongodb.net:27017', tagSet=TagSet{[Tag{name='availabilityZone', value='aps1-az3'}, Tag{name='diskState', value='READY'}, Tag{name='nodeType', value='ELECTABLE'}, Tag{name='provider', value='AWS'}, Tag{name='region', value='AP_SOUTH_1'}, Tag{name='workloadType', value='OPERATIONAL'}]}, electionId=null, setVersion=328, topologyVersion=TopologyVersion{processId=6942c6861ea1dec93c6f243e, counter=3}, lastWriteDate=Sat Jan 10 11:38:39 IST 2026, lastUpdateTimeNanos=65963192321000}
+2026-01-10T11:38:39.534+05:30  INFO 4532 --- [child-portal] [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-01-10T11:38:39.686+05:30  WARN 4532 --- [child-portal] [  restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 1ea050f2-7495-44f3-8d83-20d8ad96d42a
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-01-10T11:38:39.718+05:30  INFO 4532 --- [child-portal] [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-01-10T11:38:40.961+05:30  WARN 4532 --- [child-portal] [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-01-10T11:38:41.040+05:30  INFO 4532 --- [child-portal] [  restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-01-10T11:38:41.395+05:30 ERROR 4532 --- [child-portal] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+? Failed to create default admin: Error creating bean with name 'management.simple.metrics.export-org.springframework.boot.actuate.autoconfigure.metrics.export.simple.SimpleProperties': Could not bind properties to 'SimpleProperties' : prefix=management.simple.metrics.export, ignoreInvalidFields=false, ignoreUnknownFields=true
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  36.236 s
+[INFO] Finished at: 2026-01-10T11:38:44+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.8:run (default-cli) on project backend: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

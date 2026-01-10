@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Row, Col, Card, Button, Spinner, Alert,
-  Form, Table, Badge, InputGroup, Dropdown
+  Form, Table, Badge, InputGroup, Dropdown, Modal
 } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { helpRequestService } from '../../services/helpRequestService';
+import { adminService } from '../../services/adminService';
 import './HelpRequestManagement.css';
 
 interface HelpRequest {
@@ -25,6 +26,15 @@ interface HelpRequest {
   description?: string;
 }
 
+interface SocialWorker {
+  id: string;
+  userId: string;
+  fullName: string;
+  specialization: string;
+  availabilityStatus: string;
+  registrationDate?: string;
+}
+
 const HelpRequestManagement: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,11 +47,19 @@ const HelpRequestManagement: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
-  
+
+  const [socialWorkers, setSocialWorkers] = useState<SocialWorker[]>([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
+  const [assigning, setAssigning] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [workerSearchQuery, setWorkerSearchQuery] = useState('');
+
   // Set default filter based on route
   useEffect(() => {
     if (location.pathname.includes('/marketplace')) {
-      setStatusFilter('PENDING');
+      setStatusFilter('REQUESTED');
     } else if (location.pathname.includes('/assigned')) {
       setStatusFilter('ASSIGNED');
     } else if (location.pathname.includes('/completed')) {
@@ -56,6 +74,7 @@ const HelpRequestManagement: React.FC = () => {
 
   useEffect(() => {
     fetchHelpRequests();
+    fetchSocialWorkers();
   }, []);
 
   useEffect(() => {
@@ -77,6 +96,67 @@ const HelpRequestManagement: React.FC = () => {
     }
   };
 
+  const fetchSocialWorkers = async () => {
+    try {
+      const workers = await adminService.getSocialWorkers();
+      if (Array.isArray(workers)) {
+        // Map backend SocialWorker model to frontend structure if necessary
+        // Assuming workers already have fullName or we need to fetch user details
+        const mappedWorkers = workers.map((w: any) => {
+          const id = w.id || w.userId || 'unknown';
+          return {
+            id: id,
+            userId: w.userId || id,
+            fullName: w.fullName || w.name || `Social Worker (${id.substring(0, 5)})`,
+            specialization: Array.isArray(w.specializations) ? w.specializations.join(', ') : (w.specialization || 'General Social Work'),
+            availabilityStatus: w.available ? 'AVAILABLE' : 'BUSY',
+            registrationDate: w.registrationDate
+          };
+        });
+        setSocialWorkers(mappedWorkers);
+      }
+    } catch (err) {
+      console.error('Error fetching social workers:', err);
+    }
+  };
+
+  const handleOpenAssignModal = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setShowAssignModal(true);
+  };
+
+  const handleAssignWorker = async () => {
+    if (!selectedRequestId || !selectedWorkerId) return;
+
+    try {
+      setAssigning(true);
+      setError(null);
+      await helpRequestService.assignSocialWorker(selectedRequestId, selectedWorkerId);
+
+      setSuccessMessage('Help request assigned successfully!');
+      setShowAssignModal(false);
+      setSelectedRequestId(null);
+      setSelectedWorkerId('');
+      setWorkerSearchQuery('');
+
+      // Refresh requests
+      fetchHelpRequests();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error assigning worker:', err);
+      setError(err.response?.data?.message || 'Failed to assign help request');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const filteredWorkers = socialWorkers.filter(worker =>
+    worker.fullName.toLowerCase().includes(workerSearchQuery.toLowerCase()) ||
+    worker.specialization.toLowerCase().includes(workerSearchQuery.toLowerCase())
+  );
+
   const applyFilters = () => {
     let filtered = [...helpRequests];
 
@@ -85,7 +165,10 @@ const HelpRequestManagement: React.FC = () => {
       filtered = filtered.filter(hr =>
         hr.trackingId?.toLowerCase().includes(query) ||
         hr.helpType?.toLowerCase().includes(query) ||
-        hr.location?.toLowerCase().includes(query) ||
+        hr.description?.toLowerCase().includes(query) || // Added description to search
+        (typeof hr.location === 'string'
+          ? hr.location.toLowerCase().includes(query)
+          : (hr.location as any)?.address?.toLowerCase().includes(query)) || // Robust location search
         hr.requesterName?.toLowerCase().includes(query)
       );
     }
@@ -107,15 +190,21 @@ const HelpRequestManagement: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusUpper = status.toUpperCase();
-    if (statusUpper.includes('COMPLETED') || statusUpper.includes('RESOLVED')) {
-      return <Badge bg="success">{status}</Badge>;
+    const statusUpper = (status || '').toUpperCase();
+    if (statusUpper.includes('COMPLETED') || statusUpper.includes('RESOLVED') || statusUpper.includes('DONE')) {
+      return <Badge bg="success">COMPLETED</Badge>;
+    }
+    if (statusUpper.includes('UNDER_REVIEW') || statusUpper.includes('REVIEW')) {
+      return <Badge bg="warning">UNDER REVIEW</Badge>;
     }
     if (statusUpper.includes('ACTIVE') || statusUpper.includes('IN_PROGRESS')) {
-      return <Badge bg="info">{status}</Badge>;
+      return <Badge bg="info">IN PROGRESS</Badge>;
     }
-    if (statusUpper.includes('PENDING')) {
-      return <Badge bg="warning">{status}</Badge>;
+    if (statusUpper.includes('PENDING') || statusUpper.includes('REQUESTED')) {
+      return <Badge bg="primary">REQUESTED</Badge>;
+    }
+    if (statusUpper.includes('ASSIGNED')) {
+      return <Badge bg="info">ASSIGNED</Badge>;
     }
     if (statusUpper.includes('REJECTED') || statusUpper.includes('CANCELLED')) {
       return <Badge bg="danger">{status}</Badge>;
@@ -164,7 +253,13 @@ const HelpRequestManagement: React.FC = () => {
         </Alert>
       )}
 
-      {}
+      {successMessage && (
+        <Alert variant="success" dismissible onClose={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
+      )}
+
+      { }
       <Card className="filter-card mb-4">
         <Card.Body>
           <Row className="g-3">
@@ -190,13 +285,13 @@ const HelpRequestManagement: React.FC = () => {
                   onChange={(e) => setTypeFilter(e.target.value)}
                 >
                   <option value="ALL">All Types</option>
-                  <option value="FOOD">Food</option>
+                  <option value="FOOD_ASSISTANCE">Food Assistance</option>
                   <option value="SHELTER">Shelter</option>
-                  <option value="EDUCATION">Education</option>
-                  <option value="MEDICAL">Medical</option>
+                  <option value="EDUCATION_SUPPORT">Education Support</option>
+                  <option value="MEDICAL_HELP">Medical Help</option>
                   <option value="COUNSELING">Counseling</option>
                   <option value="CLOTHING">Clothing</option>
-                  <option value="FINANCIAL">Financial</option>
+                  <option value="OTHER">Other</option>
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -209,8 +304,7 @@ const HelpRequestManagement: React.FC = () => {
                 >
                   <option value="ALL">All Status</option>
                   <option value="REQUESTED">Requested</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="ACTIVE">Active</option>
+                  <option value="UNDER_REVIEW">Under Review</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="ASSIGNED">Assigned</option>
                   <option value="COMPLETED">Completed</option>
@@ -247,7 +341,7 @@ const HelpRequestManagement: React.FC = () => {
         </Card.Body>
       </Card>
 
-      {}
+      { }
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Help Requests ({filteredRequests.length})</h5>
@@ -278,15 +372,15 @@ const HelpRequestManagement: React.FC = () => {
                 <tbody>
                   {currentItems.map((hr) => (
                     <tr key={hr.id}>
-                      <td>{hr.trackingId || hr.id.substring(0, 8)}</td>
+                      <td>{hr.trackingId || (hr.id && hr.id.length >= 8 ? hr.id.substring(0, 8) : hr.id || 'N/A')}</td>
                       <td>{hr.helpType?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</td>
                       <td>{hr.childAge || 'N/A'}</td>
                       <td>{getPriorityBadge(hr.priority)}</td>
                       <td>{getStatusBadge(hr.status)}</td>
                       <td>
-                        {hr.assignedWorker?.name || hr.assignedWorkerId ? 
-                          (hr.assignedWorker?.name || `SW-${hr.assignedWorkerId?.substring(0, 2)}`) : 
-                          '—'}
+                        {hr.assignedWorker?.name ? hr.assignedWorker.name :
+                          hr.assignedWorkerId ? `SW-${hr.assignedWorkerId.toString().substring(0, Math.min(hr.assignedWorkerId.toString().length, 4)).toUpperCase()}` :
+                            '—'}
                       </td>
                       <td>
                         <Dropdown>
@@ -303,6 +397,14 @@ const HelpRequestManagement: React.FC = () => {
                             <Dropdown.Item onClick={() => navigate(`/admin/transfers?helpRequestId=${hr.id}`)}>
                               Transfer
                             </Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item
+                              onClick={() => handleOpenAssignModal(hr.id)}
+                              disabled={hr.status === 'COMPLETED' || hr.status === 'REJECTED'}
+                              className="text-primary"
+                            >
+                              Assign Worker
+                            </Dropdown.Item>
                           </Dropdown.Menu>
                         </Dropdown>
                       </td>
@@ -311,7 +413,7 @@ const HelpRequestManagement: React.FC = () => {
                 </tbody>
               </Table>
 
-              {}
+              { }
               {totalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mt-3">
                   <div>
@@ -342,6 +444,96 @@ const HelpRequestManagement: React.FC = () => {
           )}
         </Card.Body>
       </Card>
+
+      {/* Assignment Modal */}
+      <Modal show={showAssignModal} onHide={() => { setShowAssignModal(false); setWorkerSearchQuery(''); }} centered size="lg">
+        <Modal.Header closeButton className="bg-primary text-white">
+          <Modal.Title>🤝 Assign Social Worker</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-4">
+            <h6 className="text-muted mb-2">Assigning Request ID: <code className="text-primary">{selectedRequestId}</code></h6>
+            <Form.Control
+              type="text"
+              placeholder="🔍 Search workers by name or specialization..."
+              value={workerSearchQuery}
+              onChange={(e) => setWorkerSearchQuery(e.target.value)}
+              className="mb-3 rounded-pill"
+            />
+          </div>
+
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <Table hover responsive borderless className="align-middle">
+              <thead className="bg-light sticky-top">
+                <tr>
+                  <th style={{ width: '40%' }}>Worker Name</th>
+                  <th style={{ width: '30%' }}>Specializations</th>
+                  <th style={{ width: '15%' }}>Registered</th>
+                  <th style={{ width: '15%' }} className="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredWorkers.length > 0 ? (
+                  filteredWorkers.map(worker => (
+                    <tr key={worker.id} className={selectedWorkerId === worker.id ? 'table-primary' : ''}>
+                      <td>
+                        <div className="fw-bold">{worker.fullName}</div>
+                        <small className="text-muted">ID: {worker.id.substring(0, 8)}</small>
+                      </td>
+                      <td>
+                        {worker.specialization.split(',').map((spec, idx) => (
+                          <Badge
+                            key={idx}
+                            bg="info"
+                            className="me-1 mb-1 fw-normal text-capitalize"
+                            style={{ fontSize: '0.75rem', backgroundColor: '#e0f2f1', color: '#00695c', border: '1px solid #b2dfdb' }}
+                          >
+                            {spec.trim().toLowerCase().replace(/_/g, ' ')}
+                          </Badge>
+                        ))}
+                      </td>
+                      <td>
+                        <small className="text-muted">
+                          {worker.registrationDate ? new Date(worker.registrationDate).toLocaleDateString() : 'N/A'}
+                        </small>
+                      </td>
+                      <td className="text-center">
+                        <Button
+                          variant={selectedWorkerId === worker.id ? 'primary' : 'outline-primary'}
+                          size="sm"
+                          onClick={() => setSelectedWorkerId(worker.id)}
+                          className="rounded-pill px-3"
+                        >
+                          {selectedWorkerId === worker.id ? 'Selected ✓' : 'Select'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center py-5 text-muted">
+                      No social workers found matching your search.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="bg-light">
+          <Button variant="outline-secondary" onClick={() => { setShowAssignModal(false); setWorkerSearchQuery(''); }} disabled={assigning}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleAssignWorker}
+            disabled={assigning || !selectedWorkerId}
+            className="px-4"
+          >
+            {assigning ? <><Spinner size="sm" className="me-2" /> Assigning...</> : 'Confirm Assignment'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

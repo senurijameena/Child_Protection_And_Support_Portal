@@ -84,7 +84,7 @@ const HelpRequestDetailsPage: React.FC = () => {
 
   useEffect(() => {
     console.log('HelpRequestDetailsPage mounted with requestId:', requestId);
-    if (requestId) {
+    if (requestId && requestId !== 'undefined') {
       fetchHelpRequestDetails();
       fetchServiceOffer();
       fetchTimeline();
@@ -95,12 +95,12 @@ const HelpRequestDetailsPage: React.FC = () => {
   }, [requestId]);
 
   const fetchHelpRequestDetails = async () => {
-    if (!requestId) {
+    if (!requestId || requestId === 'undefined') {
       setError('Request ID is missing from URL.');
       setLoading(false);
       return;
     }
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -108,7 +108,7 @@ const HelpRequestDetailsPage: React.FC = () => {
       const response = await helpRequestService.getHelpRequest(requestId);
       console.log('Help request response:', response);
       console.log('Response data:', response?.data);
-      
+
       if (response && response.data) {
         // Ensure we have at least an id
         if (!response.data.id && requestId) {
@@ -313,7 +313,7 @@ const HelpRequestDetailsPage: React.FC = () => {
       return;
     }
     if (!window.confirm('Are you sure you want to reject this offer? This will cancel the help request and close it.')) return;
-    
+
     try {
       await serviceOfferService.respondToOffer({
         offerId: serviceOffer.id,
@@ -753,7 +753,7 @@ const HelpRequestDetailsPage: React.FC = () => {
               <div className="mb-3">
                 <p className="mb-2">You are accepting the service offer from:</p>
                 <p className="fw-bold mb-3">{serviceOffer.offeredByName || 'Unknown Worker'}</p>
-                
+
                 <div className="border rounded p-3 mb-3 bg-light">
                   <p className="mb-1"><strong>Service:</strong> {serviceOffer.serviceType || getHelpTypeLabel(helpRequest.helpType)}</p>
                   {scheduledDateTime && (
@@ -816,7 +816,7 @@ const HelpRequestDetailsPage: React.FC = () => {
         <Modal.Body>
           <div className="mb-3">
             <p className="mb-3">Please provide reason for rejection:</p>
-            
+
             <Form.Group className="mb-3">
               <Form.Label className="fw-bold">Reason:</Form.Label>
               <div>

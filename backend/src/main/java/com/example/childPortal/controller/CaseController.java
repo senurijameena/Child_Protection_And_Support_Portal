@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cases")
-@CrossOrigin(origins = "http://localhost:5173")
 public class CaseController {
 
     @Autowired
@@ -95,9 +94,7 @@ public class CaseController {
     @DeleteMapping("/{caseId}")
     public ResponseEntity<String> deleteCase(@PathVariable String caseId) {
         boolean deleted = caseService.deleteCase(caseId);
-        return deleted ? 
-            ResponseEntity.ok("Case deleted successfully") : 
-            ResponseEntity.notFound().build();
+        return deleted ? ResponseEntity.ok("Case deleted successfully") : ResponseEntity.notFound().build();
     }
 
-}  
+}

@@ -32,7 +32,6 @@ const CalendarView: React.FC<CalendarProps> = ({ events }) => {
         return dates;
     }, [startOfWeek]);
 
-    // Generate dates for the month view
     const monthDates = useMemo(() => {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();

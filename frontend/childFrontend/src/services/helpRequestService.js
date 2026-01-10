@@ -137,5 +137,9 @@ export const helpRequestService = {
 
   // Close/Decline help request with reason
   closeRequest: (requestId, reason) =>
-    api.put(`/api/help-requests/${requestId}/close`, { reason, solution: reason })
+    api.put(`/api/help-requests/${requestId}/close`, { reason, solution: reason }),
+
+  // Reject help request with reason
+  rejectRequest: (requestId, reason) =>
+    api.put(`/api/help-requests/${requestId}/reject`, { reason }),
 };

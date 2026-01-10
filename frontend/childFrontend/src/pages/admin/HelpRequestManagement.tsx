@@ -466,8 +466,9 @@ const HelpRequestManagement: React.FC = () => {
             <Table hover responsive borderless className="align-middle">
               <thead className="bg-light sticky-top">
                 <tr>
-                  <th style={{ width: '40%' }}>Worker Name</th>
-                  <th style={{ width: '30%' }}>Specializations</th>
+                  <th style={{ width: '30%' }}>Worker Name</th>
+                  <th style={{ width: '25%' }}>Specializations</th>
+                  <th style={{ width: '15%' }}>Status</th>
                   <th style={{ width: '15%' }}>Registered</th>
                   <th style={{ width: '15%' }} className="text-center">Action</th>
                 </tr>
@@ -475,10 +476,10 @@ const HelpRequestManagement: React.FC = () => {
               <tbody>
                 {filteredWorkers.length > 0 ? (
                   filteredWorkers.map(worker => (
-                    <tr key={worker.id} className={selectedWorkerId === worker.id ? 'table-primary' : ''}>
+                    <tr key={worker.userId} className={selectedWorkerId === worker.userId ? 'table-primary' : ''}>
                       <td>
                         <div className="fw-bold">{worker.fullName}</div>
-                        <small className="text-muted">ID: {worker.id.substring(0, 8)}</small>
+                        <small className="text-muted">ID: {worker.userId.substring(0, 8)}</small>
                       </td>
                       <td>
                         {worker.specialization.split(',').map((spec, idx) => (
@@ -493,18 +494,23 @@ const HelpRequestManagement: React.FC = () => {
                         ))}
                       </td>
                       <td>
+                        <Badge bg={worker.availabilityStatus === 'AVAILABLE' ? 'success' : 'secondary'}>
+                          {worker.availabilityStatus}
+                        </Badge>
+                      </td>
+                      <td>
                         <small className="text-muted">
                           {worker.registrationDate ? new Date(worker.registrationDate).toLocaleDateString() : 'N/A'}
                         </small>
                       </td>
                       <td className="text-center">
                         <Button
-                          variant={selectedWorkerId === worker.id ? 'primary' : 'outline-primary'}
+                          variant={selectedWorkerId === worker.userId ? 'primary' : 'outline-primary'}
                           size="sm"
-                          onClick={() => setSelectedWorkerId(worker.id)}
+                          onClick={() => setSelectedWorkerId(worker.userId)}
                           className="rounded-pill px-3"
                         >
-                          {selectedWorkerId === worker.id ? 'Selected ✓' : 'Select'}
+                          {selectedWorkerId === worker.userId ? 'Selected ✓' : 'Select'}
                         </Button>
                       </td>
                     </tr>

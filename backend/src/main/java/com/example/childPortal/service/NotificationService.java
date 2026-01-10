@@ -59,6 +59,13 @@ public class NotificationService {
                         "<p><strong>Request ID:</strong> {REQUEST_ID}</p>" +
                         "<a href='{REQUEST_URL}'>View Details</a>");
 
+        EMAIL_TEMPLATES.put("HELP_REQUEST_ASSIGNED",
+                "<h2>New Help Request Assigned</h2>" +
+                        "<p>A new help request has been assigned to you.</p>" +
+                        "<p><strong>Request ID:</strong> {REQUEST_ID}</p>" +
+                        "<p><strong>Priority:</strong> {PRIORITY}</p>" +
+                        "<a href='{REQUEST_URL}'>View Details</a>");
+
         EMAIL_TEMPLATES.put("REGISTRATION_SUCCESS",
                 "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>" +
                         "<h2 style='color: #1a56db;'>🎉 Registration Successful!</h2>" +
@@ -138,6 +145,31 @@ public class NotificationService {
                     .replace("{REQUEST_URL}", appUrl + "/help-requests/" + requestId);
             sendEmail(user.getEmail(), subject, content);
         }
+    }
+
+    public void sendHelpRequestAssignmentNotification(String userId, String requestId, String trackingId,
+            String priority, boolean isAnonymous) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Always send app notification with actionUrl
+        String actionUrl = "/admin/help-requests/" + requestId; // Social workers likely view details here or a
+                                                                // dedicated route
+        // Assuming social worker dashboard route for viewing request details
+        actionUrl = "/dashboard/requests/" + requestId; // Adjust as per frontend route if needed, currently
+                                                        // "details-modal" pattern usually
+
+        String title = "New Help Request Assigned";
+        logNotification(userId, "HELP_REQUEST_ASSIGNED", title,
+                "Help Request " + trackingId + " (" + priority + ") has been assigned to you.", actionUrl);
+
+        // Send email
+        String subject = "New Help Request Assigned - Child Protection Portal";
+        String content = EMAIL_TEMPLATES.get("HELP_REQUEST_ASSIGNED")
+                .replace("{REQUEST_ID}", trackingId)
+                .replace("{PRIORITY}", priority)
+                .replace("{REQUEST_URL}", appUrl + "/dashboard"); // Redirect to dashboard to see new requests
+        sendEmail(user.getEmail(), subject, content);
     }
 
     public void sendCaseCreatedNotification(String userId, String databaseId, String trackingId, boolean isAnonymous) {
@@ -371,6 +403,24 @@ public class NotificationService {
                 return appUrl + "/dashboard";
             default:
                 return appUrl + "/dashboard";
+        }
+    }
+
+    public void sendHelpRequestUpdateToAdmin(String requestId, String status, String updatedBy, String trackingId) {
+        String subject = "Help Request Update: " + status;
+        String content = String.format(
+                "<h2>Help Request Updated</h2>" +
+                        "<p><strong>Request ID:</strong> %s</p>" +
+                        "<p><strong>Status:</strong> %s</p>" +
+                        "<p><strong>Updated By:</strong> %s</p>" +
+                        "<p><a href='%s/admin/help-requests/%s'>View Request</a></p>",
+                trackingId, status, updatedBy, appUrl, requestId);
+
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        for (User admin : admins) {
+            sendEmail(admin.getEmail(), subject, content);
+            logNotification(admin.getId(), "HELP_REQUEST_UPDATE_ADMIN",
+                    "Help Request " + trackingId + " updated to " + status, "/admin/help-requests/" + requestId);
         }
     }
 }

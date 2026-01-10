@@ -14,6 +14,7 @@ import { messageService } from '../../services/messageService';
 import SocialWorkerAnalytics from '../analytics/SocialWorkerAnalytics';
 import FollowUpDashboard from '../dashboard/FollowUpDashboard';
 import './SocialWorkerDashboard.css';
+import './SocialWorkerSettings.css';
 
 interface SocialWorkerDashboardProps {
   // Add any props if needed
@@ -78,6 +79,10 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const [workloadDistribution, setWorkloadDistribution] = useState<{ [key: string]: { current: number; max: number } }>({});
   const [recentActivity, setRecentActivity] = useState<Array<{ time: string; message: string; type?: string }>>([]);
 
+  // Notification Request Modal State
+  const [notificationRequest, setNotificationRequest] = useState<any>(null);
+  const [loadingRequestDetails, setLoadingRequestDetails] = useState(false);
+
   // My Requests state
   const [helpRequests, setHelpRequests] = useState<any[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<any[]>([]);
@@ -100,7 +105,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
               id: user.id,
               name: user.name || profileResponse.name || 'Jane Smith',
               workerId: profileResponse.workerId || profileResponse.id || `SW-${user.id.slice(0, 3).toUpperCase()}`,
-              licenseNumber: user.licenseNumber || profileResponse.licenseNumber,
+              certificateId: user.certificateId || profileResponse.certificateId || user.licenseNumber || profileResponse.licenseNumber,
               organization: profileResponse.organization || profileResponse.department || "Hope Children's Foundation",
               status: profileResponse.status
             });
@@ -111,7 +116,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             id: user.id,
             name: user.name || 'Jane Smith',
             workerId: `SW-${user.id.slice(0, 3).toUpperCase()}`,
-            licenseNumber: user.licenseNumber,
+            certificateId: user.certificateId || user.licenseNumber,
             organization: "Hope Children's Foundation"
           });
         }
@@ -158,25 +163,30 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             'Education': { current: 0, max: 10 },
             'Medical': { current: 0, max: 10 },
             'Shelter': { current: 0, max: 10 },
-            'Counseling': { current: 0, max: 10 }
+            'Counseling': { current: 0, max: 10 },
+            'Clothing': { current: 0, max: 10 },
+            'Other': { current: 0, max: 10 }
           };
 
           activeRequests.forEach((r: any) => {
             const helpType = r.helpType || r.serviceType || '';
             if (helpType) {
-              const typeKey = helpType.split(' ')[0]; // Get first word
-              if (workload[typeKey]) {
-                workload[typeKey].current = Math.min(workload[typeKey].current + 1, workload[typeKey].max);
-              } else if (helpType.toLowerCase().includes('food')) {
+              const typeLower = helpType.toLowerCase();
+
+              if (typeLower.includes('food')) {
                 workload['Food'].current = Math.min(workload['Food'].current + 1, workload['Food'].max);
-              } else if (helpType.toLowerCase().includes('education')) {
+              } else if (typeLower.includes('education')) {
                 workload['Education'].current = Math.min(workload['Education'].current + 1, workload['Education'].max);
-              } else if (helpType.toLowerCase().includes('medical')) {
+              } else if (typeLower.includes('medical')) {
                 workload['Medical'].current = Math.min(workload['Medical'].current + 1, workload['Medical'].max);
-              } else if (helpType.toLowerCase().includes('shelter')) {
+              } else if (typeLower.includes('shelter')) {
                 workload['Shelter'].current = Math.min(workload['Shelter'].current + 1, workload['Shelter'].max);
-              } else if (helpType.toLowerCase().includes('counseling')) {
+              } else if (typeLower.includes('counseling')) {
                 workload['Counseling'].current = Math.min(workload['Counseling'].current + 1, workload['Counseling'].max);
+              } else if (typeLower.includes('clothing')) {
+                workload['Clothing'].current = Math.min(workload['Clothing'].current + 1, workload['Clothing'].max);
+              } else {
+                workload['Other'].current = Math.min(workload['Other'].current + 1, workload['Other'].max);
               }
             }
           });
@@ -324,13 +334,60 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = async (notification: any) => {
     if (!notification.read) {
       handleMarkAsRead(notification.id);
     }
+
     if (notification.actionUrl) {
-      navigate(notification.actionUrl);
-      setShowNotifications(false);
+      // Intercept help request URLs to show modal
+      const requestMatch = notification.actionUrl.match(/\/help-requests\/([a-zA-Z0-9-]+)/) ||
+        notification.actionUrl.match(/\/dashboard\/requests\/([a-zA-Z0-9-]+)/) ||
+        notification.actionUrl.match(/\/admin\/help-requests\/([a-zA-Z0-9-]+)/);
+
+      if (requestMatch && requestMatch[1]) {
+        const requestId = requestMatch[1];
+        try {
+          setLoadingRequestDetails(true);
+          const response = await api.get(`/api/help-requests/${requestId}`);
+          setNotificationRequest(response.data);
+          setShowNotifications(false);
+        } catch (error) {
+          console.error("Failed to load request details from notification", error);
+          navigate(notification.actionUrl);
+          setShowNotifications(false);
+        } finally {
+          setLoadingRequestDetails(false);
+        }
+      } else {
+        navigate(notification.actionUrl);
+        setShowNotifications(false);
+      }
+    }
+  };
+
+  const handleAcceptRequest = async (requestId: string) => {
+    try {
+      await helpRequestService.updateStatus(requestId, 'IN_PROGRESS', 'Accepted by Social Worker');
+      setNotificationRequest(null);
+      fetchHelpRequests();
+      // Update local requests count
+      setMyRequestsCount(prev => prev + 1);
+    } catch (error) {
+      console.error('Error accepting request:', error);
+      alert('Failed to accept request');
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      // In a real app, you might want to ask for a reason
+      await helpRequestService.updateStatus(requestId, 'REJECTED', 'Rejected by Social Worker');
+      setNotificationRequest(null);
+      fetchHelpRequests();
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      alert('Failed to reject request');
     }
   };
 
@@ -339,7 +396,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   };
 
   const handleSettings = () => {
-    navigate('/settings');
+    setActiveSection('profile');
   };
 
   const fetchHelpRequests = async () => {
@@ -579,10 +636,6 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
           <span className="logo-text">CHILD PROTECTION & SUPPORT PORTAL</span>
         </div>
         <div className="header-right">
-          <div className="user-info-header">
-            <span className="user-icon">👤</span>
-            <span className="user-name">{user?.name || 'Jane Smith'}</span>
-          </div>
           <div className="status-dropdown-wrapper" style={{ position: 'relative' }}>
             <button
               className={`header-action-btn status-nav-btn status-${currentStatus.toLowerCase()}`}
@@ -636,6 +689,18 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             )}
           </div>
 
+          {/* User Profile in Navbar */}
+          <div className="header-user-profile">
+            {profile?.photoUrl ? (
+              <img src={profile.photoUrl} alt="Profile" className="header-photo" />
+            ) : (
+              <div className="header-avatar-placeholder">
+                {(profile?.name || user?.name || 'S').charAt(0)}
+              </div>
+            )}
+            <span className="header-username">{profile?.name || user?.name}</span>
+          </div>
+
           <div className="notifications-wrapper" style={{ position: 'relative' }}>
             <button
               className="header-action-btn notifications-btn"
@@ -656,6 +721,10 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 onMarkAsRead={handleMarkAsRead}
                 onClose={() => setShowNotifications(false)}
                 onRefresh={fetchNotifications}
+                onViewAll={() => {
+                  setShowNotifications(false);
+                  setActiveSection('notifications');
+                }}
               />
             )}
           </div>
@@ -692,13 +761,17 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
           <div className="sidebar-profile-section">
             <div className="profile-header">
               <div className="profile-name-id">
-                <span className="profile-icon">👤</span>
+                {profile?.photoUrl ? (
+                  <img src={profile.photoUrl} alt="Profile" className="profile-photo-sidebar" />
+                ) : (
+                  <span className="profile-icon">👤</span>
+                )}
                 <div className="profile-info">
                   <div className="profile-name">{profile?.name || user?.name || 'Jane Doe'}</div>
-                  {profile?.licenseNumber && (
+                  {profile?.certificateId && (
                     <div className="profile-license">
-                      <span className="detail-icon">⭐</span>
-                      <span className="detail-text">Licensed Social Worker</span>
+                      <span className="detail-icon">📜</span>
+                      <span className="detail-text">Reg: {profile.certificateId}</span>
                     </div>
                   )}
                   <div className="profile-id-org">
@@ -891,21 +964,100 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
               </div>
             )}
             {!loading && activeSection === 'profile' && (
-              <div>
-                <h1>Profile</h1>
-                <p>Profile content will appear here.</p>
-              </div>
+              <SocialWorkerSettings
+                user={user}
+                profile={profile}
+                onUpdateProfile={async (data: any) => {
+                  // Mock update functionality
+                  console.log('Update profile', data);
+                  setProfile({ ...profile, ...data });
+                  alert('Profile updated successfully!');
+                }}
+                onLogout={handleLogout}
+              />
             )}
             {!loading && activeSection === 'feedback' && (
               <div>
                 <h1>Feedback</h1>
-                <p>Feedback content will appear here.</p>
+                <p>Feedback form will appear here.</p>
+              </div>
+            )}
+            {!loading && activeSection === 'notifications' && (
+              <div className="notifications-full-view">
+                <div className="section-header-new">
+                  <h2 className="section-title-new">🔔 ALL NOTIFICATIONS</h2>
+                  <button className="mark-all-read-btn" onClick={async () => {
+                    await notificationService.markAllAsRead();
+                    fetchNotifications();
+                  }}>
+                    Mark All as Read
+                  </button>
+                </div>
+
+                <div className="notifications-list-container">
+                  {notifications.length === 0 ? (
+                    <div className="no-data-message">No notifications found.</div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`notification-list-item ${notification.read ? 'read' : 'unread'}`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="notification-icon-large">
+                          {notification.type === 'ASSIGNMENT' ? '📋' :
+                            notification.type === 'URGENT' ? '🚨' :
+                              notification.type === 'MESSAGE' ? '💬' : '🔔'}
+                        </div>
+                        <div className="notification-details">
+                          <div className="notification-header-row">
+                            <span className="notification-title-text">{notification.title}</span>
+                            <span className="notification-time-text">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="notification-message-text">{notification.message}</p>
+                        </div>
+                        {!notification.read && (
+                          <button
+                            className="mark-read-btn-small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsRead(notification.id);
+                            }}
+                          >
+                            ✓
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>
         </main>
       </div>
-    </div>
+
+      {/* Notification Request Details Modal */}
+      {
+        (notificationRequest || loadingRequestDetails) && (
+          <RequestDetailsModal
+            request={notificationRequest}
+            loading={loadingRequestDetails}
+            onClose={() => setNotificationRequest(null)}
+            onAccept={handleAcceptRequest}
+            onReject={handleRejectRequest}
+            onTransfer={(requestId) => {
+              // Handle transfer initiation
+              setNotificationRequest(null);
+              // Navigate to transfer or show transfer modal if available
+              alert("Please use the 'Request Transfer' section to transfer this request.");
+            }}
+          />
+        )
+      }
+    </div >
   );
 };
 
@@ -924,6 +1076,7 @@ interface MyRequestsSectionProps {
 }
 
 const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
+  user,
   requests,
   filter,
   searchQuery,
@@ -939,6 +1092,12 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [requestDetails, setRequestDetails] = useState<any | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [requestToRejectId, setRequestToRejectId] = useState<string | null>(null);
+
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferRequestId, setTransferRequestId] = useState<string | null>(null);
 
   const getHelpTypeIcon = (helpType: string) => {
     const type = helpType?.toUpperCase() || '';
@@ -962,14 +1121,33 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   };
 
   const handleReject = async (requestId: string) => {
-    if (!confirm('Are you sure you want to reject this request?')) return;
+    setRequestToRejectId(requestId);
+    setRejectionReason('');
+    setShowRejectModal(true);
+  };
+
+  const confirmReject = async () => {
+    if (!requestToRejectId || !rejectionReason.trim()) {
+      alert('Please provide a reason for rejection');
+      return;
+    }
+
     try {
-      await helpRequestService.updateStatus(requestId, 'REJECTED');
+      await helpRequestService.rejectRequest(requestToRejectId, rejectionReason);
+      setShowRejectModal(false);
+      setRequestToRejectId(null);
+      setRejectionReason('');
       onRefresh();
     } catch (error) {
       console.error('Error rejecting request:', error);
       alert('Failed to reject request');
     }
+  };
+
+  const cancelReject = () => {
+    setShowRejectModal(false);
+    setRequestToRejectId(null);
+    setRejectionReason('');
   };
 
   const handleComplete = async (requestId: string) => {
@@ -983,7 +1161,8 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   };
 
   const handleTransfer = (requestId: string) => {
-    navigate(`/transfers/request?helpRequestId=${requestId}`);
+    setTransferRequestId(requestId);
+    setShowTransferModal(true);
   };
 
   const handleViewDetails = async (requestId: string) => {
@@ -1361,6 +1540,68 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
           onAccept={handleAccept}
           onReject={handleReject}
           onTransfer={handleTransfer}
+        />
+      )}
+
+      {/* Reject Request Modal */}
+      {showRejectModal && (
+        <div className="modal-overlay" onClick={cancelReject}>
+          <div className="new-transfer-modal rejection-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header-new" style={{ background: '#fff5f5' }}>
+              <h2 className="modal-title-new" style={{ color: '#c53030' }}>
+                ❌ REJECT REQUEST
+              </h2>
+              <p className="modal-subtitle-new" style={{ color: '#e53e3e' }}>
+                Please provide a reason for rejecting this request
+              </p>
+            </div>
+
+            <div className="modal-content-new">
+              <div className="transfer-step">
+                <div className="step-content">
+                  <label className="form-label">Reason for Rejection *</label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="E.g., Out of service area, Duplicate request, Capacity reached..."
+                    className="reason-textarea"
+                    rows={4}
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-new">
+              <button className="back-btn" onClick={cancelReject}>
+                Cancel
+              </button>
+              <button
+                className="submit-transfer-btn"
+                onClick={confirmReject}
+                style={{ background: '#c53030', borderColor: '#c53030' }}
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Transfer Modal */}
+      {showTransferModal && (
+        <NewTransferModal
+          user={user}
+          initialRequestId={transferRequestId}
+          onClose={() => {
+            setShowTransferModal(false);
+            setTransferRequestId(null);
+          }}
+          onSuccess={() => {
+            setShowTransferModal(false);
+            setTransferRequestId(null);
+            onRefresh();
+          }}
         />
       )}
     </div>
@@ -2803,12 +3044,14 @@ const TransferRequestsSection: React.FC<TransferRequestsSectionProps> = ({
 // New Transfer Modal Component
 interface NewTransferModalProps {
   user: any;
+  initialRequestId?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 const NewTransferModal: React.FC<NewTransferModalProps> = ({
   user,
+  initialRequestId,
   onClose,
   onSuccess
 }) => {
@@ -2823,7 +3066,10 @@ const NewTransferModal: React.FC<NewTransferModalProps> = ({
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (initialRequestId) {
+      setSelectedRequestId(initialRequestId);
+    }
+  }, [initialRequestId]);
 
   const fetchData = async () => {
     try {
@@ -3035,7 +3281,7 @@ interface RequestDetailsModalProps {
   loading: boolean;
   onClose: () => void;
   onAccept: (requestId: string) => Promise<void>;
-  onReject: (requestId: string) => Promise<void>;
+  onReject: (requestId: string, reason?: string) => Promise<void>;
   onTransfer: (requestId: string) => void;
   onComplete?: (requestId: string) => Promise<void>;
 }
@@ -3050,6 +3296,8 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   onComplete
 }) => {
   const [requestDetails, setRequestDetails] = React.useState<any>(request);
+  const [isRejecting, setIsRejecting] = React.useState(false);
+  const [rejectionReason, setRejectionReason] = React.useState('');
 
   React.useEffect(() => {
     if (request) {
@@ -3110,14 +3358,27 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   };
 
   const handleRejectClick = async () => {
-    if (confirm('Are you sure you want to reject this request?')) {
-      try {
-        await onReject(request.id);
-        onClose();
-      } catch (error) {
-        console.error('Error rejecting request:', error);
-      }
+    setIsRejecting(true);
+  };
+
+  const submitRejection = async () => {
+    if (!rejectionReason.trim()) {
+      alert('Please provide a reason for rejection');
+      return;
     }
+
+    // Direct submission without browser confirm popup, assuming the UI itself is confirmation enough
+    try {
+      await onReject(request.id, rejectionReason);
+      onClose();
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+    }
+  };
+
+  const cancelRejection = () => {
+    setIsRejecting(false);
+    setRejectionReason('');
   };
 
   const handleTransferClick = () => {
@@ -3134,7 +3395,11 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   };
 
   const handleContact = () => {
-    const contact = requestDetails?.requesterInfo?.contact || requestDetails?.contact;
+    if (isAnonymous) {
+      alert('This request is anonymous. Contact information is hidden.');
+      return;
+    }
+    const contact = requestDetails?.requesterInfo?.contact || requestDetails?.contact || requestDetails?.requesterContact;
     if (contact) {
       window.location.href = `tel:${contact}`;
     } else {
@@ -3158,10 +3423,12 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   const isUrgent = requestDetails?.priority === 'HIGH' || requestDetails?.priority === 'URGENT';
   const helpType = requestDetails?.helpType || requestDetails?.helpTypes?.[0] || 'General';
   const trackingId = requestDetails?.trackingId || `HELP-${requestDetails?.id?.slice(0, 4).toUpperCase() || '0000'}`;
-  const isAnonymous = requestDetails?.anonymous || requestDetails?.requesterInfo?.isAnonymous;
+  const isAnonymous = requestDetails?.anonymous || requestDetails?.requesterInfo?.isAnonymous || requestDetails?.isAnonymous;
   const childName = requestDetails?.childName || requestDetails?.peopleDetails?.name || '';
   const childAge = requestDetails?.approximateAge || requestDetails?.peopleDetails?.age || 'N/A';
   const childGender = requestDetails?.gender || requestDetails?.peopleDetails?.gender || 'N/A';
+  const requesterContact = requestDetails?.requesterInfo?.contact || requestDetails?.contact || requestDetails?.requesterContact;
+  const requesterAddress = requestDetails?.requesterInfo?.address || requestDetails?.requesterAddress || (requestDetails?.requesterInfo?.location);
 
   // Mock timeline data - in real app, this would come from the API
   const timeline = [
@@ -3221,7 +3488,15 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
                   <div className="info-item-new">
                     <span className="info-label-new">👥 Requester:</span>
                     <span className="info-value-new">
-                      {isAnonymous ? 'Anonymous' : (requestDetails?.requesterName || requestDetails?.requesterInfo?.name || 'N/A')}
+                      {isAnonymous ? (
+                        <span className="text-muted">Anonymous (Details Hidden)</span>
+                      ) : (
+                        <span>
+                          {requestDetails?.requesterName || requestDetails?.requesterInfo?.name || 'N/A'}
+                          {requesterContact && <span className="text-small text-muted d-block">📞 {requesterContact}</span>}
+                          {requesterAddress && <span className="text-small text-muted d-block">📍 {requesterAddress}</span>}
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="info-item-new">
@@ -3295,28 +3570,65 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
                 </div>
                 <div className="section-content-new">
                   <div className="actions-grid">
-                    {(requestDetails?.status === 'ASSIGNED' || requestDetails?.status === 'UNDER_REVIEW') && (
+                    {isRejecting ? (
+                      <div className="rejection-form full-width-grid-item" style={{ gridColumn: '1 / -1', background: '#fff5f5', padding: '15px', borderRadius: '8px', border: '1px solid #fc8181' }}>
+                        <h4 style={{ color: '#c53030', margin: '0 0 10px 0', fontSize: '1rem' }}>❌ Reject Request</h4>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', fontWeight: 500 }}>Reason for Rejection *</label>
+                        <textarea
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          placeholder="Please start typing reason... (e.g., Out of service area, Duplicate request)"
+                          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', minHeight: '80px', marginBottom: '10px' }}
+                        />
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={cancelRejection}
+                            style={{ padding: '6px 12px', border: '1px solid #ddd', borderRadius: '4px', background: 'white', cursor: 'pointer' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={submitRejection}
+                            style={{ padding: '6px 12px', border: 'none', borderRadius: '4px', background: '#c53030', color: 'white', cursor: 'pointer' }}
+                          >
+                            Confirm Rejection
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      (requestDetails?.status === 'ASSIGNED' || requestDetails?.status === 'UNDER_REVIEW') && (
+                        <>
+                          <button className="action-btn-new accept-btn-new" onClick={handleAcceptClick}>
+                            ✅ ACCEPT REQUEST
+                          </button>
+                          <button className="action-btn-new reject-btn-new" onClick={handleRejectClick}>
+                            ❌ REJECT
+                          </button>
+                        </>
+                      )
+                    )}
+
+                    {!isRejecting && (
                       <>
-                        <button className="action-btn-new accept-btn-new" onClick={handleAcceptClick}>
-                          ✅ ACCEPT REQUEST
+                        <button className="action-btn-new transfer-btn-new" onClick={handleTransferClick}>
+                          📤 REQUEST TRANSFER
                         </button>
-                        <button className="action-btn-new reject-btn-new" onClick={handleRejectClick}>
-                          ❌ REJECT
+                        <button className="action-btn-new notes-btn-new" onClick={handleAddNotes}>
+                          📝 ADD NOTES
+                        </button>
+                        <button
+                          className={`action-btn-new contact-btn-new ${isAnonymous ? 'disabled' : ''}`}
+                          onClick={handleContact}
+                          disabled={isAnonymous}
+                          title={isAnonymous ? "Contact not available for anonymous requests" : "Contact Requester"}
+                        >
+                          📞 CONTACT
+                        </button>
+                        <button className="action-btn-new package-btn-new" onClick={handleApplyPackage}>
+                          🏠 APPLY PACKAGE
                         </button>
                       </>
                     )}
-                    <button className="action-btn-new transfer-btn-new" onClick={handleTransferClick}>
-                      📤 REQUEST TRANSFER
-                    </button>
-                    <button className="action-btn-new notes-btn-new" onClick={handleAddNotes}>
-                      📝 ADD NOTES
-                    </button>
-                    <button className="action-btn-new contact-btn-new" onClick={handleContact}>
-                      📞 CONTACT
-                    </button>
-                    <button className="action-btn-new package-btn-new" onClick={handleApplyPackage}>
-                      🏠 APPLY PACKAGE
-                    </button>
                   </div>
                 </div>
               </div>
@@ -3341,6 +3653,7 @@ interface NotificationsDropdownProps {
   onMarkAsRead: (notificationId: string) => void;
   onClose: () => void;
   onRefresh: () => void;
+  onViewAll: () => void;
 }
 
 const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
@@ -3349,7 +3662,8 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   onNotificationClick,
   onMarkAsRead,
   onClose,
-  onRefresh
+  onRefresh,
+  onViewAll
 }) => {
   const unreadNotifications = notifications.filter(n => !n.read);
   const readNotifications = notifications.filter(n => n.read);
@@ -3478,12 +3792,357 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
       </div>
 
       <div className="notifications-footer">
-        <button className="view-all-notifications-btn" onClick={() => {
-          // Could navigate to a full notifications page if needed
-          onClose();
-        }}>
+        <button className="view-all-notifications-btn" onClick={onViewAll}>
           View All Notifications
         </button>
+      </div>
+    </div>
+  );
+};
+
+
+interface SocialWorkerSettingsProps {
+  user: any;
+  profile: any;
+  onUpdateProfile: (data: any) => Promise<void>;
+  onLogout: () => void;
+}
+
+const SocialWorkerSettings: React.FC<SocialWorkerSettingsProps> = ({
+  user,
+  profile,
+  onUpdateProfile,
+  onLogout
+}) => {
+  const [activeTab, setActiveTab] = React.useState<'profile' | 'password'>('profile');
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: user?.name || profile?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '+1 (555) 123-4567',
+    certificateId: profile?.certificateId || user?.certificateId || profile?.licenseNumber || '',
+    organization: profile?.organization || "Hope Children's Foundation",
+    specializations: profile?.specializations || 'Food, Education, Shelter'
+  });
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [previewImage, setPreviewImage] = React.useState<string | null>(profile?.photoUrl || null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const [maxConcurrent, setMaxConcurrent] = React.useState(10);
+  const [preferredTypes, setPreferredTypes] = React.useState<Record<string, boolean>>({
+    'Food Assistance': true,
+    'Education Support': true,
+    'Shelter': true,
+    'Medical Help': false,
+    'Counseling': false,
+    'Clothing': true,
+    'Other': false
+  });
+
+  const handlePreferenceChange = (type: string) => {
+    setPreferredTypes(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
+  // Password Change State
+  const [passwordData, setPasswordData] = React.useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordStatus, setPasswordStatus] = React.useState<{ message: string; type: 'success' | 'error' | '' }>({ message: '', type: '' });
+  const [loadingPassword, setLoadingPassword] = React.useState(false);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordStatus({ message: '', type: '' });
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordStatus({ message: 'New passwords do not match', type: 'error' });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordStatus({ message: 'Password must be at least 6 characters', type: 'error' });
+      return;
+    }
+
+    try {
+      setLoadingPassword(true);
+      const response = await authService.changePassword(passwordData.currentPassword, passwordData.newPassword);
+
+      if (response.success) {
+        setPasswordStatus({ message: 'Password changed successfully!', type: 'success' });
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        setPasswordStatus({ message: response.message || 'Failed to change password', type: 'error' });
+      }
+    } catch (error) {
+      setPasswordStatus({ message: 'An unexpected error occurred', type: 'error' });
+    } finally {
+      setLoadingPassword(false);
+    }
+  };
+
+  return (
+    <div className="settings-full-view">
+      <div className="settings-header-card">
+        <h2 className="settings-title">⚙️ SETTINGS & PROFILE</h2>
+        <p className="settings-subtitle">Manage your account and preferences</p>
+
+        <div className="settings-tabs">
+          <button
+            className={`settings-tab ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            👤 Profile
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'password' ? 'active' : ''}`}
+            onClick={() => setActiveTab('password')}
+          >
+            🔒 Change Password
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'profile' && (
+        <div className="settings-content-grid">
+          {/* Profile Information */}
+          <div className="settings-card">
+            <h3 className="card-title">👤 PROFILE INFORMATION</h3>
+            <div className="profile-edit-section">
+              <div className="avatar-upload-area">
+                <div className="settings-avatar" style={previewImage ? {
+                  backgroundImage: `url(${previewImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  color: 'transparent',
+                  border: 'none'
+                } : {}}>
+                  {!previewImage && formData.name.charAt(0).toUpperCase()}
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <button
+                  className="change-photo-btn"
+                  onClick={() => isEditing && fileInputRef.current?.click()}
+                  disabled={!isEditing}
+                  style={!isEditing ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                >
+                  📸 Change Profile Picture
+                </button>
+              </div>
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    readOnly={!isEditing}
+                    className="settings-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    readOnly
+                    className="settings-input read-only"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    readOnly={!isEditing}
+                    className="settings-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Certificate ID / Registration Number</label>
+                  <input
+                    type="text"
+                    value={formData.certificateId}
+                    onChange={(e) => setFormData({ ...formData, certificateId: e.target.value })}
+                    readOnly={!isEditing}
+                    className="settings-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Organization</label>
+                  <input
+                    type="text"
+                    value={formData.organization}
+                    readOnly={!isEditing}
+                    className="settings-input"
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label>Specializations</label>
+                  <input
+                    type="text"
+                    value={Array.isArray(formData.specializations) ? formData.specializations.join(', ') : formData.specializations}
+                    readOnly
+                    className="settings-input read-only"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Work Preferences */}
+          <div className="settings-card">
+            <h3 className="card-title">WORK PREFERENCES</h3>
+
+            <div className="preference-item">
+              <label>Max Concurrent Requests</label>
+              <select
+                value={maxConcurrent}
+                onChange={(e) => setMaxConcurrent(Number(e.target.value))}
+                className="settings-select"
+                disabled={!isEditing}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+
+            <div className="preference-group">
+              <label>Preferred Help Types</label>
+              <div className="checkbox-grid">
+                {Object.entries(preferredTypes).map(([type, checked]) => (
+                  <label key={type} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => isEditing && handlePreferenceChange(type)}
+                      disabled={!isEditing}
+                    />
+                    <span className="checkbox-text">{type}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="preference-group">
+              <label>Availability Schedule</label>
+              <div className="schedule-display">
+                <div className="schedule-row">
+                  <span className="day">Mon-Fri:</span>
+                  <span className="time">9 AM - 6 PM</span>
+                </div>
+                <div className="schedule-row">
+                  <span className="day">Sat:</span>
+                  <span className="time">10 AM - 2 PM</span>
+                </div>
+                <div className="schedule-row">
+                  <span className="day">Sun:</span>
+                  <span className="time emergency">Emergency Only</span>
+                </div>
+              </div>
+              <button className="edit-schedule-btn" disabled={!isEditing}>📅 Edit Schedule</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'password' && (
+        <div className="settings-card">
+          <h3 className="card-title">🔒 Change Password</h3>
+          <form className="password-form" onSubmit={handlePasswordChange}>
+            {passwordStatus.message && (
+              <div className={`status-message ${passwordStatus.type}`}>
+                {passwordStatus.message}
+              </div>
+            )}
+
+            <div className="form-group">
+              <label>Current Password</label>
+              <input
+                type="password"
+                className="settings-input"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>New Password</label>
+              <input
+                type="password"
+                className="settings-input"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Confirm New Password</label>
+              <input
+                type="password"
+                className="settings-input"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                required
+                minLength={6}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="save-btn change-password-btn"
+              disabled={loadingPassword}
+            >
+              {loadingPassword ? 'Updating...' : 'Update Password'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="settings-actions-footer">
+        {activeTab === 'profile' && (
+          !isEditing ? (
+            <button className="edit-btn" onClick={() => setIsEditing(true)}>✏️ Edit Profile</button>
+          ) : (
+            <>
+              <button className="save-btn" onClick={() => {
+                onUpdateProfile({ ...formData, photoUrl: previewImage });
+                setIsEditing(false);
+              }}>💾 Save Changes</button>
+              <button className="reset-btn" onClick={() => setIsEditing(false)}>❌ Cancel</button>
+            </>
+          )
+        )}
+        <button className="logout-btn-settings" onClick={onLogout}>🚪 Logout</button>
       </div>
     </div>
   );

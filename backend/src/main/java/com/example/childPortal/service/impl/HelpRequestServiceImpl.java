@@ -32,6 +32,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     @Autowired(required = false)
     private NotificationService notificationService;
 
+    @Autowired(required = false)
+    private com.example.childPortal.service.SocialWorkerService socialWorkerService;
+
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
         try {
@@ -171,6 +174,33 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                         helpRequest.setCompletionDate(LocalDateTime.now());
                     }
                     helpRequestRepository.save(helpRequest);
+
+                    // Notify Requester
+                    if (notificationService != null && helpRequest.getRequesterUserId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getRequesterUserId(),
+                                    helpRequest.getId(),
+                                    status.toString(),
+                                    helpRequest.isAnonymous());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying requester: " + e.getMessage());
+                        }
+                    }
+
+                    // Notify Admin
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    status.toString(),
+                                    updatedBy,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin: " + e.getMessage());
+                        }
+                    }
+
                     return convertToFilteredDTO(helpRequest);
                 })
                 .orElse(null);
@@ -183,8 +213,47 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     helpRequest.setAssignedWorkerId(workerId);
                     helpRequest.setStatus(HelpRequest.RequestStatus.ASSIGNED);
                     helpRequest.setLastUpdated(LocalDateTime.now());
-                    helpRequestRepository.save(helpRequest);
-                    return convertToFilteredDTO(helpRequest);
+                    HelpRequest savedRequest = helpRequestRepository.save(helpRequest);
+
+                    // Send notification to the assigned social worker
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestAssignmentNotification(
+                                    workerId,
+                                    savedRequest.getId(),
+                                    savedRequest.getTrackingId(),
+                                    savedRequest.getPriority().toString(),
+                                    savedRequest.isAnonymous());
+                        } catch (Exception e) {
+                            System.err.println("Error sending assignment notification: " + e.getMessage());
+                        }
+
+                        // Notify Requester
+                        if (savedRequest.getRequesterUserId() != null) {
+                            try {
+                                notificationService.sendHelpRequestUpdate(
+                                        savedRequest.getRequesterUserId(),
+                                        savedRequest.getId(),
+                                        "ASSIGNED",
+                                        savedRequest.isAnonymous());
+                            } catch (Exception e) {
+                                System.err.println("Error notifying requester of assignment: " + e.getMessage());
+                            }
+                        }
+
+                        // Notify Admin
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    savedRequest.getId(),
+                                    "ASSIGNED",
+                                    assignedBy,
+                                    savedRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin of assignment: " + e.getMessage());
+                        }
+                    }
+
+                    return convertToFilteredDTO(savedRequest);
                 })
                 .orElse(null);
     }
@@ -219,9 +288,84 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Override
     public List<HelpRequestDTO> getHelpRequestsByWorker(String workerId) {
-        return helpRequestRepository.findByAssignedWorkerId(workerId).stream()
+        // Find requests assigned to this ID
+        List<HelpRequest> requests = new java.util.ArrayList<>(helpRequestRepository.findByAssignedWorkerId(workerId));
+
+        // If this is a User ID, also check if there's a SocialWorker profile and find
+        // requests assigned to its ID
+        if (socialWorkerService != null) {
+            try {
+                java.util.Optional<com.example.childPortal.model.SocialWorker> profile = socialWorkerService
+                        .getSocialWorkerByUserId(workerId);
+                if (profile.isPresent()) {
+                    String profileId = profile.get().getId();
+                    if (profileId != null && !workerId.equals(profileId)) {
+                        List<HelpRequest> profileRequests = helpRequestRepository.findByAssignedWorkerId(profileId);
+                        for (HelpRequest pr : profileRequests) {
+                            if (requests.stream().noneMatch(existing -> existing.getId().equals(pr.getId()))) {
+                                requests.add(pr);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error in getHelpRequestsByWorker profile lookup: " + e.getMessage());
+            }
+        }
+
+        return requests.stream()
                 .map(this::convertToFilteredDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public HelpRequestDTO rejectHelpRequest(String requestId, String reason, String rejectedBy) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    helpRequest.setStatus(HelpRequest.RequestStatus.REJECTED);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+
+                    String currentNotes = helpRequest.getRequestNotes();
+                    String rejectionNote = "Rejected: " + reason;
+                    if (currentNotes != null && !currentNotes.isEmpty()) {
+                        helpRequest.setRequestNotes(currentNotes + "\n" + rejectionNote);
+                    } else {
+                        helpRequest.setRequestNotes(rejectionNote);
+                    }
+
+                    helpRequestRepository.save(helpRequest);
+
+                    helpRequestRepository.save(helpRequest);
+
+                    // Notify Requester
+                    if (notificationService != null && helpRequest.getRequesterUserId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getRequesterUserId(),
+                                    helpRequest.getId(),
+                                    "REJECTED",
+                                    helpRequest.isAnonymous());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying requester of rejection: " + e.getMessage());
+                        }
+                    }
+
+                    // Notify Admin
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    "REJECTED",
+                                    rejectedBy,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin of rejection: " + e.getMessage());
+                        }
+                    }
+
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
     }
 
     private HelpRequestDTO convertToFilteredDTO(HelpRequest helpRequest) {

@@ -85,6 +85,16 @@ public class HelpController {
         return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/{requestId}/reject")
+    public ResponseEntity<HelpRequestDTO> rejectHelpRequest(
+            @PathVariable String requestId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String reason = body.getOrDefault("reason", "No reason provided");
+        HelpRequestDTO updatedRequest = helpRequestService.rejectHelpRequest(requestId, reason, userId);
+        return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+    }
+
     @PutMapping("/{requestId}/assign")
     public ResponseEntity<HelpRequestDTO> assignToSocialWorker(
             @PathVariable String requestId,

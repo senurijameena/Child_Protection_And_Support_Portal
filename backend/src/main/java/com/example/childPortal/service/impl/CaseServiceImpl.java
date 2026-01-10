@@ -34,6 +34,12 @@ public class CaseServiceImpl implements CaseService {
     @Autowired(required = false)
     private NotificationService notificationService;
 
+    @Autowired(required = false)
+    private com.example.childPortal.service.SocialWorkerService socialWorkerService;
+
+    @Autowired(required = false)
+    private com.example.childPortal.service.PoliceOfficerService policeOfficerService;
+
     @Override
     @Transactional
     public CaseResponse reportCase(CaseReportRequest request, String reporterUserId) {
@@ -384,6 +390,24 @@ public class CaseServiceImpl implements CaseService {
     public List<CaseDTO> getCasesForOfficer(String officerId) {
         List<Case> cases = caseRepository.findByAssignedOfficerId(officerId);
 
+        // Resilience: If this is a User ID, also check if there's a PoliceOfficer
+        // profile and find cases assigned to its ID
+        if (policeOfficerService != null) {
+            Optional<com.example.childPortal.model.PoliceOfficer> profile = policeOfficerService
+                    .getPoliceOfficerByUserId(officerId);
+            if (profile.isPresent()) {
+                String profileId = profile.get().getId();
+                if (!officerId.equals(profileId)) {
+                    List<Case> profileCases = caseRepository.findByAssignedOfficerId(profileId);
+                    for (Case pc : profileCases) {
+                        if (cases.stream().noneMatch(existing -> existing.getId().equals(pc.getId()))) {
+                            cases.add(pc);
+                        }
+                    }
+                }
+            }
+        }
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -396,6 +420,24 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesForWorker(String workerId) {
         List<Case> cases = caseRepository.findByAssignedWorkerId(workerId);
+
+        // Resilience: If this is a User ID, also check if there's a SocialWorker
+        // profile and find cases assigned to its ID
+        if (socialWorkerService != null) {
+            Optional<com.example.childPortal.model.SocialWorker> profile = socialWorkerService
+                    .getSocialWorkerByUserId(workerId);
+            if (profile.isPresent()) {
+                String profileId = profile.get().getId();
+                if (!workerId.equals(profileId)) {
+                    List<Case> profileCases = caseRepository.findByAssignedWorkerId(profileId);
+                    for (Case pc : profileCases) {
+                        if (cases.stream().noneMatch(existing -> existing.getId().equals(pc.getId()))) {
+                            cases.add(pc);
+                        }
+                    }
+                }
+            }
+        }
 
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);

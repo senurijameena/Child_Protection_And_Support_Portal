@@ -3,8 +3,11 @@ import { api } from './api';
 
 export const analyticsService = {
 
-  getDashboardMetrics: () => 
+  getDashboardMetrics: () =>
     api.get('/api/analytics/dashboard'),
+
+  getDashboardOverview: () =>
+    api.get('/api/analytics/dashboard/overview'),
 
   getCaseStatistics: (startDate?: string, endDate?: string) => {
     const params: any = {};
@@ -13,13 +16,13 @@ export const analyticsService = {
     return api.get('/api/analytics/cases/statistics', { params });
   },
 
-  getCaseStatusDistribution: () => 
+  getCaseStatusDistribution: () =>
     api.get('/api/analytics/cases/status-distribution'),
 
-  getCaseTypeDistribution: () => 
+  getCaseTypeDistribution: () =>
     api.get('/api/analytics/cases/type-distribution'),
 
-  getCaseTrends: (period: string = 'monthly') => 
+  getCaseTrends: (period: string = 'monthly') =>
     api.get('/api/analytics/cases/trends', { params: { period } }),
 
   getHelpRequestStatistics: (startDate?: string, endDate?: string) => {
@@ -29,22 +32,22 @@ export const analyticsService = {
     return api.get('/api/analytics/help-requests/statistics', { params });
   },
 
-  getHelpTypeDistribution: () => 
+  getHelpTypeDistribution: () =>
     api.get('/api/analytics/help-requests/type-distribution'),
 
-  getUserStatistics: () => 
+  getUserStatistics: () =>
     api.get('/api/analytics/users/statistics'),
 
-  getMostActiveUsers: (limit: number = 10) => 
+  getMostActiveUsers: (limit: number = 10) =>
     api.get('/api/analytics/users/activity', { params: { limit } }),
 
-  getResponseTimeMetrics: () => 
+  getResponseTimeMetrics: () =>
     api.get('/api/analytics/performance/response-times'),
 
-  getResolutionRates: () => 
+  getResolutionRates: () =>
     api.get('/api/analytics/performance/resolution-rates'),
 
-  getLocationAnalytics: () => 
+  getLocationAnalytics: () =>
     api.get('/api/analytics/geographical/locations'),
 
   generateCustomReport: (reportData: {
@@ -53,9 +56,9 @@ export const analyticsService = {
     endDate: string;
     filters?: any;
     format?: 'PDF' | 'EXCEL' | 'CSV';
-  }) => 
+  }) =>
     api.post('/api/analytics/reports/custom', reportData),
 
-  getRealtimeUpdates: () => 
+  getRealtimeUpdates: () =>
     api.get('/api/analytics/realtime/updates')
 };

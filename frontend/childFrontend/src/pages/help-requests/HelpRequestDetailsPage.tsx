@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Row, Col, Button, Spinner, Alert, Badge, Modal, Form, InputGroup } from 'react-bootstrap';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { helpRequestService } from '../../services/helpRequestService';
 import { serviceOfferService } from '../../services/serviceOfferService';
 import { timelineService } from '../../services/timelineService';
@@ -26,6 +26,12 @@ interface HelpRequestDetails {
   documentUrls?: string[];
   anonymous?: boolean;
   requesterUserId?: string;
+  requesterName?: string;
+  requesterEmail?: string;
+  requesterPhone?: string;
+  requesterAddress?: string;
+  requesterContact?: string;
+  requesterProfilePhoto?: string;
 }
 
 interface ServiceOffer {
@@ -81,6 +87,22 @@ const HelpRequestDetailsPage: React.FC = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState<string>('');
   const [rejectComments, setRejectComments] = useState('');
+
+  const location = useLocation();
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string>('');
+  const [updateNotes, setUpdateNotes] = useState('');
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('action') === 'update') {
+      setShowUpdateModal(true);
+      // Initialize status if available
+      if (helpRequest) {
+        setUpdateStatus(helpRequest.status || '');
+      }
+    }
+  }, [location.search, helpRequest]);
 
   useEffect(() => {
     console.log('HelpRequestDetailsPage mounted with requestId:', requestId);
@@ -333,6 +355,30 @@ const HelpRequestDetailsPage: React.FC = () => {
     }
   };
 
+  const handleUpdateRequest = async () => {
+    if (!requestId) return;
+    try {
+      if (updateStatus && updateStatus !== helpRequest?.status) {
+        // @ts-ignore - updateStatus is dynamically added
+        await helpRequestService.updateStatus(requestId, updateStatus);
+      }
+      if (updateNotes) {
+        // @ts-ignore - updateNotes is dynamically added
+        await helpRequestService.updateNotes(requestId, updateNotes);
+      }
+      setShowUpdateModal(false);
+      setUpdateNotes('');
+      fetchHelpRequestDetails();
+      fetchTimeline();
+      // Clear query param
+      navigate(`/help-requests/${requestId}`, { replace: true });
+      alert('Request updated successfully');
+    } catch (err: any) {
+      console.error('Update error:', err);
+      alert('Failed to update request: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   const formatScheduledDateTime = (dateTimeString?: string): { date: string; time: string } | null => {
     if (!dateTimeString) return null;
     try {
@@ -511,6 +557,41 @@ const HelpRequestDetailsPage: React.FC = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Requester Details (Non-Anonymous Only) */}
+      {!helpRequest.anonymous && (
+        <Card className="mb-4">
+          <Card.Header>
+            <h5 className="mb-0">👤 REQUESTER DETAILS</h5>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={6}>
+                <div className="mb-3">
+                  <p className="mb-1"><strong>Name:</strong> {helpRequest.requesterName || 'N/A'}</p>
+                  <p className="mb-1"><strong>Address:</strong> {helpRequest.requesterAddress || 'N/A'}</p>
+                  <p className="mb-1"><strong>User ID:</strong> {helpRequest.requesterUserId || 'N/A'}</p>
+                </div>
+              </Col>
+              <Col md={6}>
+                <div className="mb-3">
+                  <p className="mb-1"><strong>Phone:</strong> {helpRequest.requesterPhone || helpRequest.requesterContact || 'N/A'}</p>
+                  <p className="mb-1"><strong>Email:</strong> {helpRequest.requesterEmail || 'N/A'}</p>
+                  {helpRequest.requesterProfilePhoto && (
+                    <div className="mt-2">
+                      <img
+                        src={helpRequest.requesterProfilePhoto}
+                        alt="Profile"
+                        style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      )}
 
       {/* Service Offer Details */}
       {serviceOffer && (
@@ -893,6 +974,51 @@ const HelpRequestDetailsPage: React.FC = () => {
           </Button>
           <Button variant="danger" onClick={handleConfirmRejection}>
             Confirm Rejection
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Update Request Modal */}
+      <Modal show={showUpdateModal} onHide={() => {
+        setShowUpdateModal(false);
+        setUpdateNotes('');
+      }} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>✏️ UPDATE HELP REQUEST</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Status:</Form.Label>
+            <Form.Select
+              value={updateStatus}
+              onChange={(e) => setUpdateStatus(e.target.value)}
+            >
+              <option value="ASSIGNED">ASSIGNED</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Add Notes:</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              value={updateNotes}
+              onChange={(e) => setUpdateNotes(e.target.value)}
+              placeholder="Enter progress notes or updates..."
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => {
+            setShowUpdateModal(false);
+            setUpdateNotes('');
+          }}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleUpdateRequest}>
+            Update Request
           </Button>
         </Modal.Footer>
       </Modal>

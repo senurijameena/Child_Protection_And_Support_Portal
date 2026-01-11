@@ -142,4 +142,8 @@ export const helpRequestService = {
   // Reject help request with reason
   rejectRequest: (requestId, reason) =>
     api.put(`/api/help-requests/${requestId}/reject`, { reason }),
+
+  // Update notes
+  updateNotes: (requestId, notes) =>
+    api.put(`/api/help-requests/${requestId}/notes`, { notes }),
 };

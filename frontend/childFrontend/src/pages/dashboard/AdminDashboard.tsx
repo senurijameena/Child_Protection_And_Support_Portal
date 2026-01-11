@@ -191,48 +191,71 @@ const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+
       const dateRange = getDateRange();
 
-      const [dashboardMetrics, caseStats, helpRequestStats, userStats, pendingApprovalsData, caseStatusDist, helpTypeDist] = await Promise.allSettled([
-        analyticsService.getDashboardMetrics(),
+      // Optimize: Use single overview call for metrics and recent items
+      // Maintain other distribution calls for now as they are specific
+      const [overviewData, caseStats, helpRequestStats, userStats, caseStatusDist, helpTypeDist, transfersResponse] = await Promise.allSettled([
+        analyticsService.getDashboardOverview(),
         analyticsService.getCaseStatistics(dateRange.startDate, dateRange.endDate),
         analyticsService.getHelpRequestStatistics(dateRange.startDate, dateRange.endDate),
         analyticsService.getUserStatistics(),
-        adminService.getPendingApprovals(),
         analyticsService.getCaseStatusDistribution(),
-        analyticsService.getHelpTypeDistribution()
+        analyticsService.getHelpTypeDistribution(),
+        transferService.getPendingTransfers()
       ]);
 
-      if (dashboardMetrics.status === 'fulfilled' && dashboardMetrics.value.data) {
-        const metrics = dashboardMetrics.value.data;
-        setStats(prev => ({
-          ...prev,
-          totalCases: metrics.totalCases || 0,
-          activeCases: metrics.activeCases || 0,
-          emergencyCases: metrics.emergencyCases || 0,
-          totalHelpRequests: metrics.totalHelpRequests || 0,
-          activeHelpRequests: metrics.pendingHelpRequests || 0,
-          totalUsers: metrics.totalUsers || 0,
-          pendingApprovals: metrics.pendingApprovals || 0
-        }));
+      // 1. Process Overview Data (Metrics + Recent Items)
+      if (overviewData.status === 'fulfilled' && overviewData.value.data) {
+        const { metrics, recentCases: rCases, recentHelpRequests: rHelpRequests } = overviewData.value.data;
+
+        if (metrics) {
+          setStats(prev => ({
+            ...prev,
+            totalCases: metrics.totalCases || 0,
+            activeCases: metrics.activeCases || 0,
+            emergencyCases: metrics.emergencyCases || 0,
+            totalHelpRequests: metrics.totalHelpRequests || 0,
+            activeHelpRequests: metrics.pendingHelpRequests || 0,
+            totalUsers: metrics.totalUsers || 0,
+            pendingApprovals: metrics.pendingApprovals || 0,
+            closedCases: metrics.resolvedCases || 0
+          }));
+        }
+
+        if (rCases) {
+          setRecentCases(rCases.map((c: any) => ({
+            id: c.id,
+            trackingId: c.trackingId || c.id?.substring(0, 8),
+            caseType: c.caseType || 'Unknown',
+            location: c.location || 'N/A',
+            priority: c.priority || 'MEDIUM',
+            status: c.status || 'REPORTED',
+            assignedOfficerId: c.assignedOfficerId,
+            assignedWorkerId: c.assignedWorkerId
+          })));
+        }
+
+        if (rHelpRequests) {
+          setRecentHelpRequests(rHelpRequests.map((hr: any) => ({
+            id: hr.id,
+            trackingId: hr.trackingId || hr.id?.substring(0, 8),
+            helpType: hr.helpType || 'Unknown',
+            childAge: hr.childAge,
+            priority: hr.priority || 'MEDIUM',
+            status: hr.status || 'REQUESTED',
+            assignedWorkerId: hr.assignedWorkerId
+          })));
+        }
       }
 
+      // 2. Process Extra Stats (if available)
       if (caseStats.status === 'fulfilled' && caseStats.value.data) {
         const caseData = caseStats.value.data;
         setStats(prev => ({
           ...prev,
-          totalCases: caseData.totalCases || prev.totalCases,
-          activeCases: caseData.activeCases || prev.activeCases,
-          closedCases: caseData.resolvedCases || 0
-        }));
-      }
-
-      if (helpRequestStats.status === 'fulfilled' && helpRequestStats.value.data) {
-        const hrData = helpRequestStats.value.data;
-        setStats(prev => ({
-          ...prev,
-          totalHelpRequests: hrData.total || hrData.totalHelpRequests || prev.totalHelpRequests,
-          activeHelpRequests: hrData.active || hrData.activeHelpRequests || prev.activeHelpRequests
+          closedCases: caseData.resolvedCases || prev.closedCases
         }));
       }
 
@@ -240,23 +263,15 @@ const AdminDashboard: React.FC = () => {
         const usrData = userStats.value.data;
         setStats(prev => ({
           ...prev,
-          totalUsers: usrData.totalUsers || usrData.total || prev.totalUsers,
           policeOfficers: usrData.policeOfficers || usrData.policeCount || 0,
           socialWorkers: usrData.socialWorkers || usrData.socialWorkerCount || 0
         }));
       }
 
-      if (pendingApprovalsData.status === 'fulfilled') {
-        const approvals = pendingApprovalsData.value;
-        const approvalCount = Array.isArray(approvals) ? approvals.length : (approvals?.length || 0);
-        setStats(prev => ({ ...prev, pendingApprovals: approvalCount }));
-      }
-
-      // Process case status distribution for chart
+      // 3. Process Distributions for Charts
       if (caseStatusDist.status === 'fulfilled' && caseStatusDist.value.data) {
         const statusData = caseStatusDist.value.data;
         let distribution: any[] = [];
-
         if (Array.isArray(statusData)) {
           distribution = statusData;
         } else if (typeof statusData === 'object' && statusData !== null) {
@@ -270,11 +285,9 @@ const AdminDashboard: React.FC = () => {
         setCaseStatusDistribution(distribution);
       }
 
-      // Process help request type distribution for chart
       if (helpTypeDist.status === 'fulfilled' && helpTypeDist.value.data) {
         const typeData = helpTypeDist.value.data;
         let distribution: any[] = [];
-
         if (Array.isArray(typeData)) {
           distribution = typeData;
         } else if (typeof typeData === 'object') {
@@ -288,70 +301,18 @@ const AdminDashboard: React.FC = () => {
         setHelpRequestTypeDistribution(distribution);
       }
 
-      // Fetch recent cases
-      try {
-        const casesResponse = await caseService.getAllCases();
-        if (casesResponse.data && Array.isArray(casesResponse.data)) {
-          const cases = casesResponse.data.slice(0, 5).map((c: any) => ({
-            id: c.id,
-            trackingId: c.trackingId || c.id?.substring(0, 8),
-            caseType: c.caseType || 'Unknown',
-            location: c.location || 'N/A',
-            priority: c.priority || 'MEDIUM',
-            status: c.status || 'REPORTED',
-            assignedOfficerId: c.assignedOfficerId,
-            assignedWorkerId: c.assignedWorkerId
-          }));
-          setRecentCases(cases);
-
-          const closed = casesResponse.data.filter((c: any) =>
-            c.status === 'CLOSED' || c.status === 'RESOLVED'
-          ).length;
-          const emergency = casesResponse.data.filter((c: any) =>
-            c.emergency || c.priority === 'URGENT'
-          ).length;
-          setStats(prev => ({ ...prev, closedCases: closed, emergencyCases: emergency }));
-        }
-      } catch (err) {
-        console.error('Error fetching cases:', err);
-      }
-
-      // Fetch recent help requests
-      try {
-        const helpRequestsResponse = await helpRequestService.getAllRequests();
-        if (helpRequestsResponse.data && Array.isArray(helpRequestsResponse.data)) {
-          const requests = helpRequestsResponse.data.slice(0, 5).map((hr: any) => ({
-            id: hr.id,
-            trackingId: hr.trackingId || hr.id?.substring(0, 8),
-            helpType: hr.helpType || 'Unknown',
-            childAge: hr.childAge,
-            priority: hr.priority || 'MEDIUM',
-            status: hr.status || 'REQUESTED',
-            assignedWorkerId: hr.assignedWorkerId
-          }));
-          setRecentHelpRequests(requests);
-        }
-      } catch (err) {
-        console.error('Error fetching help requests:', err);
-      }
-
-      // Fetch pending transfers
-      try {
-        const transfersResponse = await transferService.getPendingTransfers();
-        if (transfersResponse.data && Array.isArray(transfersResponse.data)) {
-          const transfers = transfersResponse.data.map((t: any) => ({
-            id: t.id,
-            type: t.type || 'CASE',
-            fromUserId: t.fromUserId || t.fromUser?.id,
-            fromUserName: t.fromUser?.name || t.fromUserName,
-            toUserId: t.toUserId || t.toUser?.id,
-            toUserName: t.toUser?.name || t.toUserName
-          }));
-          setPendingTransfers(transfers);
-          setStats(prev => ({ ...prev, pendingTransfers: transfers.length }));
-        }
-      } catch (err) {
-        console.error('Error fetching transfers:', err);
+      // 4. Process Pending Transfers
+      if (transfersResponse.status === 'fulfilled' && transfersResponse.value.data) {
+        const transfers = transfersResponse.value.data.map((t: any) => ({
+          id: t.id,
+          type: t.type || 'CASE',
+          fromUserId: t.fromUserId || t.fromUser?.id,
+          fromUserName: t.fromUser?.name || t.fromUserName,
+          toUserId: t.toUserId || t.toUser?.id,
+          toUserName: t.toUser?.name || t.toUserName
+        }));
+        setPendingTransfers(transfers);
+        setStats(prev => ({ ...prev, pendingTransfers: transfers.length }));
       }
 
     } catch (error: any) {

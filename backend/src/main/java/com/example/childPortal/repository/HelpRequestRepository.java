@@ -5,8 +5,10 @@ import com.example.childPortal.model.HelpRequest.RequestStatus;
 import com.example.childPortal.model.HelpType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 
+@Repository
 public interface HelpRequestRepository extends MongoRepository<HelpRequest, String> {
     List<HelpRequest> findByRequesterUserId(String requesterUserId);
 
@@ -19,6 +21,10 @@ public interface HelpRequestRepository extends MongoRepository<HelpRequest, Stri
     List<HelpRequest> findByHelpType(HelpType helpType);
 
     List<HelpRequest> findByAnonymous(boolean anonymous);
+
+    List<HelpRequest> findTop5ByOrderByRequestDateDesc();
+
+    long countByStatusIn(List<RequestStatus> statuses);
 
     List<HelpRequest> findAllByOrderByRequestDateDesc();
 

@@ -68,13 +68,13 @@
 }
 
 .schedule-btn {
-    background-color: #198754;
+    background-color: #0d9488;
     color: white;
-    border-color: #198754;
+    border-color: #0d9488;
 }
 
 .schedule-btn:hover {
-    background-color: #157347;
+    background-color: #0f766e;
     color: white;
 }
 
@@ -150,8 +150,8 @@
 }
 
 .priority-item.low {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background-color: #ccfbf1;
+    color: #0f766e;
 }
 
 /* Tables */
@@ -222,8 +222,8 @@
 }
 
 .status-badge.confirmed {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background-color: #ccfbf1;
+    color: #0f766e;
 }
 
 .status-badge.urgent {

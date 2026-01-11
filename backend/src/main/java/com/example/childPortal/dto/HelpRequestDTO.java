@@ -140,6 +140,52 @@ public class HelpRequestDTO {
         this.assignedWorkerId = assignedWorkerId;
     }
 
+    private String requesterContact;
+    private String requesterAddress;
+    private String requesterEmail;
+    private String requesterPhone;
+    private String requesterProfilePhoto;
+
+    public String getRequesterContact() {
+        return requesterContact;
+    }
+
+    public void setRequesterContact(String requesterContact) {
+        this.requesterContact = requesterContact;
+    }
+
+    public String getRequesterAddress() {
+        return requesterAddress;
+    }
+
+    public void setRequesterAddress(String requesterAddress) {
+        this.requesterAddress = requesterAddress;
+    }
+
+    public String getRequesterEmail() {
+        return requesterEmail;
+    }
+
+    public void setRequesterEmail(String requesterEmail) {
+        this.requesterEmail = requesterEmail;
+    }
+
+    public String getRequesterPhone() {
+        return requesterPhone;
+    }
+
+    public void setRequesterPhone(String requesterPhone) {
+        this.requesterPhone = requesterPhone;
+    }
+
+    public String getRequesterProfilePhoto() {
+        return requesterProfilePhoto;
+    }
+
+    public void setRequesterProfilePhoto(String requesterProfilePhoto) {
+        this.requesterProfilePhoto = requesterProfilePhoto;
+    }
+
     public LocalDateTime getRequestDate() {
         return requestDate;
     }

@@ -3,10 +3,12 @@ package com.example.childPortal.repository;
 import com.example.childPortal.model.User;
 import com.example.childPortal.model.Role;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface UserRepository extends MongoRepository<User, String> {
 
     Optional<User> findByEmail(String email);
@@ -24,4 +26,6 @@ public interface UserRepository extends MongoRepository<User, String> {
     long countByRole(Role role);
 
     long countByApproved(boolean approved);
+
+    long countByActive(boolean active);
 }

@@ -1,9 +1,9 @@
 .admin-footer {
-  background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+  background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 50%, #8e24aa 100%);
   color: #ffffff;
-  border-top: 3px solid #5c6bc0;
+  border-top: 3px solid #ba68c8;
   margin-top: auto;
-  box-shadow: 0 -4px 12px rgba(26, 35, 126, 0.2);
+  box-shadow: 0 -4px 15px rgba(106, 27, 154, 0.2);
 }
 
 .admin-footer-title {
@@ -145,4 +145,3 @@
     font-size: 0.85rem;
   }
 }
-

@@ -79,6 +79,7 @@ com\example\childPortal\dto\LoginResponse.class
 com\example\childPortal\dto\DashboardMetricsDTO.class
 com\example\childPortal\dto\UserActivityDTO.class
 com\example\childPortal\repository\NotificationRepository.class
+com\example\childPortal\dto\AdminDashboardOverviewDTO.class
 com\example\childPortal\dto\CaseStatisticsDTO.class
 com\example\childPortal\dto\CaseReportRequest.class
 com\example\childPortal\dto\ResolutionRateDTO.class

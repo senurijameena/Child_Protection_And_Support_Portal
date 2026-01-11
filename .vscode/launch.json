@@ -6,9 +6,24 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Current File",
+            "name": "ChildPortalApplication",
             "request": "launch",
-            "mainClass": "${file}"
+            "mainClass": "ChildPortalApplication",
+            "projectName": "backend"
+        },
+        {
+            "type": "java",
+            "name": "ChildPortalApplication",
+            "request": "launch",
+            "mainClass": "com.example.childPortal.ChildPortalApplication",
+            "projectName": "backend"
+        },
+        {
+            "name": "Attach to Edge",
+            "port": 9222,
+            "request": "attach",
+            "type": "msedge",
+            "webRoot": "${workspaceFolder}"
         },
         {
             "type": "java",

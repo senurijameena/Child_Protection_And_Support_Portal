@@ -10,6 +10,7 @@
 
 .dashboard-container {
   flex: 1;
+  margin-top: 80px;
   padding-top: 20px;
   padding-bottom: 20px;
   display: flex;
@@ -48,7 +49,7 @@
   margin-right: 0;
 }
 
-.dashboard-layout .row > [class*="col-"] {
+.dashboard-layout .row>[class*="col-"] {
   padding-left: 15px;
   padding-right: 15px;
 }
@@ -58,9 +59,8 @@
     padding-left: 15px;
     margin-bottom: 20px;
   }
-  
+
   .main-content-column {
     padding-left: 15px;
   }
 }
-

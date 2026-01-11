@@ -3,7 +3,7 @@
 }
 
 .page-title {
-  color: #1a237e;
+  color: #6a1b9a;
   font-weight: 700;
   font-size: 1.5rem;
   display: flex;
@@ -149,7 +149,7 @@
 }
 
 .case-modal-header {
-  background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+  background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
   color: white;
   border-bottom: none;
 }
@@ -221,7 +221,7 @@
 }
 
 .evidence-link {
-  color: #0d6efd;
+  color: #8e24aa;
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -229,7 +229,7 @@
 
 .evidence-link:hover {
   text-decoration: underline;
-  color: #0a58ca;
+  color: #6a1b9a;
 }
 
 .case-notes-timeline {
@@ -241,7 +241,7 @@
 .case-note-item {
   padding: 1rem;
   background: #f8f9fa;
-  border-left: 3px solid #0d6efd;
+  border-left: 3px solid #8e24aa;
   border-radius: 4px;
 }
 
@@ -308,4 +308,3 @@
     width: 100%;
   }
 }
-

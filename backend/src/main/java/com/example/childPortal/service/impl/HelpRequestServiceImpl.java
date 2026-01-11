@@ -35,6 +35,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     @Autowired(required = false)
     private com.example.childPortal.service.SocialWorkerService socialWorkerService;
 
+    @Autowired
+    private com.example.childPortal.service.CaseTimelineService timelineService;
+
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
         try {
@@ -168,12 +171,29 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             String updatedBy) {
         return helpRequestRepository.findById(requestId)
                 .map(helpRequest -> {
+                    HelpRequest.RequestStatus oldStatus = helpRequest.getStatus();
                     helpRequest.setStatus(status);
                     helpRequest.setLastUpdated(LocalDateTime.now());
                     if (status == HelpRequest.RequestStatus.COMPLETED) {
                         helpRequest.setCompletionDate(LocalDateTime.now());
                     }
                     helpRequestRepository.save(helpRequest);
+
+                    if (timelineService != null) {
+                        try {
+                            String updaterName = userRepository.findById(updatedBy).map(User::getFullName)
+                                    .orElse("Unknown");
+                            timelineService.createHelpRequestStatusChangeEvent(
+                                    requestId,
+                                    updatedBy,
+                                    updaterName,
+                                    oldStatus,
+                                    status,
+                                    "Status updated to " + status);
+                        } catch (Exception e) {
+                            System.err.println("Error adding timeline event: " + e.getMessage());
+                        }
+                    }
 
                     // Notify Requester
                     if (notificationService != null && helpRequest.getRequesterUserId() != null) {
@@ -271,9 +291,28 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     public HelpRequestDTO updateHelpRequestNotes(String requestId, String notes, String updatedBy) {
         return helpRequestRepository.findById(requestId)
                 .map(helpRequest -> {
-                    helpRequest.setRequestNotes(notes);
+                    // Start of Update Notes Logic
+                    // Currently HelpRequest model doesn't have a specific 'notes' field for social
+                    // workers,
+                    // but we can log this as a timeline event which serves as a progress note.
+
+                    if (timelineService != null && notes != null && !notes.trim().isEmpty()) {
+                        try {
+                            String updaterName = userRepository.findById(updatedBy).map(User::getFullName)
+                                    .orElse("Unknown");
+                            timelineService.createHelpRequestNoteAddedEvent(
+                                    requestId,
+                                    updatedBy,
+                                    updaterName,
+                                    notes);
+                        } catch (Exception e) {
+                            System.err.println("Error adding timeline note: " + e.getMessage());
+                        }
+                    }
+
                     helpRequest.setLastUpdated(LocalDateTime.now());
                     helpRequestRepository.save(helpRequest);
+
                     return convertToFilteredDTO(helpRequest);
                 })
                 .orElse(null);
@@ -288,8 +327,10 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Override
     public List<HelpRequestDTO> getHelpRequestsByWorker(String workerId) {
+        System.out.println("Fetching requests for workerId: " + workerId);
         // Find requests assigned to this ID
         List<HelpRequest> requests = new java.util.ArrayList<>(helpRequestRepository.findByAssignedWorkerId(workerId));
+        System.out.println("Found " + requests.size() + " requests directly assigned to " + workerId);
 
         // If this is a User ID, also check if there's a SocialWorker profile and find
         // requests assigned to its ID
@@ -299,19 +340,28 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                         .getSocialWorkerByUserId(workerId);
                 if (profile.isPresent()) {
                     String profileId = profile.get().getId();
+                    System.out.println("Found SocialWorker profile ID: " + profileId);
                     if (profileId != null && !workerId.equals(profileId)) {
                         List<HelpRequest> profileRequests = helpRequestRepository.findByAssignedWorkerId(profileId);
+                        System.out.println(
+                                "Found " + profileRequests.size() + " requests assigned to profile ID " + profileId);
                         for (HelpRequest pr : profileRequests) {
                             if (requests.stream().noneMatch(existing -> existing.getId().equals(pr.getId()))) {
                                 requests.add(pr);
                             }
                         }
                     }
+                } else {
+                    System.out.println("No SocialWorker profile found for userId: " + workerId);
                 }
             } catch (Exception e) {
                 System.err.println("Error in getHelpRequestsByWorker profile lookup: " + e.getMessage());
             }
+        } else {
+            System.out.println("SocialWorkerService is null");
         }
+
+        System.out.println("Returning total " + requests.size() + " requests for worker " + workerId);
 
         return requests.stream()
                 .map(this::convertToFilteredDTO)
@@ -412,6 +462,19 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             } else {
                 dto.setRequesterName(
                         helpRequest.getRequesterName() != null ? helpRequest.getRequesterName() : "Unknown Requester");
+                // Fetch contact details for non-anonymous requests
+                if (helpRequest.getRequesterUserId() != null) {
+                    userRepository.findById(helpRequest.getRequesterUserId()).ifPresent(reqUser -> {
+                        dto.setRequesterContact(reqUser.getPhone() != null ? reqUser.getPhone() : reqUser.getEmail());
+                        dto.setRequesterAddress(reqUser.getAddress());
+                        dto.setRequesterEmail(reqUser.getEmail());
+                        dto.setRequesterPhone(reqUser.getPhone());
+                        dto.setRequesterProfilePhoto(reqUser.getProfilePhoto());
+                        // Using User ID as the identifier since we don't have a separate NIC/National
+                        // ID field
+                        // If officialIdFile exists, it could be considered a verified ID document
+                    });
+                }
             }
         } catch (Exception e) {
             if (helpRequest.isAnonymous()) {

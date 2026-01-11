@@ -50,6 +50,8 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
+
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,7 +91,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const [requestFilter, setRequestFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [requestsPerPage] = useState(5);
+  const [requestsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -147,7 +149,12 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             r.status && !['COMPLETED', 'REJECTED', 'CLOSED'].includes(r.status.toUpperCase())
           );
           setMyRequestsCount(activeRequests.length);
-          setActiveRequestsCount(activeRequests.length);
+
+          // For Active Requests stat card, show only accepted (IN_PROGRESS) requests
+          const acceptedRequests = requests.filter((r: any) =>
+            r.status && r.status.toUpperCase() === 'IN_PROGRESS'
+          );
+          setActiveRequestsCount(acceptedRequests.length);
 
           const urgentRequests = activeRequests.filter((r: any) =>
             r.priority === 'HIGH' || r.priority === 'URGENT' || r.emergency === true
@@ -937,6 +944,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 requestsPerPage={requestsPerPage}
                 onPageChange={setCurrentPage}
                 onRefresh={() => fetchHelpRequests()}
+                onAnalyticsClick={handleAnalytics}
               />
             )}
             {!loading && activeSection === 'transfer-requests' && (
@@ -1073,6 +1081,7 @@ interface MyRequestsSectionProps {
   requestsPerPage: number;
   onPageChange: (page: number) => void;
   onRefresh: () => void;
+  onAnalyticsClick: () => void;
 }
 
 const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
@@ -1085,7 +1094,8 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   currentPage,
   requestsPerPage,
   onPageChange,
-  onRefresh
+  onRefresh,
+  onAnalyticsClick
 }) => {
   const navigate = useNavigate();
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
@@ -1098,6 +1108,12 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   const [rejectionReason, setRejectionReason] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferRequestId, setTransferRequestId] = useState<string | null>(null);
+
+  // Update Modal State
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [requestToUpdate, setRequestToUpdate] = useState<any>(null);
+  const [updateNotes, setUpdateNotes] = useState('');
+  const [updateStatus, setUpdateStatus] = useState('');
 
   const getHelpTypeIcon = (helpType: string) => {
     const type = helpType?.toUpperCase() || '';
@@ -1193,7 +1209,41 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   };
 
   const handleUpdate = (requestId: string) => {
-    navigate(`/help-requests/${requestId}?action=update`);
+    const request = requests.find(r => r.id === requestId);
+    if (request) {
+      setRequestToUpdate(request);
+      setUpdateStatus(request.status || '');
+      setUpdateNotes('');
+      setShowUpdateModal(true);
+    }
+  };
+
+  const handleCloseUpdateModal = () => {
+    setShowUpdateModal(false);
+    setRequestToUpdate(null);
+    setUpdateNotes('');
+    setUpdateStatus('');
+  };
+
+  const handleUpdateSubmit = async () => {
+    if (!requestToUpdate) return;
+
+    try {
+      if (updateStatus && updateStatus !== requestToUpdate.status) {
+        await helpRequestService.updateStatus(requestToUpdate.id, updateStatus);
+      }
+
+      if (updateNotes.trim()) {
+        await helpRequestService.updateNotes(requestToUpdate.id, updateNotes);
+      }
+
+      handleCloseUpdateModal();
+      onRefresh(); // Refresh the list
+      alert('Request updated successfully');
+    } catch (error) {
+      console.error('Error updating request:', error);
+      alert('Failed to update request');
+    }
   };
 
   // Calculate statistics
@@ -1213,9 +1263,37 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   ).length;
 
   // Pagination
+  // Sort requests: Pending/Active first, then Completed/Rejected
+  const sortedRequests = [...requests].sort((a, b) => {
+    const statusPriority: Record<string, number> = {
+      'ASSIGNED': 1,
+      'UNDER_REVIEW': 2,
+      'REQUESTED': 3,
+      'IN_PROGRESS': 4,
+      'COMPLETED': 8,
+      'REJECTED': 9,
+      'CANCELLED': 10
+    };
+
+    const getPriority = (status: string) => statusPriority[status?.toUpperCase()] || 5;
+
+    const priorityA = getPriority(a.status);
+    const priorityB = getPriority(b.status);
+
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // Secondary sort: Date (newest first)
+    const dateA = new Date(a.requestDate || a.createdAt || 0).getTime();
+    const dateB = new Date(b.requestDate || b.createdAt || 0).getTime();
+    return dateB - dateA;
+  });
+
+  // Pagination
   const indexOfLastRequest = currentPage * requestsPerPage;
   const indexOfFirstRequest = indexOfLastRequest - requestsPerPage;
-  const currentRequests = requests.slice(indexOfFirstRequest, indexOfLastRequest);
+  const currentRequests = sortedRequests.slice(indexOfFirstRequest, indexOfLastRequest);
   const totalPages = Math.ceil(requests.length / requestsPerPage);
 
   const getStatusDisplay = (status: string, priority?: string) => {
@@ -1319,7 +1397,7 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
 
       <div className="requests-table-wrapper">
         <div className="requests-table-header">
-          <h3>REQUEST TABLE</h3>
+          <h3>ALL REQUESTS</h3>
         </div>
         {currentRequests.length === 0 ? (
           <div className="no-requests">
@@ -1428,6 +1506,8 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
                               ✅ Complete
                             </button>
                           </>
+                        ) : request.status === 'REJECTED' || request.status === 'CANCELLED' ? (
+                          <span className="text-muted small">No actions available</span>
                         ) : (
                           <>
                             <button
@@ -1471,8 +1551,9 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
               })}
             </tbody>
           </table>
-        )}
-      </div>
+        )
+        }
+      </div >
 
       <div className="requests-statistics">
         <div className="statistics-header">
@@ -1501,87 +1582,147 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
           </div>
         </div>
         <div className="statistics-footer">
-          <button className="analytics-btn">View Detailed Analytics →</button>
+          <button className="analytics-btn" onClick={onAnalyticsClick}>View Detailed Analytics →</button>
         </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="pagination">
-          <span className="pagination-info">
-            Page {currentPage} of {totalPages}
-          </span>
-          <div className="page-numbers">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                className={`page-number ${currentPage === page ? 'active' : ''}`}
-                onClick={() => onPageChange(page)}
-              >
-                {page}
-              </button>
-            ))}
+      {
+        totalPages > 1 && (
+          <div className="pagination">
+            <span className="pagination-info">
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="page-numbers">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  className={`page-number ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => onPageChange(page)}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            <button
+              className="page-btn"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+            >
+              →
+            </button>
           </div>
-          <button
-            className="page-btn"
-            disabled={currentPage === totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
-          >
-            →
-          </button>
-        </div>
-      )}
+        )
+      }
 
       {/* Request Details Modal */}
-      {showDetailsModal && (
-        <RequestDetailsModal
-          request={requestDetails || selectedRequest}
-          loading={loadingDetails}
-          onClose={handleCloseModal}
-          onAccept={handleAccept}
-          onReject={handleReject}
-          onTransfer={handleTransfer}
-        />
-      )}
+      {
+        showDetailsModal && (
+          <RequestDetailsModal
+            request={requestDetails || selectedRequest}
+            loading={loadingDetails}
+            onClose={handleCloseModal}
+            onAccept={handleAccept}
+            onReject={handleReject}
+            onTransfer={handleTransfer}
+          />
+        )
+      }
 
       {/* Reject Request Modal */}
-      {showRejectModal && (
-        <div className="modal-overlay" onClick={cancelReject}>
-          <div className="new-transfer-modal rejection-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className="modal-header-new" style={{ background: '#fff5f5' }}>
-              <h2 className="modal-title-new" style={{ color: '#c53030' }}>
-                ❌ REJECT REQUEST
-              </h2>
-              <p className="modal-subtitle-new" style={{ color: '#e53e3e' }}>
-                Please provide a reason for rejecting this request
+      {
+        showRejectModal && (
+          <div className="modal-overlay" onClick={cancelReject}>
+            <div className="new-transfer-modal rejection-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+              <div className="modal-header-new" style={{ background: '#fff5f5' }}>
+                <h2 className="modal-title-new" style={{ color: '#c53030' }}>
+                  ❌ REJECT REQUEST
+                </h2>
+                <p className="modal-subtitle-new" style={{ color: '#e53e3e' }}>
+                  Please provide a reason for rejecting this request
+                </p>
+              </div>
+
+              <div className="modal-content-new">
+                <div className="transfer-step">
+                  <div className="step-content">
+                    <label className="form-label">Reason for Rejection *</label>
+                    <textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="E.g., Out of service area, Duplicate request, Capacity reached..."
+                      className="reason-textarea"
+                      rows={4}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer-new">
+                <button className="back-btn" onClick={cancelReject}>
+                  Cancel
+                </button>
+                <button
+                  className="submit-transfer-btn"
+                  onClick={confirmReject}
+                  style={{ background: '#c53030', borderColor: '#c53030' }}
+                >
+                  Confirm Rejection
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Update Request Modal */}
+      {showUpdateModal && (
+        <div className="modal-overlay" onClick={handleCloseUpdateModal}>
+          <div className="new-transfer-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header-new">
+              <h2 className="modal-title-new">📝 UPDATE REQUEST</h2>
+              <p className="modal-subtitle-new">
+                Update status and notes for {requestToUpdate?.trackingId || requestToUpdate?.id}
               </p>
             </div>
-
             <div className="modal-content-new">
               <div className="transfer-step">
                 <div className="step-content">
-                  <label className="form-label">Reason for Rejection *</label>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="E.g., Out of service area, Duplicate request, Capacity reached..."
-                    className="reason-textarea"
-                    rows={4}
-                    autoFocus
-                  />
+                  <div className="form-group mb-3">
+                    <label className="form-label">Status</label>
+                    <select
+                      className="form-input"
+                      value={updateStatus}
+                      onChange={(e) => setUpdateStatus(e.target.value)}
+                    >
+                      <option value="ASSIGNED">ASSIGNED (Pending)</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS (Active)</option>
+                      <option value="COMPLETED">COMPLETED (Finished)</option>
+                      <option value="CANCELLED">CANCELLED (Closed)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Update Notes</label>
+                    <textarea
+                      className="form-input"
+                      value={updateNotes}
+                      onChange={(e) => setUpdateNotes(e.target.value)}
+                      placeholder="Enter progress notes, actions taken, or next steps..."
+                      rows={5}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-
             <div className="modal-footer-new">
-              <button className="back-btn" onClick={cancelReject}>
+              <button className="back-btn" onClick={handleCloseUpdateModal}>
                 Cancel
               </button>
               <button
                 className="submit-transfer-btn"
-                onClick={confirmReject}
-                style={{ background: '#c53030', borderColor: '#c53030' }}
+                onClick={handleUpdateSubmit}
               >
-                Confirm Rejection
+                Update Request
               </button>
             </div>
           </div>
@@ -1589,22 +1730,24 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
       )}
 
       {/* New Transfer Modal */}
-      {showTransferModal && (
-        <NewTransferModal
-          user={user}
-          initialRequestId={transferRequestId}
-          onClose={() => {
-            setShowTransferModal(false);
-            setTransferRequestId(null);
-          }}
-          onSuccess={() => {
-            setShowTransferModal(false);
-            setTransferRequestId(null);
-            onRefresh();
-          }}
-        />
-      )}
-    </div>
+      {
+        showTransferModal && (
+          <NewTransferModal
+            user={user}
+            initialRequestId={transferRequestId}
+            onClose={() => {
+              setShowTransferModal(false);
+              setTransferRequestId(null);
+            }}
+            onSuccess={() => {
+              setShowTransferModal(false);
+              setTransferRequestId(null);
+              onRefresh();
+            }}
+          />
+        )
+      }
+    </div >
   );
 };
 
@@ -3084,9 +3227,9 @@ const NewTransferModal: React.FC<NewTransferModalProps> = ({
       setActiveRequests(active);
 
       // Fetch social workers
-      const workersResponse = await adminService.getSocialWorkers();
-      const workers = (workersResponse || []).filter((w: any) => w.userId !== user.id);
-      setSocialWorkers(workers);
+      const workers = await transferService.getAvailableSocialWorkers();
+      const filtered = (workers || []).filter((w: any) => w.userId !== user.id);
+      setSocialWorkers(filtered);
     } catch (error) {
       console.error('Error fetching data for transfer:', error);
     } finally {
@@ -3491,11 +3634,21 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
                       {isAnonymous ? (
                         <span className="text-muted">Anonymous (Details Hidden)</span>
                       ) : (
-                        <span>
-                          {requestDetails?.requesterName || requestDetails?.requesterInfo?.name || 'N/A'}
-                          {requesterContact && <span className="text-small text-muted d-block">📞 {requesterContact}</span>}
-                          {requesterAddress && <span className="text-small text-muted d-block">📍 {requesterAddress}</span>}
-                        </span>
+                        <div className="requester-details">
+                          <div className="fw-bold mb-1">
+                            {requestDetails?.requesterName || requestDetails?.requesterInfo?.name || requestDetails?.requester?.name || 'Name not provided'}
+                          </div>
+
+                          <div className="d-flex align-items-center mb-1 text-muted small">
+                            <i className="bi bi-telephone me-2"></i>
+                            {requestDetails?.requesterContact || requestDetails?.requesterInfo?.contact || requestDetails?.requester?.email || 'Contact not provided'}
+                          </div>
+
+                          <div className="d-flex align-items-center text-muted small">
+                            <i className="bi bi-geo-alt me-2"></i>
+                            {requestDetails?.requesterAddress || requestDetails?.requesterInfo?.address || requestDetails?.requester?.address || 'Address not provided'}
+                          </div>
+                        </div>
                       )}
                     </span>
                   </div>
@@ -3507,12 +3660,7 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
                     <span className="info-label-new">📝 Description:</span>
                     <span className="info-value-new">{requestDetails?.description || 'No description provided'}</span>
                   </div>
-                  <div className="info-item-new">
-                    <span className="info-label-new">⚠️ Risk Level:</span>
-                    <span className="info-value-new">
-                      {isUrgent ? 'HIGH - Homelessness imminent' : (requestDetails?.riskLevel || 'MEDIUM')}
-                    </span>
-                  </div>
+
                 </div>
               </div>
 

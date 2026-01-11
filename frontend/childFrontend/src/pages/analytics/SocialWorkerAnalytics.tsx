@@ -145,7 +145,7 @@ const SocialWorkerAnalytics: React.FC = () => {
         })).sort((a, b) => b.value - a.value);
     }, [filteredData]);
 
-    const COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1'];
+    const COLORS = ['#0d9488', '#0f766e', '#2dd4bf', '#5eead4', '#134e4a'];
 
     const getPeakDate = () => {
         if (trendData.length === 0) return "N/A";
@@ -220,8 +220,8 @@ const SocialWorkerAnalytics: React.FC = () => {
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
                                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Line type="monotone" dataKey="assigned" name="Assigned" stroke="#0d6efd" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                    <Line type="monotone" dataKey="completed" name="Completed" stroke="#198754" strokeWidth={3} dot={{ r: 4 }} />
+                                    <Line type="monotone" dataKey="assigned" name="Assigned" stroke="#0d9488" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="completed" name="Completed" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 4 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>

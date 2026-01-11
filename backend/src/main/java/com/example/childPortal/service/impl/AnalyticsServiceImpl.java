@@ -306,38 +306,22 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         @Override
         public UserStatisticsDTO getUserStatistics() {
-                List<User> allUsers = userRepository.findAll();
-
                 UserStatisticsDTO dto = new UserStatisticsDTO();
-                dto.setTotalUsers(allUsers.size());
-                dto.setActiveUsers((long) allUsers.stream()
-                                .filter(User::isActive)
-                                .count());
-                dto.setPendingUsers((long) allUsers.stream()
-                                .filter(u -> !u.isApproved())
-                                .count());
-                dto.setSuspendedUsers((long) allUsers.stream()
-                                .filter(u -> !u.isActive())
-                                .count());
+                dto.setTotalUsers(userRepository.count());
+                dto.setActiveUsers(userRepository.countByActive(true));
+                dto.setPendingUsers(userRepository.countByApproved(false));
+                dto.setSuspendedUsers(userRepository.countByActive(false));
 
-                Map<String, Long> usersByRole = allUsers.stream()
-                                .collect(Collectors.groupingBy(
-                                                u -> u.getRole() != null ? u.getRole().name() : "UNKNOWN",
-                                                Collectors.counting()));
+                Map<String, Long> usersByRole = new HashMap<>();
+                for (Role role : Role.values()) {
+                        usersByRole.put(role.name(), userRepository.countByRole(role));
+                }
                 dto.setUsersByRole(usersByRole);
 
-                dto.setTotalPoliceOfficers((long) allUsers.stream()
-                                .filter(u -> u.getRole() == Role.PO)
-                                .count());
-                dto.setTotalSocialWorkers((long) allUsers.stream()
-                                .filter(u -> u.getRole() == Role.SW)
-                                .count());
-                dto.setTotalPublicUsers((long) allUsers.stream()
-                                .filter(u -> u.getRole() == Role.PU)
-                                .count());
-                dto.setTotalAdmins((long) allUsers.stream()
-                                .filter(u -> u.getRole() == Role.ADMIN)
-                                .count());
+                dto.setTotalPoliceOfficers(usersByRole.getOrDefault("PO", 0L));
+                dto.setTotalSocialWorkers(usersByRole.getOrDefault("SW", 0L));
+                dto.setTotalPublicUsers(usersByRole.getOrDefault("PU", 0L));
+                dto.setTotalAdmins(usersByRole.getOrDefault("ADMIN", 0L));
 
                 return dto;
         }
@@ -600,37 +584,28 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         @Override
         public DashboardMetricsDTO getDashboardMetrics() {
-                List<Case> allCases = caseRepository.findAll();
-                List<HelpRequest> allRequests = helpRequestRepository.findAll();
-                List<User> allUsers = userRepository.findAll();
-
                 DashboardMetricsDTO dto = new DashboardMetricsDTO();
-                dto.setTotalCases(allCases.size());
-                dto.setActiveCases((long) allCases.stream()
-                                .filter(c -> c.getStatus() == CaseStatus.ASSIGNED ||
-                                                c.getStatus() == CaseStatus.INVESTIGATING ||
-                                                c.getStatus() == CaseStatus.UNDER_REVIEW)
-                                .count());
-                dto.setEmergencyCases((long) allCases.stream()
-                                .filter(Case::isEmergency)
-                                .count());
-                dto.setTotalHelpRequests(allRequests.size());
-                dto.setPendingHelpRequests((long) allRequests.stream()
-                                .filter(r -> r.getStatus() == RequestStatus.REQUESTED ||
-                                                r.getStatus() == RequestStatus.UNDER_REVIEW)
-                                .count());
-                dto.setTotalUsers(allUsers.size());
-                dto.setPendingApprovals((long) allUsers.stream()
-                                .filter(u -> !u.isApproved())
-                                .count());
+                dto.setTotalCases(caseRepository.count());
+                dto.setActiveCases(caseRepository.countByStatusIn(Arrays.asList(
+                                CaseStatus.ASSIGNED,
+                                CaseStatus.INVESTIGATING,
+                                CaseStatus.UNDER_REVIEW)));
+                dto.setEmergencyCases(caseRepository.countByEmergency(true));
+                dto.setTotalHelpRequests(helpRequestRepository.count());
+                dto.setPendingHelpRequests(helpRequestRepository.countByStatusIn(Arrays.asList(
+                                RequestStatus.REQUESTED,
+                                RequestStatus.UNDER_REVIEW)));
+                dto.setTotalUsers(userRepository.count());
+                dto.setPendingApprovals(userRepository.countByApproved(false));
 
-                List<Case> resolvedCases = allCases.stream()
-                                .filter(c -> c.getStatus() == CaseStatus.RESOLVED || c.getStatus() == CaseStatus.CLOSED)
-                                .filter(c -> c.getReportDate() != null && c.getResolutionDate() != null)
-                                .collect(Collectors.toList());
+                long resolvedCount = caseRepository.countByStatus(CaseStatus.RESOLVED)
+                                + caseRepository.countByStatus(CaseStatus.CLOSED);
+                dto.setResolvedCases(resolvedCount);
 
-                if (!resolvedCases.isEmpty()) {
-                        double avgResponseTime = resolvedCases.stream()
+                List<Case> resolvedCaseList = caseRepository.findByStatus(CaseStatus.RESOLVED);
+                if (!resolvedCaseList.isEmpty()) {
+                        double avgResponseTime = resolvedCaseList.stream()
+                                        .filter(c -> c.getReportDate() != null && c.getResolutionDate() != null)
                                         .mapToLong(c -> ChronoUnit.HOURS.between(c.getReportDate(),
                                                         c.getResolutionDate()))
                                         .average()
@@ -640,24 +615,52 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                         dto.setAverageResponseTime(0.0);
                 }
 
-                long totalCases = allCases.size();
-                long resolved = resolvedCases.size();
-                dto.setCaseResolutionRate(totalCases > 0 ? (double) resolved / totalCases * 100 : 0.0);
-
-                Map<String, Long> casesByStatus = allCases.stream()
-                                .collect(Collectors.groupingBy(
-                                                c -> c.getStatus() != null ? c.getStatus().name() : "UNKNOWN",
-                                                Collectors.counting()));
-                dto.setCasesByStatus(casesByStatus);
-
-                Map<String, Long> helpRequestsByType = allRequests.stream()
-                                .collect(Collectors.groupingBy(
-                                                r -> r.getHelpType() != null ? r.getHelpType().name() : "UNKNOWN",
-                                                Collectors.counting()));
-                dto.setHelpRequestsByType(helpRequestsByType);
+                long totalCases = dto.getTotalCases();
+                dto.setCaseResolutionRate(totalCases > 0 ? (double) resolvedCount / totalCases * 100 : 0.0);
 
                 dto.setLastUpdated(LocalDateTime.now());
+                return dto;
+        }
 
+        @Override
+        public AdminDashboardOverviewDTO getAdminDashboardOverview() {
+                AdminDashboardOverviewDTO overview = new AdminDashboardOverviewDTO();
+                overview.setMetrics(getDashboardMetrics());
+
+                List<Case> recentCases = caseRepository.findTop5ByOrderByReportDateDesc();
+                overview.setRecentCases(recentCases.stream().map(this::mapToCaseDTO).collect(Collectors.toList()));
+
+                List<HelpRequest> recentRequests = helpRequestRepository.findTop5ByOrderByRequestDateDesc();
+                overview.setRecentHelpRequests(
+                                recentRequests.stream().map(this::mapToHelpRequestDTO).collect(Collectors.toList()));
+
+                return overview;
+        }
+
+        private CaseDTO mapToCaseDTO(Case c) {
+                CaseDTO dto = new CaseDTO();
+                dto.setId(c.getId());
+                dto.setTrackingId(c.getTrackingId());
+                dto.setCaseType(c.getCaseType());
+                dto.setLocation(c.getLocation());
+                dto.setPriority(c.getPriority());
+                dto.setStatus(c.getStatus());
+                dto.setAssignedOfficerId(c.getAssignedOfficerId());
+                dto.setAssignedWorkerId(c.getAssignedWorkerId());
+                dto.setReportDate(c.getReportDate());
+                return dto;
+        }
+
+        private HelpRequestDTO mapToHelpRequestDTO(HelpRequest hr) {
+                HelpRequestDTO dto = new HelpRequestDTO();
+                dto.setId(hr.getId());
+                dto.setTrackingId(hr.getTrackingId());
+                dto.setHelpType(hr.getHelpType());
+                dto.setPriority(hr.getPriority());
+                dto.setStatus(hr.getStatus());
+                dto.setAssignedWorkerId(hr.getAssignedWorkerId());
+                dto.setRequestDate(hr.getRequestDate());
+                dto.setApproximateAge(hr.getApproximateAge());
                 return dto;
         }
 

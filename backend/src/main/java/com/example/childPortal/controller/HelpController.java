@@ -104,6 +104,16 @@ public class HelpController {
         return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/{requestId}/notes")
+    public ResponseEntity<HelpRequestDTO> updateHelpRequestNotes(
+            @PathVariable String requestId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String notes = body.getOrDefault("notes", "");
+        HelpRequestDTO updatedRequest = helpRequestService.updateHelpRequestNotes(requestId, notes, userId);
+        return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+    }
+
     @DeleteMapping("/{requestId}")
     public ResponseEntity<String> deleteHelpRequest(@PathVariable String requestId) {
         boolean deleted = helpRequestService.deleteHelpRequest(requestId);

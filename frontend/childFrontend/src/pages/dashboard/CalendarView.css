@@ -43,9 +43,9 @@
 }
 
 .cal-nav-btn.active {
-    background-color: #0d6efd;
+    background-color: #0d9488;
     color: white;
-    border-color: #0d6efd;
+    border-color: #0d9488;
 }
 
 .calendar-grid {
@@ -87,8 +87,8 @@
 }
 
 .day-date.today {
-    color: #0d6efd;
-    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d9488;
+    background-color: rgba(13, 148, 136, 0.1);
     display: inline-block;
     padding: 0 0.5rem;
     border-radius: 50%;
@@ -178,9 +178,9 @@
 }
 
 .event-Low {
-    background-color: #d1e7dd;
-    border-left-color: #198754;
-    color: #0f5132;
+    background-color: #ccfbf1;
+    border-left-color: #0d9488;
+    color: #0f766e;
 }
 
 .event-Completed {

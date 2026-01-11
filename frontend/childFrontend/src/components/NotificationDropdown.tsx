@@ -35,20 +35,20 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const getNotificationIcon = (type: string, message: string): string => {
     const typeUpper = (type || '').toUpperCase();
     const messageUpper = (message || '').toUpperCase();
-    
+
     if (typeUpper.includes('CASE') || messageUpper.includes('CASE') || messageUpper.includes('ASSIGNED')) return '⚡';
     if (typeUpper.includes('MESSAGE') || messageUpper.includes('MESSAGE')) return '📝';
     if (typeUpper.includes('UPDATE') || messageUpper.includes('STATUS') || messageUpper.includes('CHANGED')) return '✅';
     if (typeUpper.includes('TRANSFER') || messageUpper.includes('TRANSFERRED')) return '🔄';
     if (typeUpper.includes('REMINDER') || messageUpper.includes('FEEDBACK')) return '⭐';
     if (typeUpper.includes('HELP_REQUEST') || messageUpper.includes('HELP')) return '❤️';
-    
+
     return '🔔';
   };
 
   const formatNotificationTime = (timestamp: string): string => {
     if (!timestamp) return '';
-    
+
     const now = new Date();
     const notificationDate = new Date(timestamp);
     const diffInMs = now.getTime() - notificationDate.getTime();
@@ -72,7 +72,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   const getNotificationPrefix = (timestamp: string, read: boolean): string => {
     if (!read) return 'NEW';
-    
+
     const now = new Date();
     const notificationDate = new Date(timestamp);
     const diffInMs = now.getTime() - notificationDate.getTime();
@@ -85,15 +85,15 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   const extractIds = (message: string, title: string): { caseId?: string; helpRequestId?: string; trackingId?: string } => {
     const combined = `${title} ${message}`;
-    
+
     // Extract CASE-XXXX or CASE_XXXX (case insensitive)
     const caseMatch = combined.match(/CASE[-_]?(\w+)/i);
     const caseId = caseMatch ? caseMatch[0].toUpperCase() : undefined;
-    
+
     // Extract HELP-XXXX or HELP_REQUEST-XXXX
     const helpMatch = combined.match(/HELP[-_]?(\w+)/i);
     const helpRequestId = helpMatch ? helpMatch[0].toUpperCase() : undefined;
-    
+
     return { caseId, helpRequestId, trackingId: caseId || helpRequestId };
   };
 
@@ -101,7 +101,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     const { caseId, helpRequestId } = extractIds(notification.message, notification.title);
     const typeUpper = (notification.type || '').toUpperCase();
     const messageUpper = (notification.message || '').toUpperCase();
-    
+
     if (caseId) {
       const caseIdOnly = caseId.replace(/CASE[-_]?/i, '');
       if (messageUpper.includes('FEEDBACK') || messageUpper.includes('REMINDER')) {
@@ -112,16 +112,16 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       }
       return { label: 'View Case', path: `/cases/${caseIdOnly}` };
     }
-    
+
     if (helpRequestId) {
       const helpIdOnly = helpRequestId.replace(/HELP[-_]?/i, '');
       return { label: 'View Request', path: `/help-requests/${helpIdOnly}` };
     }
-    
+
     if (typeUpper.includes('MESSAGE') || messageUpper.includes('MESSAGE')) {
       return { label: 'Read Message', path: '/messages' };
     }
-    
+
     return null;
   };
 
@@ -129,7 +129,15 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     if (!notification.read) {
       onMarkAsRead(notification.id);
     }
-    
+
+    // Priority 1: Use direct actionUrl if provided by backend
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+      onToggle(false);
+      return;
+    }
+
+    // Priority 2: Try to extract ID and use inferred path
     const action = getNotificationAction(notification);
     if (action) {
       navigate(action.path);
@@ -169,7 +177,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             </Button>
           )}
         </div>
-        
+
         <div className="notification-list-container">
           {notifications.length > 0 ? (
             <div className="notification-list">
@@ -177,7 +185,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 const prefix = getNotificationPrefix(notification.createdAt, notification.read);
                 const icon = getNotificationIcon(notification.type || '', notification.message);
                 const action = getNotificationAction(notification);
-                
+
                 return (
                   <div
                     key={notification.id}
@@ -220,10 +228,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             <div className="notification-empty">No notifications</div>
           )}
         </div>
-        
+
         <div className="notification-footer">
-          <Link 
-            to="/notifications" 
+          <Link
+            to="/notifications"
             className="see-all-link"
             onClick={() => onToggle(false)}
           >

@@ -130,9 +130,15 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Override
     public HelpRequestDTO getHelpRequestById(String requestId) {
-        return helpRequestRepository.findById(requestId)
-                .map(this::convertToFilteredDTO)
-                .orElse(null);
+        // Try finding by ID first (UUID)
+        Optional<HelpRequest> request = helpRequestRepository.findById(requestId);
+
+        // If not found, try finding by trackingId as a fallback
+        if (request.isEmpty()) {
+            request = helpRequestRepository.findByTrackingId(requestId);
+        }
+
+        return request.map(this::convertToFilteredDTO).orElse(null);
     }
 
     @Override

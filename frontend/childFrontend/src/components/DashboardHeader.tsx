@@ -25,6 +25,7 @@ interface Notification {
   read: boolean;
   createdAt: string;
   type?: string;
+  actionUrl?: string;
 }
 
 interface UserProfile {
@@ -192,7 +193,6 @@ const DashboardHeader: React.FC = () => {
 
         // Calculate new cases today from casesByStatus if available
         if (dashboardData.casesByStatus) {
-          const today = new Date().toISOString().split('T')[0];
           // This is an approximation - backend should provide this
           newCasesToday = 0;
         }
@@ -256,24 +256,6 @@ const DashboardHeader: React.FC = () => {
     }
   };
 
-  const formatNotificationTime = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return date.toLocaleDateString();
-    } catch {
-      return dateString;
-    }
-  };
 
   const formatLastLogin = (dateString?: string) => {
     if (!dateString) return 'Never';

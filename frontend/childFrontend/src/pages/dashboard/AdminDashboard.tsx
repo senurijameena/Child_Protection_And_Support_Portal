@@ -24,6 +24,7 @@ interface DashboardStats {
   socialWorkers: number;
   pendingApprovals: number;
   pendingTransfers: number;
+  totalPublicUsers: number;
 }
 
 interface RecentCase {
@@ -81,7 +82,9 @@ const AdminDashboard: React.FC = () => {
     policeOfficers: 0,
     socialWorkers: 0,
     pendingApprovals: 0,
-    pendingTransfers: 0
+    pendingApprovals: 0,
+    pendingTransfers: 0,
+    totalPublicUsers: 0
   });
 
   const [dateFilter, setDateFilter] = useState('today');
@@ -253,9 +256,10 @@ const AdminDashboard: React.FC = () => {
       // 2. Process Extra Stats (if available)
       if (caseStats.status === 'fulfilled' && caseStats.value.data) {
         const caseData = caseStats.value.data;
+        const totalClosed = (caseData.resolvedCases || 0) + (caseData.closedCases || 0);
         setStats(prev => ({
           ...prev,
-          closedCases: caseData.resolvedCases || prev.closedCases
+          closedCases: totalClosed || prev.closedCases
         }));
       }
 
@@ -263,8 +267,10 @@ const AdminDashboard: React.FC = () => {
         const usrData = userStats.value.data;
         setStats(prev => ({
           ...prev,
-          policeOfficers: usrData.policeOfficers || usrData.policeCount || 0,
-          socialWorkers: usrData.socialWorkers || usrData.socialWorkerCount || 0
+          policeOfficers: usrData.totalPoliceOfficers || usrData.policeCount || 0,
+          socialWorkers: usrData.totalSocialWorkers || usrData.socialWorkerCount || 0,
+          totalPublicUsers: usrData.totalPublicUsers || 0,
+          totalUsers: usrData.totalUsers || 0
         }));
       }
 
@@ -433,7 +439,7 @@ const AdminDashboard: React.FC = () => {
           <Card className="stat-card stat-card-blue" onClick={() => navigate('/admin/users/public')} style={{ cursor: 'pointer' }}>
             <Card.Body>
               <div className="stat-icon">👥</div>
-              <Card.Title className="stat-value">{(stats.totalUsers - stats.policeOfficers - stats.socialWorkers).toLocaleString()}</Card.Title>
+              <Card.Title className="stat-value">{stats.totalPublicUsers.toLocaleString()}</Card.Title>
               <Card.Text className="stat-label">Public Users</Card.Text>
             </Card.Body>
           </Card>

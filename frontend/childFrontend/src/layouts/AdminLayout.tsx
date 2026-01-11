@@ -12,12 +12,12 @@ const AdminLayout: React.FC = () => {
       <DashboardHeader />
       <Container fluid className="dashboard-container">
         <Row>
-          <Col lg={3} xl={2} className="sidebar-column">
+          <Col lg={3} xl={3} className="sidebar-column">
             <SidebarNavigation userType="ADMIN" />
           </Col>
           
           {}
-          <Col lg={9} xl={10} className="main-content-column">
+          <Col lg={9} xl={9} className="main-content-column">
             <div className="dashboard-content">
               <Outlet />
             </div>

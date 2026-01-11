@@ -442,7 +442,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({ userType }) => {
                   width: '50px',
                   height: '50px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #1a237e, #3949ab)',
+                  background: 'linear-gradient(135deg, #0d9488, #0f766e)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

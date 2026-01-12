@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface HelpRequestRepository extends MongoRepository<HelpRequest, String> {
@@ -39,5 +40,5 @@ public interface HelpRequestRepository extends MongoRepository<HelpRequest, Stri
     @Query("{ 'trackingId': { $regex: ?0, $options: 'i' } }")
     List<HelpRequest> findByTrackingIdStartingWith(String prefix);
 
-    java.util.Optional<HelpRequest> findByTrackingId(String trackingId);
+    Optional<HelpRequest> findByTrackingId(String trackingId);
 }

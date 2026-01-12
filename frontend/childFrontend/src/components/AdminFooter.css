@@ -1,13 +1,13 @@
 .admin-footer {
-  background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 50%, #8e24aa 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
   color: #ffffff;
-  border-top: 3px solid #ba68c8;
+  border-top: 3px solid #ccfbf1;
   margin-top: auto;
-  box-shadow: 0 -4px 15px rgba(106, 27, 154, 0.2);
+  box-shadow: 0 -4px 15px rgba(13, 148, 136, 0.15);
 }
 
 .admin-footer-title {
-  color: #ffd54f;
+  color: #ccfbf1;
   font-weight: 600;
   font-size: 0.95rem;
   text-transform: uppercase;
@@ -37,7 +37,8 @@
 }
 
 .admin-footer-link:hover {
-  color: #ffd54f;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
   text-decoration: none;
 }
 
@@ -69,17 +70,17 @@
 }
 
 .admin-footer-support strong {
-  color: #ffd54f;
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .admin-footer-security {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.1);
   padding: 0.75rem;
   border-radius: 6px;
-  border-left: 3px solid #ffd54f;
+  border-left: 3px solid #3A7CA5;
 }
 
 .admin-footer-bottom {
@@ -94,7 +95,7 @@
 }
 
 .admin-footer-bottom strong {
-  color: #ffd54f;
+  color: #ffffff;
 }
 
 .admin-footer-legal {
@@ -113,7 +114,7 @@
 
 .admin-footer-legal .admin-footer-link:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: #ffd54f;
+  color: #ffffff;
 }
 
 

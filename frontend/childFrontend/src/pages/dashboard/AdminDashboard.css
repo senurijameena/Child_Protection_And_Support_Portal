@@ -6,6 +6,7 @@
   position: relative;
   z-index: 1;
   overflow-x: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .dashboard-header {

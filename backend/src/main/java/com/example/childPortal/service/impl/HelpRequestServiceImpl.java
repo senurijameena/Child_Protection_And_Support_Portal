@@ -130,14 +130,14 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Override
     public HelpRequestDTO getHelpRequestById(String requestId) {
-        // Try to find by MongoDB ID first
-        java.util.Optional<HelpRequest> request = helpRequestRepository.findById(requestId);
-        
-        // If not found, try to find by Tracking ID (common in mockup data)
-        if (!request.isPresent()) {
+        // Try finding by ID first (UUID)
+        Optional<HelpRequest> request = helpRequestRepository.findById(requestId);
+
+        // If not found, try finding by trackingId as a fallback
+        if (request.isEmpty()) {
             request = helpRequestRepository.findByTrackingId(requestId);
         }
-        
+
         return request.map(this::convertToFilteredDTO).orElse(null);
     }
 

@@ -5,6 +5,7 @@ import { helpRequestService } from '../../services/helpRequestService';
 import { serviceOfferService } from '../../services/serviceOfferService';
 import { timelineService } from '../../services/timelineService';
 import { formatTrackingId, formatHelpRequestId } from '../../utils/trackingIdFormatter';
+import { authService } from '../../services/authService';
 import './HelpRequestDetailsPage.css';
 
 interface HelpRequestDetails {
@@ -69,6 +70,8 @@ interface TimelineEvent {
 const HelpRequestDetailsPage: React.FC = () => {
   const { requestId } = useParams<{ requestId: string }>();
   const navigate = useNavigate();
+  const currentUser = authService.getCurrentUser();
+  const backPath = currentUser?.role === 'ADMIN' ? '/admin/dashboard' : '/help-requests/my-requests';
   const [helpRequest, setHelpRequest] = useState<HelpRequestDetails | null>(null);
   const [serviceOffer, setServiceOffer] = useState<ServiceOffer | null>(null);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
@@ -414,8 +417,8 @@ const HelpRequestDetailsPage: React.FC = () => {
           )}
         </Alert>
         <div className="text-center mt-3">
-          <Button variant="primary" onClick={() => navigate('/help-requests/my-requests')} className="me-2">
-            ← Back to My Requests
+          <Button variant="primary" onClick={() => navigate(backPath)} className="me-2">
+            ← Back
           </Button>
           {requestId && (
             <Button variant="outline-primary" onClick={() => {
@@ -436,8 +439,8 @@ const HelpRequestDetailsPage: React.FC = () => {
       <div className="help-request-details-container py-5">
         <Alert variant="info" className="text-center">No help request details available.</Alert>
         <div className="text-center">
-          <Button variant="primary" onClick={() => navigate('/help-requests/my-requests')}>
-            ← Back to My Requests
+          <Button variant="primary" onClick={() => navigate(backPath)}>
+            ← Back
           </Button>
         </div>
       </div>
@@ -460,8 +463,8 @@ const HelpRequestDetailsPage: React.FC = () => {
             'HELP'
           ) || formatHelpRequestId(helpRequest.id, helpRequest.anonymous)}
         </h2>
-        <Button variant="outline-secondary" onClick={() => navigate('/help-requests/my-requests')}>
-          ← Back to My Requests
+        <Button variant="outline-secondary" onClick={() => navigate(backPath)}>
+          ← Back
         </Button>
       </div>
 

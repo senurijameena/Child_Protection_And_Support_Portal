@@ -554,6 +554,30 @@ public class CaseServiceImpl implements CaseService {
                 .count();
     }
 
+    @Override
+    @Transactional
+    public CaseDTO addEvidenceToCase(String caseId, String evidenceUrl) {
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        if (caseOpt.isEmpty())
+            return null;
+
+        Case caseEntity = caseOpt.get();
+        List<String> evidence = caseEntity.getEvidenceUrls();
+        if (evidence == null) {
+            evidence = new ArrayList<>();
+        }
+        evidence.add(evidenceUrl);
+        caseEntity.setEvidenceUrls(evidence);
+        caseEntity.setLastUpdated(LocalDateTime.now());
+        Case updatedCase = caseRepository.save(caseEntity);
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
+    }
+
     private CaseDTO convertToFullDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());

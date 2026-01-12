@@ -503,7 +503,7 @@ const AdminDashboard: React.FC = () => {
                   xKey="type"
                   yKey="count"
                   height={280}
-                  color="#3949ab"
+                  color="#22d3ee"
                 />
               ) : (
                 <div className="text-center py-5">
@@ -526,8 +526,7 @@ const AdminDashboard: React.FC = () => {
                 variant="link"
                 size="sm"
                 onClick={() => navigate('/admin/cases/all')}
-                className="p-0 text-primary"
-                style={{ textDecoration: 'none', fontWeight: 500 }}
+                style={{ textDecoration: 'none', fontWeight: 600, color: '#1e3a8a' }}
               >
                 View All →
               </Button>
@@ -568,8 +567,7 @@ const AdminDashboard: React.FC = () => {
                             variant="link"
                             size="sm"
                             onClick={() => navigate(`/admin/cases/${c.id}`)}
-                            className="p-0 text-primary"
-                            style={{ textDecoration: 'none' }}
+                            style={{ textDecoration: 'none', fontWeight: 600, color: '#1e3a8a' }}
                           >
                             View
                           </Button>

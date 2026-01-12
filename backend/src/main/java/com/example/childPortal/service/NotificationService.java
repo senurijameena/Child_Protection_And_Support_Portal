@@ -423,4 +423,13 @@ public class NotificationService {
                     "Help Request " + trackingId + " updated to " + status, "/admin/help-requests/" + requestId);
         }
     }
+
+    public void sendNewMessageNotification(String toUserId, String fromUserId, String fromUserName,
+            String messagePreview) {
+        String title = "New Message from " + fromUserName;
+        String message = messagePreview.length() > 50 ? messagePreview.substring(0, 47) + "..." : messagePreview;
+        String actionUrl = "/messages?participantId=" + fromUserId;
+
+        logNotification(toUserId, "NEW_MESSAGE", title, message, actionUrl);
+    }
 }

@@ -146,4 +146,19 @@ export const helpRequestService = {
   // Update notes
   updateNotes: (requestId, notes) =>
     api.put(`/api/help-requests/${requestId}/notes`, { notes }),
+
+  // POST /api/help-requests/{requestId}/document - Upload document
+  uploadDocument: async (requestId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/api/help-requests/${requestId}/document`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    if (response.data) {
+      response.data = transformHelpRequestResponse(response.data);
+    }
+    return response;
+  },
 };

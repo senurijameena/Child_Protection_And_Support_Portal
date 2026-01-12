@@ -16,4 +16,7 @@ export const helpRequestService: {
   updateStatus: (requestId: string, status: string) => AxiosPromise<any>;
   assignSocialWorker: (requestId: string, workerId: string) => AxiosPromise<any>;
   deleteRequest: (requestId: string) => AxiosPromise<any>;
+  rejectRequest: (requestId: string, reason: string) => AxiosPromise<any>;
+  updateNotes: (requestId: string, notes: string) => AxiosPromise<any>;
+  uploadDocument: (requestId: string, file: File) => AxiosPromise<any>;
 };

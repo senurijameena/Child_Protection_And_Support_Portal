@@ -91,6 +91,23 @@ public class CaseController {
         return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/{caseId}/evidence")
+    public ResponseEntity<CaseDTO> uploadEvidence(
+            @PathVariable String caseId,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @AuthenticationPrincipal String userId) {
+        try {
+            // Mock file storage logic
+            String fileName = file.getOriginalFilename();
+            String evidenceUrl = "/uploads/case_evidence/" + caseId + "/" + fileName;
+
+            CaseDTO updatedCase = caseService.addEvidenceToCase(caseId, evidenceUrl);
+            return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/{caseId}")
     public ResponseEntity<String> deleteCase(@PathVariable String caseId) {
         boolean deleted = caseService.deleteCase(caseId);

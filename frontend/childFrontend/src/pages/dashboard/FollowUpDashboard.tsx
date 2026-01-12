@@ -11,7 +11,7 @@ interface FollowUp {
     childName: string;
     type: string;
     status: 'UPCOMING' | 'CONFIRMED' | 'URGENT' | 'SCHEDULED' | 'COMPLETED' | 'MISSED';
-    priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+    priority?: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
     scheduledDate: string; // ISO String for backend mapping
     timeString?: string; // Derived for display
     notes?: string;
@@ -19,7 +19,12 @@ interface FollowUp {
     socialWorkerId?: string;
 }
 
-const FollowUpDashboard: React.FC = () => {
+interface FollowUpDashboardProps {
+    initialData?: Partial<FollowUp> | null;
+    onCloseModal?: () => void;
+}
+
+const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCloseModal }) => {
     const [activeView, setActiveView] = useState<'cal' | 'list' | 'upcoming' | 'missed'>('list');
     const [todaySchedule, setTodaySchedule] = useState<FollowUp[]>([]);
     const [missedFollowUps, setMissedFollowUps] = useState<FollowUp[]>([]);
@@ -40,6 +45,21 @@ const FollowUpDashboard: React.FC = () => {
         priority: 'MEDIUM',
         status: 'UPCOMING'
     });
+
+    useEffect(() => {
+        if (initialData) {
+            setNewFollowUp(prev => ({
+                ...prev,
+                ...initialData
+            }));
+            setShowScheduleModal(true);
+        }
+    }, [initialData]);
+
+    const handleCloseInternal = () => {
+        setShowScheduleModal(false);
+        if (onCloseModal) onCloseModal();
+    };
 
     const currentUser = authService.getCurrentUser();
 
@@ -80,7 +100,7 @@ const FollowUpDashboard: React.FC = () => {
                 item.timeString = itemDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 // Categorize
-                if (itemDateStr === todayStr && item.status !== 'MISSED') {
+                if (itemDateStr === todayStr && (item.status as string) !== 'MISSED') {
                     todaysItems.push(item);
                 }
 
@@ -88,7 +108,7 @@ const FollowUpDashboard: React.FC = () => {
                 if (item.status === 'MISSED') {
                     missedItems.push(item);
                     totalPastDue++;
-                } else if (itemDate < today && item.status !== 'COMPLETED' && item.status !== 'MISSED') {
+                } else if (itemDate < today && item.status !== 'COMPLETED' && (item.status as string) !== 'MISSED') {
                     // Auto-detect missed/overdue if older than today
                     item.status = 'MISSED'; // update local representation
                     missedItems.push(item);
@@ -156,7 +176,7 @@ const FollowUpDashboard: React.FC = () => {
 
             await followUpService.createFollowUp(payload);
 
-            setShowScheduleModal(false);
+            handleCloseInternal();
             setNewFollowUp({ type: 'Home Visit', priority: 'MEDIUM' }); // Reset
             setFormDate('');
             setFormTime('');
@@ -169,12 +189,7 @@ const FollowUpDashboard: React.FC = () => {
         }
     };
 
-    const handleStatusAction = async (id: string, action: string) => {
-        // Placeholder for status updates (e.g. Complete, Missed)
-        console.log(`Action ${action} on ${id}`);
-        // In real implementation: await followUpService.updateFollowUp(id, {status: ...})
-        // fetchFollowUpData();
-    };
+    // Status action logic removed as it was unused
 
     return (
         <div className="follow-up-dashboard">
@@ -398,9 +413,10 @@ const FollowUpDashboard: React.FC = () => {
                             <div className="form-group">
                                 <label className="form-label">Priority</label>
                                 <select name="priority" className="form-control" onChange={handleInputChange} value={newFollowUp.priority}>
-                                    <option>LOW</option>
-                                    <option>MEDIUM</option>
-                                    <option>HIGH</option>
+                                    <option value="LOW">LOW</option>
+                                    <option value="MEDIUM">MEDIUM</option>
+                                    <option value="HIGH">HIGH</option>
+                                    <option value="URGENT">URGENT</option>
                                 </select>
                             </div>
                             <div className="form-group">
@@ -408,7 +424,7 @@ const FollowUpDashboard: React.FC = () => {
                                 <textarea name="notes" className="form-control" rows={3} onChange={handleInputChange}></textarea>
                             </div>
                             <div className="modal-actions">
-                                <button type="button" className="control-btn" onClick={() => setShowScheduleModal(false)}>Cancel</button>
+                                <button type="button" className="control-btn" onClick={handleCloseInternal}>Cancel</button>
                                 <button type="submit" className="control-btn schedule-btn">Schedule</button>
                             </div>
                         </form>

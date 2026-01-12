@@ -32,4 +32,6 @@ public interface HelpRequestService {
     List<HelpRequestDTO> getHelpRequestsByWorker(String workerId);
 
     HelpRequestDTO rejectHelpRequest(String requestId, String reason, String rejectedBy);
+
+    HelpRequestDTO addDocumentToHelpRequest(String requestId, String documentUrl);
 }

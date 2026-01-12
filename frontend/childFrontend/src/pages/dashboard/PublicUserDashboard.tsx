@@ -15,6 +15,7 @@ import { helpRequestService } from '../../services/helpRequestService';
 import { notificationService } from '../../services/notificationService';
 import { timelineService } from '../../services/timelineService';
 import { userService } from '../../services/userService';
+import { messageService } from '../../services/messageService';
 import './PublicUserDashboard.css';
 
 interface Case {
@@ -66,6 +67,7 @@ const PublicUserDashboard: React.FC = () => {
   const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
@@ -129,6 +131,14 @@ const PublicUserDashboard: React.FC = () => {
       } catch (err) {
         console.error('Error fetching activity:', err);
         setActivities([]);
+      }
+
+      // Fetch unread message count
+      try {
+        const messageResponse = await messageService.getUnreadCount();
+        setUnreadMessages(messageResponse.data || 0);
+      } catch (err) {
+        console.error('Error fetching unread count:', err);
       }
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
@@ -297,6 +307,46 @@ const PublicUserDashboard: React.FC = () => {
                 className="w-100"
               >
                 Request Help
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row className="mb-4">
+        <Col md={12}>
+          <Card
+            className="message-status-card"
+            style={{
+              background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer'
+            }}
+            onClick={() => navigate('/messages')}
+          >
+            <Card.Body className="d-flex justify-content-between align-items-center py-4">
+              <div className="d-flex align-items-center">
+                <div style={{ fontSize: '2.5rem', marginRight: '20px' }}>💬</div>
+                <div>
+                  <h4 className="mb-1 text-white">Direct Communication</h4>
+                  <p className="mb-0 opacity-75">
+                    {unreadMessages > 0
+                      ? `You have ${unreadMessages} unread messages from social workers.`
+                      : 'Speak directly with social workers assigned to your cases.'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="light"
+                style={{ color: '#0d9488', fontWeight: 'bold', borderRadius: '8px' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/messages');
+                }}
+              >
+                Go to Messages {unreadMessages > 0 && <Badge bg="danger" className="ms-2">{unreadMessages}</Badge>}
               </Button>
             </Card.Body>
           </Card>

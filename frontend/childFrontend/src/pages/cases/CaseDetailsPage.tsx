@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Card, 
-  Button, 
-  Row, 
-  Col, 
+import {
+  Container,
+  Card,
+  Button,
+  Row,
+  Col,
   Badge,
   Alert,
   Spinner
@@ -515,10 +515,30 @@ const CaseDetailsPage: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                    <input
+                      type="file"
+                      id="evidence-upload"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file && caseId) {
+                          try {
+                            const response = await caseService.uploadEvidence(caseId, file);
+                            if (response.data) {
+                              setCaseData(response.data);
+                              alert('Evidence uploaded successfully');
+                            }
+                          } catch (err) {
+                            console.error('Upload failed:', err);
+                            alert('Failed to upload evidence');
+                          }
+                        }
+                      }}
+                    />
                     <Button
                       variant="outline-primary"
                       size="sm"
-                      onClick={() => navigate(`/cases/${caseData.id}/upload-evidence`)}
+                      onClick={() => document.getElementById('evidence-upload')?.click()}
                     >
                       📤 Upload More Evidence
                     </Button>
@@ -542,7 +562,7 @@ const CaseDetailsPage: React.FC = () => {
                 {timeline.map((event, index) => {
                   const isTransfer = event.eventType?.toUpperCase().includes('TRANSFERRED');
                   const isAssignmentNotification = event.eventType?.toUpperCase().includes('ASSIGNMENT_NOTIFICATION');
-                  
+
                   return (
                     <div key={event.id || index} className="timeline-item mb-4">
                       <div className="timeline-time mb-2">
@@ -555,7 +575,7 @@ const CaseDetailsPage: React.FC = () => {
                           </span>
                           <strong>{getEventLabel(event.eventType)}</strong>
                         </div>
-                        
+
                         {/* Transfer Event Details */}
                         {isTransfer && (
                           <>
@@ -575,7 +595,7 @@ const CaseDetailsPage: React.FC = () => {
                             )}
                           </>
                         )}
-                        
+
                         {/* Assignment Notification Details */}
                         {isAssignmentNotification && (
                           <>
@@ -590,7 +610,7 @@ const CaseDetailsPage: React.FC = () => {
                             )}
                           </>
                         )}
-                        
+
                         {/* Regular Event Details */}
                         {!isTransfer && !isAssignmentNotification && (
                           <>

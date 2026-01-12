@@ -3,6 +3,8 @@ import { Container, Row, Col, Card, Button, Badge, InputGroup, Form, Alert, Spin
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { messageService } from '../../services/messageService';
 import { authService } from '../../services/authService';
+import { caseService } from '../../services/caseService';
+import { helpRequestService } from '../../services/helpRequestService';
 import './MessagesPage.css';
 
 interface Conversation {
@@ -36,7 +38,9 @@ const MessagesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = authService.getCurrentUser();
   const selectedParticipantId = searchParams.get('userId') || searchParams.get('participantId');
-  
+  const contextCaseId = searchParams.get('caseId');
+  const contextRequestId = searchParams.get('helpRequestId') || searchParams.get('requestId');
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -47,7 +51,7 @@ const MessagesPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
 
@@ -55,15 +59,99 @@ const MessagesPage: React.FC = () => {
     fetchConversations();
   }, []);
 
+  // Effect to handle navigation from Cases/Requests
+  useEffect(() => {
+    const loadContextData = async () => {
+      if (selectedParticipantId) return; // Already have a participant
+
+      if (contextCaseId) {
+        try {
+          const res = await caseService.getCaseById(contextCaseId);
+          const workerId = res.data?.assignedWorkerId || res.data?.assignedOfficerId;
+          const workerName = res.data?.assignedWorkerName || res.data?.assignedOfficerName || 'Assigned Officer';
+
+          if (workerId) {
+            // Check if conversation exists
+            const existing = conversations.find(c => c.participantId === workerId);
+            if (existing) {
+              setSearchParams({ userId: workerId });
+            } else {
+              // Prepare a new conversation object
+              setSelectedConversation({
+                participantId: workerId,
+                participantName: workerName,
+                participantRole: res.data?.assignedOfficerId ? 'POLICE' : 'SOCIAL_WORKER',
+                relatedCaseId: contextCaseId,
+                relatedCaseTrackingId: res.data?.trackingId
+              });
+              setMessages([]);
+            }
+          }
+        } catch (err) {
+          console.error('Error loading case for messaging:', err);
+        }
+      } else if (contextRequestId) {
+        try {
+          const res = await helpRequestService.getHelpRequest(contextRequestId);
+          const workerId = res.data?.assignedWorkerId;
+          const workerName = res.data?.assignedWorkerName || 'Assigned Worker';
+
+          if (workerId) {
+            // Check if conversation exists
+            const existing = conversations.find(c => c.participantId === workerId);
+            if (existing) {
+              setSearchParams({ userId: workerId });
+            } else {
+              // Prepare a new conversation object
+              setSelectedConversation({
+                participantId: workerId,
+                participantName: workerName,
+                participantRole: 'SOCIAL_WORKER',
+                relatedRequestId: contextRequestId,
+                relatedRequestTrackingId: res.data?.trackingId
+              });
+              setMessages([]);
+            }
+          }
+        } catch (err) {
+          console.error('Error loading help request for messaging:', err);
+        }
+      }
+    };
+
+    if (!loading) {
+      loadContextData();
+    }
+  }, [contextCaseId, contextRequestId, loading, conversations]);
+
   useEffect(() => {
     if (selectedParticipantId) {
       const conversation = conversations.find(c => c.participantId === selectedParticipantId);
       if (conversation) {
         setSelectedConversation(conversation);
         fetchMessages(conversation.participantId);
+      } else if (conversations.length > 0) {
+        // Participant not in existing conversations list - might be a new conversation
+        // we'll let the user fetch messages anyway to check if it's truly empty
+        fetchMessages(selectedParticipantId);
       }
     }
   }, [selectedParticipantId, conversations]);
+
+  // If selectedParticipantId is present but not in conversations, create a dummy conversation for it
+  useEffect(() => {
+    if (selectedParticipantId && conversations.length > 0 && !selectedConversation) {
+      const exists = conversations.some(c => c.participantId === selectedParticipantId);
+      if (!exists && !loading) {
+        // This is a new conversation
+        setSelectedConversation({
+          participantId: selectedParticipantId,
+          participantName: 'User ' + selectedParticipantId.slice(0, 5),
+          participantRole: 'USER'
+        });
+      }
+    }
+  }, [selectedParticipantId, conversations, loading, selectedConversation]);
 
   useEffect(() => {
     filterConversations();
@@ -95,7 +183,7 @@ const MessagesPage: React.FC = () => {
       const response = await messageService.getConversationMessages(participantId);
       const messagesData = Array.isArray(response.data) ? response.data : [];
       setMessages(messagesData);
-      
+
       // Mark messages as read
       const unreadMessages = messagesData.filter((m: Message) => !m.read && m.toUserId === currentUser?.id);
       for (const msg of unreadMessages) {
@@ -105,12 +193,19 @@ const MessagesPage: React.FC = () => {
           console.error('Error marking message as read:', err);
         }
       }
-      
+
       // Refresh conversations to update unread counts
-      fetchConversations();
+      // Use a separate function or only if we had unread messages to avoid infinite loops
+      if (unreadMessages.length > 0) {
+        const conversationsResponse = await messageService.getConversations();
+        setConversations(Array.isArray(conversationsResponse.data) ? conversationsResponse.data : []);
+      }
     } catch (err: any) {
       console.error('Error fetching messages:', err);
-      setError('Failed to load messages. Please try again later.');
+      // Don't show error if it's a 404/Empty conversation
+      if (err.response?.status !== 404) {
+        setError('Failed to load messages. Please try again later.');
+      }
     } finally {
       setMessagesLoading(false);
     }
@@ -121,13 +216,13 @@ const MessagesPage: React.FC = () => {
       setFilteredConversations(conversations);
       return;
     }
-    
+
     const query = searchQuery.toLowerCase();
-    const filtered = conversations.filter(c => 
+    const filtered = conversations.filter(c =>
       c.participantName.toLowerCase().includes(query) ||
-      c.lastMessage?.toLowerCase().includes(query) ||
-      c.relatedCaseTrackingId?.toLowerCase().includes(query) ||
-      c.relatedRequestTrackingId?.toLowerCase().includes(query)
+      (c.lastMessage && c.lastMessage.toLowerCase().includes(query)) ||
+      (c.relatedCaseTrackingId && c.relatedCaseTrackingId.toLowerCase().includes(query)) ||
+      (c.relatedRequestTrackingId && c.relatedRequestTrackingId.toLowerCase().includes(query))
     );
     setFilteredConversations(filtered);
   };
@@ -140,7 +235,7 @@ const MessagesPage: React.FC = () => {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || sending) return;
-    
+
     try {
       setSending(true);
       await messageService.sendConversationMessage(selectedConversation.participantId, {
@@ -148,10 +243,13 @@ const MessagesPage: React.FC = () => {
         relatedCaseId: selectedConversation.relatedCaseId,
         relatedRequestId: selectedConversation.relatedRequestId
       });
-      
+
       setNewMessage('');
       await fetchMessages(selectedConversation.participantId);
-      await fetchConversations();
+
+      // Update conversations list to show newest on top
+      const conversationsResponse = await messageService.getConversations();
+      setConversations(Array.isArray(conversationsResponse.data) ? conversationsResponse.data : []);
     } catch (err: any) {
       console.error('Error sending message:', err);
       alert(err.response?.data?.message || 'Failed to send message. Please try again.');

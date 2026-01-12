@@ -114,6 +114,23 @@ public class HelpController {
         return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/{requestId}/document")
+    public ResponseEntity<HelpRequestDTO> uploadDocument(
+            @PathVariable String requestId,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @AuthenticationPrincipal String userId) {
+        try {
+            // Mock file storage logic similar to user profile
+            String fileName = file.getOriginalFilename();
+            String documentUrl = "/uploads/documents/" + requestId + "/" + fileName;
+
+            HelpRequestDTO updatedRequest = helpRequestService.addDocumentToHelpRequest(requestId, documentUrl);
+            return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/{requestId}")
     public ResponseEntity<String> deleteHelpRequest(@PathVariable String requestId) {
         boolean deleted = helpRequestService.deleteHelpRequest(requestId);

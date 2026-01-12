@@ -93,6 +93,14 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [requestsPerPage] = useState(10);
 
+  // New States for Notes & Updates Modals
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [modalText, setModalText] = useState('');
+  const [isSubmittingModal, setIsSubmittingModal] = useState(false);
+  const [messageInitialData, setMessageInitialData] = useState<any>(null);
+  const [packageInitialRequestId, setPackageInitialRequestId] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!user?.id) return;
@@ -492,6 +500,47 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     return true;
   };
 
+  const workloadPercentage = (currentWorkload / maxWorkload) * 100;
+  const isOverloaded = currentWorkload >= maxWorkload;
+  const showWorkloadWarning = currentWorkload >= maxWorkload * 0.8;
+
+  const handleSaveNotes = async () => {
+    if (!activeRequestId || !modalText.trim()) return;
+
+    try {
+      setIsSubmittingModal(true);
+      await helpRequestService.updateNotes(activeRequestId, modalText);
+      setModalText('');
+      setShowNotesModal(false);
+      // Refresh data
+      fetchDashboardData();
+      alert('Notes saved successfully');
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      alert('Failed to save notes');
+    } finally {
+      setIsSubmittingModal(false);
+    }
+  };
+
+  const handleSaveUpdate = async () => {
+    if (!activeRequestId || !modalText.trim()) return;
+
+    try {
+      setIsSubmittingModal(true);
+      await helpRequestService.updateNotes(activeRequestId, `[UPDATE] ${modalText}`);
+      setModalText('');
+      setShowUpdateModal(false);
+      fetchDashboardData();
+      alert('Update added successfully');
+    } catch (error) {
+      console.error('Error saving update:', error);
+      alert('Failed to add update');
+    } finally {
+      setIsSubmittingModal(false);
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     // Prevent clicking the same status
     if (currentStatus === newStatus) {
@@ -836,7 +885,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             <div className="workload-value">{currentWorkload}/{maxWorkload}</div>
             <div className="workload-bar-container">
               <div
-                className="workload-bar"
+                className={`workload-bar ${isOverloaded ? 'overloaded' : showWorkloadWarning ? 'warning' : ''}`}
                 style={{ width: `${Math.min((currentWorkload / maxWorkload) * 100, 100)}%` }}
               ></div>
             </div>
@@ -945,6 +994,17 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
                 onPageChange={setCurrentPage}
                 onRefresh={() => fetchHelpRequests()}
                 onAnalyticsClick={handleAnalytics}
+                onSetRequest={(id) => setActiveRequestId(id)}
+                onShowNotes={() => setShowNotesModal(true)}
+                onShowUpdate={() => setShowUpdateModal(true)}
+                onScheduleFollowUp={(data) => {
+                  setFollowUpInitialData(data);
+                  setActiveSection('follow-ups');
+                }}
+                onMessageUser={(data) => {
+                  setMessageInitialData(data);
+                  setActiveSection('messages');
+                }}
               />
             )}
             {!loading && activeSection === 'transfer-requests' && (
@@ -956,15 +1016,22 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
             {!loading && activeSection === 'service-packages' && (
               <ServicePackagesSection
                 user={user}
+                initialRequestId={packageInitialRequestId}
+                onClearInitialRequestId={() => setPackageInitialRequestId(null)}
               />
             )}
             {!loading && activeSection === 'messages' && (
               <MessagesSection
                 user={user}
+                initialData={messageInitialData}
+                onClearInitialData={() => setMessageInitialData(null)}
               />
             )}
             {!loading && activeSection === 'follow-ups' && (
-              <FollowUpDashboard />
+              <FollowUpDashboard
+                initialData={followUpInitialData}
+                onCloseModal={() => setFollowUpInitialData(null)}
+              />
             )}
             {!loading && activeSection === 'analytics' && (
               <div className="analytics-section-wrapper">
@@ -1062,9 +1129,80 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
               // Navigate to transfer or show transfer modal if available
               alert("Please use the 'Request Transfer' section to transfer this request.");
             }}
+            onSetRequest={(id) => setActiveRequestId(id)}
+            onShowNotes={() => setShowNotesModal(true)}
+            onShowUpdate={() => setShowUpdateModal(true)}
           />
         )
       }
+
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <div className="modal-overlay" onClick={() => setShowNotesModal(false)}>
+          <div className="new-transfer-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header-new">
+              <h2 className="modal-title-new">📝 ADD PROGRESS NOTES</h2>
+              <p className="modal-subtitle-new">Record details for request: {activeRequestId}</p>
+            </div>
+            <div className="modal-content-new">
+              <div className="form-group">
+                <textarea
+                  className="form-input"
+                  style={{ width: '100%', borderRadius: '8px', padding: '12px', border: '1px solid #e0e0e0', minHeight: '150px' }}
+                  value={modalText}
+                  onChange={(e) => setModalText(e.target.value)}
+                  placeholder="Enter detailed notes about the case progress..."
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-footer-new">
+              <button className="back-btn" onClick={() => setShowNotesModal(false)}>Cancel</button>
+              <button
+                className="submit-transfer-btn"
+                onClick={handleSaveNotes}
+                disabled={isSubmittingModal || !modalText.trim()}
+              >
+                {isSubmittingModal ? 'Saving...' : 'Save Notes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Modal */}
+      {showUpdateModal && (
+        <div className="modal-overlay" onClick={() => setShowUpdateModal(false)}>
+          <div className="new-transfer-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header-new">
+              <h2 className="modal-title-new">🔄 ADD CASE UPDATE</h2>
+              <p className="modal-subtitle-new">Add a quick update for request: {activeRequestId}</p>
+            </div>
+            <div className="modal-content-new">
+              <div className="form-group">
+                <textarea
+                  className="form-input"
+                  style={{ width: '100%', borderRadius: '8px', padding: '12px', border: '1px solid #e0e0e0', minHeight: '100px' }}
+                  value={modalText}
+                  onChange={(e) => setModalText(e.target.value)}
+                  placeholder="Describe the latest development or action taken..."
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-footer-new">
+              <button className="back-btn" onClick={() => setShowUpdateModal(false)}>Cancel</button>
+              <button
+                className="submit-transfer-btn"
+                onClick={handleSaveUpdate}
+                disabled={isSubmittingModal || !modalText.trim()}
+              >
+                {isSubmittingModal ? 'Adding...' : 'Add Update'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 };
@@ -1082,6 +1220,11 @@ interface MyRequestsSectionProps {
   onPageChange: (page: number) => void;
   onRefresh: () => void;
   onAnalyticsClick: () => void;
+  onSetRequest: (id: string) => void;
+  onShowNotes: () => void;
+  onShowUpdate: () => void;
+  onScheduleFollowUp: (data: any) => void;
+  onMessageUser: (data: any) => void;
 }
 
 const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
@@ -1095,7 +1238,12 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   requestsPerPage,
   onPageChange,
   onRefresh,
-  onAnalyticsClick
+  onAnalyticsClick,
+  onSetRequest,
+  onShowNotes,
+  onShowUpdate,
+  onScheduleFollowUp,
+  onMessageUser
 }) => {
   const navigate = useNavigate();
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
@@ -1114,6 +1262,39 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   const [requestToUpdate, setRequestToUpdate] = useState<any>(null);
   const [updateNotes, setUpdateNotes] = useState('');
   const [updateStatus, setUpdateStatus] = useState('');
+
+  // Quick Message State
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageDraft, setMessageDraft] = useState('');
+  const [activeRequestForMessage, setActiveRequestForMessage] = useState<any>(null);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  const handleMessageUser = (request: any) => {
+    setActiveRequestForMessage(request);
+    setMessageDraft(`Hello ${request.requesterName || 'User'}, I am the social worker assigned to your case (${request.trackingId || request.id}). `);
+    setShowMessageModal(true);
+  };
+
+  const handleSendMessageQuick = async () => {
+    if (!messageDraft.trim() || !activeRequestForMessage || isSendingMessage) return;
+
+    try {
+      setIsSendingMessage(true);
+      await messageService.sendConversationMessage(activeRequestForMessage.requesterUserId, {
+        message: messageDraft.trim(),
+        relatedRequestId: activeRequestForMessage.trackingId || activeRequestForMessage.id
+      });
+      setShowMessageModal(false);
+      setMessageDraft('');
+      setActiveRequestForMessage(null);
+      alert('Message sent successfully!');
+    } catch (error) {
+      console.error('Error sending quick message:', error);
+      alert('Failed to send message. Please try the main Messages tab.');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
 
   const getHelpTypeIcon = (helpType: string) => {
     const type = helpType?.toUpperCase() || '';
@@ -1295,6 +1476,21 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   const indexOfFirstRequest = indexOfLastRequest - requestsPerPage;
   const currentRequests = sortedRequests.slice(indexOfFirstRequest, indexOfLastRequest);
   const totalPages = Math.ceil(requests.length / requestsPerPage);
+
+  const handleNoteAction = (requestId: string) => {
+    onSetRequest(requestId);
+    onShowNotes();
+  };
+
+  const handleScheduleFollowUp = (request: any) => {
+    onScheduleFollowUp({
+      requestId: request.trackingId || request.id,
+      childName: request.requesterName || 'N/A',
+      type: 'Home Visit',
+      priority: request.priority || 'MEDIUM',
+      notes: `Follow-up for request ${request.trackingId || request.id}`
+    });
+  };
 
   const getStatusDisplay = (status: string, priority?: string) => {
     const statusUpper = status?.toUpperCase() || '';
@@ -1485,6 +1681,22 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
                               📝 Update
                             </button>
                             <button
+                              className="table-action-btn message-btn"
+                              onClick={() => handleMessageUser(request)}
+                              title="Message User"
+                              style={{ backgroundColor: '#F1F5F9', color: '#1E3A8A', borderColor: '#E2E8F0' }}
+                            >
+                              📨 Message
+                            </button>
+                            <button
+                              className="table-action-btn follow-up-btn"
+                              onClick={() => handleScheduleFollowUp(request)}
+                              title="Schedule Follow-up"
+                              style={{ backgroundColor: '#fdf2f8', color: '#9d174d', borderColor: '#fbcfe8' }}
+                            >
+                              📅 Follow-up
+                            </button>
+                            <button
                               className="table-action-btn details-btn"
                               onClick={() => handleViewDetails(request.id)}
                               title="View Details"
@@ -1624,6 +1836,9 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
             onAccept={handleAccept}
             onReject={handleReject}
             onTransfer={handleTransfer}
+            onSetRequest={onSetRequest}
+            onShowNotes={onShowNotes}
+            onShowUpdate={onShowUpdate}
           />
         )
       }
@@ -1729,6 +1944,44 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
         </div>
       )}
 
+      {/* Quick Message Modal */}
+      {showMessageModal && (
+        <div className="modal-overlay" onClick={() => setShowMessageModal(false)}>
+          <div className="new-transfer-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-header-new">
+              <h2 className="modal-title-new">📨 QUICK MESSAGE</h2>
+              <p className="modal-subtitle-new">
+                To: {activeRequestForMessage?.requesterName} | Case: {activeRequestForMessage?.trackingId || activeRequestForMessage?.id}
+              </p>
+            </div>
+            <div className="modal-content-new">
+              <div className="form-group" style={{ padding: '0 10px' }}>
+                <label className="form-label">Message to Public User</label>
+                <textarea
+                  className="form-input"
+                  style={{ width: '100%', borderRadius: '8px', padding: '15px', border: '1px solid #0d9488', minHeight: '180px', fontSize: '1rem' }}
+                  value={messageDraft}
+                  onChange={(e) => setMessageDraft(e.target.value)}
+                  placeholder="Enter your message here..."
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-footer-new">
+              <button className="back-btn" onClick={() => setShowMessageModal(false)}>Cancel</button>
+              <button
+                className="submit-transfer-btn"
+                onClick={handleSendMessageQuick}
+                disabled={isSendingMessage || !messageDraft.trim()}
+                style={{ backgroundColor: '#0d9488', borderColor: '#0d9488' }}
+              >
+                {isSendingMessage ? 'Sending...' : 'Send Message'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* New Transfer Modal */}
       {
         showTransferModal && (
@@ -1754,10 +2007,14 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
 // Messages Section Component
 interface MessagesSectionProps {
   user: any;
+  initialData?: any;
+  onClearInitialData?: () => void;
 }
 
 const MessagesSection: React.FC<MessagesSectionProps> = ({
-  user
+  user,
+  initialData,
+  onClearInitialData
 }) => {
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<any[]>([]);
@@ -1766,10 +2023,49 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
   const [newMessage, setNewMessage] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   useEffect(() => {
     fetchConversations();
   }, [user]);
+
+  useEffect(() => {
+    if (initialData && conversations.length > 0) {
+      const existing = conversations.find(c => c.participantId === initialData.participantId);
+      if (existing) {
+        setSelectedConversation(existing);
+      } else {
+        // If it's a new conversation from a help request
+        const newConv = {
+          participantId: initialData.participantId,
+          participantName: initialData.participantName,
+          relatedRequestId: initialData.relatedRequestId,
+          relatedRequestType: initialData.relatedRequestType,
+          lastMessage: "Starting a new conversation...",
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0
+        };
+        setConversations(prev => [newConv, ...prev]);
+        setSelectedConversation(newConv);
+      }
+
+      // Auto-focus and pre-fill a draft message for the user
+      setNewMessage(`Hello ${initialData.participantName}, I am the social worker assigned to review your help request (${initialData.relatedRequestId}). `);
+
+      // Clear initial data so it doesn't trigger again on switch
+      if (onClearInitialData) onClearInitialData();
+    }
+  }, [initialData, conversations]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -1946,20 +2242,102 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
     setNewMessage(response);
   };
 
-  const handleCall = () => {
-    alert('Call feature coming soon');
-  };
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [callInfo, setCallInfo] = useState<{ name: string, phone: string, canCall: boolean, reason?: string } | null>(null);
 
-  const handleApplyPackage = () => {
-    if (selectedConversation?.relatedRequestId) {
-      navigate(`/service-packages/apply?requestId=${selectedConversation.relatedRequestId}`);
-    } else {
-      alert('No related request found for this conversation');
+  const handleCall = async () => {
+    const targetId = selectedConversation.relatedRequestId || selectedConversation.requestTrackingId;
+
+    if (!targetId) {
+      setCallInfo({
+        name: selectedConversation.participantName,
+        phone: '',
+        canCall: false,
+        reason: 'No request record is associated with this conversation.'
+      });
+      setShowCallModal(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await api.get(`/api/help-requests/${targetId}`);
+      const requestData = response.data;
+
+      if (!requestData) throw new Error("Not found");
+
+      if (requestData.anonymous) {
+        setCallInfo({
+          name: 'Anonymous Requester',
+          phone: '',
+          canCall: false,
+          reason: 'Confidentiality Protection: Direct calling is disabled for anonymous requests to protect the family\'s privacy.'
+        });
+      } else if (requestData.requesterPhone) {
+        setCallInfo({
+          name: requestData.requesterName || selectedConversation.participantName,
+          phone: requestData.requesterPhone,
+          canCall: true
+        });
+      } else if (requestData.requesterContact && !requestData.requesterContact.includes('@')) {
+        setCallInfo({
+          name: requestData.requesterName || selectedConversation.participantName,
+          phone: requestData.requesterContact,
+          canCall: true
+        });
+      } else {
+        setCallInfo({
+          name: requestData.requesterName || selectedConversation.participantName,
+          phone: '',
+          canCall: false,
+          reason: 'This user has not provided a verified phone number for this request.'
+        });
+      }
+      setShowCallModal(true);
+    } catch (error) {
+      console.error('Error fetching contact info:', error);
+      setCallInfo({
+        name: selectedConversation.participantName,
+        phone: '',
+        canCall: false,
+        reason: 'Secure communication system could not retrieve the contact record at this time.'
+      });
+      setShowCallModal(true);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const [requestDetails, setRequestDetails] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      const targetId = selectedConversation?.relatedRequestId || selectedConversation?.requestTrackingId;
+      if (targetId) {
+        try {
+          const response = await api.get(`/api/help-requests/${targetId}`);
+          setRequestDetails(response.data);
+        } catch (error) {
+          console.error('Error fetching request details for header:', error);
+          setRequestDetails(null);
+        }
+      } else {
+        setRequestDetails(null);
+      }
+    };
+
+    if (selectedConversation) {
+      fetchContactInfo();
+    }
+  }, [selectedConversation]);
+
   if (loading) {
-    return <div className="loading">Loading messages...</div>;
+    return (
+      <div className="messages-loading-state">
+        <div className="loader-spinner"></div>
+        <p>Loading your conversations...</p>
+      </div>
+    );
   }
 
   return (
@@ -2014,11 +2392,32 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
           {selectedConversation ? (
             <>
               <div className="conversation-header-panel">
-                <h3 className="conversation-title">
-                  👤 {selectedConversation.participantName}
-                  {selectedConversation.relatedRequestId && ` • ${selectedConversation.relatedRequestId}`}
-                  {selectedConversation.relatedRequestType && ` • ${selectedConversation.relatedRequestType}`}
-                </h3>
+                <div className="conversation-header-info">
+                  <h3 className="conversation-title">
+                    {selectedConversation.participantName}
+                  </h3>
+                  {!requestDetails?.anonymous && (requestDetails?.requesterPhone || requestDetails?.requesterEmail) && (
+                    <div className="conversation-header-contact">
+                      {requestDetails.requesterPhone && (
+                        <span className="contact-item" title="Call User">
+                          📞 {requestDetails.requesterPhone}
+                        </span>
+                      )}
+                      {requestDetails.requesterEmail && (
+                        <span className="contact-item" title="Email User">
+                          ✉️ {requestDetails.requesterEmail}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {requestDetails?.anonymous && (
+                    <div className="conversation-header-contact anonymous-tag">
+                      🔒 Anonymous Request
+                    </div>
+                  )}
+                  {selectedConversation.relatedRequestId && <span className="conversation-meta-item"> • {selectedConversation.relatedRequestId}</span>}
+                  {selectedConversation.relatedRequestType && <span className="conversation-meta-item"> • {selectedConversation.relatedRequestType}</span>}
+                </div>
               </div>
               <div className="messages-area">
                 {messages.length === 0 ? (
@@ -2036,30 +2435,25 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
                     </div>
                   ))
                 )}
+                <div ref={messagesEndRef} />
               </div>
               <div className="message-actions">
-                <button className="message-action-btn" onClick={() => alert('Attach file feature coming soon')}>
-                  📎 Attach
-                </button>
-                <button className="message-action-btn" onClick={() => {
-                  const response = prompt('Quick Responses:\n1. I\'ll get back to you soon.\n2. Thank you for your message.\n3. Let me check on that for you.\n\nOr type your own:');
-                  if (response) handleQuickResponse(response);
-                }}>
-                  📋 Quick Responses
-                </button>
+                <div className="quick-responses-container">
+                  <span className="quick-responses-label">Quick:</span>
+                  <button className="quick-res-pill" onClick={() => handleQuickResponse("I'll get back to you soon.")}>Soon</button>
+                  <button className="quick-res-pill" onClick={() => handleQuickResponse("Thank you for the information.")}>Thanks</button>
+                  <button className="quick-res-pill" onClick={() => handleQuickResponse("Let me check on that for you.")}>Check</button>
+                  <button className="quick-res-pill" onClick={() => handleQuickResponse("I have updated your case progress.")}>Updated</button>
+                </div>
                 <button className="message-action-btn" onClick={handleCall}>
                   📞 Call
                 </button>
-                {selectedConversation.relatedRequestId && (
-                  <button className="message-action-btn" onClick={handleApplyPackage}>
-                    🎯 Apply Package
-                  </button>
-                )}
               </div>
               <div className="message-input-area">
                 <textarea
                   className="message-input"
-                  placeholder="Type your message..."
+                  placeholder="Type your message here..."
+                  autoFocus
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => {
@@ -2081,11 +2475,67 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
             </>
           ) : (
             <div className="no-conversation-selected">
-              <p>Select a conversation to start messaging</p>
+              <div className="empty-state-content">
+                <span className="empty-state-icon">💬</span>
+                <h3>Select a conversation</h3>
+                <p>Choose a chat from the sidebar to start messaging with families or colleagues.</p>
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Custom Call Confirmation Modal */}
+      {showCallModal && callInfo && (
+        <div className="modal-overlay" onClick={() => setShowCallModal(false)}>
+          <div className="call-confirmation-modal" onClick={e => e.stopPropagation()}>
+            <div className={`call-modal-header ${callInfo.canCall ? 'success' : 'error'}`}>
+              <div className="call-icon-circle">
+                {callInfo.canCall ? '📞' : '⚠️'}
+              </div>
+              <h3>{callInfo.canCall ? 'Voice Call Initiation' : 'Calling Restricted'}</h3>
+            </div>
+
+            <div className="call-modal-body">
+              <div className="target-user-card">
+                <span className="target-label">Contact Person</span>
+                <span className="target-name">{callInfo.name}</span>
+              </div>
+
+              {callInfo.canCall ? (
+                <div className="phone-display">
+                  <span className="phone-label">Verified Number:</span>
+                  <span className="phone-number">{callInfo.phone}</span>
+                </div>
+              ) : (
+                <div className="restriction-notice">
+                  <p>{callInfo.reason}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="call-modal-footer">
+              <button
+                className="modal-secondary-btn"
+                onClick={() => setShowCallModal(false)}
+              >
+                {callInfo.canCall ? 'Cancel' : 'Dismiss'}
+              </button>
+              {callInfo.canCall && (
+                <button
+                  className="modal-primary-btn call-confirm-btn"
+                  onClick={() => {
+                    window.location.href = `tel:${callInfo.phone}`;
+                    setShowCallModal(false);
+                  }}
+                >
+                  Start Call Now
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -2093,10 +2543,14 @@ const MessagesSection: React.FC<MessagesSectionProps> = ({
 // Service Packages Section Component
 interface ServicePackagesSectionProps {
   user: any;
+  initialRequestId?: string | null;
+  onClearInitialRequestId?: () => void;
 }
 
 const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
-  user
+  user,
+  initialRequestId,
+  onClearInitialRequestId
 }) => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<any[]>([]);
@@ -2106,6 +2560,17 @@ const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [createTemplate, setCreateTemplate] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialRequestId) {
+      setSelectedRequestId(initialRequestId);
+      // We don't have a packageId yet, but setting the requestId will help
+      // Or maybe we should wait for packages to load and pick one?
+      // Usually, we pick a package first, then apply to a request.
+      // If we come from a request, we hit "Apply Pkg", so we show the list of packages.
+      // When a package is clicked, we use the initialRequestId.
+    }
+  }, [initialRequestId]);
 
   useEffect(() => {
     fetchPackages();
@@ -2187,7 +2652,7 @@ const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
 
   const handleUseNow = (packageId: string, requestId?: string) => {
     setSelectedPackageId(packageId);
-    setSelectedRequestId(requestId || null);
+    setSelectedRequestId(requestId || initialRequestId || null);
     setShowApplyModal(true);
   };
 
@@ -2208,6 +2673,16 @@ const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
         </h1>
         <p className="packages-subtitle">Create and manage assistance packages</p>
       </div>
+
+      {initialRequestId && (
+        <div className="applying-context-banner">
+          <span className="context-icon">🎯</span>
+          <div className="context-text">
+            <strong>Applying Package to:</strong> {initialRequestId}
+          </div>
+          <button className="clear-context-btn" onClick={onClearInitialRequestId}>Cancel</button>
+        </div>
+      )}
 
       <div className="packages-actions">
         <button className="create-package-btn" onClick={handleCreateNew}>
@@ -2327,11 +2802,13 @@ const ServicePackagesSection: React.FC<ServicePackagesSectionProps> = ({
             setShowApplyModal(false);
             setSelectedPackageId(null);
             setSelectedRequestId(null);
+            if (onClearInitialRequestId) onClearInitialRequestId();
           }}
           onSuccess={() => {
             setShowApplyModal(false);
             setSelectedPackageId(null);
             setSelectedRequestId(null);
+            if (onClearInitialRequestId) onClearInitialRequestId();
             fetchPackages();
           }}
         />
@@ -3427,6 +3904,9 @@ interface RequestDetailsModalProps {
   onReject: (requestId: string, reason?: string) => Promise<void>;
   onTransfer: (requestId: string) => void;
   onComplete?: (requestId: string) => Promise<void>;
+  onSetRequest: (requestId: string) => void;
+  onShowNotes: () => void;
+  onShowUpdate: () => void;
 }
 
 const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
@@ -3436,7 +3916,10 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   onAccept,
   onReject,
   onTransfer,
-  onComplete
+  onComplete,
+  onSetRequest,
+  onShowNotes,
+  onShowUpdate
 }) => {
   const [requestDetails, setRequestDetails] = React.useState<any>(request);
   const [isRejecting, setIsRejecting] = React.useState(false);
@@ -3530,11 +4013,8 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   };
 
   const handleAddNotes = () => {
-    const notes = prompt('Enter notes for this request:');
-    if (notes) {
-      // TODO: Implement add notes functionality
-      console.log('Adding notes:', notes);
-    }
+    onSetRequest(request.id);
+    onShowNotes();
   };
 
   const handleContact = () => {
@@ -3556,11 +4036,8 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
   };
 
   const handleAddUpdate = () => {
-    const update = prompt('Enter update for this request:');
-    if (update) {
-      // TODO: Implement add update functionality
-      console.log('Adding update:', update);
-    }
+    onSetRequest(request.id);
+    onShowUpdate();
   };
 
   const isUrgent = requestDetails?.priority === 'HIGH' || requestDetails?.priority === 'URGENT';
@@ -3694,7 +4171,7 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
                       const isPdf = fileName.toLowerCase().endsWith('.pdf');
                       return (
                         <div key={index} className="document-item-new">
-                          <span className="document-icon">{isPdf ? '📄' : '🏠'}</span>
+                          <span className="document-icon">{isPdf ? '📄' : '📷'}</span>
                           <span className="document-name">{fileName}</span>
                           <a href={doc} target="_blank" rel="noopener noreferrer" className="document-link-new">
                             {isPdf ? '📥 Download' : '👁️ View'}
@@ -3705,7 +4182,27 @@ const RequestDetailsModal: React.FC<RequestDetailsModalProps> = ({
                   ) : (
                     <div className="no-documents">No documents available</div>
                   )}
-                  <button className="upload-document-btn" onClick={() => alert('Upload document feature coming soon')}>
+                  <input
+                    type="file"
+                    id="doc-upload"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const response = await helpRequestService.uploadDocument(request.id, file);
+                          if (response.data) {
+                            setRequestDetails(response.data);
+                            alert('Document uploaded successfully');
+                          }
+                        } catch (err) {
+                          console.error('Upload failed:', err);
+                          alert('Failed to upload document');
+                        }
+                      }
+                    }}
+                  />
+                  <button className="upload-document-btn" onClick={() => document.getElementById('doc-upload')?.click()}>
                     📎 Upload New Document
                   </button>
                 </div>

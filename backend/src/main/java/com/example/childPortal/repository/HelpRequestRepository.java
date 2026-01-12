@@ -38,4 +38,6 @@ public interface HelpRequestRepository extends MongoRepository<HelpRequest, Stri
 
     @Query("{ 'trackingId': { $regex: ?0, $options: 'i' } }")
     List<HelpRequest> findByTrackingIdStartingWith(String prefix);
+
+    java.util.Optional<HelpRequest> findByTrackingId(String trackingId);
 }

@@ -130,9 +130,15 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Override
     public HelpRequestDTO getHelpRequestById(String requestId) {
-        return helpRequestRepository.findById(requestId)
-                .map(this::convertToFilteredDTO)
-                .orElse(null);
+        // Try to find by MongoDB ID first
+        java.util.Optional<HelpRequest> request = helpRequestRepository.findById(requestId);
+        
+        // If not found, try to find by Tracking ID (common in mockup data)
+        if (!request.isPresent()) {
+            request = helpRequestRepository.findByTrackingId(requestId);
+        }
+        
+        return request.map(this::convertToFilteredDTO).orElse(null);
     }
 
     @Override
@@ -413,6 +419,23 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                         }
                     }
 
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO addDocumentToHelpRequest(String requestId, String documentUrl) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    List<String> docs = helpRequest.getDocumentUrls();
+                    if (docs == null) {
+                        docs = new java.util.ArrayList<>();
+                    }
+                    docs.add(documentUrl);
+                    helpRequest.setDocumentUrls(docs);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+                    helpRequestRepository.save(helpRequest);
                     return convertToFilteredDTO(helpRequest);
                 })
                 .orElse(null);

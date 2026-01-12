@@ -1,6 +1,7 @@
 .public-user-layout {
   min-height: 100vh;
-  background-color: #F8F9FA; /* Light background */
+  background-color: transparent;
+  /* Light background */
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -19,7 +20,8 @@
 
 .public-user-layout .dashboard-container {
   flex: 1;
-  padding-top: 80px !important; /* Space for fixed header */
+  padding-top: 80px !important;
+  /* Space for fixed header */
   padding-bottom: 20px;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
@@ -41,7 +43,8 @@
   margin-top: 0 !important;
   margin-bottom: 0 !important;
   display: flex;
-  align-items: flex-start; /* Align sidebar and content to top */
+  align-items: flex-start;
+  /* Align sidebar and content to top */
   width: 100%;
 }
 
@@ -73,7 +76,7 @@
     flex: 0 0 250px;
     padding-right: 15px;
   }
-  
+
   .public-user-layout .main-content-column {
     flex: 1;
     margin-left: 0;
@@ -82,22 +85,26 @@
 }
 
 .public-user-layout .dashboard-content {
-  background-color: #F8F9FA !important; /* Light background */
-  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  /* Glass effect */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
   padding: 24px !important;
   margin-top: 0 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  color: #1F2937 !important; /* Dark text for light theme */
+  color: #1F2937 !important;
 }
 
 /* Override global dashboard-content styles from App.css */
 .public-user-layout .dashboard-container .dashboard-content {
-  background-color: #F8F9FA !important; /* Light background */
+  background-color: rgba(255, 255, 255, 0.8) !important;
   padding: 24px !important;
-  color: #1F2937 !important; /* Dark text for light theme */
+  color: #1F2937 !important;
 }
 
 @media (max-width: 991px) {
@@ -107,7 +114,7 @@
     padding-right: 15px;
     margin-bottom: 20px;
   }
-  
+
   .public-user-layout .main-content-column {
     width: 100%;
     padding-left: 15px;

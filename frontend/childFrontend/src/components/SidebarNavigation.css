@@ -1,228 +1,162 @@
-/* Sidebar Navigation - Forced Light Theme */
+/* Sidebar Navigation - Light Theme Clean */
 
 .sidebar-navigation {
-  background-color: #F8F9FA !important;
-  /* Force Light Grey */
-  border-right: 1px solid #e3e6f0;
+  background-color: transparent !important;
+  border-right: 1px solid #e5e7eb;
   height: calc(100vh - 80px);
   position: sticky;
   top: 80px;
   overflow-y: auto;
-  padding: 1rem 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 0.5rem;
   z-index: 10;
 }
 
 /* Sidebar Links */
 .sidebar-link {
-  color: #0f766e !important;
-  /* Teal Green Text */
-  font-weight: 600 !important;
+  color: #4B5563 !important;
+  /* Gray-600 */
+  font-weight: 500 !important;
   padding: 0.75rem 1rem !important;
   margin-bottom: 0.25rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  border: none !important;
-  background-color: transparent !important;
-  /* No black background */
+  border: 1px solid transparent !important;
   text-decoration: none !important;
 }
 
 .sidebar-link:hover {
-  background-color: rgba(13, 148, 136, 0.1) !important;
-  color: #0d9488 !important;
-  transform: translateX(5px);
-  text-decoration: none !important;
+  background-color: #f0f9ff !important;
+  /* Light Blue tint */
+  color: #5B9BD5 !important;
+  /* Soft Blue */
+  transform: translateX(3px);
 }
 
 .sidebar-link.active {
-  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+  background: linear-gradient(135deg, #5B9BD5 0%, #4A90E2 100%) !important;
+  /* Soft Blue Gradient */
   color: white !important;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
-  text-decoration: none !important;
+  box-shadow: 0 4px 10px rgba(91, 155, 213, 0.3);
+  border: none !important;
 }
 
 /* Accordion Styles */
-.sidebar-accordion {
-  background-color: transparent !important;
-  border: none !important;
-  margin-bottom: 0.5rem;
-}
-
-.sidebar-accordion .accordion-item {
-  background-color: transparent !important;
-  border: none !important;
-}
-
+.sidebar-accordion,
+.sidebar-accordion .accordion-item,
 .sidebar-accordion-header {
-  padding: 0 !important;
+  background: transparent !important;
   border: none !important;
-  background-color: transparent !important;
 }
 
 .sidebar-accordion-header button {
-  color: #0f766e !important;
-  /* Teal Green Text */
-  font-weight: 600 !important;
+  color: #4B5563 !important;
+  font-weight: 500 !important;
   padding: 0.75rem 1rem !important;
   background-color: transparent !important;
-  /* Explicitly remove any dark background */
-  border: none !important;
-  border-radius: 8px;
+  border-radius: 10px;
   width: 100%;
   text-align: left;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   box-shadow: none !important;
 }
 
 .sidebar-accordion-header button:hover {
-  background-color: rgba(13, 148, 136, 0.1) !important;
-  color: #0d9488 !important;
+  background-color: #f0f9ff !important;
+  color: #5B9BD5 !important;
 }
 
 .sidebar-accordion-header button:not(.collapsed) {
-  background-color: rgba(13, 148, 136, 0.05) !important;
-  color: #0d9488 !important;
+  background-color: #eff6ff !important;
+  color: #1D4ED8 !important;
+  /* Darker Blue */
+  font-weight: 600 !important;
 }
 
 .sidebar-accordion-header button::after {
-  filter: sepia(100%) hue-rotate(130deg) saturate(500%);
-  /* Color the arrow to teal */
+  filter: contrast(0.5);
+  /* Make default arrow gray */
 }
 
-.sidebar-accordion .accordion-body {
-  padding: 0.5rem 0 0.5rem 1.5rem;
-  background-color: transparent !important;
-  border: none;
-}
-
-/* Sidebar Sublinks */
+/* Sublinks */
 .sidebar-sublink {
-  color: #0f766e !important;
-  /* Teal Green Text */
+  color: #6B7280 !important;
   font-size: 0.9rem;
-  padding: 0.5rem 1rem 0.5rem 2.5rem !important;
+  padding: 0.6rem 1rem 0.6rem 2.5rem !important;
   margin-bottom: 0.1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
-  background-color: transparent !important;
+  background: transparent !important;
   display: flex !important;
   align-items: center;
   text-decoration: none !important;
 }
 
 .sidebar-sublink:hover {
-  background-color: rgba(13, 148, 136, 0.05) !important;
-  color: #0d9488 !important;
-  padding-left: 3rem !important;
+  background-color: #f9fafb !important;
+  color: #10B981 !important;
+  /* Teal Green hover */
+  padding-left: 2.75rem !important;
 }
 
 .sidebar-sublink.active {
-  background-color: rgba(13, 148, 136, 0.1) !important;
-  color: #0d9488 !important;
-  font-weight: 700 !important;
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  /* Light Teal bg */
+  color: #059669 !important;
+  /* Teal Green text */
+  font-weight: 600 !important;
 }
 
 /* Icons */
 .sidebar-link i,
-.sidebar-accordion-header button i,
-.sidebar-sublink i {
-  color: #0d9488 !important;
-  /* Teal Icons */
+.sidebar-accordion-header button i {
+  color: #9CA3AF;
   font-size: 1.1rem;
+  margin-right: 0.75rem;
+  transition: color 0.2s;
 }
 
-/* Sidebar Headers & Titles */
-.sidebar-header {
-  padding: 0 1.5rem 1rem;
-  border-bottom: 1px solid #e3e6f0;
-  margin-bottom: 1rem;
-  background-color: transparent !important;
+.sidebar-link:hover i {
+  color: #5B9BD5;
 }
 
-.sidebar-title {
-  color: #0d9488 !important;
-  /* Teal Green */
-  font-weight: 700 !important;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.sidebar-user-info {
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-  color: #0f766e !important;
-  /* Darker Teal */
-}
-
-/* Avatar Section */
-.admin-avatar-section {
-  padding: 1.5rem 1.5rem 0.5rem;
-  background-color: transparent !important;
-}
-
-.avatar-img {
-  border: 2px solid #0d9488 !important;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
-}
-
-.avatar-placeholder {
-  border: 2px solid #0d9488 !important;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
-  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+.sidebar-link.active i {
   color: white !important;
 }
 
 /* Section Headers */
 .sidebar-section-header {
-  padding: 0.75rem 1.5rem;
-  color: #0d9488 !important;
-  font-size: 0.75rem;
+  padding: 1rem 1.5rem 0.5rem;
+  color: #9CA3AF !important;
+  font-size: 0.7rem;
   font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 1px;
-  background-color: transparent !important;
 }
 
-/* Forced Global Overrides for Dark Mode */
-@media (prefers-color-scheme: dark) {
-
-  .sidebar-navigation,
-  .sidebar-accordion,
-  .sidebar-accordion .accordion-item,
-  .sidebar-accordion-header button,
-  .sidebar-link,
-  .sidebar-sublink {
-    background-color: #F8F9FA !important;
-    color: #0f766e !important;
-  }
-
-  .sidebar-link.active,
-  .sidebar-sublink.active {
-    background: linear-gradient(135deg, #0d9488, #0f766e) !important;
-    color: white !important;
-  }
+/* Avatar Section */
+.avatar-placeholder {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  border: 2px solid white !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Scrollbar */
 .sidebar-navigation::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .sidebar-navigation::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 .sidebar-navigation::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: #d1d5db;
+  border-radius: 4px;
 }
 
 .sidebar-navigation::-webkit-scrollbar-thumb:hover {
-  background: #0d9488;
+  background: #9ca3af;
 }

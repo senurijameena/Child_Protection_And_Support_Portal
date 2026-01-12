@@ -1,6 +1,6 @@
 .dashboard-layout {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
   position: relative;

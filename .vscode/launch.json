@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -16,21 +13,8 @@
             "name": "ChildPortalApplication",
             "request": "launch",
             "mainClass": "com.example.childPortal.ChildPortalApplication",
-            "projectName": "backend"
-        },
-        {
-            "name": "Attach to Edge",
-            "port": 9222,
-            "request": "attach",
-            "type": "msedge",
-            "webRoot": "${workspaceFolder}"
-        },
-        {
-            "type": "java",
-            "name": "ChildPortalApplication",
-            "request": "launch",
-            "mainClass": "com.example.childPortal.ChildPortalApplication",
-            "projectName": "backend"
+            "projectName": "backend",
+            "cwd": "${workspaceFolder}/backend"
         }
     ]
 }

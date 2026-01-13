@@ -151,7 +151,30 @@
     font-size: 1.75rem;
   }
 
+
   .impact-stat-card .stat-label {
     font-size: 0.85rem;
+  }
+}
+
+.pulse-badge {
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(25, 135, 84, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
   }
 }

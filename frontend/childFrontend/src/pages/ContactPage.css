@@ -6,7 +6,7 @@
 
 
 .contact-hero {
-  background: linear-gradient(135deg, #f8f9ff 0%, #eef0ff 100%);
+  background: var(--background-color);
   padding-top: 2rem;
 }
 
@@ -54,7 +54,7 @@
 
 .emergency-card:hover {
   transform: translateY(-5px);
-  border-color: #dc3545;
+  border-color: var(--danger-color);
   box-shadow: 0 10px 25px rgba(220, 53, 69, 0.15) !important;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .emergency-number {
-  font-family: 'Courier New', monospace;
+  /* font-family: inherit; */
   letter-spacing: 2px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -91,7 +91,7 @@
 }
 
 .department-card .contact-info a {
-  color: #1a237e;
+  color: var(--primary-dark);
   transition: color 0.2s ease;
 }
 
@@ -141,24 +141,24 @@
   .contact-hero .display-4 {
     font-size: 2.5rem;
   }
-  
+
   .contact-hero .display-6 {
     font-size: 1.75rem;
   }
-  
+
   .video-container {
     min-height: 250px;
   }
-  
+
   .contact-video {
     min-height: 250px;
   }
-  
+
   .emergency-icon {
     width: 60px;
     height: 60px;
   }
-  
+
   .emergency-number {
     font-size: 2rem;
   }
@@ -168,30 +168,30 @@
   .contact-hero .display-4 {
     font-size: 2rem;
   }
-  
+
   .contact-hero .display-6 {
     font-size: 1.5rem;
   }
-  
+
   .video-container {
     min-height: 200px;
   }
-  
+
   .contact-video {
     min-height: 200px;
   }
 }
 
 
-@media (prefers-color-scheme: dark) {
+@media (max-width: 1px) {
   .contact-hero {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   }
-  
+
   .bg-light {
     background-color: #1a202c !important;
   }
-  
+
   .emergency-card,
   .department-card,
   .office-card,
@@ -199,19 +199,19 @@
     background-color: #2d3748;
     color: #e2e8f0;
   }
-  
+
   .department-card .contact-info a {
     color: #818cf8;
   }
-  
+
   .department-card .contact-info a:hover {
     color: #a5b4fc;
   }
-  
+
   .bg-warning.bg-opacity-10 {
     background-color: rgba(255, 193, 7, 0.1) !important;
   }
-  
+
   .bg-danger.bg-opacity-10 {
     background-color: rgba(220, 53, 69, 0.1) !important;
   }

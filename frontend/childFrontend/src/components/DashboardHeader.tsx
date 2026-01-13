@@ -342,10 +342,12 @@ const DashboardHeader: React.FC = () => {
           <div className="header-left-section">
             <Navbar.Brand as={Link} to={getDashboardPath()} className="logo-brand">
               <div className="logo-container">
-                <span className="logo-emoji">🛡️</span>
+                <span className="logo-emoji">
+                  <img src="/images/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
+                </span>
                 <div className="brand-text-container">
                   <span className="system-name">
-                    {user?.role === 'ADMIN' ? 'Child Protection Portal' : 'Child Protection and Support Portal'}
+                    CHILD PROTECTION AND SUPPORT PORTAL
                   </span>
                   <span className="dashboard-title">
                     {user?.role === 'ADMIN' ? 'Admin Dashboard' :

@@ -1,211 +1,197 @@
-import React, { useState, useMemo } from 'react';
-import './CalendarView.css';
+import React, { useState } from 'react';
 
-interface CalendarProps {
-    events: any[]; // Using any for simplicity as it matches FollowUp interface effectively
+interface CalendarViewProps {
+    events: any[];
 }
 
-const CalendarView: React.FC<CalendarProps> = ({ events }) => {
-    // View mode: 'week' or 'month'
-    const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-
-    // Start date of current view (default to start of current week - Monday for week view, or current day for month tracking)
+const CalendarView: React.FC<CalendarViewProps> = ({ events }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    const getStartOfWeek = (date: Date) => {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-        return new Date(d.setDate(diff));
-    };
+    const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
 
-    const startOfWeek = useMemo(() => getStartOfWeek(currentDate), [currentDate]);
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
 
-    // Generate dates for the week
-    const weekDates = useMemo(() => {
-        const dates = [];
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(startOfWeek);
-            d.setDate(startOfWeek.getDate() + i);
-            dates.push(d);
-        }
-        return dates;
-    }, [startOfWeek]);
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
 
-    const monthDates = useMemo(() => {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+    const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+    const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
-        const firstDayOfMonth = new Date(year, month, 1);
-        const lastDayOfMonth = new Date(year, month + 1, 0);
+    const totalDays = daysInMonth(month, year);
+    const startDay = firstDayOfMonth(month, year);
 
-        const startDate = new Date(firstDayOfMonth);
-        startDate.setDate(startDate.getDate() - (startDate.getDay() === 0 ? 6 : startDate.getDay() - 1)); // Backtrack to Monday
+    // Create array for the calendar grid
+    const calendarDays = [];
+    // Padding for days from previous month
+    for (let i = 0; i < startDay; i++) {
+        calendarDays.push(null);
+    }
+    // Days of the actual month
+    for (let d = 1; d <= totalDays; d++) {
+        calendarDays.push(d);
+    }
 
-        const endDate = new Date(lastDayOfMonth);
-        if (endDate.getDay() !== 0) {
-            endDate.setDate(endDate.getDate() + (7 - endDate.getDay())); // Forward to Sunday
-        }
-
-        const dates = [];
-        const d = new Date(startDate);
-        while (d <= endDate) {
-            dates.push(new Date(d));
-            d.setDate(d.getDate() + 1);
-        }
-        return dates;
-    }, [currentDate]);
-
-    const navigate = (direction: 'prev' | 'next') => {
-        const newDate = new Date(currentDate);
-        if (viewMode === 'week') {
-            newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
-        } else {
-            newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
-        }
-        setCurrentDate(newDate);
-    };
-
-    const isToday = (date: Date) => {
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
-    };
-
-    const isCurrentMonth = (date: Date) => {
-        return date.getMonth() === currentDate.getMonth();
-    };
-
-    // Time slots (e.g. 9 AM to 5 PM)
-    const timeSlots = [9, 10, 11, 12, 13, 14, 15, 16, 17]; // Hours
-
-    const getEventsForCell = (date: Date, hour?: number) => {
+    const getEventsForDay = (day: number | null) => {
+        if (!day) return [];
         return events.filter(e => {
-            const eDate = new Date(e.scheduledDate);
-            const matchesDate = eDate.getDate() === date.getDate() &&
-                eDate.getMonth() === date.getMonth() &&
-                eDate.getFullYear() === date.getFullYear();
-
-            if (hour !== undefined) {
-                return matchesDate && eDate.getHours() === hour;
-            }
-            return matchesDate;
+            const eventDate = new Date(e.scheduledDate || e.date);
+            return eventDate.getDate() === day &&
+                eventDate.getMonth() === month &&
+                eventDate.getFullYear() === year;
         });
     };
 
-    const formatDateRange = () => {
-        if (viewMode === 'week') {
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-        } else {
-            return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        }
-    };
-
-    const renderEvent = (event: any) => {
-        let priorityClass = 'event-Medium'; // default
-        if (event.status === 'COMPLETED') priorityClass = 'event-Completed';
-        else if (event.priority === 'HIGH' || event.priority === 'URGENT') priorityClass = 'event-Urgent';
-        else if (event.priority === 'LOW') priorityClass = 'event-Low';
-
-        return (
-            <div key={event.id} className={`calendar-event ${priorityClass}`} title={`${event.type} for ${event.childName}`}>
-                <strong>{event.timeString}</strong> {event.childName} <small>({event.type})</small>
-            </div>
-        );
-    };
-
     return (
-        <div className="calendar-view-container">
-            <div className="calendar-utils-header">
-                <div className="current-week-label">
-                    {viewMode === 'week' ? '📅 WEEKLY CALENDAR' : '🗓️ MONTHLY CALENDAR'} - {formatDateRange()}
-                </div>
-                <div className="calendar-nav-buttons">
-                    <button className="cal-nav-btn" onClick={() => navigate('prev')}>◀ Previous</button>
-                    <button className="cal-nav-btn" onClick={() => setCurrentDate(new Date())}>Today</button>
-                    <button className="cal-nav-btn" onClick={() => navigate('next')}>Next ▶</button>
-                    <div className="view-toggle ml-3" style={{ marginLeft: '1rem', display: 'flex', gap: '0.25rem' }}>
-                        <button
-                            className={`cal-nav-btn ${viewMode === 'week' ? 'active' : ''}`}
-                            onClick={() => setViewMode('week')}
-                        >Week</button>
-                        <button
-                            className={`cal-nav-btn ${viewMode === 'month' ? 'active' : ''}`}
-                            onClick={() => setViewMode('month')}
-                        >Month</button>
-                    </div>
+        <div className="calendar-container p-4 bg-white rounded-3 shadow-sm border">
+            <div className="calendar-header d-flex justify-content-between align-items-center mb-4">
+                <h3 className="fw-bold text-primary m-0">
+                    {monthNames[month]} {year}
+                </h3>
+                <div className="calendar-nav">
+                    <button className="btn btn-outline-primary btn-sm me-2" onClick={prevMonth}>
+                        <i className="bi bi-chevron-left"></i> Prev
+                    </button>
+                    <button className="btn btn-outline-primary btn-sm" onClick={nextMonth}>
+                        Next <i className="bi bi-chevron-right"></i>
+                    </button>
                 </div>
             </div>
 
-            {viewMode === 'week' ? (
-                <div className="calendar-grid">
-                    {/* Header Row */}
-                    <div className="calendar-header-cell time-header"></div> {/* Empty corner */}
-                    {weekDates.map((date, idx) => (
-                        <div key={idx} className="calendar-header-cell">
-                            <span className="day-name">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                            <span className={`day-date ${isToday(date) ? 'today' : ''}`}>
-                                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                        </div>
-                    ))}
+            <div className="calendar-grid">
+                <div className="calendar-day-label">Sun</div>
+                <div className="calendar-day-label">Mon</div>
+                <div className="calendar-day-label">Tue</div>
+                <div className="calendar-day-label">Wed</div>
+                <div className="calendar-day-label">Thu</div>
+                <div className="calendar-day-label">Fri</div>
+                <div className="calendar-day-label">Sat</div>
 
-                    {/* Time Slots */}
-                    {timeSlots.map(hour => (
-                        <React.Fragment key={hour}>
-                            <div className="time-slot">
-                                {hour}:00
-                            </div>
-                            {weekDates.map((date, dayIdx) => {
-                                const cellEvents = getEventsForCell(date, hour);
+                {calendarDays.map((day, index) => {
+                    const dayEvents = getEventsForDay(day);
+                    const isToday = day === new Date().getDate() &&
+                        month === new Date().getMonth() &&
+                        year === new Date().getFullYear();
 
-                                return (
-                                    <div key={dayIdx} className="calendar-cell">
-                                        {cellEvents.map(renderEvent)}
+                    return (
+                        <div key={index} className={`calendar-cell ${!day ? 'empty' : ''} ${isToday ? 'today' : ''}`}>
+                            {day && (
+                                <>
+                                    <span className="day-number">{day}</span>
+                                    <div className="event-dots">
+                                        {dayEvents.map((e, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`event-dot ${e.priority === 'HIGH' || e.priority === 'URGENT' ? 'urgent' : 'normal'}`}
+                                                title={`${e.type}: ${e.requestId || 'Follow-up'}`}
+                                            ></div>
+                                        ))}
                                     </div>
-                                );
-                            })}
-                        </React.Fragment>
-                    ))}
-                </div>
-            ) : (
-                <div className="month-grid">
-                    {/* Weekday Headers */}
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                        <div key={day} className="calendar-header-cell">{day}</div>
-                    ))}
-
-                    {/* Month Cells */}
-                    {monthDates.map((date, idx) => {
-                        const cellEvents = getEventsForCell(date);
-                        return (
-                            <div key={idx} className={`month-cell ${!isCurrentMonth(date) ? 'different-month' : ''}`}>
-                                <div className="month-cell-header">
-                                    <span className={`day-date ${isToday(date) ? 'today' : ''}`} style={{ fontSize: '1rem' }}>
-                                        {date.getDate()}
-                                    </span>
-                                </div>
-                                <div className="month-events-list">
-                                    {cellEvents.slice(0, 3).map(renderEvent)}
-                                    {cellEvents.length > 3 && (
-                                        <div className="text-muted small text-center">+{cellEvents.length - 3} more</div>
+                                    {dayEvents.length > 0 && (
+                                        <div className="event-list-popover">
+                                            {dayEvents.slice(0, 2).map((e, idx) => (
+                                                <div key={idx} className="event-mini-tag">
+                                                    {e.type.split(' ')[0]}
+                                                </div>
+                                            ))}
+                                            {dayEvents.length > 2 && <div className="event-more">+{dayEvents.length - 2} more</div>}
+                                        </div>
                                     )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            <div className="legend-bar">
-                <span className="legend-item"><span className="legend-dot" style={{ background: '#dc3545' }}></span> Urgent</span>
-                <span className="legend-item"><span className="legend-dot" style={{ background: '#ffc107' }}></span> Medium</span>
-                <span className="legend-item"><span className="legend-dot" style={{ background: '#198754' }}></span> Low</span>
-                <span className="legend-item"><span className="legend-dot" style={{ background: '#6c757d' }}></span> Completed</span>
+                                </>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
+
+            <style>{`
+                .calendar-grid {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 1px;
+                    background-color: #e9ecef;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+                .calendar-day-label {
+                    background-color: #f8f9fa;
+                    padding: 10px;
+                    text-align: center;
+                    font-weight: bold;
+                    color: #495057;
+                    font-size: 0.8rem;
+                    text-transform: uppercase;
+                }
+                .calendar-cell {
+                    background-color: #fff;
+                    min-height: 100px;
+                    padding: 8px;
+                    position: relative;
+                    transition: all 0.2s ease;
+                }
+                .calendar-cell:not(.empty):hover {
+                    background-color: #f1f3f5;
+                }
+                .calendar-cell.today {
+                    background-color: #fff4e6;
+                }
+                .calendar-cell.today .day-number {
+                    background-color: #fd7e14;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                }
+                .day-number {
+                    font-size: 0.9rem;
+                    color: #495057;
+                    font-weight: 500;
+                }
+                .event-dots {
+                    display: flex;
+                    gap: 2px;
+                    margin-top: 4px;
+                }
+                .event-dot {
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                }
+                .event-dot.normal { background-color: #0d6efd; }
+                .event-dot.urgent { background-color: #dc3545; }
+                
+                .event-list-popover {
+                    margin-top: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .event-mini-tag {
+                    font-size: 0.7rem;
+                    padding: 2px 4px;
+                    background-color: #e7f5ff;
+                    color: #1971c2;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .event-more {
+                    font-size: 0.65rem;
+                    color: #adb5bd;
+                    text-align: center;
+                }
+                .empty {
+                  background-color: #f8f9fa;
+                }
+            `}</style>
         </div>
     );
 };

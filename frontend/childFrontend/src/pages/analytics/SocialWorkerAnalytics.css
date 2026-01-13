@@ -1,33 +1,33 @@
 .sw-analytics-dashboard {
     padding: 1.5rem;
-    background-color: #f8f9fa;
+    background-color: var(--background-color);
     min-height: 100%;
 }
 
 .sw-analytics-header {
     margin-bottom: 2rem;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding-bottom: 1rem;
 }
 
 .sw-analytics-title {
     font-size: 1.75rem;
-    color: #0f766e;
+    color: var(--text-primary);
     font-weight: 700;
     margin-bottom: 0.5rem;
 }
 
 .sw-analytics-subtitle {
-    color: #6c757d;
+    color: var(--text-secondary);
     font-size: 1rem;
 }
 
 /* Period Selection */
 .period-selection {
-    background: white;
+    background: var(--surface-color);
     padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
     margin-bottom: 2rem;
     display: flex;
     justify-content: space-between;
@@ -36,7 +36,7 @@
 
 .period-label {
     font-weight: 600;
-    color: #495057;
+    color: var(--text-secondary);
     margin-right: 1rem;
 }
 
@@ -47,31 +47,32 @@
 
 .period-btn {
     padding: 0.375rem 0.75rem;
-    border: 1px solid #dee2e6;
-    background: white;
-    color: #495057;
-    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    border-radius: var(--border-radius-sm);
     font-size: 0.9rem;
     transition: all 0.2s;
 }
 
 .period-btn:hover {
-    background-color: #e9ecef;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
 }
 
 .period-btn.active {
-    background-color: #0d9488;
+    background-color: var(--primary-color);
     color: white;
-    border-color: #0d9488;
+    border-color: var(--primary-color);
 }
 
 .refresh-btn {
-    color: #0d9488;
-    border-color: #0d9488;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 .refresh-btn:hover {
-    background-color: #0d9488;
+    background-color: var(--primary-color);
     color: white;
 }
 
@@ -84,10 +85,10 @@
 }
 
 .metric-card {
-    background: white;
+    background: var(--surface-color);
     padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
     text-align: center;
     border-top: 4px solid transparent;
     transition: transform 0.2s;
@@ -95,27 +96,29 @@
 
 .metric-card:hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
 }
 
 .metric-card.total {
-    border-top-color: #0d9488;
+    border-top-color: var(--primary-color);
 }
 
 .metric-card.completed {
-    border-top-color: #0d9488;
+    border-top-color: var(--success-color);
 }
 
 .metric-card.rate {
-    border-top-color: #ffc107;
+    border-top-color: var(--warning-color);
 }
 
 .metric-card.rating {
     border-top-color: #6f42c1;
+    /* Keep purple for rating or use accent */
 }
 
 .metric-title {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0.5rem;
@@ -124,12 +127,12 @@
 .metric-value {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #212529;
+    color: var(--text-primary);
 }
 
 .metric-subtitle {
     font-size: 0.85rem;
-    color: #adb5bd;
+    color: var(--text-tertiary);
     margin-top: 0.25rem;
 }
 

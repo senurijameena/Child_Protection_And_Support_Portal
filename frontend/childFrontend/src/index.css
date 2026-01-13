@@ -5,39 +5,69 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Soft Blue & Teal Green Theme */
-  --primary-color: #5B9BD5;
+  /* Soft Blue & Off-White Template Theme */
+  --primary-color: #64B5F6;
   /* Soft Blue */
-  --primary-dark: #4A90E2;
-  --secondary-color: #10B981;
-  /* Teal Green */
-  --secondary-dark: #059669;
+  --primary-dark: #42A5F5;
+  /* Slightly darker Blue */
+  --primary-light: #E3F2FD;
+  /* Very Light Blue */
 
-  --accent-color: #38bdf8;
+  --secondary-color: #81C784;
+  /* Soft Green for success/secondary actions */
+  --secondary-dark: #66BB6A;
+  --secondary-light: #E8F5E9;
 
-  --background-color: #F8F9FA;
-  /* Off-white/Light Gray */
-  --surface-color: #ffffff;
+  --accent-color: #FFB74D;
+  /* Warm accent */
 
-  --text-color: #374151;
-  /* Dark Gray for text */
-  --text-primary: #111827;
-  /* Near Black */
+  /* Backgrounds */
+  --background-color: #F9FAFB;
+  /* Off-White (Neutral) */
+  --surface-color: #FFFFFF;
+  /* Pure White */
+
+  /* Typography */
+  --text-primary: #1F2937;
+  /* Charcoal for readability */
   --text-secondary: #6B7280;
-  /* Gray */
+  /* Cool Gray */
+  --text-tertiary: #9CA3AF;
+  /* Light Gray */
 
-  /* Glassmorphism Tokens - Light Mode */
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  /* Modern UI Tokens */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-  --primary-gradient: linear-gradient(135deg, #5B9BD5 0%, #4A90E2 100%);
-  --secondary-gradient: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+  --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  /* Gradients - Soft & Professional */
+  --primary-gradient: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%);
+  --secondary-gradient: linear-gradient(135deg, #81C784 0%, #66BB6A 100%);
 
   /* Status Colors */
-  --success-color: #10B981;
-  --warning-color: #F59E0B;
-  --info-color: #3B82F6;
-  --danger-color: #EF4444;
+  --success-color: #34D399;
+  --warning-color: #FBBF24;
+  --info-color: #60A5FA;
+  --danger-color: #F87171;
+
+  /* Bootstrap Overrides */
+  --bs-primary: var(--primary-color);
+  --bs-secondary: var(--text-secondary);
+  --bs-success: var(--success-color);
+  --bs-info: var(--info-color);
+  --bs-warning: var(--warning-color);
+  --bs-danger: var(--danger-color);
+  /* Ensure bootstrap body adopts the theme */
+  --bs-body-bg: var(--background-color);
+  --bs-body-color: var(--text-primary);
 }
 
 body {

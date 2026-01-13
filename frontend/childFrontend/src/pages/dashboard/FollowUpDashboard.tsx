@@ -242,7 +242,7 @@ const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCl
                             .filter(i => i.priority === 'HIGH' || i.priority === 'URGENT')
                             .map(item => (
                                 <div key={item.id} className="priority-item urgent">
-                                    <strong>🔴 URGENT:</strong> {item.childName}'s {item.type} ({item.timeString})
+                                    <strong>🔴 URGENT:</strong> {item.type} for {item.requestId || 'Follow-up'} ({item.timeString})
                                 </div>
                             ))}
                     </div>
@@ -278,8 +278,7 @@ const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCl
                                     <tr key={item.id}>
                                         <td className="time-slot">{statusColor(item.status)} {item.timeString}</td>
                                         <td className="child-info">
-                                            <span className="child-name">{item.childName}</span>
-                                            <span className="request-id">{item.requestId || 'N/A'}</span>
+                                            <span className="child-name">{item.requestId || 'General Follow-up'}</span>
                                             <span className="text-muted small">{item.notes}</span>
                                         </td>
                                         <td>{item.type}</td>
@@ -335,7 +334,7 @@ const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCl
                                 <tr key={item.id}>
                                     <td>{item.requestId || '-'}</td>
                                     <td className="child-info">
-                                        <span className="child-name">{item.childName}</span>
+                                        <span className="child-name">{item.requestId || 'Follow-up'}</span>
                                         <span className="text-muted small">{item.type}</span>
                                     </td>
                                     <td>
@@ -368,17 +367,7 @@ const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCl
                     <div className="modal-content">
                         <h3 className="section-title">➕ Schedule New Follow-up</h3>
                         <form onSubmit={handleScheduleSubmit}>
-                            <div className="form-group">
-                                <label className="form-label">Child Name</label>
-                                <input
-                                    name="childName"
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Enter Name..."
-                                    required
-                                    onChange={handleInputChange}
-                                />
-                            </div>
+
                             <div className="form-group">
                                 <label className="form-label">Request ID (Optional)</label>
                                 <input
@@ -386,6 +375,7 @@ const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCl
                                     type="text"
                                     className="form-control"
                                     placeholder="e.g. HELP-123"
+                                    value={newFollowUp.requestId || ''}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -421,7 +411,7 @@ const FollowUpDashboard: React.FC<FollowUpDashboardProps> = ({ initialData, onCl
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Notes</label>
-                                <textarea name="notes" className="form-control" rows={3} onChange={handleInputChange}></textarea>
+                                <textarea name="notes" className="form-control" rows={3} value={newFollowUp.notes || ''} onChange={handleInputChange}></textarea>
                             </div>
                             <div className="modal-actions">
                                 <button type="button" className="control-btn" onClick={handleCloseInternal}>Cancel</button>

@@ -26,11 +26,11 @@ const PublicUserNavbar: React.FC = () => {
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
-    
+
     if (currentUser) {
       fetchUnreadCount();
     }
-    
+
     // Update notifications every 30 seconds
     const notificationInterval = setInterval(() => {
       fetchUnreadCount();
@@ -38,7 +38,7 @@ const PublicUserNavbar: React.FC = () => {
         fetchNotifications();
       }
     }, 30000);
-    
+
     return () => {
       clearInterval(notificationInterval);
     };
@@ -57,7 +57,7 @@ const PublicUserNavbar: React.FC = () => {
     try {
       const response = await notificationService.getUnreadNotifications().catch(() => ({ data: [] }));
       const apiNotifications = response.data || [];
-      
+
       // Transform API response to match Notification interface
       const transformedNotifications: Notification[] = apiNotifications.slice(0, 5).map((notif: any) => ({
         id: notif.id || '',
@@ -70,7 +70,7 @@ const PublicUserNavbar: React.FC = () => {
         helpRequestId: notif.helpRequestId || notif.metadata?.helpRequestId,
         messageId: notif.messageId
       }));
-      
+
       setNotifications(transformedNotifications);
       setUnreadCount(transformedNotifications.filter(n => !n.read).length);
     } catch (error) {
@@ -89,7 +89,7 @@ const PublicUserNavbar: React.FC = () => {
     e.stopPropagation();
     try {
       await notificationService.markAsRead(notificationId);
-      setNotifications(prev => prev.map(n => 
+      setNotifications(prev => prev.map(n =>
         n.id === notificationId ? { ...n, read: true } : n
       ));
       setUnreadCount(prev => Math.max(0, prev - 1));
@@ -120,15 +120,15 @@ const PublicUserNavbar: React.FC = () => {
   const formatNotificationMessage = (notification: Notification) => {
     // Extract case ID or help request ID from message, title, or metadata
     const message = notification.message || notification.title || '';
-    
+
     // Try to extract IDs from the message (support various formats)
     const caseIdMatch = message.match(/#?CASE[-_]?[\w]+|case[-_]?[\w]+/i);
     const helpRequestIdMatch = message.match(/#?HELP[-_]?[\w]+|help[-_]?request[-_]?[\w]+/i);
-    
+
     // Use IDs from metadata if available
     const caseId = notification.caseId || caseIdMatch?.[0];
     const helpRequestId = notification.helpRequestId || helpRequestIdMatch?.[0];
-    
+
     // Format message based on type
     if (notification.type === 'CASE_UPDATE' || notification.type === 'EVIDENCE') {
       if (caseId) {
@@ -155,7 +155,7 @@ const PublicUserNavbar: React.FC = () => {
       // Fallback
       return message || 'New message received';
     }
-    
+
     // Default: return original message or title
     return message || notification.title || 'Notification';
   };
@@ -181,49 +181,49 @@ const PublicUserNavbar: React.FC = () => {
             }} />
           </div>
           <div className="navbar-title-wrapper">
-            <span className="navbar-title-main">Child Protection Portal</span>
+            <span className="navbar-title-main">CHILD PROTECTION AND SUPPORT PORTAL</span>
           </div>
         </div>
-        
+
         <div className="navbar-nav-section">
           <div className="navbar-nav-links">
-            <Link 
+            <Link
               to="/public/dashboard"
-              className="nav-link-btn" 
+              className="nav-link-btn"
             >
               📊 Dashboard
             </Link>
-            <Link 
+            <Link
               to="/report-case"
-              className="nav-link-btn" 
+              className="nav-link-btn"
             >
               📄 Report Case
             </Link>
-            <Link 
+            <Link
               to="/request-help"
-              className="nav-link-btn" 
+              className="nav-link-btn"
             >
               ❤️ Request Help
             </Link>
-            <Link 
+            <Link
               to="/messages"
-              className="nav-link-btn" 
+              className="nav-link-btn"
             >
               💬 Messages
             </Link>
-            <Link 
+            <Link
               to="/feedback"
-              className="nav-link-btn" 
+              className="nav-link-btn"
             >
               ⭐ Feedback
             </Link>
           </div>
         </div>
-        
+
         <div className="navbar-right-section">
           {/* Notification Bell */}
           <div className="notification-dropdown-wrapper">
-            <button 
+            <button
               className="navbar-icon-btn notification-btn"
               onClick={() => setShowNotifications(!showNotifications)}
               aria-expanded={showNotifications}
@@ -271,7 +271,7 @@ const PublicUserNavbar: React.FC = () => {
                   </div>
                 )}
                 <div className="notification-divider"></div>
-                <div 
+                <div
                   className="notification-view-all"
                   onClick={() => {
                     navigate('/notifications');
@@ -286,7 +286,7 @@ const PublicUserNavbar: React.FC = () => {
 
           {/* User Dropdown */}
           <div className="user-dropdown-wrapper">
-            <button 
+            <button
               className="navbar-icon-btn user-btn"
               onClick={() => {
                 const toggle = document.querySelector('.user-dropdown-menu') as HTMLElement;
@@ -305,14 +305,14 @@ const PublicUserNavbar: React.FC = () => {
                 <small className="text-muted" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>{user?.email || ''}</small>
               </div>
               <div className="notification-divider"></div>
-              <div 
+              <div
                 className="dropdown-item"
                 onClick={() => navigate('/profile')}
               >
                 <i className="bi bi-person me-2"></i>
                 Profile
               </div>
-              <div 
+              <div
                 className="dropdown-item"
                 onClick={() => navigate('/settings')}
               >
@@ -320,7 +320,7 @@ const PublicUserNavbar: React.FC = () => {
                 Settings
               </div>
               <div className="notification-divider"></div>
-              <div 
+              <div
                 className="dropdown-item"
                 onClick={handleLogout}
               >

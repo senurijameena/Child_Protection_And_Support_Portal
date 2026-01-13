@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
       <Container fluid="xxl">
         <div className="login-footer-content">
           <Row className="g-4">
-            {}
+            { }
             <Col md={4} sm={12}>
               <div className="footer-section">
                 <h5 className="footer-section-title">
@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
               </div>
             </Col>
 
-            {}
+            { }
             <Col md={4} sm={12}>
               <div className="footer-section">
                 <h5 className="footer-section-title">
@@ -73,7 +73,7 @@ const Footer: React.FC = () => {
               </div>
             </Col>
 
-            {}
+            { }
             <Col md={4} sm={12}>
               <div className="footer-section">
                 <h5 className="footer-section-title">
@@ -102,12 +102,12 @@ const Footer: React.FC = () => {
             </Col>
           </Row>
 
-          {}
+          { }
           <div className="footer-bottom">
             <Row className="align-items-center">
               <Col md={6} sm={12} className="text-center text-md-start mb-2 mb-md-0">
                 <p className="footer-copyright">
-                  © {currentYear} Child Protection and Support Portal. All rights reserved.
+                  © {currentYear} CHILD PROTECTION AND SUPPORT PORTAL. All rights reserved.
                 </p>
               </Col>
               <Col md={6} sm={12} className="text-center text-md-end">

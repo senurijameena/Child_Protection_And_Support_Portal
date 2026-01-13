@@ -1,5 +1,5 @@
 .registration-options-page {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  background: var(--background-color);
   min-height: 100vh;
   padding-top: 90px;
 }
@@ -62,7 +62,7 @@
   padding: 0.5rem;
   background: #f8f9fa;
   border-radius: 6px;
-  border-left: 3px solid #0d6efd;
+  border-left: 3px solid var(--primary-color);
 }
 
 .role-button {
@@ -98,10 +98,13 @@
 }
 
 @keyframes arrowPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
     transform: translateX(0);
   }
+
   50% {
     opacity: 1;
     transform: translateX(10px);
@@ -118,7 +121,7 @@
 }
 
 .comparison-table thead {
-  background: linear-gradient(135deg, #1a56db 0%, #2563eb 100%);
+  background: var(--primary-gradient);
   color: white;
 }
 
@@ -188,4 +191,3 @@
     padding: 0.5rem 0.25rem;
   }
 }
-

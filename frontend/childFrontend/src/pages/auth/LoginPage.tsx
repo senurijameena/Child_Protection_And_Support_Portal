@@ -175,7 +175,7 @@ const LoginPage: React.FC = () => {
               { }
               <div className="login-portal-info">
                 <div className="login-portal-info-content">
-                  <h2 className="login-portal-info-title">🛡️ Child Protection Portal</h2>
+                  <h2 className="login-portal-info-title">🛡️ CHILD PROTECTION AND SUPPORT PORTAL</h2>
                   <p className="login-portal-info-subtitle">
                     Protecting Childhood, Building Futures
                   </p>

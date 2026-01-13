@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge } from 'react-bootstrap';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { API_BASE_URL } from '../utils/constants';
 import axios from 'axios';
 import './LandingStatistics.css';
@@ -193,12 +194,78 @@ const LandingStatistics: React.FC = () => {
           ))}
         </Row>
 
-        { }
-        <div className="text-center mt-4">
-          <div className="statistics-chart-placeholder">
-            <small className="text-muted">Animated bar chart updating every 30 seconds</small>
-          </div>
-        </div>
+
+        {/* Animated Stacked Bar Chart */}
+        {!loading && stats && stats.monthlyActivity && (
+          <Row className="justify-content-center mt-5">
+            <Col xs={12} lg={10}>
+              <Card className="border-0 shadow-lg p-4">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h4 className="fw-bold mb-0">Monthly Activity Trends</h4>
+                  <Badge bg="success" className="pulse-badge">Live Updates</Badge>
+                </div>
+                <div style={{ width: '100%', height: 400 }}>
+                  <ResponsiveContainer>
+                    <BarChart
+                      data={stats.monthlyActivity}
+                      margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#6B7280' }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#6B7280' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '12px',
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          backdropFilter: 'blur(4px)',
+                        }}
+                        cursor={{ fill: 'rgba(229, 231, 235, 0.4)' }}
+                      />
+                      <Legend
+                        iconType="circle"
+                        wrapperStyle={{ paddingTop: '20px' }}
+                      />
+                      <Bar
+                        dataKey="cases"
+                        name="Cases Reported"
+                        fill="#3B82F6"
+                        radius={[4, 4, 0, 0]}
+                        animationDuration={1500}
+                        barSize={30}
+                      />
+                      <Bar
+                        dataKey="helpRequests"
+                        name="Help Requests"
+                        fill="#10B981"
+                        radius={[4, 4, 0, 0]}
+                        animationDuration={1500}
+                        animationBegin={300}
+                        barSize={30}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        )}
       </Container>
     </section>
   );

@@ -1,13 +1,13 @@
 /* ModernLayout.css - Light Theme */
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.6);
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-    --primary-gradient: linear-gradient(135deg, #5B9BD5 0%, #4A90E2 100%);
-    --accent-color: #10B981;
-    --text-primary: #1F2937;
-    --text-secondary: #6B7280;
-    --bg-light: #F8F9FA;
+    --glass-bg: var(--glass-bg);
+    --glass-border: var(--glass-border);
+    --glass-shadow: var(--glass-shadow);
+    --primary-gradient: var(--primary-gradient);
+    --accent-color: var(--secondary-color);
+    --text-primary: var(--text-primary);
+    --text-secondary: var(--text-secondary);
+    --bg-light: var(--background-color);
 }
 
 .modern-layout-container {

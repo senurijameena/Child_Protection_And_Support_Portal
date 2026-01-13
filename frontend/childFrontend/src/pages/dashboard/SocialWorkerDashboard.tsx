@@ -13,6 +13,8 @@ import { serviceOfferService } from '../../services/serviceOfferService';
 import { messageService } from '../../services/messageService';
 import SocialWorkerAnalytics from '../analytics/SocialWorkerAnalytics';
 import FollowUpDashboard from '../dashboard/FollowUpDashboard';
+import { useSocialWorkerDashboardData } from '../../hooks/useSocialWorkerDashboardData';
+import SocialWorkerOverview from './SocialWorkerOverview';
 import './SocialWorkerDashboard.css';
 import './SocialWorkerSettings.css';
 
@@ -31,26 +33,42 @@ interface SocialWorkerProfile {
 
 const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const navigate = useNavigate();
-  const user = authService.getCurrentUser();
+  // We use the hook for dashboard data, but keep local state for specific tabs
+  const {
+    user,
+    loading,
+    profile,
+    stats,
+    currentStatus,
+    workloadDistribution,
+    recentActivity,
+    schedule,
+    updateStatus,
+    refresh
+  } = useSocialWorkerDashboardData();
+
+  // Destructure stats for compatibility with existing code
+  const {
+    myRequestsCount,
+    activeRequestsCount,
+    urgentRequestsCount,
+    assignedChildrenCount,
+    messagesCount,
+    transferRequestsCount,
+    notificationsCount,
+    currentWorkload
+  } = stats;
+
+  const emergencyAlertsCount = urgentRequestsCount;
+  const maxWorkload = 10;
+
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [loading, setLoading] = useState(true);
 
-  const [profile, setProfile] = useState<SocialWorkerProfile | null>(null);
-
-  const [myRequestsCount, setMyRequestsCount] = useState(0);
-  const [assignedChildrenCount, setAssignedChildrenCount] = useState(0);
-  const [messagesCount, setMessagesCount] = useState(0);
-  const [transferRequestsCount, setTransferRequestsCount] = useState(0);
-  const [notificationsCount, setNotificationsCount] = useState(0);
-  const [emergencyAlertsCount, setEmergencyAlertsCount] = useState(0);
-  const [currentWorkload, setCurrentWorkload] = useState(0);
-  const [maxWorkload] = useState(10);
+  // UI States
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-
-
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -74,13 +92,6 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
     }
   }, [showNotifications, showStatusDropdown]);
 
-  const [currentStatus, setCurrentStatus] = useState<string>('AVAILABLE');
-
-  const [activeRequestsCount, setActiveRequestsCount] = useState(0);
-  const [urgentRequestsCount, setUrgentRequestsCount] = useState(0);
-  const [workloadDistribution, setWorkloadDistribution] = useState<{ [key: string]: { current: number; max: number } }>({});
-  const [recentActivity, setRecentActivity] = useState<Array<{ time: string; message: string; type?: string }>>([]);
-
   // Notification Request Modal State
   const [notificationRequest, setNotificationRequest] = useState<any>(null);
   const [loadingRequestDetails, setLoadingRequestDetails] = useState(false);
@@ -99,206 +110,12 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const [modalText, setModalText] = useState('');
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
   const [messageInitialData, setMessageInitialData] = useState<any>(null);
+  const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
+  const [followUpInitialData, setFollowUpInitialData] = useState<any>(null);
   const [packageInitialRequestId, setPackageInitialRequestId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user?.id) return;
+  // Removed the large useEffect as it's now handled by the hook
 
-      try {
-        setLoading(true);
-
-        try {
-          const profileResponse = await socialWorkerService.getSocialWorkerProfile(user.id);
-          if (profileResponse) {
-            setProfile({
-              id: user.id,
-              name: user.name || profileResponse.name || 'Jane Smith',
-              workerId: profileResponse.workerId || profileResponse.id || `SW-${user.id.slice(0, 3).toUpperCase()}`,
-              certificateId: user.certificateId || profileResponse.certificateId || user.licenseNumber || profileResponse.licenseNumber,
-              organization: profileResponse.organization || profileResponse.department || "Hope Children's Foundation",
-              status: profileResponse.status
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching profile:', error);
-          setProfile({
-            id: user.id,
-            name: user.name || 'Jane Smith',
-            workerId: `SW-${user.id.slice(0, 3).toUpperCase()}`,
-            certificateId: user.certificateId || user.licenseNumber,
-            organization: "Hope Children's Foundation"
-          });
-        }
-
-        try {
-          const statusResponse = await statusService.getMyStatus();
-          if (statusResponse?.data?.status) {
-            const status = statusResponse.data.status.toUpperCase();
-            if (status === 'AVAILABLE' || status === 'ONLINE') {
-              setCurrentStatus('AVAILABLE');
-            } else if (status === 'BUSY' || status === 'OCCUPIED') {
-              setCurrentStatus('BUSY');
-            } else if (status === 'OFF_DUTY' || status === 'OFFLINE' || status === 'OFF-DUTY') {
-              setCurrentStatus('OFF_DUTY');
-            } else {
-              setCurrentStatus(status);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching status:', error);
-        }
-
-        try {
-          const requestsResponse = await api.get(`/api/help-requests/worker/${user.id}`);
-          const requests = Array.isArray(requestsResponse.data) ? requestsResponse.data :
-            (requestsResponse.data?.data || requestsResponse.data?.requests || []);
-          const activeRequests = requests.filter((r: any) =>
-            r.status && !['COMPLETED', 'REJECTED', 'CLOSED'].includes(r.status.toUpperCase())
-          );
-          setMyRequestsCount(activeRequests.length);
-
-          // For Active Requests stat card, show only accepted (IN_PROGRESS) requests
-          const acceptedRequests = requests.filter((r: any) =>
-            r.status && r.status.toUpperCase() === 'IN_PROGRESS'
-          );
-          setActiveRequestsCount(acceptedRequests.length);
-
-          const urgentRequests = activeRequests.filter((r: any) =>
-            r.priority === 'HIGH' || r.priority === 'URGENT' || r.emergency === true
-          );
-          setUrgentRequestsCount(urgentRequests.length);
-          setEmergencyAlertsCount(urgentRequests.length);
-
-          // Calculate current workload (total active requests)
-          setCurrentWorkload(activeRequests.length);
-
-          const workload: { [key: string]: { current: number; max: number } } = {
-            'Food': { current: 0, max: 10 },
-            'Education': { current: 0, max: 10 },
-            'Medical': { current: 0, max: 10 },
-            'Shelter': { current: 0, max: 10 },
-            'Counseling': { current: 0, max: 10 },
-            'Clothing': { current: 0, max: 10 },
-            'Other': { current: 0, max: 10 }
-          };
-
-          activeRequests.forEach((r: any) => {
-            const helpType = r.helpType || r.serviceType || '';
-            if (helpType) {
-              const typeLower = helpType.toLowerCase();
-
-              if (typeLower.includes('food')) {
-                workload['Food'].current = Math.min(workload['Food'].current + 1, workload['Food'].max);
-              } else if (typeLower.includes('education')) {
-                workload['Education'].current = Math.min(workload['Education'].current + 1, workload['Education'].max);
-              } else if (typeLower.includes('medical')) {
-                workload['Medical'].current = Math.min(workload['Medical'].current + 1, workload['Medical'].max);
-              } else if (typeLower.includes('shelter')) {
-                workload['Shelter'].current = Math.min(workload['Shelter'].current + 1, workload['Shelter'].max);
-              } else if (typeLower.includes('counseling')) {
-                workload['Counseling'].current = Math.min(workload['Counseling'].current + 1, workload['Counseling'].max);
-              } else if (typeLower.includes('clothing')) {
-                workload['Clothing'].current = Math.min(workload['Clothing'].current + 1, workload['Clothing'].max);
-              } else {
-                workload['Other'].current = Math.min(workload['Other'].current + 1, workload['Other'].max);
-              }
-            }
-          });
-          setWorkloadDistribution(workload);
-        } catch (error) {
-          console.error('Error fetching my requests:', error);
-        }
-
-        // Fetch assigned children count (active assignments)
-        try {
-          const assignmentsResponse = await socialWorkerService.getActiveAssignments(user.id);
-          const assignments = Array.isArray(assignmentsResponse) ? assignmentsResponse :
-            (assignmentsResponse?.data || assignmentsResponse?.assignments || []);
-          setAssignedChildrenCount(assignments.length);
-        } catch (error) {
-          console.error('Error fetching assigned children:', error);
-        }
-
-        // Fetch unread messages/notifications count
-        try {
-          const notificationsResponse = await notificationService.getUnreadCount();
-          setMessagesCount(notificationsResponse.data || 0);
-          setNotificationsCount(notificationsResponse.data || 0);
-        } catch (error) {
-          console.error('Error fetching messages count:', error);
-        }
-
-        // Fetch transfer requests count
-        try {
-          const transfersResponse = await transferService.getPendingTransferCount();
-          const count = transfersResponse?.data?.count || transfersResponse?.data || 0;
-          setTransferRequestsCount(count);
-        } catch (error) {
-          console.error('Error fetching transfer requests:', error);
-        }
-
-        // Fetch recent activity
-        try {
-          const activityResponse = await timelineService.getRecentActivity(5);
-          const activities = Array.isArray(activityResponse.data) ? activityResponse.data :
-            (activityResponse.data?.data || activityResponse.data?.activities || []);
-
-          const formattedActivities = activities.map((activity: any) => {
-            const date = activity.timestamp || activity.createdAt || new Date().toISOString();
-            const time = new Date(date).toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true
-            });
-
-            let message = activity.description || activity.message || activity.eventType || 'Activity';
-            const isEmergency = activity.priority === 'HIGH' || activity.priority === 'URGENT' || activity.emergency;
-
-            return {
-              time,
-              message,
-              type: isEmergency ? 'emergency' : 'normal'
-            };
-          });
-
-          // If no activities from API, create sample recent activity
-          if (formattedActivities.length === 0) {
-            const now = new Date();
-            formattedActivities.push(
-              {
-                time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                message: 'Dashboard loaded',
-                type: 'normal'
-              }
-            );
-          }
-
-          setRecentActivity(formattedActivities);
-        } catch (error) {
-          console.error('Error fetching recent activity:', error);
-          // Set default activity
-          const now = new Date();
-          setRecentActivity([{
-            time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-            message: 'Welcome to your dashboard',
-            type: 'normal'
-          }]);
-        }
-
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
 
   const handleNavigation = (route: string) => {
     setActiveSection(route);
@@ -504,6 +321,7 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   const isOverloaded = currentWorkload >= maxWorkload;
   const showWorkloadWarning = currentWorkload >= maxWorkload * 0.8;
 
+
   const handleSaveNotes = async () => {
     if (!activeRequestId || !modalText.trim()) return;
 
@@ -542,135 +360,10 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    // Prevent clicking the same status
-    if (currentStatus === newStatus) {
-      console.log('Status is already', newStatus);
-      return;
-    }
-
     try {
-      console.log(`[STATUS CHANGE] Attempting to change from ${currentStatus} to: ${newStatus}`);
-
-      // Auto-transition logic: OFF_DUTY -> BUSY requires passing through AVAILABLE
-      if (currentStatus === 'OFF_DUTY' && newStatus === 'BUSY') {
-        console.log('[STATUS CHANGE] Auto-transition: Switching to AVAILABLE first...');
-        try {
-          await statusService.setAvailable();
-          // Small delay to ensure backend processes it
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (err) {
-          console.warn('[STATUS CHANGE] Intermediate switch to AVAILABLE failed, trying direct switch anyway...', err);
-        }
-      }
-
-      // Try POST methods first (they seem more reliable based on backend implementation)
-      let response;
-      let methodUsed = '';
-
-      try {
-        switch (newStatus) {
-          case 'AVAILABLE':
-            response = await statusService.setAvailable();
-            methodUsed = 'POST /available';
-            break;
-          case 'BUSY':
-            response = await statusService.setBusy();
-            methodUsed = 'POST /busy';
-            break;
-          case 'OFF_DUTY':
-            response = await statusService.setOffDuty();
-            methodUsed = 'POST /off-duty';
-            break;
-          default:
-            // Fallback to PUT method
-            response = await statusService.changeOwnStatus({
-              newStatus: newStatus
-            });
-            methodUsed = 'PUT /change';
-        }
-        console.log(`[STATUS CHANGE] Response from ${methodUsed}:`, response);
-      } catch (postError: any) {
-        console.error(`[STATUS CHANGE] POST method failed:`, postError);
-        // Fallback to PUT method
-        try {
-          console.log('[STATUS CHANGE] Trying PUT method as fallback...');
-          response = await statusService.changeOwnStatus({
-            newStatus: newStatus
-          });
-          methodUsed = 'PUT /change (fallback)';
-          console.log(`[STATUS CHANGE] Response from ${methodUsed}:`, response);
-        } catch (putError: any) {
-          console.error('[STATUS CHANGE] PUT method also failed:', putError);
-          throw putError;
-        }
-      }
-
-      // Handle response - check both response.data and direct response
-      const result = response?.data || response;
-      console.log('[STATUS CHANGE] Final result:', result);
-
-      // Check if the response indicates success
-      if (result) {
-        // Check for explicit success field
-        if (result.success === true || result.success === undefined) {
-          // Success - update local state
-          setCurrentStatus(newStatus);
-          if (profile) {
-            setProfile({ ...profile, status: newStatus });
-          }
-          console.log(`[STATUS CHANGE] ✅ Status successfully updated to ${newStatus}`);
-
-          // Refresh status from server to confirm
-          setTimeout(async () => {
-            try {
-              const statusResponse = await statusService.getMyStatus();
-              console.log('[STATUS CHANGE] Refreshed status from server:', statusResponse?.data);
-              if (statusResponse?.data?.currentStatus) {
-                const serverStatus = statusResponse.data.currentStatus.toString().toUpperCase();
-                if (serverStatus !== newStatus) {
-                  console.warn(`[STATUS CHANGE] Status mismatch! Expected ${newStatus}, got ${serverStatus}`);
-                }
-                setCurrentStatus(serverStatus);
-              }
-            } catch (refreshError) {
-              console.warn('[STATUS CHANGE] Could not refresh status from server:', refreshError);
-            }
-          }, 500);
-        } else if (result.success === false) {
-          throw new Error(result?.message || 'Failed to update status');
-        } else {
-          // No explicit success field, but we got a response - assume success
-          setCurrentStatus(newStatus);
-          if (profile) {
-            setProfile({ ...profile, status: newStatus });
-          }
-          console.log(`[STATUS CHANGE] Status updated to ${newStatus} (no explicit success field)`);
-        }
-      } else {
-        throw new Error('No response received from server');
-      }
+      await updateStatus(newStatus);
     } catch (error: any) {
-      console.error('[STATUS CHANGE] ❌ Error updating status:', error);
-      console.error('[STATUS CHANGE] Error details:', {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status,
-        statusText: error?.response?.statusText,
-        config: error?.config
-      });
-
-      let errorMessage = 'Failed to update status. ';
-      if (error?.response?.status === 401) {
-        errorMessage += 'You are not authenticated. Please log in again.';
-      } else if (error?.response?.status === 403) {
-        errorMessage += 'You do not have permission to change status.';
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
-      alert(`Error: ${errorMessage}`);
+      alert(error.message || 'Failed to update status');
     }
   };
 
@@ -688,8 +381,10 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
       {/* Top Header Bar */}
       <header className="dashboard-top-header">
         <div className="header-left">
-          <span className="logo-icon">🏠</span>
-          <span className="logo-text">CHILD PROTECTION & SUPPORT PORTAL</span>
+          <span className="logo-icon">
+            <img src="/images/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
+          </span>
+          <span className="logo-text">CHILD PROTECTION AND SUPPORT PORTAL</span>
         </div>
         <div className="header-right">
           <div className="status-dropdown-wrapper" style={{ position: 'relative' }}>
@@ -901,85 +596,15 @@ const SocialWorkerDashboard: React.FC<SocialWorkerDashboardProps> = () => {
               </div>
             )}
             {!loading && activeSection === 'dashboard' && (
-              <div className="dashboard-main-view">
-                {/* Dashboard Header */}
-                <div className="dashboard-header-section">
-                  <h1 className="dashboard-title">📊 SOCIAL WORKER DASHBOARD</h1>
-                  <p className="dashboard-subtitle">
-                    Welcome back, {profile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || 'Jane'}! Here's your overview.
-                  </p>
-                </div>
-
-                {/* Quick Stats Cards */}
-                <div className="quick-stats-section">
-                  <div className="stats-grid">
-                    <div className="stat-card stat-card-primary">
-                      <div className="stat-value">{activeRequestsCount}</div>
-                      <div className="stat-label">Active Requests</div>
-                    </div>
-                    <div className="stat-card stat-card-warning">
-                      <div className="stat-value">{urgentRequestsCount}</div>
-                      <div className="stat-label">Urgent Requests</div>
-                    </div>
-                    <div className="stat-card stat-card-success">
-                      <div className="stat-value">{transferRequestsCount}</div>
-                      <div className="stat-label">Transfer Requests</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Workload Distribution */}
-                <div className="workload-section">
-                  <div className="section-card">
-                    <h2 className="section-title">📈 WORKLOAD DISTRIBUTION</h2>
-                    <div className="workload-chart">
-                      {Object.entries(workloadDistribution).map(([serviceType, data]) => {
-                        const percentage = (data.current / data.max) * 100;
-                        return (
-                          <div key={serviceType} className="workload-item">
-                            <div className="workload-label">{serviceType}:</div>
-                            <div className="workload-bar-container">
-                              <div
-                                className="workload-bar"
-                                style={{ width: `${percentage}%` }}
-                              ></div>
-                            </div>
-                            <div className="workload-value">{data.current}/{data.max}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Activity & Alerts */}
-                <div className="activity-section">
-                  <div className="section-card">
-                    <h2 className="section-title">🚨 RECENT ACTIVITY & ALERTS</h2>
-                    <div className="activity-list">
-                      {recentActivity.length > 0 ? (
-                        recentActivity.map((activity, index) => (
-                          <div
-                            key={index}
-                            className={`activity-item ${activity.type === 'emergency' ? 'activity-emergency' : ''}`}
-                          >
-                            <span className="activity-time">{activity.time}</span>
-                            <span className="activity-message">
-                              {activity.type === 'emergency' && '🔴 '}
-                              {activity.message}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="activity-item">
-                          <span className="activity-time">--:--</span>
-                          <span className="activity-message">No recent activity</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SocialWorkerOverview
+                stats={stats}
+                workloadDistribution={workloadDistribution}
+                recentActivity={recentActivity}
+                schedule={schedule}
+                profile={profile}
+                user={user}
+                onRefresh={refresh}
+              />
             )}
             {!loading && activeSection === 'my-requests' && (
               <MyRequestsSection
@@ -1485,7 +1110,6 @@ const MyRequestsSection: React.FC<MyRequestsSectionProps> = ({
   const handleScheduleFollowUp = (request: any) => {
     onScheduleFollowUp({
       requestId: request.trackingId || request.id,
-      childName: request.requesterName || 'N/A',
       type: 'Home Visit',
       priority: request.priority || 'MEDIUM',
       notes: `Follow-up for request ${request.trackingId || request.id}`

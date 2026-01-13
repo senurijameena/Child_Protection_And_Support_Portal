@@ -29,7 +29,7 @@ const Header: React.FC = () => {
       const headerOffset = 100;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
+
       window.scrollTo({
         top: Math.max(0, offsetPosition),
         behavior: 'smooth'
@@ -84,7 +84,7 @@ const Header: React.FC = () => {
     <header className={`main-header ${isScrolled ? 'scrolled' : ''}`}>
       <Container fluid="xxl" className="header-container">
         <div className="header-content">
-          {}
+          { }
           <Link to="/" className="logo-wrapper" onClick={() => setIsMobileMenuOpen(false)}>
             {logoError ? (
               <div className="logo-placeholder">
@@ -99,12 +99,12 @@ const Header: React.FC = () => {
               />
             )}
             <div className="logo-text">
-              <h1 className="logo-main-text">Child Protection Portal</h1>
+              <h1 className="logo-main-text">CHILD PROTECTION AND SUPPORT PORTAL</h1>
               <p className="logo-sub-text">Government Initiative</p>
             </div>
           </Link>
 
-          {}
+          { }
           <nav className="desktop-nav">
             {navItems.map((item) => (
               item.anchor ? (
@@ -129,7 +129,7 @@ const Header: React.FC = () => {
             ))}
           </nav>
 
-          {}
+          { }
           <div className="header-actions">
             <Button
               variant="outline-primary"
@@ -147,7 +147,7 @@ const Header: React.FC = () => {
             </Button>
           </div>
 
-          {}
+          { }
           <button
             className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -159,7 +159,7 @@ const Header: React.FC = () => {
           </button>
         </div>
 
-        {}
+        { }
         <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
           {navItems.map((item) => (
             item.anchor ? (

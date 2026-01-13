@@ -32,7 +32,7 @@ const AdminFooter: React.FC = () => {
     <footer className="admin-footer">
       <Container fluid>
         <Row className="g-4 py-4">
-          {}
+          { }
           <Col lg={4} md={6}>
             <div className="mb-3">
               <h6 className="admin-footer-title mb-3">
@@ -42,8 +42,8 @@ const AdminFooter: React.FC = () => {
               <ul className="list-unstyled admin-footer-links">
                 {adminQuickLinks.map((link, index) => (
                   <li key={index} className="mb-2">
-                    <Link 
-                      to={link.path} 
+                    <Link
+                      to={link.path}
                       className="admin-footer-link d-flex align-items-center"
                     >
                       <i className={`${link.icon} me-2`}></i>
@@ -79,8 +79,8 @@ const AdminFooter: React.FC = () => {
               <ul className="list-unstyled admin-footer-links">
                 {adminResources.map((resource, index) => (
                   <li key={index} className="mb-2">
-                    <Link 
-                      to={resource.path} 
+                    <Link
+                      to={resource.path}
                       className="admin-footer-link d-flex align-items-center"
                     >
                       <i className={`${resource.icon} me-2`}></i>
@@ -120,7 +120,7 @@ const AdminFooter: React.FC = () => {
               </div>
             </div>
 
-            {}
+            { }
             <div className="mt-4 pt-3 admin-footer-divider">
               <h6 className="admin-footer-title mb-2">
                 <i className="bi bi-shield-check me-2"></i>
@@ -134,14 +134,14 @@ const AdminFooter: React.FC = () => {
           </Col>
         </Row>
 
-        {}
+        { }
         <Row>
           <Col>
             <div className="admin-footer-bottom">
               <div className="d-flex flex-wrap justify-content-between align-items-center">
                 <div>
                   <p className="mb-0 small">
-                    &copy; {currentYear} <strong>Child Protection Portal</strong> - Admin Dashboard
+                    &copy; {currentYear} <strong>CHILD PROTECTION AND SUPPORT PORTAL</strong> - Admin Dashboard
                   </p>
                   <p className="mb-0 small text-muted">
                     System Administrator Access | All rights reserved

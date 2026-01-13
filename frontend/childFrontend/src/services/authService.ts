@@ -317,7 +317,7 @@ export const authService = {
       case 'ADMIN':
         return '/admin/dashboard';
       case 'POLICE':
-        return '/dashboard';
+        return '/police/dashboard';
       case 'SOCIAL_WORKER':
         return '/social-worker/dashboard';
       case 'PUBLIC':

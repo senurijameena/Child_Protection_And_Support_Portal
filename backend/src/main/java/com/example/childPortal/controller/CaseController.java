@@ -64,6 +64,12 @@ public class CaseController {
         return ResponseEntity.ok(cases);
     }
 
+    @GetMapping("/station/{stationId}")
+    public ResponseEntity<List<CaseDTO>> getCasesForStation(@PathVariable String stationId) {
+        List<CaseDTO> cases = caseService.getCasesForStation(stationId);
+        return ResponseEntity.ok(cases);
+    }
+
     @PutMapping("/{caseId}/status")
     public ResponseEntity<CaseDTO> updateCaseStatus(
             @PathVariable String caseId,
@@ -79,6 +85,15 @@ public class CaseController {
             @RequestParam String officerId,
             @AuthenticationPrincipal String adminId) {
         CaseDTO updatedCase = caseService.assignCaseToOfficer(caseId, officerId, adminId);
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{caseId}/assign/station")
+    public ResponseEntity<CaseDTO> assignToStation(
+            @PathVariable String caseId,
+            @RequestParam String stationId,
+            @AuthenticationPrincipal String adminId) {
+        CaseDTO updatedCase = caseService.assignCaseToStation(caseId, stationId, adminId);
         return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
     }
 

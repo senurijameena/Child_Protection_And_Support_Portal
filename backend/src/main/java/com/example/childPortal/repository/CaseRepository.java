@@ -24,6 +24,8 @@ public interface CaseRepository extends MongoRepository<Case, String> {
 
     List<Case> findByAssignedOfficerId(String officerId);
 
+    List<Case> findByAssignedStationId(String stationId);
+
     List<Case> findByAssignedWorkerId(String workerId);
 
     List<Case> findAllByOrderByReportDateDesc();

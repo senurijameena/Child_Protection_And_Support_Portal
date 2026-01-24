@@ -20,30 +20,34 @@ public class PoliceDashboardController {
     @Autowired
     private CaseService caseService;
 
+    @Autowired
+    private com.example.childPortal.service.PoliceOfficerService policeOfficerService;
+
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
         Map<String, Object> stats = new HashMap<>();
-        
+
         // Log for debugging
         System.out.println("Fetching police stats for user: " + userId);
-        
+
         List<CaseDTO> assignedCases = caseService.getCasesForOfficer(userId);
-        
+
         long activeCases = assignedCases.stream()
-            .filter(c -> c.getStatus() != CaseStatus.RESOLVED && c.getStatus() != CaseStatus.CLOSED)
-            .count();
-            
+                .filter(c -> c.getStatus() != CaseStatus.RESOLVED && c.getStatus() != CaseStatus.CLOSED)
+                .count();
+
         long urgentCases = assignedCases.stream()
-            .filter(c -> c.isEmergency() || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
-            .count();
-            
+                .filter(c -> c.isEmergency()
+                        || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
+                .count();
+
         long resolvedToday = 0; // Placeholder for logic requiring date comparison
-        
+
         stats.put("assignedCases", assignedCases.size());
         stats.put("activeCases", activeCases);
         stats.put("urgentCases", urgentCases);
-        stats.put("emergencyCases", urgentCases); 
-        stats.put("resolvedToday", resolvedToday); 
+        stats.put("emergencyCases", urgentCases);
+        stats.put("resolvedToday", resolvedToday);
         stats.put("avgResponse", "2.4h"); // Mock
         stats.put("pendingTransfers", 0);
         stats.put("unreadNotifications", 0);
@@ -55,5 +59,25 @@ public class PoliceDashboardController {
     public ResponseEntity<List<CaseDTO>> getAssignedCases(@AuthenticationPrincipal String userId) {
         List<CaseDTO> assignedCases = caseService.getCasesForOfficer(userId);
         return ResponseEntity.ok(assignedCases);
+    }
+
+    @GetMapping("/station-cases")
+    public ResponseEntity<List<CaseDTO>> getStationCases(@AuthenticationPrincipal String userId) {
+        System.out.println("Fetching station cases for user: " + userId);
+
+        java.util.Optional<com.example.childPortal.model.PoliceOfficer> officerOpt = policeOfficerService
+                .getPoliceOfficerByUserId(userId);
+
+        if (officerOpt.isPresent()) {
+            String stationId = officerOpt.get().getStationId();
+            if (stationId != null) {
+                // Determine if we want ALL station cases or just unassigned ones.
+                // Usually a dashboard might show "My Station's Cases"
+                List<CaseDTO> stationCases = caseService.getCasesForStation(stationId);
+                return ResponseEntity.ok(stationCases);
+            }
+        }
+
+        return ResponseEntity.ok(java.util.Collections.emptyList());
     }
 }

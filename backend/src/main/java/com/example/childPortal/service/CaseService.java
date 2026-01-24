@@ -23,6 +23,8 @@ public interface CaseService {
 
     CaseDTO assignCaseToOfficer(String caseId, String officerId, String assignedBy);
 
+    CaseDTO assignCaseToStation(String caseId, String stationId, String assignedBy);
+
     CaseDTO assignCaseToSocialWorker(String caseId, String workerId, String assignedBy);
 
     boolean deleteCase(String caseId);
@@ -34,6 +36,8 @@ public interface CaseService {
     List<CaseDTO> getPublicActiveCases();
 
     List<CaseDTO> getCasesForOfficer(String officerId);
+
+    List<CaseDTO> getCasesForStation(String stationId);
 
     List<CaseDTO> getCasesForWorker(String workerId);
 

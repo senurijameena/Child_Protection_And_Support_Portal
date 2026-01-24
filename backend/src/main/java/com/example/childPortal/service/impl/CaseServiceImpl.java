@@ -296,6 +296,30 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     @Transactional
+    public CaseDTO assignCaseToStation(String caseId, String stationId, String assignedBy) {
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        if (caseOpt.isEmpty()) {
+            return null;
+        }
+
+        Case caseEntity = caseOpt.get();
+        caseEntity.setAssignedStationId(stationId);
+        if (caseEntity.getStatus() == CaseStatus.REPORTED) {
+            caseEntity.setStatus(CaseStatus.ASSIGNED);
+        }
+        caseEntity.setLastUpdated(LocalDateTime.now());
+
+        Case updatedCase = caseRepository.save(caseEntity);
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
+    }
+
+    @Override
+    @Transactional
     public CaseDTO assignCaseToSocialWorker(String caseId, String workerId, String assignedBy) {
         Optional<Case> caseOpt = caseRepository.findById(caseId);
         if (caseOpt.isEmpty())
@@ -407,6 +431,19 @@ public class CaseServiceImpl implements CaseService {
                 }
             }
         }
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return cases.stream()
+                .map(caseEntity -> CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CaseDTO> getCasesForStation(String stationId) {
+        List<Case> cases = caseRepository.findByAssignedStationId(stationId);
 
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
@@ -595,6 +632,7 @@ public class CaseServiceImpl implements CaseService {
         dto.setEvidenceUrls(caseEntity.getEvidenceUrls());
         dto.setStatus(caseEntity.getStatus());
         dto.setAssignedOfficerId(caseEntity.getAssignedOfficerId());
+        dto.setAssignedStationId(caseEntity.getAssignedStationId());
         dto.setAssignedWorkerId(caseEntity.getAssignedWorkerId());
         dto.setReportDate(caseEntity.getReportDate());
         dto.setPriority(caseEntity.getPriority());

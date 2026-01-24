@@ -315,13 +315,13 @@ export const authService = {
 
     switch (user.role) {
       case 'ADMIN':
-        return '/admin/dashboard';
+        return '/dashboard/admin';
       case 'POLICE':
-        return '/police/dashboard';
+        return '/dashboard/officer';
       case 'SOCIAL_WORKER':
-        return '/social-worker/dashboard';
+        return '/dashboard/social-worker';
       case 'PUBLIC':
-        return '/public/dashboard';
+        return '/dashboard/user';
       default:
         return '/dashboard';
     }

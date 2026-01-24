@@ -1,17 +1,17 @@
 
 import React from 'react';
-import { 
-  Container, 
-  Row, 
-  Col, 
-  Card, 
-  Button, 
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
   Badge,
   Accordion
 } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '../components/LandingHeader';
+import Footer from '../components/LandingFooter';
 import './AboutPage.css';
 
 const AboutPage: React.FC = () => {
@@ -102,7 +102,7 @@ const AboutPage: React.FC = () => {
     <>
       <Header />
       <div className="about-page">
-        {}
+        { }
         <section className="about-hero py-5">
           <Container>
             <Row className="align-items-center">
@@ -112,35 +112,35 @@ const AboutPage: React.FC = () => {
                   <span className="d-block text-warning">Building Futures</span>
                 </h1>
                 <p className="lead mb-4">
-                  The Child Protection Portal is a comprehensive digital platform 
-                  connecting vulnerable children with protection services, law enforcement, 
+                  The Child Protection Portal is a comprehensive digital platform
+                  connecting vulnerable children with protection services, law enforcement,
                   and social support systems across India.
                 </p>
                 <div className="d-flex gap-3">
-                  <Button 
-                    variant="primary" 
+                  <Button
+                    variant="primary"
                     size="lg"
                     onClick={() => navigate('/register/public')}
                   >
                     <i className="bi bi-person-plus me-2"></i>
                     Join Our Mission
                   </Button>
-                  <Button 
-                    variant="outline-primary" 
+                  <Button
+                    variant="outline-primary"
                     size="lg"
-                    onClick={() => navigate('/contact')}
+                    onClick={() => navigate('/login')}
                   >
-                    <i className="bi bi-envelope me-2"></i>
-                    Contact Us
+                    <i className="bi bi-box-arrow-in-right me-2"></i>
+                    Login
                   </Button>
                 </div>
               </Col>
               <Col lg={6}>
                 <div className="about-hero-image position-relative">
-                  {}
-                  <img 
+                  { }
+                  <img
                     src="/images/about.jpg"  // Updated path
-                    alt="Child Protection Platform Team" 
+                    alt="Child Protection Platform Team"
                     className="img-fluid rounded-3 shadow-lg border"
                     style={{
                       width: '100%',
@@ -168,7 +168,7 @@ const AboutPage: React.FC = () => {
           </Container>
         </section>
 
-        {}
+        { }
         <section className="py-5 bg-light">
           <Container>
             <div className="text-center mb-5">
@@ -202,7 +202,7 @@ const AboutPage: React.FC = () => {
           </Container>
         </section>
 
-        {}
+        { }
         <section className="py-5">
           <Container>
             <div className="text-center mb-5">
@@ -236,7 +236,7 @@ const AboutPage: React.FC = () => {
           </Container>
         </section>
 
-        {}
+        { }
         <section className="py-5 bg-light">
           <Container>
             <div className="text-center mb-5">
@@ -259,8 +259,8 @@ const AboutPage: React.FC = () => {
                     <Card.Text className="text-muted small">
                       Report cases, request help, track progress, and provide feedback
                     </Card.Text>
-                    <Button 
-                      variant="outline-primary" 
+                    <Button
+                      variant="outline-primary"
                       size="sm"
                       className="mt-3"
                       onClick={() => navigate('/register/public')}
@@ -280,8 +280,8 @@ const AboutPage: React.FC = () => {
                     <Card.Text className="text-muted small">
                       Investigate cases, coordinate response, and maintain law enforcement records
                     </Card.Text>
-                    <Button 
-                      variant="outline-danger" 
+                    <Button
+                      variant="outline-danger"
                       size="sm"
                       className="mt-3"
                       onClick={() => navigate('/register/police')}
@@ -301,8 +301,8 @@ const AboutPage: React.FC = () => {
                     <Card.Text className="text-muted small">
                       Provide counseling, rehabilitation, and support services to children
                     </Card.Text>
-                    <Button 
-                      variant="outline-success" 
+                    <Button
+                      variant="outline-success"
                       size="sm"
                       className="mt-3"
                       onClick={() => navigate('/register/social-worker')}
@@ -334,7 +334,7 @@ const AboutPage: React.FC = () => {
           </Container>
         </section>
 
-        {}
+        { }
         <section className="py-5">
           <Container>
             <div className="text-center mb-5">
@@ -363,7 +363,7 @@ const AboutPage: React.FC = () => {
                 <div className="text-center mt-4">
                   <p className="text-muted">
                     Still have questions?{' '}
-                    <Link to="/contact" className="text-decoration-none fw-bold">
+                    <Link to="/login" className="text-decoration-none fw-bold">
                       Contact our support team
                     </Link>
                   </p>
@@ -373,7 +373,7 @@ const AboutPage: React.FC = () => {
           </Container>
         </section>
 
-        {}
+        { }
         <section className="py-5 cta-section">
           <Container>
             <Row className="align-items-center">
@@ -386,8 +386,8 @@ const AboutPage: React.FC = () => {
                 </p>
               </Col>
               <Col lg={4} className="text-lg-end">
-                <Button 
-                  variant="warning" 
+                <Button
+                  variant="warning"
                   size="lg"
                   className="px-5 py-3 fw-bold"
                   onClick={() => navigate('/register/public')}

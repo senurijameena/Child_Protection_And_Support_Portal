@@ -1,499 +1,281 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Form,
-  Button,
-  Alert,
-  Spinner,
-  InputGroup
-} from 'react-bootstrap';
+import { Form, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService, type LoginCredentials } from '../../services/authService';
-import Header from '../../components/Header';
+import Header from '../../components/LandingHeader';
 import './LoginPage.css';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
+  // Form State
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: ''
   });
 
+  // UI States
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<string>('PUBLIC');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string>('');
-  const [loginStats, setLoginStats] = useState<number>(1247);
 
+  // Handle Input Changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    if (apiError) setApiError('');
+  };
+
+  // Form Validation
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = 'Please enter a valid email address';
     }
-
     if (!formData.password) {
       newErrors.password = 'Password is required';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-    if (apiError) setApiError('');
-  };
-
+  // Handle Login Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Prevent duplicate submissions
-    if (loading) {
-      return;
-    }
-
-    // Clear any previous errors
+    if (loading) return;
     setApiError('');
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
-
     try {
       const response = await authService.login(formData);
 
       if (response.success) {
-        if (rememberMe) {
-          localStorage.setItem('rememberedEmail', formData.email);
-
-          const expirationDate = new Date();
-          expirationDate.setDate(expirationDate.getDate() + 30);
-          localStorage.setItem('rememberMeExpiration', expirationDate.toISOString());
-        } else {
-          localStorage.removeItem('rememberedEmail');
-          localStorage.removeItem('rememberMeExpiration');
+        // Determine storage based on "Remember Me"
+        const token = response.token;
+        if (token) {
+          if (rememberMe) {
+            localStorage.setItem('authToken', token);
+          } else {
+            sessionStorage.setItem('authToken', token);
+            // Also clear from localStorage if user unchecked it
+            localStorage.removeItem('authToken');
+          }
         }
 
         const user = authService.getCurrentUser();
         if (user) {
-          // Verify that the logged-in user matches the selected role
-          if (user.role !== selectedRole && selectedRole !== 'PUBLIC') {
-            // Allow PUBLIC selection to login as anyone (or maybe not? standard behavior is usually restrict)
-            // Actually, if I select SOCIAL WORKER, I expect to be a SOCIAL WORKER.
-            // If I select PUBLIC, I expect to be PUBLIC.
-
-            // Let's be strict:
-            if (user.role !== selectedRole) {
-              console.warn(`Role mismatch: Selected ${selectedRole} but logged in as ${user.role}`);
-              authService.logout();
-              setApiError(`Access Denied: This account is registered as ${user.role.replace('_', ' ')}, not ${selectedRole.replace('_', ' ')}.`);
-              return;
-            }
+          // Redirect based on role requirements in the prompt
+          switch (user.role) {
+            case 'ADMIN':
+              navigate('/dashboard/admin');
+              break;
+            case 'POLICE':
+              navigate('/dashboard/officer');
+              break;
+            case 'SOCIAL_WORKER':
+              navigate('/dashboard/social-worker');
+              break;
+            case 'PUBLIC':
+              navigate('/dashboard/user');
+              break;
+            default:
+              navigate('/dashboard');
           }
-
-          const dashboardPath = authService.getDashboardPath();
-          console.log('Navigating to dashboard:', dashboardPath);
-          navigate(dashboardPath);
         } else {
-
-          console.warn('User data not available after login, redirecting to default dashboard');
           navigate('/dashboard');
         }
       } else {
-        const errorMessage = response.message || 'Login failed. Please check your credentials.';
-        setApiError(errorMessage);
+        setApiError(response.message || 'Invalid credentials. Please try again.');
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
-      setApiError(errorMessage);
+      if (!navigator.onLine) {
+        setApiError('No internet connection. Please check your network.');
+      } else if (error.response?.status === 403) {
+        setApiError('Account not yet approved by administrator.');
+      } else {
+        setApiError('Server unavailable. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Hydrate email if remembered
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail');
-    const expiration = localStorage.getItem('rememberMeExpiration');
-
-    if (rememberedEmail && expiration) {
-      const expirationDate = new Date(expiration);
-      if (expirationDate > new Date()) {
-        setFormData(prev => ({ ...prev, email: rememberedEmail }));
-        setRememberMe(true);
-      } else {
-        localStorage.removeItem('rememberedEmail');
-        localStorage.removeItem('rememberMeExpiration');
-      }
+    const rememberedEmail = localStorage.getItem('lastEmail');
+    if (rememberedEmail) {
+      setFormData(prev => ({ ...prev, email: rememberedEmail }));
+      setRememberMe(true);
     }
-
-    const interval = setInterval(() => {
-      setLoginStats(prev => prev + Math.floor(Math.random() * 3));
-    }, 30000); // Update every 30 seconds
-
-    return () => clearInterval(interval);
   }, []);
+
+  // Save/Clear email on change if needed
+  useEffect(() => {
+    if (rememberMe && formData.email) {
+      localStorage.setItem('lastEmail', formData.email);
+    } else if (!rememberMe) {
+      localStorage.removeItem('lastEmail');
+    }
+  }, [rememberMe, formData.email]);
 
   return (
     <div className="login-page-wrapper">
       <Header />
+      <div className="login-split-container">
+        {/* Left Section: Visual & Trust (60% Desktop) */}
+        <div className="login-visual-section">
+          <div className="login-visual-content">
+            <h1>Welcome Back</h1>
+            <p>
+              Secure access for citizens, police officers,
+              social workers, and administrators.
+              We work together to protect our future.
+            </p>
 
-      <div className="login-main-content">
-        <Container fluid className="login-split-container">
-          <Row className="g-0 h-100">
-            { }
-            <Col lg={6} className="login-image-section">
-              <div className="login-image-wrapper">
-                <img
-                  src="/images/login.jpg"
-                  alt="Child Protection Portal"
-                  className="login-hero-image"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/default-login.jpg';
-                  }}
-                />
+            <div className="trust-badges">
+              <div className="badge-item">
+                <div className="badge-icon">🔒</div>
+                <div className="badge-text">Secure Login</div>
               </div>
-              { }
-              <div className="login-portal-info">
-                <div className="login-portal-info-content">
-                  <h2 className="login-portal-info-title">🛡️ CHILD PROTECTION AND SUPPORT PORTAL</h2>
-                  <p className="login-portal-info-subtitle">
-                    Protecting Childhood, Building Futures
-                  </p>
-                  <div className="login-portal-info-stats">
-                    <div className="portal-stat-item">
-                      <span className="portal-stat-number">{loginStats.toLocaleString()}+</span>
-                      <span className="portal-stat-label">Users Today</span>
-                    </div>
-                    <div className="portal-stat-item">
-                      <span className="portal-stat-number">24/7</span>
-                      <span className="portal-stat-label">Support</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="badge-item">
+                <div className="badge-icon">🛡️</div>
+                <div className="badge-text">Role-based Access</div>
               </div>
-            </Col>
-
-            { }
-            <Col lg={6} className="login-form-section">
-              <div className="login-form-wrapper">
-                <Card className="login-card">
-                  <Card.Body className="login-card-body">
-                    { }
-                    <div className="login-welcome-section">
-                      <h1 className="login-welcome-title">WELCOME BACK</h1>
-                      <p className="login-welcome-subtitle">
-                        Secure login to Child Protection and Support Portal
-                      </p>
-                    </div>
-
-                    { }
-                    {apiError && (
-                      <Alert variant="danger" className="login-error-alert">
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        {apiError}
-                      </Alert>
-                    )}
-
-                    { }
-                    <Form onSubmit={handleSubmit} className="login-form">
-                      { }
-                      <Form.Group className="login-form-group">
-                        <Form.Label className="login-form-label">
-                          Login As <span className="required-asterisk">*</span>
-                        </Form.Label>
-                        <Form.Select
-                          value={selectedRole}
-                          onChange={(e) => setSelectedRole(e.target.value)}
-                          className="login-form-input"
-                        >
-                          <option value="PUBLIC">👤 Public User</option>
-                          <option value="POLICE">👮 Police Officer</option>
-                          <option value="SOCIAL_WORKER">👩⚕️ Social Worker</option>
-                          <option value="ADMIN">👨‍💼 Administrator</option>
-                        </Form.Select>
-                        <Form.Text className="text-muted">
-                          Select your user type to login
-                        </Form.Text>
-                      </Form.Group>
-
-                      { }
-                      <Form.Group className="login-form-group">
-                        <Form.Label className="login-form-label">
-                          Email Address <span className="required-asterisk">*</span>
-                        </Form.Label>
-                        <Form.Control
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          placeholder="Enter your email address"
-                          isInvalid={!!errors.email}
-                          required
-                          className="login-form-input"
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.email}
-                        </Form.Control.Feedback>
-                      </Form.Group>
-
-                      { }
-                      <Form.Group className="login-form-group">
-                        <Form.Label className="login-form-label">
-                          Password <span className="required-asterisk">*</span>
-                        </Form.Label>
-                        <InputGroup hasValidation>
-                          <Form.Control
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Enter your password"
-                            isInvalid={!!errors.password}
-                            required
-                            className="login-form-input"
-                          />
-                          <InputGroup.Text
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="password-toggle-btn"
-                            title={showPassword ? 'Hide Password' : 'Show Password'}
-                          >
-                            {showPassword ? '🙈' : '👁️'}
-                          </InputGroup.Text>
-                          <Form.Control.Feedback type="invalid">
-                            {errors.password}
-                          </Form.Control.Feedback>
-                        </InputGroup>
-                      </Form.Group>
-
-                      { }
-                      <Form.Group className="login-form-group">
-                        <Form.Check
-                          type="checkbox"
-                          id="rememberMe"
-                          label="Remember me for 30 days"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="remember-me-checkbox"
-                        />
-                      </Form.Group>
-
-                      { }
-                      <div className="login-button-section">
-                        <Button
-                          variant="primary"
-                          type="submit"
-                          size="lg"
-                          className="login-submit-btn"
-                          disabled={loading}
-                        >
-                          {loading ? (
-                            <>
-                              <Spinner
-                                as="span"
-                                animation="border"
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                                className="me-2"
-                              />
-                              Logging in...
-                            </>
-                          ) : (
-                            'LOGIN'
-                          )}
-                        </Button>
-                      </div>
-                    </Form>
-
-                    { }
-                    <div className="login-additional-links">
-                      <div className="login-link-item">
-                        <span className="login-link-icon">🔐</span>
-                        <span className="login-link-text">Forgot Password?</span>
-                        <Link to="/forgot-password" className="login-link-action">
-                          Reset here
-                        </Link>
-                      </div>
-                      <div className="login-link-item">
-                        <span className="login-link-icon">🆕</span>
-                        <span className="login-link-text">New User?</span>
-                        <Link to="/register" className="login-link-action">
-                          Register here
-                        </Link>
-                      </div>
-                    </div>
-
-                    { }
-                    <Card className="security-features-card">
-                      <Card.Body>
-                        <div className="security-features-title">
-                          🔒 This is a secure government portal
-                        </div>
-                        <div className="security-features-list">
-                          <div className="security-feature-item">
-                            <span className="security-check">✅</span>
-                            <span>End-to-end encryption</span>
-                          </div>
-                          <div className="security-feature-item">
-                            <span className="security-check">✅</span>
-                            <span>Two-factor authentication available</span>
-                          </div>
-                          <div className="security-feature-item">
-                            <span className="security-check">✅</span>
-                            <span>Activity logging enabled</span>
-                          </div>
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Card.Body>
-                </Card>
+              <div className="badge-item">
+                <div className="badge-icon">👁️</div>
+                <div className="badge-text">Privacy Protected</div>
               </div>
-            </Col>
-          </Row>
-        </Container>
-      </div>
-
-      { }
-      <footer className="login-page-footer">
-        <Container fluid="xxl">
-          <div className="login-footer-content">
-            <Row className="g-4">
-              { }
-              <Col md={4} sm={12}>
-                <div className="footer-section">
-                  <h5 className="footer-section-title">
-                    <i className="bi bi-telephone-fill me-2"></i>
-                    24/7 Emergency Support
-                  </h5>
-                  <div className="footer-emergency-contacts">
-                    <div className="emergency-contact-item">
-                      <span className="emergency-icon">📞</span>
-                      <div className="emergency-details">
-                        <strong>Childline</strong>
-                        <a href="tel:1098" className="emergency-number">1098</a>
-                      </div>
-                    </div>
-                    <div className="emergency-contact-item">
-                      <span className="emergency-icon">🚨</span>
-                      <div className="emergency-details">
-                        <strong>Emergency</strong>
-                        <a href="tel:112" className="emergency-number">112</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Col>
-
-              { }
-              <Col md={4} sm={12}>
-                <div className="footer-section">
-                  <h5 className="footer-section-title">
-                    <i className="bi bi-link-45deg me-2"></i>
-                    Quick Links
-                  </h5>
-                  <ul className="footer-links-list">
-                    <li>
-                      <Link to="/about">
-                        <i className="bi bi-info-circle me-2"></i>
-                        About Us
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/contact">
-                        <i className="bi bi-envelope me-2"></i>
-                        Contact Us
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/register">
-                        <i className="bi bi-person-plus me-2"></i>
-                        Register
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/">
-                        <i className="bi bi-house-door me-2"></i>
-                        Home
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </Col>
-
-              { }
-              <Col md={4} sm={12}>
-                <div className="footer-section">
-                  <h5 className="footer-section-title">
-                    <i className="bi bi-share-fill me-2"></i>
-                    Connect With Us
-                  </h5>
-                  <div className="footer-social-links">
-                    <a href="#" className="social-link" title="Facebook">
-                      <i className="bi bi-facebook"></i>
-                    </a>
-                    <a href="#" className="social-link" title="Twitter">
-                      <i className="bi bi-twitter-x"></i>
-                    </a>
-                    <a href="#" className="social-link" title="LinkedIn">
-                      <i className="bi bi-linkedin"></i>
-                    </a>
-                    <a href="#" className="social-link" title="YouTube">
-                      <i className="bi bi-youtube"></i>
-                    </a>
-                  </div>
-                  <div className="footer-security-badge">
-                    <i className="bi bi-shield-check me-2"></i>
-                    <span>Secure Government Portal</span>
-                  </div>
-                </div>
-              </Col>
-            </Row>
-
-            { }
-            <div className="footer-bottom">
-              <Row className="align-items-center">
-                <Col md={6} sm={12} className="text-center text-md-start mb-2 mb-md-0">
-                  <p className="footer-copyright">
-                    © {new Date().getFullYear()} Child Protection and Support Portal. All rights reserved.
-                  </p>
-                </Col>
-                <Col md={6} sm={12} className="text-center text-md-end">
-                  <div className="footer-legal-links">
-                    <Link to="/about">Privacy Policy</Link>
-                    <span className="separator">|</span>
-                    <Link to="/about">Terms of Service</Link>
-                    <span className="separator">|</span>
-                    <Link to="/about">Security</Link>
-                  </div>
-                </Col>
-              </Row>
             </div>
           </div>
-        </Container>
-      </footer>
+        </div>
+
+        {/* Right Section: Form (40% Desktop) */}
+        <div className="login-form-section">
+          <div className="login-card">
+            <h2>Login to Portal</h2>
+            <p className="subtitle">Enter your credentials below</p>
+
+            <Form onSubmit={handleSubmit}>
+              {/* Email Field */}
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <div className="input-container">
+                  <i className="bi bi-envelope input-icon"></i>
+                  <input
+                    type="email"
+                    name="email"
+                    className={`form-input ${errors.email ? 'border-danger' : ''}`}
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                {errors.email && <div className="text-danger small mt-1 font-bold">{errors.email}</div>}
+              </div>
+
+              {/* Password Field */}
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <div className="input-container">
+                  <i className="bi bi-lock input-icon"></i>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    className={`form-input ${errors.password ? 'border-danger' : ''}`}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    onCopy={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                  </button>
+                </div>
+                {errors.password && <div className="text-danger small mt-1 font-bold">{errors.password}</div>}
+              </div>
+
+              {/* Remember Me & Forgot Password */}
+              <div className="form-options">
+                <label className="remember-me">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  Keep me logged in
+                </label>
+                <Link to="/forgot-password" title="Restore password access" className="forgot-password">
+                  Forgot Password?
+                </Link>
+              </div>
+
+              {/* API Status Alerts */}
+              {apiError && (
+                <Alert variant="danger" className="text-sm py-2 px-3 mb-4 rounded-lg">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  {apiError}
+                </Alert>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="submit-btn"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner size="sm" animation="border" />
+                    Authenticating...
+                  </>
+                ) : (
+                  <>
+                    Login
+                    <i className="bi bi-arrow-right-short text-2xl"></i>
+                  </>
+                )}
+              </button>
+            </Form>
+
+            {/* Registration Links Section */}
+            <div className="registration-section">
+              <p>Don't have an account?</p>
+              <div className="reg-links-grid">
+                <Link to="/register/public" className="reg-btn">
+                  <i className="bi bi-person-fill"></i>
+                  Register as Public User
+                </Link>
+                <Link to="/register/police" className="reg-btn">
+                  <i className="bi bi-shield-shaded"></i>
+                  Register as Police Officer
+                </Link>
+                <Link to="/register/social-worker" className="reg-btn">
+                  <i className="bi bi-heart-fill"></i>
+                  Register as Social Worker
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default LoginPage;
-

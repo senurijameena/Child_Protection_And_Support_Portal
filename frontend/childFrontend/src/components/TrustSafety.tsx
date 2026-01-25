@@ -26,23 +26,25 @@ const TrustSafety: React.FC = () => {
     ];
 
     return (
-        <section className="py-24 bg-white" id="trust">
+        <section className="py-28 bg-white" id="trust">
             <Container>
                 <Row className="align-items-center">
-                    <Col lg={5} className="mb-16 lg:mb-0">
+                    <Col lg={5} className="mb-20 lg:mb-0 pr-lg-12">
                         <div className="relative">
-                            <h2 className="text-primary font-bold tracking-widest uppercase text-sm mb-3">Our Commitment</h2>
-                            <h3 className="text-4xl font-extrabold text-gray-900 mb-8 leading-tight">
-                                Built on Trust, Guarded by <span className="text-primary">Safety</span>.
-                            </h3>
-                            <p className="text-lg text-gray-600 mb-8">
-                                We understand the sensitivity of child protection.
-                                Our system is designed with a "Safety First" approach,
-                                ensuring that victims and reporters are always protected.
+                            <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-blue-600 uppercase bg-blue-50 rounded-full">
+                                Trust & Security
+                            </span>
+                            <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900 mb-8 leading-[1.1] tracking-tighter">
+                                Built on Trust, Guarded by <span className="text-blue-600 italic">Safety</span>.
+                            </h2>
+                            <p className="text-xl text-slate-600 mb-10 leading-relaxed font-medium">
+                                We understand the profound sensitivity of child protection.
+                                Our system architecture follows a "Zero Trust" security model
+                                ensuring absolute anonymity and defense.
                             </p>
-                            <div className="bg-blue-50 border-l-4 border-primary p-6 rounded-r-2xl">
-                                <p className="text-gray-800 font-semibold mb-0 italic">
-                                    "Confidentiality is not just a feature, it's our promise to the community."
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-8 rounded-r-[2rem] shadow-sm">
+                                <p className="text-blue-900 font-bold mb-0 text-lg italic leading-snug">
+                                    "Security isn't just a layer of code here; it's our foundational promise to the next generation."
                                 </p>
                             </div>
                         </div>
@@ -51,12 +53,12 @@ const TrustSafety: React.FC = () => {
                         <Row className="g-4">
                             {features.map((feature, index) => (
                                 <Col sm={6} key={index}>
-                                    <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-2 group h-100">
-                                        <div className="w-14 h-14 bg-white shadow-md rounded-2xl flex items-center justify-center text-2xl text-primary mb-6 transition-transform group-hover:scale-110">
+                                    <div className="p-10 bg-slate-50 rounded-[2.5rem] border border-slate-100 transition-all duration-500 hover:bg-white hover:shadow-premium hover:-translate-y-3 group h-100">
+                                        <div className="w-16 h-16 bg-white shadow-premium rounded-2xl flex items-center justify-center text-3xl text-blue-600 mb-8 transition-all duration-500 group-hover:bg-blue-600 group-hover:text-white group-hover:rotate-6">
                                             <i className={`bi ${feature.icon}`}></i>
                                         </div>
-                                        <h4 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h4>
-                                        <p className="text-sm text-gray-600 mb-0 leading-relaxed">
+                                        <h4 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">{feature.title}</h4>
+                                        <p className="text-slate-600 mb-0 leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
                                             {feature.description}
                                         </p>
                                     </div>

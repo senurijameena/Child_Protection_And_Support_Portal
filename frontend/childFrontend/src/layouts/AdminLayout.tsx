@@ -1,5 +1,4 @@
 import React from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
 import { Outlet } from 'react-router-dom';
 import DashboardHeader from '../components/DashboardHeader';
 import SidebarNavigation from '../components/SidebarNavigation';
@@ -8,23 +7,26 @@ import './AdminLayout.css';
 
 const AdminLayout: React.FC = () => {
   return (
-    <div className="dashboard-layout">
+    <div className="admin-dashboard-layout">
+      {/* 🧭 Top Navigation Strip */}
       <DashboardHeader />
-      <Container fluid className="dashboard-container">
-        <Row>
-          <Col lg={3} xl={3} className="sidebar-column">
-            <SidebarNavigation userType="ADMIN" />
-          </Col>
-          
-          {}
-          <Col lg={9} xl={9} className="main-content-column">
-            <div className="dashboard-content">
-              <Outlet />
-            </div>
-          </Col>
-        </Row>
-      </Container>
-      <AdminFooter />
+
+      <div className="admin-main-wrapper">
+        {/* 🛡️ Fixed/Collapsible Sidebar */}
+        <SidebarNavigation userType="ADMIN" />
+
+        {/* 💻 Primary Content Area */}
+        <main className="admin-content-area">
+          <div className="admin-page-content">
+            <Outlet />
+          </div>
+
+          {/* 🏁 System Footer */}
+          <div className="admin-footer-wrapper">
+            <AdminFooter />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

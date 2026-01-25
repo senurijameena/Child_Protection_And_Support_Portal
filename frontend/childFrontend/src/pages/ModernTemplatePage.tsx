@@ -83,8 +83,13 @@ const ModernTemplatePage: React.FC = () => {
                             </p>
                             <ShinyButton>Explore Features</ShinyButton>
                         </div>
-                        <div style={{ flex: 1, minWidth: '300px', height: '250px', background: 'linear-gradient(45deg, rgba(255,255,255,0.05), rgba(255,255,255,0.1))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'rgba(255,255,255,0.3)' }}>Visual Placeholder</span>
+                        <div className="flex-1 min-w-[300px] h-[250px] rounded-2xl overflow-hidden shadow-2xl relative group">
+                            <img
+                                src="https://images.unsplash.com/photo-1577100078279-b3445dee6316?q=80&w=600&auto=format&fit=crop"
+                                alt="Modern Interface"
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-blue-600/20 group-hover:bg-transparent transition-colors"></div>
                         </div>
                     </div>
                 </GlassCard>

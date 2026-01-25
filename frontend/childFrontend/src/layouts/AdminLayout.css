@@ -1,66 +1,43 @@
-.dashboard-layout {
+.admin-dashboard-layout {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background-color: transparent;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow-x: hidden;
-  width: 100%;
+  background-color: #f8fafc;
 }
 
-.dashboard-container {
+.admin-main-wrapper {
+  display: flex;
   flex: 1;
-  margin-top: 80px;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  margin-top: 85px;
+  /* Height of the header */
+}
+
+/* Sidebar behavior remains in SidebarNavigation.css */
+
+.admin-content-area {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 1;
-  overflow-x: hidden;
-  width: 100%;
+  min-width: 0;
+  /* Prevent flex items from overflowing */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-column {
-  padding-right: 0;
-  padding-left: 15px;
+.admin-page-content {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f8fafc;
 }
 
-.main-content-column {
-  padding-left: 15px;
-  padding-right: 15px;
-}
-
-.dashboard-content {
-  background-color: transparent;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-  min-height: calc(100vh - 200px);
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  overflow-x: hidden;
-}
-
-
-.dashboard-layout .row {
-  margin-left: 0;
-  margin-right: 0;
-}
-
-.dashboard-layout .row>[class*="col-"] {
-  padding-left: 15px;
-  padding-right: 15px;
+/* Footer should stretch across the content area or the whole screen? 
+Usually, for modern dashboards, it's at the bottom of the content area. */
+.admin-footer-wrapper {
+  border-top: 1px solid #e2e8f0;
+  background-color: #ffffff;
 }
 
 @media (max-width: 991px) {
-  .sidebar-column {
-    padding-left: 15px;
-    margin-bottom: 20px;
-  }
-
-  .main-content-column {
-    padding-left: 15px;
+  .admin-main-wrapper {
+    flex-direction: column;
   }
 }

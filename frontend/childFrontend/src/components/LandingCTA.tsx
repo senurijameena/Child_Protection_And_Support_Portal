@@ -6,56 +6,55 @@ const CallToAction: React.FC = () => {
     const navigate = useNavigate();
 
     return (
-        <section className="py-20">
+        <section className="py-24">
             <Container>
-                <div className="relative rounded-[3rem] overflow-hidden bg-primary px-8 py-16 text-center text-white shadow-2xl">
-                    {/* Background patterns */}
-                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <path d="M0,0 L100,0 L100,100 L0,100 Z" fill="url(#grid)" />
-                            <defs>
-                                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-                                </pattern>
-                            </defs>
-                        </svg>
-                    </div>
+                <div className="relative rounded-[3.5rem] overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-8 py-20 text-center text-white shadow-premium">
+                    {/* Decorative abstract elements */}
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
+                    <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl -ml-40 -mb-40"></div>
 
-                    <div className="relative z-10 max-w-2xl mx-auto">
-                        <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
-                            You can make a difference today.
+                    <div className="relative z-10 max-w-3xl mx-auto">
+                        <span className="inline-block px-4 py-1.5 mb-6 text-[10px] font-black tracking-[0.2em] text-blue-200 uppercase bg-white/10 rounded-full backdrop-blur-sm border border-white/10">
+                            Take Immediate Action
+                        </span>
+                        <h2 className="text-4xl lg:text-6xl font-black mb-8 leading-tight tracking-tighter">
+                            Your Vigilance Can <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200">Save A Life Today.</span>
                         </h2>
-                        <p className="text-xl text-blue-50 mb-10 font-medium">
-                            Join thousands of citizens and professionals working together to build
-                            a safer world for our children.
+                        <p className="text-xl text-blue-100/80 mb-12 font-medium leading-relaxed max-w-2xl mx-auto">
+                            Join our nationwide network of protective authorities and compassionate
+                            citizens. Every report is a step toward a safer tomorrow.
                         </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Button
-                                variant="light"
+                                variant="white"
                                 size="lg"
-                                className="px-10 py-3 rounded-full font-bold text-primary shadow-lg transition-all hover:scale-105"
+                                className="px-12 py-4 rounded-2xl font-bold bg-white text-blue-700 shadow-premium transition-all hover:scale-105 hover:bg-blue-50 border-none"
                                 onClick={() => navigate('/login')}
                             >
-                                Report a Case
+                                <i className="bi bi-shield-fill-exclamation mr-2"></i>
+                                Open Secure Report
                             </Button>
                             <Button
-                                variant="success"
+                                variant="outline-light"
                                 size="lg"
-                                className="px-10 py-3 rounded-full font-bold text-white shadow-lg border-2 border-white/20 transition-all hover:scale-105"
+                                className="px-12 py-4 rounded-2xl font-bold border-2 border-white/30 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/10"
                                 onClick={() => navigate('/login')}
                             >
-                                Request Help
+                                <i className="bi bi-heart-fill mr-2"></i>
+                                Seek Protection
                             </Button>
                         </div>
-                        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm font-semibold opacity-90">
-                            <Link to="/register/social-worker" className="text-white hover:text-green-200 transition-colors no-underline">
-                                <i className="bi bi-person-plus me-2"></i>
-                                Join as Social Worker
+
+                        <div className="mt-16 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 text-xs font-bold uppercase tracking-[0.15em] opacity-80">
+                            <Link to="/register/social-worker" className="text-white hover:text-blue-200 transition-all no-underline flex items-center gap-2">
+                                <i className="bi bi-person-badge-fill text-lg"></i>
+                                Register as Social Worker
                             </Link>
-                            <div className="w-1 h-1 bg-white/30 rounded-full hidden sm:block"></div>
-                            <Link to="/register/police" className="text-white hover:text-blue-200 transition-colors no-underline">
-                                <i className="bi bi-shield-shaded me-2"></i>
-                                Join as Police Officer
+                            <Link to="/register/police" className="text-white hover:text-blue-200 transition-all no-underline flex items-center gap-2">
+                                <i className="bi bi-shield-shaded text-lg"></i>
+                                Register for Police Station
                             </Link>
                         </div>
                     </div>

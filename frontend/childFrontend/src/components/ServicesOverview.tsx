@@ -48,32 +48,37 @@ const ServicesOverview: React.FC = () => {
     ];
 
     return (
-        <section className="py-24 bg-white" id="services">
+        <section className="py-24 bg-slate-50" id="services">
             <Container>
                 <div className="text-center mb-16 max-w-3xl mx-auto">
-                    <h2 className="text-primary font-bold tracking-widest uppercase text-sm mb-3">Our Services</h2>
-                    <h3 className="text-4xl font-extrabold text-gray-900 mb-6">Comprehensive Protection for Every Child</h3>
-                    <p className="text-lg text-gray-600">
-                        We provide a wide range of services to ensure children are protected,
-                        supported, and given the opportunity to thrive in a safe environment.
+                    <span className="inline-block px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-blue-600 uppercase bg-blue-100 rounded-full">
+                        How We Protect
+                    </span>
+                    <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
+                        Comprehensive Protection & Support
+                    </h2>
+                    <p className="text-lg text-slate-600 leading-relaxed">
+                        Our platform orchestrates a multi-layered defense and support system
+                        designed to ensure every child has access to safety, justice, and care.
                     </p>
                 </div>
 
                 <Row className="g-4">
                     {services.map((service, index) => (
                         <Col lg={4} md={6} key={index}>
-                            <Card className="h-100 border-0 shadow-sm hover:shadow-xl transition-all duration-300 group rounded-2xl overflow-hidden border-b-4 border-transparent hover:border-primary">
-                                <Card.Body className="p-8">
-                                    <div className={`w-16 h-16 ${service.bg} ${service.color} rounded-2xl flex items-center justify-center mb-6 text-3xl transition-transform group-hover:rotate-6`}>
+                            <Card className="h-100 border-0 shadow-md hover:shadow-premium transition-all duration-500 group rounded-[2rem] overflow-hidden bg-white/80 backdrop-blur-sm border border-white">
+                                <Card.Body className="p-10">
+                                    <div className={`w-20 h-20 bg-blue-50 text-blue-600 rounded-[1.5rem] flex items-center justify-center mb-8 text-4xl transition-all duration-500 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-3 shadow-sm`}>
                                         <i className={`bi ${service.icon}`}></i>
                                     </div>
-                                    <h4 className="text-xl font-bold text-gray-900 mb-4">{service.title}</h4>
-                                    <p className="text-gray-600 mb-6 flex-grow">
+                                    <h4 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">{service.title}</h4>
+                                    <p className="text-slate-600 mb-8 leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
                                         {service.description}
                                     </p>
-                                    <button className="text-primary font-bold flex items-center gap-2 group-hover:gap-3 transition-all no-underline">
-                                        Learn More <i className="bi bi-arrow-right"></i>
-                                    </button>
+                                    <div className="flex items-center gap-2 text-blue-600 font-bold uppercase text-xs tracking-widest cursor-pointer group/link">
+                                        More Details
+                                        <i className="bi bi-arrow-right-short text-xl transition-transform group-hover/link:translate-x-2"></i>
+                                    </div>
                                 </Card.Body>
                             </Card>
                         </Col>

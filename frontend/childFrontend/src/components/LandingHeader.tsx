@@ -23,8 +23,8 @@ const LandingHeader: React.FC = () => {
         >
             <Container>
                 <Navbar.Brand as={Link} to="/" className="flex items-center no-underline transition-all hover:opacity-90">
-                    <div className="w-12 h-12 bg-gradient-to-tr from-primary to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-blue-200 ring-4 ring-white">
-                        <i className="bi bi-shield-fill-check text-white text-3xl"></i>
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-blue-100 ring-4 ring-white overflow-hidden">
+                        <img src="/images/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
                     </div>
                     <div className="flex flex-col">
                         <span className="font-black text-2xl text-gray-900 leading-none tracking-tighter uppercase sm:inline-block">

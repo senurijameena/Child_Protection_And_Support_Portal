@@ -1,644 +1,234 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container,
-  Navbar,
-  Nav,
-  Button,
-  Dropdown,
-  Badge,
-  Offcanvas,
-  Spinner
+    Container,
+    Navbar,
+    Nav,
+    Button,
+    Dropdown,
+    Badge,
+    Spinner,
+    OverlayTrigger,
+    Tooltip as BSTooltip
 } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { notificationService } from '../services/notificationService';
 import { userService } from '../services/userService';
-import { API_BASE_URL } from '../utils/constants';
+import { analyticsService } from '../services/analyticsService';
 import NotificationDropdown from './NotificationDropdown';
 import './DashboardHeader.css';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: string;
-  type?: string;
-  actionUrl?: string;
-}
-
-interface UserProfile {
-  id: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-  role: string;
-  active: boolean;
-  approved: boolean;
-  registrationDate?: string;
-  lastLogin?: string;
-  address?: string;
-  city?: string;
-  location?: string;
-  profilePhoto?: string;
-  profileImage?: string;
-}
-
 interface QuickStats {
-  liveCases: number;
-  newCasesToday: number;
-  emergencyCases: number;
-  pendingApprovals: number;
+    emergencyCases: number;
 }
 
 const DashboardHeader: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [user, setUser] = useState(authService.getCurrentUser());
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [quickStats, setQuickStats] = useState<QuickStats | null>(null);
-  const [loadingQuickStats, setLoadingQuickStats] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [user, setUser] = useState(authService.getCurrentUser());
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [quickStats, setQuickStats] = useState<QuickStats>({ emergencyCases: 0 });
+    const [loadingStats, setLoadingStats] = useState(false);
+    const [systemStatus, setSystemStatus] = useState<'success' | 'warning' | 'danger'>('success');
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
+    const fetchDashboardData = useCallback(async () => {
+        if (!user || user.role !== 'ADMIN') return;
 
-  useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+        setLoadingStats(true);
+        try {
+            const response = await analyticsService.getDashboardOverview();
+            if (response.data && response.data.metrics) {
+                setQuickStats({
+                    emergencyCases: response.data.metrics.emergencyCases || 0
+                });
+            }
+            setSystemStatus('success');
+        } catch (error) {
+            console.error('Error fetching header stats:', error);
+            setSystemStatus('warning');
+        } finally {
+            setLoadingStats(false);
+        }
+    }, [user]);
 
-    if (currentUser) {
-      fetchUserProfile(currentUser.id);
-      fetchUnreadNotifications();
-      fetchNotifications();
+    const fetchNotifications = useCallback(async () => {
+        if (!user) return;
+        try {
+            const [countRes, listRes] = await Promise.all([
+                notificationService.getUnreadCount(),
+                notificationService.getNotifications()
+            ]);
+            setUnreadCount(countRes.data || 0);
+            setNotifications(listRes.data || []);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    }, [user]);
 
+    useEffect(() => {
+        fetchDashboardData();
+        fetchNotifications();
 
+        const statsInterval = setInterval(fetchDashboardData, 30000); // 30s poll
+        const notifInterval = setInterval(fetchNotifications, 60000); // 60s poll
 
-      if (currentUser.role === 'ADMIN') {
-        fetchQuickStats();
-        const statsInterval = setInterval(fetchQuickStats, 30000); // Update every 30 seconds
         return () => {
-          clearInterval(statsInterval);
+            clearInterval(statsInterval);
+            clearInterval(notifInterval);
         };
-      }
-    }
+    }, [fetchDashboardData, fetchNotifications, location.pathname]);
 
-    const interval = setInterval(() => {
-      setUser(authService.getCurrentUser());
-    }, 60000);
-
-
-
-    const handleNotificationRefresh = () => {
-      fetchUnreadNotifications();
-      fetchNotifications();
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await Promise.all([fetchDashboardData(), fetchNotifications()]);
+        setTimeout(() => setIsRefreshing(false), 500);
     };
 
-    const handleUserProfileUpdate = () => {
-      // Refresh user data when profile is updated
-      const updatedUser = authService.getCurrentUser();
-      setUser(updatedUser);
-      if (updatedUser) {
-        fetchUserProfile(updatedUser.id);
-      }
+    const handleLogout = () => {
+        if (window.confirm('Are you sure you want to terminate your session?')) {
+            authService.logout();
+            navigate('/login');
+        }
     };
 
-    window.addEventListener('notificationRefresh', handleNotificationRefresh);
-    window.addEventListener('userProfileUpdated', handleUserProfileUpdate);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('notificationRefresh', handleNotificationRefresh);
-      window.removeEventListener('userProfileUpdated', handleUserProfileUpdate);
+    const getPageTitle = () => {
+        const path = location.pathname;
+        if (path.includes('/admin/dashboard')) return 'Dashboard';
+        if (path.includes('/admin/users')) return 'User Management';
+        if (path.includes('/admin/cases')) return 'Case Management';
+        if (path.includes('/admin/help-requests')) return 'Assistance Bureau';
+        if (path.includes('/admin/announcements')) return 'Broadcasts';
+        if (path.includes('/admin/analytics')) return 'Strategic Intel';
+        if (path.includes('/admin/system')) return 'System Governance';
+        return 'Admin Console';
     };
-  }, [location]);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const response = await userService.getUserProfile(userId);
-      setUserProfile(response.data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
+    const getInitials = () => {
+        if (!user?.name) return 'A';
+        return user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    };
 
+    const renderTooltip = (text: string) => (props: any) => (
+        <BSTooltip id="button-tooltip" {...props}>
+            {text}
+        </BSTooltip>
+    );
 
-
-  const fetchUnreadNotifications = async () => {
-    try {
-      const response = await notificationService.getUnreadCount();
-      setUnreadCount(response.data || 0);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await notificationService.getNotifications();
-      const apiNotifications = response.data || [];
-
-      // Transform API response to match Notification interface
-      // Sort by most recent first, limit to 6
-      const transformedNotifications: Notification[] = apiNotifications
-        .sort((a: any, b: any) => {
-          const dateA = new Date(a.createdAt || a.timestamp || 0).getTime();
-          const dateB = new Date(b.createdAt || b.timestamp || 0).getTime();
-          return dateB - dateA;
-        })
-        .slice(0, 6)
-        .map((notif: any) => ({
-          id: notif.id || '',
-          title: notif.title || '',
-          message: notif.message || '',
-          read: notif.read || false,
-          createdAt: notif.createdAt || notif.timestamp || new Date().toISOString(),
-          type: notif.type,
-          actionUrl: notif.actionUrl
-        }));
-
-      setNotifications(transformedNotifications);
-    } catch (error) {
-      console.error('Error fetching notification list:', error);
-    }
-  };
-
-  const fetchQuickStats = async () => {
-    if (user?.role !== 'ADMIN') return;
-
-    try {
-      setLoadingQuickStats(true);
-      const token = localStorage.getItem('authToken');
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-
-      // Use the analytics dashboard endpoint which returns all metrics
-      const dashboardRes = await fetch(`${API_BASE_URL}/api/analytics/dashboard`, { headers });
-
-      let liveCases = 0;
-      let newCasesToday = 0;
-      let emergencyCases = 0;
-      let pendingApprovals = 0;
-
-      if (dashboardRes.ok) {
-        const dashboardData = await dashboardRes.json();
-        // Map backend response to frontend state
-        liveCases = dashboardData.activeCases || 0;
-        emergencyCases = dashboardData.emergencyCases || 0;
-        pendingApprovals = dashboardData.pendingApprovals || 0;
-
-        // Calculate new cases today from casesByStatus if available
-        if (dashboardData.casesByStatus) {
-          // This is an approximation - backend should provide this
-          newCasesToday = 0;
-        }
-      } else {
-        // Fallback: try individual endpoints
-        const [casesRes, approvalsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/cases/all`, { headers }).catch(() => null),
-          fetch(`${API_BASE_URL}/api/admin/pending-approvals`, { headers }).catch(() => null)
-        ]);
-
-        if (casesRes?.ok) {
-          const casesData = await casesRes.json();
-          if (Array.isArray(casesData)) {
-            liveCases = casesData.filter((c: any) =>
-              c.status === 'REPORTED' ||
-              c.status === 'UNDER_REVIEW' ||
-              c.status === 'ASSIGNED' ||
-              c.status === 'INVESTIGATING'
-            ).length;
-            emergencyCases = casesData.filter((c: any) => c.priority === 'URGENT' || c.priority === 'EMERGENCY').length;
-          }
-        }
-
-        if (approvalsRes?.ok) {
-          const approvalsData = await approvalsRes.json();
-          pendingApprovals = Array.isArray(approvalsData) ? approvalsData.length : (approvalsData.count || 0);
-        }
-      }
-
-      setQuickStats({
-        liveCases,
-        newCasesToday,
-        emergencyCases,
-        pendingApprovals
-      });
-    } catch (error) {
-      console.error('Error fetching quick stats:', error);
-    } finally {
-      setLoadingQuickStats(false);
-    }
-  };
-
-  const handleNotificationClick = async (notificationId: string) => {
-    try {
-      await notificationService.markAsRead(notificationId);
-      fetchUnreadNotifications();
-      fetchNotifications();
-      setShowNotifications(false);
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await notificationService.markAllAsRead();
-      fetchUnreadNotifications();
-      fetchNotifications();
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
-  };
-
-
-  const formatLastLogin = (dateString?: string) => {
-    if (!dateString) return 'Never';
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins} minutes ago`;
-      if (diffHours < 24) return `${diffHours} hours ago`;
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays} days ago`;
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
-  };
-
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case 'help':
-        navigate('/request-help');
-        break;
-      default:
-        break;
-    }
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return 'Administrator';
-      case 'POLICE': return 'Police Officer';
-      case 'SOCIAL_WORKER': return 'Social Worker';
-      case 'PUBLIC': return 'Public User';
-      default: return 'User';
-    }
-  };
-
-  const getDashboardPath = () => {
-    if (!user) return '/login';
-    switch (user.role) {
-      case 'ADMIN': return '/admin/dashboard';
-      case 'POLICE': return '/police/dashboard';
-      case 'SOCIAL_WORKER': return '/social-worker/dashboard';
-      case 'PUBLIC': return '/dashboard';
-      default: return '/dashboard';
-    }
-  };
-
-  const handleCloseMobileMenu = () => {
-    setShowMobileMenu(false);
-  };
-
-  if (!user) {
-    return null; // Or redirect to login
-  }
-
-  return (
-    <>
-      <Navbar expand="lg" className="dashboard-header" sticky="top">
-        <div className="header-quote-banner">
-          <div className="quote-content">
-            Working together to prevent harm and ensure child well-being
-          </div>
-        </div>
-
-        <Container fluid className="header-main-content">
-          <div className="header-left-section">
-            <Navbar.Brand as={Link} to={getDashboardPath()} className="logo-brand">
-              <div className="logo-container">
-                <span className="logo-emoji">
-                  <img src="/images/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
-                </span>
-                <div className="brand-text-container">
-                  <span className="system-name">
-                    CHILD PROTECTION AND SUPPORT PORTAL
-                  </span>
-                  <span className="dashboard-title">
-                    {user?.role === 'ADMIN' ? 'Admin Dashboard' :
-                      user?.role === 'POLICE' ? 'Police Officer Dashboard' :
-                        user?.role === 'SOCIAL_WORKER' ? 'Social Worker Dashboard' :
-                          'Public User Dashboard'}
-                  </span>
-                </div>
-              </div>
-            </Navbar.Brand>
-          </div>
-
-          {user?.role === 'ADMIN' && (
-            <div className="header-quick-stats-section d-none d-xl-flex">
-              <div className="quick-stat-item" onClick={() => navigate('/admin/cases/all')} style={{ cursor: 'pointer' }}>
-                <span className="quick-stat-icon">📊</span>
-                <div className="quick-stat-content">
-                  <span className="quick-stat-label">Live Cases</span>
-                  <span className="quick-stat-value">
-                    {loadingQuickStats ? (
-                      <Spinner animation="border" size="sm" />
-                    ) : (
-                      <>
-                        {quickStats?.liveCases || 0}
-                        {quickStats && quickStats.newCasesToday > 0 && (
-                          <Badge bg="success" className="quick-stat-badge">
-                            +{quickStats.newCasesToday}
-                          </Badge>
-                        )}
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              <div className="quick-stat-item emergency-stat" onClick={() => navigate('/admin/cases/emergency')} style={{ cursor: 'pointer' }}>
-                <span className="quick-stat-icon">🚨</span>
-                <div className="quick-stat-content">
-                  <span className="quick-stat-label">Emergency</span>
-                  <span className="quick-stat-value emergency-blink">
-                    {loadingQuickStats ? (
-                      <Spinner animation="border" size="sm" />
-                    ) : (
-                      quickStats?.emergencyCases || 0
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              <div className="quick-stat-item" onClick={() => navigate('/admin/users')} style={{ cursor: 'pointer' }}>
-                <span className="quick-stat-icon">👥</span>
-                <div className="quick-stat-content">
-                  <span className="quick-stat-label">Pending</span>
-                  <span className="quick-stat-value">
-                    {loadingQuickStats ? (
-                      <Spinner animation="border" size="sm" />
-                    ) : (
-                      <>
-                        {quickStats?.pendingApprovals || 0}
-                        {quickStats && quickStats.pendingApprovals > 0 && (
-                          <Badge bg="danger" className="quick-stat-badge">
-                            {quickStats.pendingApprovals}
-                          </Badge>
-                        )}
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Navbar.Toggle
-            aria-controls="dashboard-nav"
-            onClick={() => setShowMobileMenu(true)}
-            className="mobile-toggle"
-          />
-
-          <Navbar.Collapse id="dashboard-nav">
-            <div className="header-right-section">
-
-
-              <Dropdown align="end">
-                <Dropdown.Toggle variant="link" className="user-info-toggle p-0">
-                  <div className="user-info-container">
-                    {user?.profileImage || userProfile?.profilePhoto ? (
-                      <img
-                        src={user?.profileImage || userProfile?.profilePhoto}
-                        alt={user?.name || 'User'}
-                        className="user-profile-photo"
-                      />
-                    ) : (
-                      <div className="user-profile-photo-placeholder">
-                        {user?.name?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                    )}
-                    <span className="user-name">{user?.name || 'User'}</span>
-                    <span className="user-role-label">({getRoleDisplayName(user?.role || 'PUBLIC')})</span>
-                    <span className="dropdown-arrow">▼</span>
-                  </div>
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu className="user-info-dropdown">
-                  <Dropdown.Header className="user-info-dropdown-header">
-                    <div className="user-info-name">
-                      {user?.profileImage ? (
-                        <img
-                          src={user.profileImage}
-                          alt={user.name || 'Admin'}
-                          className="avatar-img"
-                          style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }}
-                        />
-                      ) : (
-                        <div
-                          className="avatar-placeholder"
-                          style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#667eea',
-                            fontSize: '1.5rem',
-                            fontWeight: 'bold',
-                            border: '2px solid white'
-                          }}
-                        >
-                          {user?.name?.charAt(0).toUpperCase() || 'A'}
+    return (
+        <Navbar expand="lg" className="dashboard-header" sticky="top">
+            <Container fluid className="header-main-content px-4">
+                {/* LEFT SECTION: Brand & Context */}
+                <div className="header-left-section d-flex align-items-center">
+                    <Link to="/admin/dashboard" className="text-decoration-none mr-4">
+                        <div className="logo-container">
+                            <div className="logo-shield">
+                                <i className="bi bi-shield-fill-check"></i>
+                            </div>
+                            <div className="brand-text-container d-none d-md-flex">
+                                <span className="system-name">Child Protection Portal</span>
+                                <span className="admin-console-tag">Admin Console</span>
+                            </div>
                         </div>
-                      )}
-                      <div>
-                        <div className="user-full-name">{user?.name || 'User'}</div>
-                        <div className="user-email">
-                          {user?.role === 'ADMIN' ? 'Role: ADMIN' : user?.email || ''}
-                        </div>
-                      </div>
+                    </Link>
+
+                    <div className="vertical-divider mx-4 d-none d-lg-block" style={{ width: '1px', height: '30px', backgroundColor: '#e2e8f0' }}></div>
+
+                    <div className="page-context d-none d-lg-block">
+                        <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px] d-block mb-1">Current Section</span>
+                        <span className="font-black text-slate-900 tracking-tight">{getPageTitle()}</span>
                     </div>
-                  </Dropdown.Header>
-                  <Dropdown.Divider />
-                  <div className="user-info-details">
-                    {user?.role !== 'ADMIN' && (
-                      <>
-                        <div className="user-detail-item">
-                          <span className="detail-label">User Reference ID:</span>
-                          <span className="detail-value">{user?.id || 'N/A'}</span>
-                        </div>
-                        <div className="user-detail-item">
-                          <span className="detail-label">Last Login:</span>
-                          <span className="detail-value">{formatLastLogin(userProfile?.lastLogin)}</span>
-                        </div>
-                      </>
-                    )}
-                    {user?.role === 'ADMIN' && (
-                      <div className="user-detail-item">
-                        <span className="detail-label">Role:</span>
-                        <span className="detail-value">ADMIN</span>
-                      </div>
-                    )}
-                  </div>
-                  <Dropdown.Divider />
-                  {user?.role !== 'ADMIN' && (
-                    <Dropdown.Item as={Link} to="/profile" className="dropdown-menu-item">
-                      <span className="menu-icon">👤</span>
-                      <span className="menu-text">View Profile</span>
-                    </Dropdown.Item>
-                  )}
-                  <Dropdown.Item
-                    onClick={handleLogout}
-                    className="dropdown-menu-item logout-item"
-                  >
-                    <span className="menu-icon">🚪</span>
-                    <span className="menu-text">Logout</span>
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+                </div>
 
-              <NotificationDropdown
-                show={showNotifications}
-                onToggle={(isOpen) => setShowNotifications(isOpen)}
-                notifications={notifications}
-                unreadCount={unreadCount}
-                onMarkAsRead={handleNotificationClick}
-                onMarkAllAsRead={handleMarkAllAsRead}
-              />
+                {/* CENTER SECTION: System Status */}
+                <div className="header-center-section d-none d-md-flex">
+                    <div className="status-indicators">
+                        <OverlayTrigger placement="bottom" overlay={renderTooltip('Cases marked URGENT or EMERGENCY')}>
+                            <div className="indicator-item emergency-indicator" onClick={() => navigate('/admin/cases/emergency')}>
+                                <div className="pulse-dot"></div>
+                                <span>{quickStats.emergencyCases} Active Emergency Cases</span>
+                            </div>
+                        </OverlayTrigger>
 
-              <Button
-                variant="link"
-                className="logout-btn p-0"
-                onClick={handleLogout}
-                title="Logout"
-              >
-                <span className="logout-icon">🚪</span>
-              </Button>
-            </div>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
+                        <OverlayTrigger placement="bottom" overlay={renderTooltip(systemStatus === 'success' ? 'All systems operational' : 'Partial system latency monitored')}>
+                            <div className="indicator-item health-indicator">
+                                <div className={`health-dot ${systemStatus}`}></div>
+                                <span>System {systemStatus === 'success' ? 'Operational' : 'Issue Detected'}</span>
+                            </div>
+                        </OverlayTrigger>
 
-      { }
-      <Offcanvas show={showMobileMenu} onHide={handleCloseMobileMenu} placement="end">
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>
-            <div className="mobile-menu-header">
-              <div className="user-avatar">
-                {user.profileImage ? (
-                  <img
-                    src={user.profileImage}
-                    alt={user.name}
-                    className="avatar-img"
-                  />
-                ) : (
-                  <div className="avatar-placeholder">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                )}
-              </div>
-              <div className="mobile-user-info">
-                <h6>{user.name || 'User'}</h6>
-                <span className="user-role">{getRoleDisplayName(user.role)}</span>
-              </div>
-            </div>
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Nav className="flex-column mobile-nav">
-            <Nav.Link as={Link} to={getDashboardPath()} onClick={handleCloseMobileMenu}>
-              <i className="bi bi-speedometer2 me-2"></i>
-              Dashboard Home
-            </Nav.Link>
-            <Nav.Link as={Link} to="/profile" onClick={handleCloseMobileMenu}>
-              <i className="bi bi-person-circle me-2"></i>
-              My Profile
-            </Nav.Link>
+                        <i
+                            className={`bi bi-arrow-clockwise refresh-icon ${isRefreshing ? 'rotate' : ''}`}
+                            onClick={handleRefresh}
+                            title="Manual Refresh"
+                        ></i>
+                    </div>
+                </div>
 
-            <hr className="my-2" />
+                {/* RIGHT SECTION: Actions & Profile */}
+                <div className="header-right-section header-actions">
+                    {/* Notifications */}
+                    <NotificationDropdown
+                        show={showNotifications}
+                        onToggle={(isOpen) => setShowNotifications(isOpen)}
+                        notifications={notifications}
+                        unreadCount={unreadCount}
+                        onMarkAsRead={(id) => notificationService.markAsRead(id).then(fetchNotifications)}
+                        onMarkAllAsRead={() => notificationService.markAllAsRead().then(fetchNotifications)}
+                    />
 
-            <h6 className="px-3 mt-3 text-muted">Quick Actions</h6>
-            <Button
-              variant="primary"
-              className="mb-2"
-              onClick={() => { handleQuickAction('report'); handleCloseMobileMenu(); }}
-            >
-              <i className="bi bi-file-earmark-plus me-2"></i>
-              Report Case
-            </Button>
-            <Button
-              variant="warning"
-              className="mb-4"
-              onClick={() => { handleQuickAction('help'); handleCloseMobileMenu(); }}
-            >
-              <i className="bi bi-question-circle me-2"></i>
-              Request Help
-            </Button>
+                    {/* Messages */}
+                    <button className="action-icon-btn" onClick={() => navigate('/messages')} title="Messages">
+                        <i className="bi bi-chat-left-dots"></i>
+                        <span className="badge-count">3</span>
+                    </button>
 
-            <hr className="my-2" />
+                    {/* Quick Action Dropdown */}
+                    <Dropdown align="end">
+                        <Dropdown.Toggle as="button" className="quick-action-btn">
+                            <i className="bi bi-lightning-charge-fill"></i>
+                            <span className="d-none d-xl-inline">+ Quick Action</span>
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu className="dropdown-menu">
+                            <Dropdown.Header className="font-black text-[10px] uppercase tracking-widest text-slate-400">Tactical Actions</Dropdown.Header>
+                            <Dropdown.Item onClick={() => navigate('/admin/cases/emergency')}><i className="bi bi-shield-exclamation text-red-500"></i> Assign Emergency Case</Dropdown.Item>
+                            <Dropdown.Item onClick={() => navigate('/admin/users/pending')}><i className="bi bi-person-check text-blue-500"></i> Approve Users</Dropdown.Item>
+                            <Dropdown.Item onClick={() => navigate('/admin/announcements')}><i className="bi bi-megaphone text-amber-500"></i> Create Announcement</Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item onClick={() => navigate('/admin/analytics')}><i className="bi bi-file-earmark-pdf"></i> Generate Report</Dropdown.Item>
+                            <Dropdown.Item onClick={() => navigate('/admin/transfers')}><i className="bi bi-arrow-left-right"></i> Review Transfers</Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
 
-            <Nav.Link as={Link} to="/notifications" onClick={handleCloseMobileMenu}>
-              <i className="bi bi-bell me-2"></i>
-              Notifications
-              {unreadCount > 0 && (
-                <Badge bg="danger" className="ms-2">
-                  {unreadCount}
-                </Badge>
-              )}
-            </Nav.Link>
-            <Nav.Link as={Link} to="/settings" onClick={handleCloseMobileMenu}>
-              <i className="bi bi-gear me-2"></i>
-              Settings
-            </Nav.Link>
-            <Nav.Link as={Link} to="/help" onClick={handleCloseMobileMenu}>
-              <i className="bi bi-question-circle me-2"></i>
-              Help & Support
-            </Nav.Link>
-
-            <hr className="my-2" />
-
-            <Button
-              variant="outline-danger"
-              onClick={handleLogout}
-              className="mt-3"
-            >
-              <i className="bi bi-box-arrow-right me-2"></i>
-              Logout
-            </Button>
-          </Nav>
-        </Offcanvas.Body>
-      </Offcanvas>
-    </>
-  );
+                    {/* Admin Profile */}
+                    <Dropdown align="end">
+                        <Dropdown.Toggle variant="link" className="user-profile-toggle p-0 text-decoration-none">
+                            <div className="avatar-initials">
+                                {getInitials()}
+                                <div className="online-status-dot"></div>
+                            </div>
+                            <div className="admin-name ms-2 d-none d-xl-block">
+                                {user?.name || 'Administrator'}
+                            </div>
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu className="dropdown-menu">
+                            <Dropdown.Header className="font-bold text-xs">{user?.email || 'System Admin'}</Dropdown.Header>
+                            <Dropdown.Item onClick={() => navigate('/profile')}><i className="bi bi-person"></i> View Profile</Dropdown.Item>
+                            <Dropdown.Item onClick={() => navigate('/change-password')}><i className="bi bi-key"></i> Change Password</Dropdown.Item>
+                            <Dropdown.Item onClick={() => navigate('/admin/audit-logs')}><i className="bi bi-journal-text"></i> Activity Log</Dropdown.Item>
+                            <Dropdown.Item onClick={() => navigate('/admin/settings')}><i className="bi bi-shield-lock"></i> Security Settings</Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item onClick={handleLogout} className="logout-item">
+                                <i className="bi bi-box-arrow-right"></i> Logout Session
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </div>
+            </Container>
+        </Navbar>
+    );
 };
 
 export default DashboardHeader;

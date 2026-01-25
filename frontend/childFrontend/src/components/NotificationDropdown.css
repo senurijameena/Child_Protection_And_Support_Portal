@@ -19,26 +19,30 @@
 }
 
 .notification-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #212529;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .mark-all-read-btn {
   padding: 0;
-  font-size: 0.85rem;
-  color: #0d6efd;
+  font-size: 0.75rem;
+  color: #3b82f6;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .mark-all-read-btn:hover {
-  color: #0a58ca;
-  text-decoration: underline;
+  color: #1e3a8a;
+  text-decoration: none;
 }
 
 .notification-list-container {
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -47,9 +51,9 @@
 }
 
 .notification-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s;
+  padding: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
 
@@ -58,16 +62,16 @@
 }
 
 .notification-item:hover {
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
 }
 
 .notification-item.unread {
-  background-color: #e7f3ff;
-  font-weight: 500;
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
 }
 
 .notification-item.unread:hover {
-  background-color: #d0e7ff;
+  background-color: #dbeafe;
 }
 
 .notification-content-wrapper {
@@ -85,9 +89,10 @@
 }
 
 .notification-icon-large {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
   margin-top: 2px;
+  opacity: 0.8;
 }
 
 .notification-text-content {
@@ -104,10 +109,11 @@
 }
 
 .notification-prefix {
-  font-weight: 600;
-  color: #0d6efd;
-  font-size: 0.85rem;
+  font-weight: 800;
+  color: #3b82f6;
+  font-size: 0.75rem;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   flex-shrink: 0;
 }
 

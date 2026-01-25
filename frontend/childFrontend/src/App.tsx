@@ -19,7 +19,9 @@ import PoliceDashboard from './pages/dashboard/PoliceDashboard';
 import PoliceLayout from './layouts/PoliceLayout';
 import PublicUserDashboard from './pages/dashboard/PublicUserDashboard';
 import PublicUserLayout from './layouts/PublicUserLayout';
-import SocialWorkerDashboard from './pages/dashboard/SocialWorkerDashboard';
+import SocialWorkerLayout from './layouts/SocialWorkerLayout';
+import SocialWorkerDashboardMain from './pages/dashboard/social-worker/SocialWorkerDashboardMain';
+
 import ReportCasePage from './pages/cases/ReportCasePage';
 import MyCasesPage from './pages/cases/MyCasesPage';
 import CaseDetailsPage from './pages/cases/CaseDetailsPage';
@@ -92,9 +94,15 @@ function App() {
                     }
                 >
                     <Route path="/dashboard/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/system-status" element={<AdminDashboard />} />
+                    <Route path="/admin/health" element={<AdminDashboard />} />
+                    <Route path="/admin/audit-logs" element={<AdminDashboard />} />
+                    <Route path="/admin/email-logs" element={<AdminDashboard />} />
                     <Route path="/admin/users" element={<UserManagement />} />
                     <Route path="/admin/users/all" element={<UserManagement />} />
                     <Route path="/admin/users/public" element={<UserManagement />} />
+                    <Route path="/admin/users/pending" element={<UserManagement />} />
                     <Route path="/admin/users/police" element={<UserManagement />} />
                     <Route path="/admin/users/social-workers" element={<UserManagement />} />
                     <Route path="/admin/users/deactivated" element={<UserManagement />} />
@@ -105,10 +113,13 @@ function App() {
                     <Route path="/admin/cases/assigned" element={<AllCasesPage />} />
                     <Route path="/admin/cases/resolved" element={<AllCasesPage />} />
                     <Route path="/admin/cases/closed" element={<AllCasesPage />} />
+                    <Route path="/admin/cases/anonymous" element={<AllCasesPage />} />
                     <Route path="/admin/cases/:caseId" element={<CaseDetailsPage />} />
                     <Route path="/admin/cases/duplicate-detection" element={<DuplicateDetection />} />
                     <Route path="/admin/help-requests" element={<HelpRequestManagement />} />
                     <Route path="/admin/help-requests/all" element={<HelpRequestManagement />} />
+                    <Route path="/admin/help-requests/pending-review" element={<HelpRequestManagement />} />
+                    <Route path="/admin/help-requests/in-progress" element={<HelpRequestManagement />} />
                     <Route path="/admin/help-requests/marketplace" element={<HelpRequestManagement />} />
                     <Route path="/admin/help-requests/assigned" element={<HelpRequestManagement />} />
                     <Route path="/admin/help-requests/completed" element={<HelpRequestManagement />} />
@@ -167,13 +178,22 @@ function App() {
 
                 {/* Social Worker Routes */}
                 <Route
-                    path="/dashboard/social-worker"
                     element={
                         <ProtectedRoute requiredRole="SOCIAL_WORKER">
-                            <SocialWorkerDashboard />
+                            <SocialWorkerLayout />
                         </ProtectedRoute>
                     }
-                />
+                >
+                    <Route path="/dashboard/social-worker" element={<SocialWorkerDashboardMain />} />
+                    <Route path="/social-worker/assigned" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/offers" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/follow-ups" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/transfers" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/messages" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/notifications" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/analytics" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                    <Route path="/social-worker/profile" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
+                </Route>
 
                 {/* Other Protected Routes */}
                 <Route

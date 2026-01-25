@@ -1,0 +1,25 @@
+# Common ignores
+node_modules/
+dist/
+build/
+.env
+.env.*
+.DS_Store
+
+# Backend ignores
+target/
+*.log
+.settings/
+.classpath
+.project
+.factorypath
+
+# Frontend specific
+frontend/childFrontend/node_modules/
+frontend/childFrontend/dist/
+frontend/childFrontend/.vite/
+
+# Logs
+backend/build_log.txt
+backend/build_log_2.txt
+backend/build_output.txt

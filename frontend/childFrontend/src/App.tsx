@@ -1,231 +1,147 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './pages/LandingPage';
-import AboutPage from './pages/AboutPage';
-import ModernTemplatePage from './pages/ModernTemplatePage';
-import LoginPage from './pages/auth/LoginPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import ChangePasswordPage from './pages/auth/ChangePasswordPage';
-import PoliceRegistrationPage from './pages/registration/PoliceRegistrationPage';
-import SocialWorkerRegistrationPage from './pages/registration/SocialWorkerRegistrationPage';
-import PublicRegistrationPage from './pages/registration/PublicRegistrationPage';
-import RegistrationOptionsPage from './pages/registration/RegistrationOptionsPage';
-import RegistrationSuccessPage from './pages/registration/RegistrationSuccessPage';
-import PoliceRegistrationSuccessPage from './pages/registration/PoliceRegistrationSuccessPage';
-import SocialWorkerRegistrationSuccessPage from './pages/registration/SocialWorkerRegistrationSuccessPage';
-import AdminDashboard from './pages/dashboard/AdminDashboard';
-import AdminLayout from './layouts/AdminLayout';
-import PoliceDashboard from './pages/dashboard/PoliceDashboard';
-import PoliceLayout from './layouts/PoliceLayout';
-import PublicUserDashboard from './pages/dashboard/PublicUserDashboard';
-import PublicUserLayout from './layouts/PublicUserLayout';
-import SocialWorkerLayout from './layouts/SocialWorkerLayout';
-import SocialWorkerDashboardMain from './pages/dashboard/social-worker/SocialWorkerDashboardMain';
-
-import ReportCasePage from './pages/cases/ReportCasePage';
-import MyCasesPage from './pages/cases/MyCasesPage';
-import CaseDetailsPage from './pages/cases/CaseDetailsPage';
-import RequestHelpPage from './pages/help-requests/RequestHelpPage';
-import MyHelpRequestsPage from './pages/help-requests/MyHelpRequestsPage';
-import HelpRequestDetailsPage from './pages/help-requests/HelpRequestDetailsPage';
-import MessagesPage from './pages/messages/MessagesPage';
-import AnalyticsPage from './pages/analytics/AnalyticsPage';
-import FeedbackPage from './pages/feedback/FeedbackPage';
-import ProfilePage from './pages/profile/ProfilePage';
-import NotificationCenterPage from './pages/notifications/NotificationCenterPage';
-import UserManagement from './pages/admin/UserManagement';
-import AllCasesPage from './pages/admin/AllCasesPage';
-import HelpRequestManagement from './pages/admin/HelpRequestManagement';
-import TransferRequestManagement from './pages/admin/TransferRequestManagement';
-import FeedbackManagement from './pages/admin/FeedbackManagement';
-import SystemAnnouncements from './pages/admin/SystemAnnouncements';
-import DuplicateDetection from './pages/admin/DuplicateDetection';
-import RequestTransferPage from './pages/transfers/RequestTransferPage';
-import ManageTransfersPage from './pages/transfers/ManageTransfersPage';
-import TransferRequestsPage from './pages/transfers/TransferRequestsPage';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import NotificationToast from './components/NotificationToast';
-import ScrollToTop from './components/ScrollToTop';
-import { useAuth } from './hooks/useAuth';
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/auth/LoginPage'
+import { SignupPage } from './pages/auth/SignupPage'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
+import { PublicUserLayout } from './layouts/PublicUserLayout'
+import { AdminLayout } from './layouts/AdminLayout'
+import { PoliceLayout } from './layouts/PoliceLayout'
+import { SocialWorkerLayout } from './layouts/SocialWorkerLayout'
+import { PublicUserDashboard } from './pages/dashboard/PublicUserDashboard'
+import { ReportCasePage } from './pages/dashboard/ReportCasePage'
+import { RequestHelpPage } from './pages/dashboard/RequestHelpPage'
+import { MyCasesPage } from './pages/dashboard/MyCasesPage'
+import { MyRequestsPage } from './pages/dashboard/MyRequestsPage'
+import { CaseDetailsPage } from './pages/dashboard/CaseDetailsPage'
+import { RequestDetailsPage } from './pages/dashboard/RequestDetailsPage'
+import { MessagesPage } from './pages/dashboard/MessagesPage'
+import { NotificationsPage } from './pages/dashboard/NotificationsPage'
+import { ServiceOffersPage } from './pages/dashboard/ServiceOffersPage'
+import { ProfilePage } from './pages/dashboard/ProfilePage'
+import { AdminDashboard } from './pages/admin/AdminDashboard'
+import { AllCasesPage } from './pages/admin/AllCasesPage'
+import { AdminCaseDetailsPage } from './pages/admin/AdminCaseDetailsPage'
+import { HelpRequestManagementPage } from './pages/admin/HelpRequestManagementPage'
+import { AdminHelpRequestDetailsPage } from './pages/admin/AdminHelpRequestDetailsPage'
+import { UserManagementPage } from './pages/admin/UserManagementPage'
+import { TransferRequestManagementPage } from './pages/admin/TransferRequestManagementPage'
+import { DuplicateDetectionPage } from './pages/admin/DuplicateDetectionPage'
+import { SystemAnnouncementsPage } from './pages/admin/SystemAnnouncementsPage'
+import { FeedbackManagementPage } from './pages/admin/FeedbackManagementPage'
+import { PoliceDashboard } from './pages/police/PoliceDashboard'
+import { PoliceCasesPage } from './pages/police/PoliceCasesPage'
+import { PoliceCaseDetailsPage } from './pages/police/PoliceCaseDetailsPage'
+import { PoliceMessagesPage } from './pages/police/PoliceMessagesPage'
+import { PoliceReportsPage } from './pages/police/PoliceReportsPage'
+import { PoliceProfilePage } from './pages/police/PoliceProfilePage'
+import { SocialWorkerDashboard } from './pages/social-worker/SocialWorkerDashboard'
+import { SocialWorkerRequestsPage } from './pages/social-worker/SocialWorkerRequestsPage'
+import { SocialWorkerRequestDetailsPage } from './pages/social-worker/SocialWorkerRequestDetailsPage'
+import { SocialWorkerMessagesPage } from './pages/social-worker/SocialWorkerMessagesPage'
+import { SocialWorkerPackagesPage } from './pages/social-worker/SocialWorkerPackagesPage'
+import { SocialWorkerReportsPage } from './pages/social-worker/SocialWorkerReportsPage'
+import { SocialWorkerProfilePage } from './pages/social-worker/SocialWorkerProfilePage'
+import { SocialWorkerCalendarPage } from './pages/social-worker/SocialWorkerCalendarPage'
+import { SocialWorkerLibraryPage } from './pages/social-worker/SocialWorkerLibraryPage'
+import { SocialWorkerTransfersPage } from './pages/social-worker/SocialWorkerTransfersPage'
 
 function App() {
-    const { user } = useAuth();
-
-    return (
-        <Router>
-            <ScrollToTop />
-            <NotificationToast />
-            <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/modern-template" element={<ModernTemplatePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/register" element={<RegistrationOptionsPage />} />
-                <Route path="/register/public" element={<PublicRegistrationPage />} />
-                <Route path="/register/public/success" element={<RegistrationSuccessPage />} />
-                <Route path="/register/police" element={<PoliceRegistrationPage />} />
-                <Route path="/register/police/success" element={<PoliceRegistrationSuccessPage />} />
-                <Route path="/register/social-worker" element={<SocialWorkerRegistrationPage />} />
-                <Route path="/register/social-worker/success" element={<SocialWorkerRegistrationSuccessPage />} />
-
-                {/* Dashboard Route - Redirects based on role */}
-                <Route
-                    path="/dashboard"
-                    element={
-                        <ProtectedRoute>
-                            {user?.role === 'ADMIN' ? <Navigate to="/dashboard/admin" replace /> :
-                                user?.role === 'POLICE' ? <Navigate to="/dashboard/officer" replace /> :
-                                    user?.role === 'SOCIAL_WORKER' ? <Navigate to="/dashboard/social-worker" replace /> :
-                                        user?.role === 'PUBLIC' ? <Navigate to="/dashboard/user" replace /> :
-                                            <Navigate to="/login" replace />}
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* Admin Routes */}
-                <Route
-                    element={
-                        <ProtectedRoute requiredRole="ADMIN">
-                            <AdminLayout />
-                        </ProtectedRoute>
-                    }
-                >
-                    <Route path="/dashboard/admin" element={<AdminDashboard />} />
-                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                    <Route path="/admin/system-status" element={<AdminDashboard />} />
-                    <Route path="/admin/health" element={<AdminDashboard />} />
-                    <Route path="/admin/audit-logs" element={<AdminDashboard />} />
-                    <Route path="/admin/email-logs" element={<AdminDashboard />} />
-                    <Route path="/admin/users" element={<UserManagement />} />
-                    <Route path="/admin/users/all" element={<UserManagement />} />
-                    <Route path="/admin/users/public" element={<UserManagement />} />
-                    <Route path="/admin/users/pending" element={<UserManagement />} />
-                    <Route path="/admin/users/police" element={<UserManagement />} />
-                    <Route path="/admin/users/social-workers" element={<UserManagement />} />
-                    <Route path="/admin/users/deactivated" element={<UserManagement />} />
-                    <Route path="/admin/cases" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/all" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/emergency" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/pending-review" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/assigned" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/resolved" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/closed" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/anonymous" element={<AllCasesPage />} />
-                    <Route path="/admin/cases/:caseId" element={<CaseDetailsPage />} />
-                    <Route path="/admin/cases/duplicate-detection" element={<DuplicateDetection />} />
-                    <Route path="/admin/help-requests" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/all" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/pending-review" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/in-progress" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/marketplace" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/assigned" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/completed" element={<HelpRequestManagement />} />
-                    <Route path="/admin/help-requests/:requestId" element={<HelpRequestDetailsPage />} />
-                    <Route path="/admin/transfers" element={<TransferRequestManagement />} />
-                    <Route path="/admin/transfers/pending" element={<TransferRequestManagement />} />
-                    <Route path="/admin/transfers/approved" element={<TransferRequestManagement />} />
-                    <Route path="/admin/transfers/rejected" element={<TransferRequestManagement />} />
-                    <Route path="/admin/analytics" element={<AnalyticsPage />} />
-                    <Route path="/admin/analytics/dashboard" element={<AnalyticsPage />} />
-                    <Route path="/admin/analytics/custom-reports" element={<AnalyticsPage />} />
-                    <Route path="/admin/feedback" element={<FeedbackManagement />} />
-                    <Route path="/admin/announcements" element={<SystemAnnouncements />} />
-                    <Route path="/admin/settings" element={<SystemAnnouncements />} />
-                </Route>
-
-                {/* Public User Routes */}
-                <Route
-                    element={
-                        <ProtectedRoute>
-                            <PublicUserLayout />
-                        </ProtectedRoute>
-                    }
-                >
-                    <Route path="/dashboard/user" element={<PublicUserDashboard />} />
-                    <Route path="/report-case" element={<ReportCasePage />} />
-                    <Route path="/request-help" element={<RequestHelpPage />} />
-                    <Route path="/cases/my-cases" element={<MyCasesPage />} />
-                    <Route path="/cases/:caseId" element={<CaseDetailsPage />} />
-                    <Route path="/help-requests/my-requests" element={<MyHelpRequestsPage />} />
-                    <Route path="/help-requests/:requestId" element={<HelpRequestDetailsPage />} />
-                    <Route path="/messages" element={<MessagesPage />} />
-                    <Route path="/analytics" element={<AnalyticsPage />} />
-                    <Route path="/feedback" element={<FeedbackPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/notifications" element={<NotificationCenterPage />} />
-                    <Route path="/change-password" element={<ChangePasswordPage />} />
-                    {/* Other public user routes will be added as pages are created */}
-                </Route>
-
-                {/* Police Routes */}
-                <Route
-                    element={
-                        <ProtectedRoute requiredRole="POLICE">
-                            <PoliceLayout />
-                        </ProtectedRoute>
-                    }
-                >
-                    <Route path="/dashboard/officer" element={<PoliceDashboard />} />
-                    <Route path="/police/assignments/active" element={<MyCasesPage />} />
-                    <Route path="/police/assignments/emergency" element={<MyCasesPage />} />
-                    <Route path="/police/assignments/history" element={<MyCasesPage />} />
-                    <Route path="/police/cases/search" element={<MyCasesPage />} />
-                    {/* Add more specific routes as needed */}
-                </Route>
-
-                {/* Social Worker Routes */}
-                <Route
-                    element={
-                        <ProtectedRoute requiredRole="SOCIAL_WORKER">
-                            <SocialWorkerLayout />
-                        </ProtectedRoute>
-                    }
-                >
-                    <Route path="/dashboard/social-worker" element={<SocialWorkerDashboardMain />} />
-                    <Route path="/social-worker/assigned" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/offers" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/follow-ups" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/transfers" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/messages" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/notifications" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/analytics" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                    <Route path="/social-worker/profile" element={<SocialWorkerDashboardMain />} /> {/* Placeholder */}
-                </Route>
-
-                {/* Other Protected Routes */}
-                <Route
-                    path="/transfers/request"
-                    element={
-                        <ProtectedRoute>
-                            <RequestTransferPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/transfers/manage"
-                    element={
-                        <ProtectedRoute>
-                            <ManageTransfersPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/transfers/requests"
-                    element={
-                        <ProtectedRoute>
-                            <TransferRequestsPage />
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* Catch all - redirect to home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </Router>
-    );
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/report-case" element={<PlaceholderPage title="Report a Case" />} />
+      <Route path="/request-help" element={<PlaceholderPage title="Request Help" />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['PU']}>
+            <PublicUserLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<PublicUserDashboard />} />
+        <Route path="report-case" element={<ReportCasePage />} />
+        <Route path="request-help" element={<RequestHelpPage />} />
+        <Route path="my-cases" element={<MyCasesPage />} />
+        <Route path="my-requests" element={<MyRequestsPage />} />
+        <Route path="cases/:caseId" element={<CaseDetailsPage />} />
+        <Route path="requests/:requestId" element={<RequestDetailsPage />} />
+        <Route path="messages" element={<MessagesPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="service-offers" element={<ServiceOffersPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="cases" element={<AllCasesPage />} />
+        <Route path="cases/:caseId" element={<AdminCaseDetailsPage />} />
+        <Route path="help-requests" element={<HelpRequestManagementPage />} />
+        <Route path="help-requests/:requestId" element={<AdminHelpRequestDetailsPage />} />
+        <Route path="users" element={<UserManagementPage />} />
+        <Route path="transfers" element={<TransferRequestManagementPage />} />
+        <Route path="duplicates" element={<DuplicateDetectionPage />} />
+        <Route path="announcements" element={<SystemAnnouncementsPage />} />
+        <Route path="feedback" element={<FeedbackManagementPage />} />
+      </Route>
+      <Route
+        path="/police"
+        element={
+          <ProtectedRoute allowedRoles={['PO']}>
+            <PoliceLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<PoliceDashboard />} />
+        <Route path="cases" element={<PoliceCasesPage />} />
+        <Route path="cases/:caseId" element={<PoliceCaseDetailsPage />} />
+        <Route path="messages" element={<PoliceMessagesPage />} />
+        <Route path="reports" element={<PoliceReportsPage />} />
+        <Route path="profile" element={<PoliceProfilePage />} />
+      </Route>
+      <Route
+        path="/social-worker"
+        element={
+          <ProtectedRoute allowedRoles={['SW']}>
+            <SocialWorkerLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<SocialWorkerDashboard />} />
+        <Route path="requests" element={<SocialWorkerRequestsPage />} />
+        <Route path="requests/:requestId" element={<SocialWorkerRequestDetailsPage />} />
+        <Route path="calendar" element={<SocialWorkerCalendarPage />} />
+        <Route path="messages" element={<SocialWorkerMessagesPage />} />
+        <Route path="library" element={<SocialWorkerLibraryPage />} />
+        <Route path="transfers" element={<SocialWorkerTransfersPage />} />
+        <Route path="packages" element={<SocialWorkerPackagesPage />} />
+        <Route path="reports" element={<SocialWorkerReportsPage />} />
+        <Route path="profile" element={<SocialWorkerProfilePage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
 
-export default App;
+function PlaceholderPage({ title }: { title: string }) {
+  return (
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="text-center">
+        <h1 className="text-primary mb-3">{title}</h1>
+        <p className="text-secondary">This page will be implemented with full functionality.</p>
+      </div>
+    </div>
+  )
+}
+
+export default App

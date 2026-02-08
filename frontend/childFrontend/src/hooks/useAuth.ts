@@ -1,49 +1,36 @@
-import { useState, useEffect } from 'react';
-import { authService, type UserData } from '../services/authService';
+import { useState, useEffect } from 'react'
 
-interface UseAuthReturn {
-  isAuthenticated: boolean;
-  user: UserData | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+interface User {
+  userId: string
+  email?: string
+  fullName?: string
+  role?: string
 }
 
-export const useAuth = (): UseAuthReturn => {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
-  }, []);
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const response = await authService.login({ email, password });
-      if (response.success && response.user) {
-        setUser(response.user);
-        return true;
+    const token = localStorage.getItem('token')
+    const stored = localStorage.getItem('user')
+    if (token && stored) {
+      try {
+        setUser(JSON.parse(stored))
+      } catch {
+        setUser(null)
       }
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
+    } else {
+      setUser(null)
     }
-  };
+    setLoading(false)
+  }, [])
 
   const logout = () => {
-    authService.logout();
-    setUser(null);
-  };
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setUser(null)
+  }
 
-  return {
-    isAuthenticated: !!user && user.status === 'ACTIVE',
-    user,
-    loading,
-    login,
-    logout
-  };
-};
-
+  return { user, loading, isAuthenticated: !!user, logout }
+}

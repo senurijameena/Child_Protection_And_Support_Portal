@@ -1,37 +1,30 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { authService } from '../../services/authService';
+import { Navigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredRole?: 'ADMIN' | 'POLICE' | 'SOCIAL_WORKER' | 'PUBLIC' | string;
-  allowedRoles?: string[];
+  children: React.ReactNode
+  allowedRoles?: string[]
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requiredRole, 
-  allowedRoles 
-}) => {
-  const user = authService.getCurrentUser();
+export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+
+  if (loading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="spinner-border text-primary" role="status" />
+      </div>
+    )
+  }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (user.status !== 'ACTIVE') {
-    return <Navigate to="/login" state={{ message: 'Account not active' }} replace />;
+  if (allowedRoles && user.role && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />
   }
-  
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-  
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-  
-  return <>{children}</>;
-};
 
-export default ProtectedRoute;
+  return <>{children}</>
+}

@@ -1,281 +1,172 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Alert, Spinner } from 'react-bootstrap';
-import { useNavigate, Link } from 'react-router-dom';
-import { authService, type LoginCredentials } from '../../services/authService';
-import Header from '../../components/LandingHeader';
-import './LoginPage.css';
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Form, Button, Card } from 'react-bootstrap'
+import { login } from '../../services/authApi'
+import { ROLE_LABELS } from '../../types/auth'
+import type { Role } from '../../types/auth'
 
-const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
+export function LoginPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState<Role | ''>('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // Form State
-  const [formData, setFormData] = useState<LoginCredentials>({
-    email: '',
-    password: ''
-  });
-
-  // UI States
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState<string>('');
-
-  // Handle Input Changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-    if (apiError) setApiError('');
-  };
-
-  // Form Validation
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+  const handleSubmit = async (ev: React.FormEvent) => {
+    ev.preventDefault()
+    setError('')
+    if (!email.trim()) {
+      setError('Email is required')
+      return
     }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
+    if (!password) {
+      setError('Password is required')
+      return
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle Login Submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
-    setApiError('');
-
-    if (!validateForm()) return;
-
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await authService.login(formData);
-
-      if (response.success) {
-        // Determine storage based on "Remember Me"
-        const token = response.token;
-        if (token) {
-          if (rememberMe) {
-            localStorage.setItem('authToken', token);
-          } else {
-            sessionStorage.setItem('authToken', token);
-            // Also clear from localStorage if user unchecked it
-            localStorage.removeItem('authToken');
-          }
-        }
-
-        const user = authService.getCurrentUser();
-        if (user) {
-          // Redirect based on role requirements in the prompt
-          switch (user.role) {
-            case 'ADMIN':
-              navigate('/dashboard/admin');
-              break;
-            case 'POLICE':
-              navigate('/dashboard/officer');
-              break;
-            case 'SOCIAL_WORKER':
-              navigate('/dashboard/social-worker');
-              break;
-            case 'PUBLIC':
-              navigate('/dashboard/user');
-              break;
-            default:
-              navigate('/dashboard');
-          }
-        } else {
-          navigate('/dashboard');
-        }
+      const res = await login({ email: email.trim(), password })
+      if (res.approved && res.token) {
+        localStorage.setItem('token', res.token)
+        localStorage.setItem('user', JSON.stringify({
+          userId: res.userId,
+          email: res.email,
+          fullName: res.fullName,
+          role: res.role,
+        }))
+        const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
+        const target =
+          res.role === 'ADMIN'
+            ? '/admin'
+            : res.role === 'PO'
+              ? '/police'
+              : res.role === 'SW'
+                ? '/social-worker'
+                : res.role === 'PU'
+                  ? '/dashboard'
+                  : from || '/'
+        navigate(target)
+        window.location.reload()
       } else {
-        setApiError(response.message || 'Invalid credentials. Please try again.');
+        setError(res.message || 'Login failed')
       }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      if (!navigator.onLine) {
-        setApiError('No internet connection. Please check your network.');
-      } else if (error.response?.status === 403) {
-        setApiError('Account not yet approved by administrator.');
-      } else {
-        setApiError('Server unavailable. Please try again later.');
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid credentials')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  // Hydrate email if remembered
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('lastEmail');
-    if (rememberedEmail) {
-      setFormData(prev => ({ ...prev, email: rememberedEmail }));
-      setRememberMe(true);
-    }
-  }, []);
-
-  // Save/Clear email on change if needed
-  useEffect(() => {
-    if (rememberMe && formData.email) {
-      localStorage.setItem('lastEmail', formData.email);
-    } else if (!rememberMe) {
-      localStorage.removeItem('lastEmail');
-    }
-  }, [rememberMe, formData.email]);
+  const roles: Role[] = ['PU', 'PO', 'SW', 'ADMIN']
 
   return (
-    <div className="login-page-wrapper">
-      <Header />
-      <div className="login-split-container">
-        {/* Left Section: Visual & Trust (60% Desktop) */}
-        <div className="login-visual-section">
-          <div className="login-visual-content">
-            <h1>Welcome Back</h1>
-            <p>
-              Secure access for citizens, police officers,
-              social workers, and administrators.
-              We work together to protect our future.
-            </p>
-
-            <div className="trust-badges">
-              <div className="badge-item">
-                <div className="badge-icon">🔒</div>
-                <div className="badge-text">Secure Login</div>
-              </div>
-              <div className="badge-item">
-                <div className="badge-icon">🛡️</div>
-                <div className="badge-text">Role-based Access</div>
-              </div>
-              <div className="badge-item">
-                <div className="badge-icon">👁️</div>
-                <div className="badge-text">Privacy Protected</div>
-              </div>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center py-5 auth-page">
+      <div className="position-absolute w-100 h-100 overflow-hidden auth-bg-shapes" aria-hidden="true" />
+      <div className="position-relative w-100" style={{ maxWidth: 440 }}>
+        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card">
+          <Card.Body className="p-4 p-md-5">
+            <div className="text-center mb-4">
+              <img
+                src="/images/logo.jpeg"
+                alt="Logo"
+                className="logo-navbar mb-3"
+                style={{ height: 40, width: 'auto' }}
+              />
+              <h1 className="h3 fw-bold text-dark mb-1">Welcome Back</h1>
+              <p className="text-secondary small">Sign in to the Child Protection Portal</p>
             </div>
-          </div>
-        </div>
 
-        {/* Right Section: Form (40% Desktop) */}
-        <div className="login-form-section">
-          <div className="login-card">
-            <h2>Login to Portal</h2>
-            <p className="subtitle">Enter your credentials below</p>
+            {error && (
+              <div className="alert alert-danger py-2 small" role="alert">
+                {error}
+              </div>
+            )}
 
             <Form onSubmit={handleSubmit}>
-              {/* Email Field */}
-              <div className="form-group">
-                <label className="form-label">Email Address</label>
-                <div className="input-container">
-                  <i className="bi bi-envelope input-icon"></i>
-                  <input
-                    type="email"
-                    name="email"
-                    className={`form-input ${errors.email ? 'border-danger' : ''}`}
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                {errors.email && <div className="text-danger small mt-1 font-bold">{errors.email}</div>}
-              </div>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="login-email">Email</Form.Label>
+                <Form.Control
+                  id="login-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setError('')
+                  }}
+                  className="auth-input"
+                  autoComplete="email"
+                  autoFocus
+                />
+              </Form.Group>
 
-              {/* Password Field */}
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <div className="input-container">
-                  <i className="bi bi-lock input-icon"></i>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    className={`form-input ${errors.password ? 'border-danger' : ''}`}
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    onCopy={(e) => e.preventDefault()}
-                    onPaste={(e) => e.preventDefault()}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? 'Hide Password' : 'Show Password'}
-                  >
-                    <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                  </button>
-                </div>
-                {errors.password && <div className="text-danger small mt-1 font-bold">{errors.password}</div>}
-              </div>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="login-password">Password</Form.Label>
+                <Form.Control
+                  id="login-password"
+                  type="password"
+                  placeholder="Your password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setError('')
+                  }}
+                  className="auth-input"
+                  autoComplete="current-password"
+                />
+              </Form.Group>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="form-options">
-                <label className="remember-me">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  Keep me logged in
-                </label>
-                <Link to="/forgot-password" title="Restore password access" className="forgot-password">
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="login-role">Login as</Form.Label>
+                <Form.Select
+                  id="login-role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as Role | '')}
+                  className="auth-input"
+                >
+                  <option value="">Auto-detect</option>
+                  {roles.map((r) => (
+                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <div className="d-flex justify-content-end mb-3">
+                <Link to="/forgot-password" className="small text-primary text-decoration-none">
                   Forgot Password?
                 </Link>
               </div>
 
-              {/* API Status Alerts */}
-              {apiError && (
-                <Alert variant="danger" className="text-sm py-2 px-3 mb-4 rounded-lg">
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                  {apiError}
-                </Alert>
-              )}
-
-              {/* Submit Button */}
-              <button
+              <Button
                 type="submit"
-                className="submit-btn"
+                variant="primary"
+                className="w-100 py-2 rounded-pill fw-semibold btn-primary-custom"
                 disabled={loading}
               >
-                {loading ? (
-                  <>
-                    <Spinner size="sm" animation="border" />
-                    Authenticating...
-                  </>
-                ) : (
-                  <>
-                    Login
-                    <i className="bi bi-arrow-right-short text-2xl"></i>
-                  </>
-                )}
-              </button>
+                {loading ? 'Signing in...' : 'Log In'}
+              </Button>
             </Form>
 
-            {/* Registration Links Section */}
-            <div className="registration-section">
-              <p>Don't have an account?</p>
-              <div className="reg-links-grid">
-                <Link to="/register/public" className="reg-btn">
-                  <i className="bi bi-person-fill"></i>
-                  Register as Public User
-                </Link>
-                <Link to="/register/police" className="reg-btn">
-                  <i className="bi bi-shield-shaded"></i>
-                  Register as Police Officer
-                </Link>
-                <Link to="/register/social-worker" className="reg-btn">
-                  <i className="bi bi-heart-fill"></i>
-                  Register as Social Worker
-                </Link>
+            <div className="mt-4 pt-3 border-top">
+              <p className="text-center text-muted small mb-2">Or continue with</p>
+              <div className="d-flex gap-2 justify-content-center">
+                <Button variant="outline-secondary" size="sm" className="rounded-pill flex-grow-1" disabled>
+                  Google
+                </Button>
+                <Button variant="outline-secondary" size="sm" className="rounded-pill flex-grow-1" disabled>
+                  Facebook
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
+
+            <p className="text-center text-secondary small mt-4 mb-0">
+              Don&apos;t have an account? <Link to="/signup" className="text-primary fw-medium">Sign up</Link>
+            </p>
+          </Card.Body>
+        </Card>
       </div>
     </div>
-  );
-};
-
-export default LoginPage;
+  )
+}

@@ -425,6 +425,91 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     }
 
     @Override
+    public HelpRequestDTO acceptHelpRequest(String requestId, String acceptedBy) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    String assigned = helpRequest.getAssignedWorkerId();
+                    boolean isAssignedToUser = assigned != null && assigned.equals(acceptedBy);
+                    boolean isAssignedViaProfile = false;
+                    if (socialWorkerService != null && !isAssignedToUser) {
+                        isAssignedViaProfile = socialWorkerService.getSocialWorkerByUserId(acceptedBy)
+                                .map(sw -> sw.getId() != null && sw.getId().equals(assigned))
+                                .orElse(false);
+                    }
+                    if (!isAssignedToUser && !isAssignedViaProfile) {
+                        return null;
+                    }
+                    helpRequest.setStatus(HelpRequest.RequestStatus.IN_PROGRESS);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+                    String currentNotes = helpRequest.getRequestNotes();
+                    String acceptNote = "Accepted by worker and service started.";
+                    if (currentNotes != null && !currentNotes.isEmpty()) {
+                        helpRequest.setRequestNotes(currentNotes + "\n" + acceptNote);
+                    } else {
+                        helpRequest.setRequestNotes(acceptNote);
+                    }
+                    helpRequestRepository.save(helpRequest);
+
+                    if (notificationService != null && helpRequest.getRequesterUserId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getRequesterUserId(),
+                                    helpRequest.getId(),
+                                    "IN_PROGRESS",
+                                    helpRequest.isAnonymous());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying requester of acceptance: " + e.getMessage());
+                        }
+                    }
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    "IN_PROGRESS",
+                                    acceptedBy,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin of acceptance: " + e.getMessage());
+                        }
+                    }
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO declineHelpRequest(String requestId, String reason, String declinedBy) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    helpRequest.setAssignedWorkerId(null);
+                    helpRequest.setStatus(HelpRequest.RequestStatus.UNDER_REVIEW);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+                    String currentNotes = helpRequest.getRequestNotes();
+                    String declineNote = "Declined by worker: " + reason;
+                    if (currentNotes != null && !currentNotes.isEmpty()) {
+                        helpRequest.setRequestNotes(currentNotes + "\n" + declineNote);
+                    } else {
+                        helpRequest.setRequestNotes(declineNote);
+                    }
+                    helpRequestRepository.save(helpRequest);
+
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    "DECLINED",
+                                    declinedBy + " - " + reason,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin of decline: " + e.getMessage());
+                        }
+                    }
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
+    @Override
     public HelpRequestDTO addDocumentToHelpRequest(String requestId, String documentUrl) {
         return helpRequestRepository.findById(requestId)
                 .map(helpRequest -> {

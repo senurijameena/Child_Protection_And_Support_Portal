@@ -19,6 +19,17 @@ public class RegisterRequest {
      private String stationAddress;
      private String idDocumentUrl;
 
+     // Police Station registration
+     private String stationName;
+     private String district;
+     private String city;
+     private String officerInChargeName;
+     private String locationCoordinates; // "latitude,longitude"
+     private String officerIdProofUrl;
+     private String governmentApprovalLetterUrl;
+     private String allocatedResources;
+     private String staffDetails;
+
      private String licenseNumber;
      private String organization;
      private String specializations;
@@ -133,11 +144,83 @@ public class RegisterRequest {
           return idDocumentUrl;
      }
 
-     public void setIdDocumentUrl(String idDocumentUrl) {
-          this.idDocumentUrl = idDocumentUrl;
-     }
+    public void setIdDocumentUrl(String idDocumentUrl) {
+        this.idDocumentUrl = idDocumentUrl;
+    }
 
-     public String getLicenseNumber() {
+    public String getStationName() {
+        return stationName;
+    }
+
+    public void setStationName(String stationName) {
+        this.stationName = stationName;
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getOfficerInChargeName() {
+        return officerInChargeName;
+    }
+
+    public void setOfficerInChargeName(String officerInChargeName) {
+        this.officerInChargeName = officerInChargeName;
+    }
+
+    public String getLocationCoordinates() {
+        return locationCoordinates;
+    }
+
+    public void setLocationCoordinates(String locationCoordinates) {
+        this.locationCoordinates = locationCoordinates;
+    }
+
+    public String getOfficerIdProofUrl() {
+        return officerIdProofUrl;
+    }
+
+    public void setOfficerIdProofUrl(String officerIdProofUrl) {
+        this.officerIdProofUrl = officerIdProofUrl;
+    }
+
+    public String getGovernmentApprovalLetterUrl() {
+        return governmentApprovalLetterUrl;
+    }
+
+    public void setGovernmentApprovalLetterUrl(String governmentApprovalLetterUrl) {
+        this.governmentApprovalLetterUrl = governmentApprovalLetterUrl;
+    }
+
+    public String getAllocatedResources() {
+        return allocatedResources;
+    }
+
+    public void setAllocatedResources(String allocatedResources) {
+        this.allocatedResources = allocatedResources;
+    }
+
+    public String getStaffDetails() {
+        return staffDetails;
+    }
+
+    public void setStaffDetails(String staffDetails) {
+        this.staffDetails = staffDetails;
+    }
+
+    public String getLicenseNumber() {
           return licenseNumber;
      }
 

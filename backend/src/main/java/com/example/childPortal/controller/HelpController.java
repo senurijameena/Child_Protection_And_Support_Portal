@@ -95,6 +95,24 @@ public class HelpController {
         return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/{requestId}/accept")
+    public ResponseEntity<HelpRequestDTO> acceptHelpRequest(
+            @PathVariable String requestId,
+            @AuthenticationPrincipal String userId) {
+        HelpRequestDTO updatedRequest = helpRequestService.acceptHelpRequest(requestId, userId);
+        return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{requestId}/decline")
+    public ResponseEntity<HelpRequestDTO> declineHelpRequest(
+            @PathVariable String requestId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String reason = body.getOrDefault("reason", "No reason provided");
+        HelpRequestDTO updatedRequest = helpRequestService.declineHelpRequest(requestId, reason, userId);
+        return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+    }
+
     @PutMapping("/{requestId}/assign")
     public ResponseEntity<HelpRequestDTO> assignToSocialWorker(
             @PathVariable String requestId,

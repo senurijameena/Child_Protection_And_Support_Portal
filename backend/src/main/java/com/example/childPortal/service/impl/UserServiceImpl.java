@@ -34,6 +34,9 @@ public class UserServiceImpl implements UserService {
     private SocialWorkerRepository socialWorkerRepository;
 
     @Autowired
+    private PoliceStationRepository policeStationRepository;
+
+    @Autowired
     private CaseRepository caseRepository;
 
     @Autowired
@@ -171,6 +174,71 @@ public class UserServiceImpl implements UserService {
                 }
             } catch (Exception deleteException) {
                 System.err.println("Failed to cleanup user after registration error: " + deleteException.getMessage());
+            }
+            return new LoginResponse(null, "Registration failed: " + e.getMessage(), false);
+        }
+    }
+
+    @Override
+    public LoginResponse registerPoliceStation(RegisterRequest request) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return new LoginResponse(null, "Passwords do not match", false);
+        }
+        if (!request.isTermsAccepted()) {
+            return new LoginResponse(null, "You must accept the terms and conditions", false);
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return new LoginResponse(null, "Email already exists", false);
+        }
+
+        User user = new User();
+        user.setFullName(request.getFullName() != null && !request.getFullName().isEmpty()
+                ? request.getFullName() : request.getOfficerInChargeName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.PO);
+        user.setApproved(true);
+        user.setRegistrationDate(LocalDateTime.now());
+
+        try {
+            user = userRepository.save(user);
+
+            PoliceStation station = new PoliceStation();
+            station.setStationName(request.getStationName());
+            station.setDistrict(request.getDistrict());
+            station.setCity(request.getCity());
+            station.setAddress(request.getAddress());
+            station.setContactNumber(request.getPhone());
+            station.setEmail(request.getEmail());
+            station.setOfficerInChargeName(request.getOfficerInChargeName() != null ? request.getOfficerInChargeName() : request.getFullName());
+            station.setRegisteredUserId(user.getId());
+            station.setLocationCoordinates(request.getLocationCoordinates());
+            station.setOfficerIdProofUrl(request.getOfficerIdProofUrl());
+            station.setGovernmentApprovalLetterUrl(request.getGovernmentApprovalLetterUrl());
+            station.setAllocatedResources(request.getAllocatedResources());
+            station.setStaffDetails(request.getStaffDetails());
+            policeStationRepository.save(station);
+
+            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+            try {
+                notificationService.sendRegistrationSuccessEmail(user.getId(), user.getRole().name());
+            } catch (Exception emailException) {
+                System.err.println("Warning: Failed to send registration success email to " + user.getEmail() + ": " + emailException.getMessage());
+            }
+
+            LoginResponse response = new LoginResponse(token, user.getId(), user.getEmail(), user.getFullName(),
+                    user.getRole(), true);
+            response.setProfilePhoto(user.getProfilePhoto());
+            return response;
+        } catch (Exception e) {
+            try {
+                if (user.getId() != null) {
+                    userRepository.delete(user);
+                }
+            } catch (Exception deleteException) {
+                System.err.println("Failed to cleanup user after police station registration error: " + deleteException.getMessage());
             }
             return new LoginResponse(null, "Registration failed: " + e.getMessage(), false);
         }

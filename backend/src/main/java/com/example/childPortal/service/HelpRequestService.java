@@ -33,5 +33,9 @@ public interface HelpRequestService {
 
     HelpRequestDTO rejectHelpRequest(String requestId, String reason, String rejectedBy);
 
+    HelpRequestDTO acceptHelpRequest(String requestId, String acceptedBy);
+
+    HelpRequestDTO declineHelpRequest(String requestId, String reason, String declinedBy);
+
     HelpRequestDTO addDocumentToHelpRequest(String requestId, String documentUrl);
 }

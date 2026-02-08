@@ -1,5 +1,7 @@
 package com.example.childPortal.controller;
 
+import com.example.childPortal.dto.UserManagementDTO;
+import com.example.childPortal.dto.UserUpdateRequest;
 import com.example.childPortal.model.Role;
 import com.example.childPortal.model.User;
 import com.example.childPortal.model.PoliceOfficer;
@@ -139,5 +141,41 @@ public class AdminController {
         boolean success = userService.rejectUser(userId);
         return success ? ResponseEntity.ok("User rejected successfully")
                 : ResponseEntity.badRequest().body("User not found");
+    }
+
+    @GetMapping("/users/management")
+    public ResponseEntity<List<UserManagementDTO>> getAllUsersForManagement() {
+        List<UserManagementDTO> users = userService.getAllUsersForManagement();
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/users/management/role/{role}")
+    public ResponseEntity<List<UserManagementDTO>> getUsersByRoleForManagement(
+            @PathVariable String role) {
+        List<UserManagementDTO> users = userService.getUsersByRoleForManagement(role);
+        return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/users/{userId}")
+    public ResponseEntity<Map<String, Object>> adminUpdateUser(
+            @PathVariable String userId,
+            @RequestBody UserUpdateRequest request) {
+        boolean success = userService.updateUserDetails(userId, request);
+        return success ? ResponseEntity.ok(Map.of("success", true))
+                : ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not found"));
+    }
+
+    @PutMapping("/users/{userId}/deactivate")
+    public ResponseEntity<Map<String, Object>> deactivateUser(@PathVariable String userId) {
+        boolean success = userService.deactivateUser(userId);
+        return success ? ResponseEntity.ok(Map.of("success", true))
+                : ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not found"));
+    }
+
+    @PutMapping("/users/{userId}/activate")
+    public ResponseEntity<Map<String, Object>> activateUser(@PathVariable String userId) {
+        boolean success = userService.activateUser(userId);
+        return success ? ResponseEntity.ok(Map.of("success", true))
+                : ResponseEntity.badRequest().body(Map.of("success", false, "message", "User not found"));
     }
 }

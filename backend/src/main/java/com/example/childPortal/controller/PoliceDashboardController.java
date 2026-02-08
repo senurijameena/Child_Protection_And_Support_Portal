@@ -80,4 +80,22 @@ public class PoliceDashboardController {
 
         return ResponseEntity.ok(java.util.Collections.emptyList());
     }
+
+    @PostMapping("/cases/{caseId}/accept")
+    public ResponseEntity<CaseDTO> acceptCase(
+            @PathVariable String caseId,
+            @AuthenticationPrincipal String userId) {
+        CaseDTO updated = caseService.assignCaseToOfficer(caseId, userId, userId);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/cases/{caseId}/decline")
+    public ResponseEntity<CaseDTO> declineCase(
+            @PathVariable String caseId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String reason = body.getOrDefault("reason", "No reason provided");
+        CaseDTO updated = caseService.declineCaseByOfficer(caseId, userId, reason);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
 }

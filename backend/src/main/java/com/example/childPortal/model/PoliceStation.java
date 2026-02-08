@@ -15,6 +15,11 @@ public class PoliceStation {
     private String email;
     private String officerInChargeName;
     private String locationCoordinates; // Format: "latitude,longitude"
+    private String registeredUserId; // User account that manages this station
+    private String officerIdProofUrl;
+    private String governmentApprovalLetterUrl;
+    private String allocatedResources;
+    private String staffDetails;
 
     public PoliceStation() {
     }
@@ -96,5 +101,45 @@ public class PoliceStation {
 
     public void setLocationCoordinates(String locationCoordinates) {
         this.locationCoordinates = locationCoordinates;
+    }
+
+    public String getRegisteredUserId() {
+        return registeredUserId;
+    }
+
+    public void setRegisteredUserId(String registeredUserId) {
+        this.registeredUserId = registeredUserId;
+    }
+
+    public String getOfficerIdProofUrl() {
+        return officerIdProofUrl;
+    }
+
+    public void setOfficerIdProofUrl(String officerIdProofUrl) {
+        this.officerIdProofUrl = officerIdProofUrl;
+    }
+
+    public String getGovernmentApprovalLetterUrl() {
+        return governmentApprovalLetterUrl;
+    }
+
+    public void setGovernmentApprovalLetterUrl(String governmentApprovalLetterUrl) {
+        this.governmentApprovalLetterUrl = governmentApprovalLetterUrl;
+    }
+
+    public String getAllocatedResources() {
+        return allocatedResources;
+    }
+
+    public void setAllocatedResources(String allocatedResources) {
+        this.allocatedResources = allocatedResources;
+    }
+
+    public String getStaffDetails() {
+        return staffDetails;
+    }
+
+    public void setStaffDetails(String staffDetails) {
+        this.staffDetails = staffDetails;
     }
 }

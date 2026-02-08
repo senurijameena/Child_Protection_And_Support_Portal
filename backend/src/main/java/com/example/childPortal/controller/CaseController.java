@@ -79,6 +79,16 @@ public class CaseController {
         return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/{caseId}/notes")
+    public ResponseEntity<CaseDTO> updateCaseNotes(
+            @PathVariable String caseId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String notes = body.getOrDefault("notes", "");
+        CaseDTO updatedCase = caseService.updateCaseNotes(caseId, notes, userId);
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+    }
+
     @PutMapping("/{caseId}/assign/officer")
     public ResponseEntity<CaseDTO> assignToOfficer(
             @PathVariable String caseId,

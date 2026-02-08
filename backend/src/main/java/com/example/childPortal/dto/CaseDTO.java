@@ -28,6 +28,7 @@ public class CaseDTO {
     private LocalDateTime reportDate;
     private Priority priority;
     private boolean emergency;
+    private String caseNotes;
 
     public static CaseDTO createFilteredDTO(com.example.childPortal.model.Case caseEntity,
             Role userRole,
@@ -52,6 +53,7 @@ public class CaseDTO {
         dto.setReportDate(caseEntity.getReportDate());
         dto.setPriority(caseEntity.getPriority());
         dto.setEmergency(caseEntity.isEmergency());
+        dto.setCaseNotes(caseEntity.getCaseNotes());
 
         if (caseEntity.isAnonymous()) {
             if (userRole == Role.ADMIN ||
@@ -226,5 +228,13 @@ public class CaseDTO {
 
     public boolean isEmergency() {
         return emergency;
+    }
+
+    public String getCaseNotes() {
+        return caseNotes;
+    }
+
+    public void setCaseNotes(String caseNotes) {
+        this.caseNotes = caseNotes;
     }
 }

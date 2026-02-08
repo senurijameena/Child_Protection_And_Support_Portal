@@ -12,7 +12,10 @@ import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
+import com.example.childPortal.service.CaseTimelineService;
 import com.example.childPortal.service.NotificationService;
+import com.example.childPortal.dto.CaseTimelineDTO;
+import com.example.childPortal.model.CaseTimelineEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,9 @@ public class CaseServiceImpl implements CaseService {
 
     @Autowired(required = false)
     private com.example.childPortal.service.PoliceOfficerService policeOfficerService;
+
+    @Autowired(required = false)
+    private CaseTimelineService caseTimelineService;
 
     @Override
     @Transactional
@@ -607,6 +613,39 @@ public class CaseServiceImpl implements CaseService {
         caseEntity.setEvidenceUrls(evidence);
         caseEntity.setLastUpdated(LocalDateTime.now());
         Case updatedCase = caseRepository.save(caseEntity);
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
+    }
+
+    @Override
+    @Transactional
+    public CaseDTO declineCaseByOfficer(String caseId, String officerId, String reason) {
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        if (caseOpt.isEmpty())
+            return null;
+
+        Case caseEntity = caseOpt.get();
+        String officerName = userRepository.findById(officerId).map(User::getFullName).orElse("Officer");
+        String note = String.format("[%s] Officer declined: %s", LocalDateTime.now(), reason);
+        String existingNotes = caseEntity.getCaseNotes();
+        caseEntity.setCaseNotes(existingNotes != null ? existingNotes + "\n" + note : note);
+        caseEntity.setLastUpdated(LocalDateTime.now());
+        Case updatedCase = caseRepository.save(caseEntity);
+
+        if (caseTimelineService != null) {
+            CaseTimelineDTO dto = new CaseTimelineDTO();
+            dto.setCaseId(caseId);
+            dto.setEventType(CaseTimelineEvent.EventType.NOTE_ADDED);
+            dto.setDescription("Officer declined: " + reason);
+            dto.setPerformedByUserId(officerId);
+            dto.setPerformedByName(officerName);
+            dto.setEventTime(LocalDateTime.now());
+            caseTimelineService.createTimelineEvent(dto);
+        }
 
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);

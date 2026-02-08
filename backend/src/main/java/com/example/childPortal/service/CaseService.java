@@ -56,4 +56,6 @@ public interface CaseService {
     long getEmergencyCaseCount();
 
     CaseDTO addEvidenceToCase(String caseId, String evidenceUrl);
+
+    CaseDTO declineCaseByOfficer(String caseId, String officerId, String reason);
 }

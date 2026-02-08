@@ -16,6 +16,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpMethod;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 @Configuration
@@ -92,6 +93,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
 
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
@@ -102,6 +104,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/feedback/public").permitAll()
 
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/police/**").hasAuthority("ROLE_PO")
                 .requestMatchers("/api/cases/officer/**").hasAuthority("ROLE_PO")
                 .requestMatchers("/api/services/offer").hasAuthority("ROLE_SW")
                 .requestMatchers("/api/help-requests/assign").hasAuthority("ROLE_SW")
@@ -118,6 +121,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/duplicates/**").authenticated()
                 .requestMatchers("/api/dashboard/**").authenticated()
                 .requestMatchers("/api/anonymity/**").authenticated()
+
+                // Combined app: allow GET to non-API paths (static frontend, SPA routes)
+                .requestMatchers(request -> HttpMethod.GET.name().equals(request.getMethod())
+                        && request.getRequestURI() != null
+                        && !request.getRequestURI().startsWith("/api"))
+                .permitAll()
 
                 .anyRequest().authenticated()
             )

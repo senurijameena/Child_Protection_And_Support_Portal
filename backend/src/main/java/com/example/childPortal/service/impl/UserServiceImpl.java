@@ -8,6 +8,7 @@ import com.example.childPortal.service.CaseService;
 import com.example.childPortal.service.FeedbackService;
 import com.example.childPortal.service.HelpRequestService;
 import com.example.childPortal.service.NotificationService;
+import com.example.childPortal.service.SequenceService;
 import com.example.childPortal.service.UserService;
 
 import jakarta.annotation.PostConstruct;
@@ -57,6 +58,19 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private SequenceService sequenceService;
+
+    /**
+     * Generates a standardized user ID: ROLE-0001 (e.g. PO-0001, SW-0001, PU-0001, AD-0001).
+     * Separate sequence per role, zero-padded 4 digits, backend-only.
+     */
+    private String generateUserId(Role role) {
+        String seqKey = "user_seq_" + role.name();
+        long next = sequenceService.getNextSequence(seqKey);
+        return role.name() + "-" + String.format("%04d", next);
+    }
+
     @PostConstruct
     public void createDefaultAdmin() {
         new Thread(() -> {
@@ -65,6 +79,7 @@ public class UserServiceImpl implements UserService {
 
                 if (!userRepository.findByEmail("admin@gmail.com").isPresent()) {
                     User admin = new User();
+                    admin.setId(generateUserId(Role.ADMIN));
                     admin.setFullName("System Administrator");
                     admin.setEmail("admin@gmail.com");
                     admin.setPhone("+1234567890");
@@ -103,6 +118,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = new User();
+        user.setId(generateUserId(request.getRole()));
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
@@ -192,6 +208,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = new User();
+        user.setId(generateUserId(Role.PO));
         user.setFullName(request.getFullName() != null && !request.getFullName().isEmpty()
                 ? request.getFullName() : request.getOfficerInChargeName());
         user.setEmail(request.getEmail());

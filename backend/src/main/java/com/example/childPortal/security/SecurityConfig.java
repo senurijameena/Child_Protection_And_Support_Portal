@@ -102,6 +102,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/cases/public/**").permitAll()
                 .requestMatchers("/statistics/public").permitAll()
                 .requestMatchers("/api/feedback/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/stations", "/api/stations/**").permitAll()
+                .requestMatchers("/api/contact/public").permitAll()
 
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/police/**").hasAuthority("ROLE_PO")

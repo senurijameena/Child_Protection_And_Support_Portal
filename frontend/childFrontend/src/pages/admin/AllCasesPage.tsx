@@ -13,14 +13,12 @@ import {
 import {
   getAllCasesWithDetails,
   getAllPoliceStations,
-  getSocialWorkers,
   updateCaseStatus,
   assignCaseToStation,
-  assignCaseToSocialWorker,
   getAvailableUsersForAssignment,
 } from '../../services/adminApi'
 import type { CaseDTO } from '../../types/dashboard'
-import type { PoliceStationDTO, SocialWorkerDTO } from '../../types/admin'
+import type { PoliceStationDTO } from '../../types/admin'
 import { CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
 
 const STATUS_OPTIONS = [
@@ -42,12 +40,9 @@ export function AllCasesPage() {
   const [filterType, setFilterType] = useState('')
   const [selectedCase, setSelectedCase] = useState<CaseDTO | null>(null)
   const [showAssignModal, setShowAssignModal] = useState(false)
-  const [assignTarget, setAssignTarget] = useState<'station' | 'worker'>('station')
   const [stations, setStations] = useState<PoliceStationDTO[]>([])
-  const [workers, setWorkers] = useState<SocialWorkerDTO[]>([])
   const [suggestions, setSuggestions] = useState<{ policeOfficers?: unknown[]; socialWorkers?: unknown[] } | null>(null)
   const [assignStationId, setAssignStationId] = useState('')
-  const [assignWorkerId, setAssignWorkerId] = useState('')
   const [assignLoading, setAssignLoading] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
@@ -67,7 +62,6 @@ export function AllCasesPage() {
 
   useEffect(() => {
     getAllPoliceStations().then(setStations).catch(() => setStations([]))
-    getSocialWorkers().then(setWorkers).catch(() => setWorkers([]))
   }, [])
 
   const filteredCases = cases.filter((c) => {
@@ -93,8 +87,6 @@ export function AllCasesPage() {
     setSelectedCase(c)
     setShowAssignModal(true)
     setAssignStationId('')
-    setAssignWorkerId('')
-    setAssignTarget('station')
     if (c.location) {
       getAvailableUsersForAssignment('PO', c.location, c.caseType)
         .then(setSuggestions)
@@ -105,14 +97,10 @@ export function AllCasesPage() {
   }
 
   const handleAssign = async () => {
-    if (!selectedCase) return
+    if (!selectedCase || !assignStationId) return
     setAssignLoading(true)
     try {
-      if (assignTarget === 'station' && assignStationId) {
-        await assignCaseToStation(selectedCase.id, assignStationId)
-      } else if (assignTarget === 'worker' && assignWorkerId) {
-        await assignCaseToSocialWorker(selectedCase.id, assignWorkerId)
-      }
+      await assignCaseToStation(selectedCase.id, assignStationId)
       loadCases()
       setShowAssignModal(false)
       setSelectedCase(null)
@@ -280,7 +268,7 @@ export function AllCasesPage() {
                             <>
                               <Dropdown.Divider />
                               <Dropdown.Item onClick={() => openAssignModal(c)}>
-                                Assign to Police / Social Worker
+                                Assign to Police Station
                               </Dropdown.Item>
                               <Dropdown.Item
                                 onClick={() =>
@@ -326,7 +314,7 @@ export function AllCasesPage() {
 
       <Modal show={showAssignModal} onHide={() => setShowAssignModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Assign Case</Modal.Title>
+          <Modal.Title>Assign Case to Police Station</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedCase && (
@@ -336,57 +324,23 @@ export function AllCasesPage() {
               </p>
               {suggestions && (
                 <div className="alert alert-info py-2 small">
-                  AI suggestion: Consider workload and region for best match.
+                  Consider workload and region for best match.
                 </div>
               )}
               <Form.Group className="mb-3">
-                <Form.Check
-                  type="radio"
-                  label="Assign to Police Station"
-                  name="assignTarget"
-                  checked={assignTarget === 'station'}
-                  onChange={() => setAssignTarget('station')}
-                />
-                <Form.Check
-                  type="radio"
-                  label="Assign to Social Worker"
-                  name="assignTarget"
-                  checked={assignTarget === 'worker'}
-                  onChange={() => setAssignTarget('worker')}
-                />
+                <Form.Label>Select Police Station</Form.Label>
+                <Form.Select
+                  value={assignStationId}
+                  onChange={(e) => setAssignStationId(e.target.value)}
+                >
+                  <option value="">Choose...</option>
+                  {stations.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.stationName} - {s.district}
+                    </option>
+                  ))}
+                </Form.Select>
               </Form.Group>
-              {assignTarget === 'station' && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Select Station</Form.Label>
-                  <Form.Select
-                    value={assignStationId}
-                    onChange={(e) => setAssignStationId(e.target.value)}
-                  >
-                    <option value="">Choose...</option>
-                    {stations.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.stationName} - {s.district}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              )}
-              {assignTarget === 'worker' && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Select Social Worker</Form.Label>
-                  <Form.Select
-                    value={assignWorkerId}
-                    onChange={(e) => setAssignWorkerId(e.target.value)}
-                  >
-                    <option value="">Choose...</option>
-                    {workers.map((w) => (
-                      <option key={w.userId || w.id} value={w.userId || w.id}>
-                        {w.fullName} - {w.organization || 'N/A'}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              )}
             </>
           )}
         </Modal.Body>
@@ -397,11 +351,7 @@ export function AllCasesPage() {
           <Button
             variant="primary"
             onClick={handleAssign}
-            disabled={
-              assignLoading ||
-              (assignTarget === 'station' && !assignStationId) ||
-              (assignTarget === 'worker' && !assignWorkerId)
-            }
+            disabled={assignLoading || !assignStationId}
           >
             {assignLoading ? 'Assigning...' : 'Assign'}
           </Button>

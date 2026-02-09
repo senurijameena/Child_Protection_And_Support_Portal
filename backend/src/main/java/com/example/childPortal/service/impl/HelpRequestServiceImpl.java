@@ -121,6 +121,12 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                 notificationService.sendHelpRequestCreatedNotification(requesterUserId, savedHelpRequest.getId(),
                         savedHelpRequest.getTrackingId(), helpRequestDTO.isAnonymous());
             }
+            // Notify admins of new help request
+            if (notificationService != null) {
+                notificationService.sendHelpRequestCreatedNotificationToAdmin(savedHelpRequest.getId(),
+                        savedHelpRequest.getTrackingId(),
+                        savedHelpRequest.getHelpType() != null ? savedHelpRequest.getHelpType().name() : null);
+            }
 
             return new HelpResponse(savedHelpRequest.getId(), "Help request submitted successfully", true);
         } catch (Exception e) {

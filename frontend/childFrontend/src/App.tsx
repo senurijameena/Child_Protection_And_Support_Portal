@@ -40,6 +40,10 @@ import { TransferRequestManagementPage } from './pages/admin/TransferRequestMana
 import { DuplicateDetectionPage } from './pages/admin/DuplicateDetectionPage'
 import { SystemAnnouncementsPage } from './pages/admin/SystemAnnouncementsPage'
 import { FeedbackManagementPage } from './pages/admin/FeedbackManagementPage'
+import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
+import { AdminReportsPage } from './pages/admin/AdminReportsPage'
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { PoliceDashboard } from './pages/police/PoliceDashboard'
 import { PoliceCasesPage } from './pages/police/PoliceCasesPage'
 import { PoliceCaseDetailsPage } from './pages/police/PoliceCaseDetailsPage'
@@ -125,11 +129,15 @@ function App() {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="notifications" element={<AdminNotificationsPage />} />
         <Route path="cases" element={<AllCasesPage />} />
         <Route path="cases/:caseId" element={<AdminCaseDetailsPage />} />
         <Route path="help-requests" element={<HelpRequestManagementPage />} />
         <Route path="help-requests/:requestId" element={<AdminHelpRequestDetailsPage />} />
+        <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="users" element={<UserManagementPage />} />
+        <Route path="reports" element={<AdminReportsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="transfers" element={<TransferRequestManagementPage />} />
         <Route path="duplicates" element={<DuplicateDetectionPage />} />
         <Route path="announcements" element={<SystemAnnouncementsPage />} />

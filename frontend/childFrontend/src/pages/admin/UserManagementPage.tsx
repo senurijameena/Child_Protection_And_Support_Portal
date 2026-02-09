@@ -28,6 +28,8 @@ export function UserManagementPage() {
   const [filterRole, setFilterRole] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [showRejectModal, setShowRejectModal] = useState(false)
+  const [showApproveModal, setShowApproveModal] = useState(false)
+  const [showLockModal, setShowLockModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserManagementDTO | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -61,6 +63,8 @@ export function UserManagementPage() {
     try {
       await approveUser(userId)
       loadUsers()
+      setShowApproveModal(false)
+      setSelectedUser(null)
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed to approve')
     } finally {
@@ -95,6 +99,8 @@ export function UserManagementPage() {
         await adminActivateUser(u.userId)
       }
       loadUsers()
+      setShowLockModal(false)
+      setSelectedUser(null)
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed to update')
     } finally {
@@ -158,6 +164,7 @@ export function UserManagementPage() {
           <Table hover responsive className="mb-0">
             <thead>
               <tr>
+                <th>User ID</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
@@ -170,13 +177,14 @@ export function UserManagementPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-5 text-muted">
+                  <td colSpan={8} className="text-center py-5 text-muted">
                     No users found
                   </td>
                 </tr>
               ) : (
                 filtered.map((u) => (
                   <tr key={u.userId}>
+                    <td><code className="small">{u.userId || '-'}</code></td>
                     <td className="fw-medium">{u.fullName || '-'}</td>
                     <td>{u.email || '-'}</td>
                     <td>
@@ -216,7 +224,10 @@ export function UserManagementPage() {
                           {!u.approved && (
                             <>
                               <Dropdown.Item
-                                onClick={() => handleApprove(u.userId)}
+                                onClick={() => {
+                                  setSelectedUser(u)
+                                  setShowApproveModal(true)
+                                }}
                                 disabled={actionLoading}
                               >
                                 Approve
@@ -234,7 +245,10 @@ export function UserManagementPage() {
                           )}
                           {u.approved && u.role !== 'ADMIN' && (
                             <Dropdown.Item
-                              onClick={() => handleToggleActive(u)}
+                              onClick={() => {
+                                setSelectedUser(u)
+                                setShowLockModal(true)
+                              }}
                               disabled={actionLoading}
                             >
                               {u.active ? 'Lock / Deactivate' : 'Activate'}
@@ -258,7 +272,7 @@ export function UserManagementPage() {
         <Modal.Body>
           {selectedUser && (
             <p>
-              Are you sure you want to reject {selectedUser.fullName} (
+              Are you sure you want to reject <strong>{selectedUser.fullName}</strong> (
               {selectedUser.email})? They will not be able to access the platform.
             </p>
           )}
@@ -273,6 +287,58 @@ export function UserManagementPage() {
             disabled={actionLoading}
           >
             {actionLoading ? 'Rejecting...' : 'Reject'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showApproveModal} onHide={() => setShowApproveModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Approve User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedUser && (
+            <p>
+              Are you sure you want to approve <strong>{selectedUser.fullName}</strong> (
+              {selectedUser.email})? They will be able to access the platform.
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowApproveModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="success"
+            onClick={() => selectedUser && handleApprove(selectedUser.userId)}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Approving...' : 'Approve'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showLockModal} onHide={() => setShowLockModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{selectedUser?.active ? 'Lock Account' : 'Activate Account'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedUser && (
+            <p>
+              Are you sure you want to {selectedUser.active ? 'lock' : 'activate'} the account for{' '}
+              <strong>{selectedUser.fullName}</strong> ({selectedUser.email})?
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowLockModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant={selectedUser?.active ? 'danger' : 'success'}
+            onClick={() => selectedUser && handleToggleActive(selectedUser)}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : selectedUser?.active ? 'Lock' : 'Activate'}
           </Button>
         </Modal.Footer>
       </Modal>

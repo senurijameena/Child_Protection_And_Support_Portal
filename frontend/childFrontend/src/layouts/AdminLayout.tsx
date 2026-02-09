@@ -2,16 +2,21 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Navbar, Nav, Container, Dropdown, Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
+import { AdminNotificationDropdown } from '../components/admin/AdminNotificationDropdown'
 
 const sidebarItems = [
   { path: '/admin', label: 'Dashboard', icon: '📊' },
-  { path: '/admin/cases', label: 'All Cases', icon: '📁' },
+  { path: '/admin/notifications', label: 'Notifications', icon: '🔔' },
+  { path: '/admin/cases', label: 'Cases (Police)', icon: '📁' },
   { path: '/admin/help-requests', label: 'Help Requests', icon: '🙋' },
+  { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
+  { path: '/admin/users', label: 'User Approvals', icon: '👥' },
   { path: '/admin/transfers', label: 'Transfer Requests', icon: '🔄' },
   { path: '/admin/duplicates', label: 'Duplicate Detection', icon: '🔍' },
-  { path: '/admin/users', label: 'User Management', icon: '👥' },
   { path: '/admin/announcements', label: 'System Announcements', icon: '📢' },
   { path: '/admin/feedback', label: 'Feedback', icon: '💬' },
+  { path: '/admin/reports', label: 'Reports', icon: '📄' },
+  { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export function AdminLayout() {
@@ -113,7 +118,8 @@ export function AdminLayout() {
               Child Protection Portal
             </Navbar.Brand>
             <Navbar.Collapse id="admin-nav" className="justify-content-end">
-              <Nav>
+              <Nav className="d-flex align-items-center">
+                <AdminNotificationDropdown />
                 <Dropdown align="end">
                   <Dropdown.Toggle variant="light" className="border-0">
                     {user?.fullName || user?.email || 'Admin'}

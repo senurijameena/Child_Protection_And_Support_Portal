@@ -197,6 +197,11 @@ public class CaseServiceImpl implements CaseService {
                 notificationService.sendCaseCreatedNotification(reporterUserId, savedCase.getId(),
                         savedCase.getTrackingId(), request.isAnonymous());
             }
+            // Notify admins of new case
+            if (notificationService != null) {
+                notificationService.sendCaseCreatedNotificationToAdmin(savedCase.getId(),
+                        savedCase.getTrackingId(), savedCase.getCaseType() != null ? savedCase.getCaseType().name() : null);
+            }
 
             return new CaseResponse(savedCase.getId(), savedCase.getTrackingId(), "Case reported successfully", true);
         } catch (Exception e) {
@@ -271,6 +276,17 @@ public class CaseServiceImpl implements CaseService {
         }
 
         Case updatedCase = caseRepository.save(caseEntity);
+
+        // Notify admins when police/anyone updates case status
+        if (notificationService != null) {
+            Optional<User> updater = userRepository.findById(updatedBy);
+            String updaterName = updater.map(User::getFullName).orElse(updatedBy);
+            notificationService.sendCaseStatusUpdateToAdmin(caseId, caseEntity.getTrackingId(),
+                    status.name(), updaterName);
+            if (status == CaseStatus.RESOLVED || status == CaseStatus.CLOSED) {
+                notificationService.sendCaseCompletedNotificationToAdmin(caseId, caseEntity.getTrackingId());
+            }
+        }
 
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);

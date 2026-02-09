@@ -1,19 +1,34 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Card, Badge, Spinner } from 'react-bootstrap'
+import { Card, Badge, Spinner, ListGroup } from 'react-bootstrap'
 import { apiGet } from '../../services/api'
 import { REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
 import type { HelpRequestDTO } from '../../types/dashboard'
 
+interface TimelineEvent {
+  id?: string
+  eventType?: string
+  description?: string
+  performedByName?: string
+  eventTime?: string
+}
+
 export function AdminHelpRequestDetailsPage() {
   const { requestId } = useParams<{ requestId: string }>()
   const [r, setR] = useState<HelpRequestDTO | null>(null)
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!requestId) return
-    apiGet<HelpRequestDTO>(`/help-requests/${requestId}`)
-      .then(setR)
+    Promise.all([
+      apiGet<HelpRequestDTO>(`/help-requests/${requestId}`),
+      apiGet<TimelineEvent[]>(`/timeline/help-request/${requestId}`).catch(() => []),
+    ])
+      .then(([req, tl]) => {
+        setR(req)
+        setTimeline(Array.isArray(tl) ? tl : [])
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [requestId])
@@ -83,7 +98,7 @@ export function AdminHelpRequestDetailsPage() {
               <p className="text-muted">{r.description || '-'}</p>
               {r.documentUrls && r.documentUrls.length > 0 && (
                 <div>
-                  <strong>Documents:</strong>
+                  <strong>Evidence / Documents (Uploaded by Requester):</strong>
                   <ul className="mb-0 mt-2">
                     {r.documentUrls.map((url, i) => (
                       <li key={i}>
@@ -102,6 +117,29 @@ export function AdminHelpRequestDetailsPage() {
               )}
             </Card.Body>
           </Card>
+          {timeline.length > 0 && (
+            <Card className="border-0 shadow-sm rounded-4">
+              <Card.Header className="bg-white border-0 pt-3">
+                <h5 className="mb-0">Progress Timeline</h5>
+              </Card.Header>
+              <Card.Body>
+                <ListGroup variant="flush">
+                  {timeline.map((item, i) => (
+                    <ListGroup.Item
+                      key={item.id || i}
+                      className="border-0 border-start border-2 border-primary ps-3"
+                    >
+                      <small className="text-muted">
+                        {item.eventTime ? new Date(item.eventTime).toLocaleString() : '-'}
+                        {item.performedByName && ` · ${item.performedByName}`}
+                      </small>
+                      <p className="mb-0">{item.description || '-'}</p>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </Card.Body>
+            </Card>
+          )}
         </div>
         <div className="col-lg-4">
           <Card className="border-0 shadow-sm rounded-4">

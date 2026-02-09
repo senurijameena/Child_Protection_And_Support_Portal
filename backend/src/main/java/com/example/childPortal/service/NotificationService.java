@@ -172,6 +172,58 @@ public class NotificationService {
         sendEmail(user.getEmail(), subject, content);
     }
 
+    /**
+     * Notify all admins when a new case is submitted.
+     */
+    public void sendCaseCreatedNotificationToAdmin(String databaseId, String trackingId, String caseType) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/cases/" + databaseId;
+        String title = "New Case Submitted";
+        String message = "Case " + trackingId + " (" + (caseType != null ? caseType : "Unknown") + ") has been submitted for review.";
+        for (User admin : admins) {
+            logNotification(admin.getId(), "NEW_CASE_ADMIN", title, message, actionUrl);
+        }
+    }
+
+    /**
+     * Notify all admins when a new help request is submitted.
+     */
+    public void sendHelpRequestCreatedNotificationToAdmin(String databaseId, String trackingId, String helpType) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/help-requests/" + databaseId;
+        String title = "New Help Request Submitted";
+        String message = "Help Request " + trackingId + " (" + (helpType != null ? helpType : "Unknown") + ") has been submitted for review.";
+        for (User admin : admins) {
+            logNotification(admin.getId(), "NEW_HELP_REQUEST_ADMIN", title, message, actionUrl);
+        }
+    }
+
+    /**
+     * Notify all admins when police station updates case status.
+     */
+    public void sendCaseStatusUpdateToAdmin(String caseId, String trackingId, String status, String updatedBy) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/cases/" + caseId;
+        String title = "Case Status Updated";
+        String message = "Case " + trackingId + " updated to " + status + " by " + updatedBy;
+        for (User admin : admins) {
+            logNotification(admin.getId(), "CASE_STATUS_UPDATE_ADMIN", title, message, actionUrl);
+        }
+    }
+
+    /**
+     * Notify all admins when case/request is completed.
+     */
+    public void sendCaseCompletedNotificationToAdmin(String caseId, String trackingId) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/cases/" + caseId;
+        String title = "Case Completed";
+        String message = "Case " + trackingId + " has been completed.";
+        for (User admin : admins) {
+            logNotification(admin.getId(), "CASE_COMPLETED_ADMIN", title, message, actionUrl);
+        }
+    }
+
     public void sendCaseCreatedNotification(String userId, String databaseId, String trackingId, boolean isAnonymous) {
         // Always send app notification with actionUrl
         String actionUrl = "/cases/" + databaseId;

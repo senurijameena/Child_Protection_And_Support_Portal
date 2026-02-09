@@ -89,7 +89,8 @@ export function AdminCaseDetailsPage() {
               <p className="text-muted">{c.caseDescription || '-'}</p>
               {c.evidenceUrls && c.evidenceUrls.length > 0 && (
                 <div>
-                  <strong>Evidence / Documents:</strong>
+                  <strong>Evidence / Documents</strong>
+                  <div className="text-muted small mb-2">Uploaded by Public User (reporter)</div>
                   <ul className="mb-0 mt-2">
                     {c.evidenceUrls.map((url, i) => (
                       <li key={i}>

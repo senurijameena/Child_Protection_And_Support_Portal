@@ -1,5 +1,16 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { LandingPage } from './pages/LandingPage'
+import { PublicLayout } from './layouts/PublicLayout'
+import { SupportLocationsPage } from './pages/public/SupportLocationsPage'
+import { ContactDirectoryPage } from './pages/public/ContactDirectoryPage'
+import { HowItWorksPage } from './pages/public/HowItWorksPage'
+import { CaseTypesGuidePage } from './pages/public/CaseTypesGuidePage'
+import { ReportVsRequestPage } from './pages/public/ReportVsRequestPage'
+import { AnonymousReportingPage } from './pages/public/AnonymousReportingPage'
+import { PrivacySafetyPage } from './pages/public/PrivacySafetyPage'
+import { AwarenessEducationPage } from './pages/public/AwarenessEducationPage'
+import { FAQPage } from './pages/public/FAQPage'
+import { ContactUsPage } from './pages/public/ContactUsPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupPage } from './pages/auth/SignupPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -50,6 +61,36 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/support-locations" element={<PublicLayout />}>
+        <Route index element={<SupportLocationsPage />} />
+      </Route>
+      <Route path="/contact-directory" element={<PublicLayout />}>
+        <Route index element={<ContactDirectoryPage />} />
+      </Route>
+      <Route path="/how-it-works" element={<PublicLayout />}>
+        <Route index element={<HowItWorksPage />} />
+      </Route>
+      <Route path="/case-types" element={<PublicLayout />}>
+        <Route index element={<CaseTypesGuidePage />} />
+      </Route>
+      <Route path="/report-vs-request" element={<PublicLayout />}>
+        <Route index element={<ReportVsRequestPage />} />
+      </Route>
+      <Route path="/anonymous-reporting" element={<PublicLayout />}>
+        <Route index element={<AnonymousReportingPage />} />
+      </Route>
+      <Route path="/privacy-safety" element={<PublicLayout />}>
+        <Route index element={<PrivacySafetyPage />} />
+      </Route>
+      <Route path="/awareness" element={<PublicLayout />}>
+        <Route index element={<AwarenessEducationPage />} />
+      </Route>
+      <Route path="/faq" element={<PublicLayout />}>
+        <Route index element={<FAQPage />} />
+      </Route>
+      <Route path="/contact-us" element={<PublicLayout />}>
+        <Route index element={<ContactUsPage />} />
+      </Route>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

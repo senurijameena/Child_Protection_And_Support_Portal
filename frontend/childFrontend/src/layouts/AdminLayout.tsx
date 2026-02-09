@@ -7,7 +7,7 @@ import { AdminNotificationDropdown } from '../components/admin/AdminNotification
 const sidebarItems = [
   { path: '/admin', label: 'Dashboard', icon: '📊' },
   { path: '/admin/notifications', label: 'Notifications', icon: '🔔' },
-  { path: '/admin/cases', label: 'Cases (Police)', icon: '📁' },
+  { path: '/admin/cases', label: 'Cases', icon: '📁' },
   { path: '/admin/help-requests', label: 'Help Requests', icon: '🙋' },
   { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
   { path: '/admin/users', label: 'User Approvals', icon: '👥' },

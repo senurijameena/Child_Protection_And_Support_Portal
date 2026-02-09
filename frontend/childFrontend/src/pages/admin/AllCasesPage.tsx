@@ -1,35 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import {
-  Card,
-  Table,
-  Badge,
-  Button,
-  Form,
-  Modal,
-  Spinner,
-  Dropdown,
-} from 'react-bootstrap'
-import {
-  getAllCasesWithDetails,
-  getAllPoliceStations,
-  updateCaseStatus,
-  assignCaseToStation,
-  getAvailableUsersForAssignment,
-} from '../../services/adminApi'
+import { Card, Table, Badge, Form, Spinner } from 'react-bootstrap'
+import { getAllCasesWithDetails, getAllPoliceStations } from '../../services/adminApi'
 import type { CaseDTO } from '../../types/dashboard'
 import type { PoliceStationDTO } from '../../types/admin'
 import { CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
 
-const STATUS_OPTIONS = [
-  'REPORTED',
-  'UNDER_REVIEW',
-  'ASSIGNED',
-  'INVESTIGATING',
-  'RESOLVED',
-  'CLOSED',
-  'REJECTED',
-  'CANCELLED',
+const STATUS_FILTERS: { code: string; label: string }[] = [
+  { code: 'REPORTED', label: 'Submitted' },
+  { code: 'UNDER_REVIEW', label: 'Accepted' },
+  { code: 'REJECTED', label: 'Rejected' },
+  { code: 'ASSIGNED', label: 'Assigned' },
+  { code: 'INVESTIGATING', label: 'Investigating' },
+  { code: 'RESOLVED', label: 'Resolved' },
+  { code: 'CLOSED', label: 'Closed' },
 ]
 
 export function AllCasesPage() {
@@ -38,15 +22,7 @@ export function AllCasesPage() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '')
   const [filterType, setFilterType] = useState('')
-  const [selectedCase, setSelectedCase] = useState<CaseDTO | null>(null)
-  const [showAssignModal, setShowAssignModal] = useState(false)
   const [stations, setStations] = useState<PoliceStationDTO[]>([])
-  const [suggestions, setSuggestions] = useState<{ policeOfficers?: unknown[]; socialWorkers?: unknown[] } | null>(null)
-  const [assignStationId, setAssignStationId] = useState('')
-  const [assignLoading, setAssignLoading] = useState(false)
-  const [showRejectModal, setShowRejectModal] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
-  const [actionLoading, setActionLoading] = useState(false)
 
   const loadCases = () => {
     setLoading(true)
@@ -70,69 +46,6 @@ export function AllCasesPage() {
     return true
   })
 
-  const handleStatusChange = async (caseId: string, status: string) => {
-    setActionLoading(true)
-    try {
-      await updateCaseStatus(caseId, status)
-      loadCases()
-      setSelectedCase(null)
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to update')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const openAssignModal = (c: CaseDTO) => {
-    setSelectedCase(c)
-    setShowAssignModal(true)
-    setAssignStationId('')
-    if (c.location) {
-      getAvailableUsersForAssignment('PO', c.location, c.caseType)
-        .then(setSuggestions)
-        .catch(() => setSuggestions(null))
-    } else {
-      setSuggestions(null)
-    }
-  }
-
-  const handleAssign = async () => {
-    if (!selectedCase || !assignStationId) return
-    setAssignLoading(true)
-    try {
-      await assignCaseToStation(selectedCase.id, assignStationId)
-      loadCases()
-      setShowAssignModal(false)
-      setSelectedCase(null)
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to assign')
-    } finally {
-      setAssignLoading(false)
-    }
-  }
-
-  const handleReject = async () => {
-    if (!selectedCase) return
-    setActionLoading(true)
-    try {
-      await updateCaseStatus(selectedCase.id, 'REJECTED')
-      loadCases()
-      setShowRejectModal(false)
-      setSelectedCase(null)
-      setRejectReason('')
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to reject')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const openRejectModal = (c: CaseDTO) => {
-    setSelectedCase(c)
-    setShowRejectModal(true)
-    setRejectReason('')
-  }
-
   if (loading) {
     return (
       <div className="d-flex justify-content-center py-5">
@@ -154,15 +67,15 @@ export function AllCasesPage() {
         <Card.Body>
           <div className="row g-3">
             <div className="col-md-4">
-              <Form.Label className="small text-muted">Status</Form.Label>
+              <Form.Label className="small text-muted">Case Status</Form.Label>
               <Form.Select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
                 <option value="">All</option>
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {CASE_STATUS_LABELS[s as keyof typeof CASE_STATUS_LABELS] || s}
+                {STATUS_FILTERS.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.label}
                   </option>
                 ))}
               </Form.Select>
@@ -190,20 +103,18 @@ export function AllCasesPage() {
           <Table hover responsive className="mb-0">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Reporter</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Assigned</th>
-                <th className="text-end">Actions</th>
+                <th>Case ID</th>
+                <th>Case Type</th>
+                <th>Current Status</th>
+                <th>Submitted Date</th>
+                <th>Assigned Police Station</th>
+                <th className="text-end">View</th>
               </tr>
             </thead>
             <tbody>
               {filteredCases.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-5 text-muted">
+                  <td colSpan={6} className="text-center py-5 text-muted">
                     No cases found
                   </td>
                 </tr>
@@ -217,14 +128,6 @@ export function AllCasesPage() {
                       {CASE_TYPE_LABELS[(c.caseType as keyof typeof CASE_TYPE_LABELS) || 'OTHER']}
                     </td>
                     <td>
-                      {c.anonymous ? (
-                        <Badge bg="secondary">Anonymous</Badge>
-                      ) : (
-                        c.reporterName || '-'
-                      )}
-                    </td>
-                    <td>{c.location || '-'}</td>
-                    <td>
                       <Badge
                         bg={
                           c.status === 'REPORTED' || c.status === 'UNDER_REVIEW'
@@ -236,7 +139,9 @@ export function AllCasesPage() {
                                 : 'primary'
                         }
                       >
-                        {CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
+                        {c.status === 'UNDER_REVIEW'
+                          ? 'Accepted'
+                          : CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
                       </Badge>
                     </td>
                     <td className="text-muted small">
@@ -245,64 +150,17 @@ export function AllCasesPage() {
                         : '-'}
                     </td>
                     <td>
-                      {c.assignedStationId || c.assignedOfficerId || c.assignedWorkerId ? (
-                        <Badge bg="success">Assigned</Badge>
-                      ) : (
-                        <Badge bg="secondary">Unassigned</Badge>
-                      )}
+                      {c.assignedStationId
+                        ? stations.find((s) => s.id === c.assignedStationId)?.stationName || 'Assigned'
+                        : '-'}
                     </td>
                     <td className="text-end">
-                      <Dropdown>
-                        <Dropdown.Toggle
-                          variant="outline-primary"
-                          size="sm"
-                          id={`actions-${c.id}`}
-                        >
-                          Actions
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu align="end">
-                          <Dropdown.Item as={Link} to={`/admin/cases/${c.id}`}>
-                            View Details
-                          </Dropdown.Item>
-                          {(c.status === 'REPORTED' || c.status === 'UNDER_REVIEW') && (
-                            <>
-                              <Dropdown.Divider />
-                              <Dropdown.Item onClick={() => openAssignModal(c)}>
-                                Assign to Police Station
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                onClick={() =>
-                                  handleStatusChange(c.id, 'UNDER_REVIEW')
-                                }
-                              >
-                                Accept for Review
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                onClick={() => openRejectModal(c)}
-                                className="text-danger"
-                              >
-                                Reject
-                              </Dropdown.Item>
-                            </>
-                          )}
-                          {(c.status === 'ASSIGNED' ||
-                            c.status === 'INVESTIGATING') && (
-                            <>
-                              <Dropdown.Divider />
-                              <Dropdown.Item onClick={() => openAssignModal(c)}>
-                                Reassign
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                onClick={() =>
-                                  handleStatusChange(c.id, 'CLOSED')
-                                }
-                              >
-                                Close Case
-                              </Dropdown.Item>
-                            </>
-                          )}
-                        </Dropdown.Menu>
-                      </Dropdown>
+                      <Link
+                        to={`/admin/cases/${c.id}`}
+                        className="btn btn-outline-primary btn-sm"
+                      >
+                        View
+                      </Link>
                     </td>
                   </tr>
                 ))
@@ -312,81 +170,6 @@ export function AllCasesPage() {
         </Card.Body>
       </Card>
 
-      <Modal show={showAssignModal} onHide={() => setShowAssignModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Assign Case to Police Station</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedCase && (
-            <>
-              <p className="text-muted small mb-3">
-                Case: {selectedCase.trackingId || selectedCase.id}
-              </p>
-              {suggestions && (
-                <div className="alert alert-info py-2 small">
-                  Consider workload and region for best match.
-                </div>
-              )}
-              <Form.Group className="mb-3">
-                <Form.Label>Select Police Station</Form.Label>
-                <Form.Select
-                  value={assignStationId}
-                  onChange={(e) => setAssignStationId(e.target.value)}
-                >
-                  <option value="">Choose...</option>
-                  {stations.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.stationName} - {s.district}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAssignModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleAssign}
-            disabled={assignLoading || !assignStationId}
-          >
-            {assignLoading ? 'Assigning...' : 'Assign'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal show={showRejectModal} onHide={() => setShowRejectModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Reject Case</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group>
-            <Form.Label>Reason (optional)</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Provide a reason for rejection..."
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowRejectModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleReject}
-            disabled={actionLoading}
-          >
-            {actionLoading ? 'Rejecting...' : 'Reject'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   )
 }

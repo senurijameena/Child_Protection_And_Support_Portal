@@ -326,7 +326,8 @@ public class CaseServiceImpl implements CaseService {
 
         Case caseEntity = caseOpt.get();
         caseEntity.setAssignedStationId(stationId);
-        if (caseEntity.getStatus() == CaseStatus.REPORTED) {
+        // Whenever a station is assigned (and the case is not already completed), mark as ASSIGNED
+        if (caseEntity.getStatus() != CaseStatus.RESOLVED && caseEntity.getStatus() != CaseStatus.CLOSED) {
             caseEntity.setStatus(CaseStatus.ASSIGNED);
         }
         caseEntity.setLastUpdated(LocalDateTime.now());

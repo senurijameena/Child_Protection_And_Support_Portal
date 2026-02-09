@@ -18,13 +18,13 @@ export function HeroSection() {
             </p>
             <div className="d-flex flex-wrap gap-3 mb-4">
               <Link
-                to="/report-case"
+                to="/login"
                 className="btn btn-primary px-5 py-3 rounded-pill fw-semibold btn-primary-custom fs-6"
               >
                 Report a Case
               </Link>
               <Link
-                to="/request-help"
+                to="/login"
                 className="btn btn-outline-primary px-5 py-3 rounded-pill fw-semibold btn-secondary-custom fs-6 border-2"
               >
                 Request Help

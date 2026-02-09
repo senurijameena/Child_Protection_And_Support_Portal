@@ -164,7 +164,7 @@ export async function getActiveAnnouncements(): Promise<AnnouncementDTO[]> {
 export async function createAnnouncement(data: {
   title: string
   message: string
-  type?: string
+  type?: AnnouncementDTO['type']
   active?: boolean
   expiresAt?: string
 }): Promise<AnnouncementDTO> {

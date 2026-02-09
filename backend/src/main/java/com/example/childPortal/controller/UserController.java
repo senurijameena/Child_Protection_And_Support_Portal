@@ -4,6 +4,7 @@ import com.example.childPortal.dto.UserDTO;
 import com.example.childPortal.dto.UserProfileStatsDTO;
 import com.example.childPortal.dto.PersonalAnalyticsDTO;
 import com.example.childPortal.dto.UserUpdateRequest;
+import com.example.childPortal.dto.ChangePasswordRequest;
 import com.example.childPortal.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -101,6 +102,27 @@ public class UserController {
                 "success", true,
                 "user", updatedUser
             ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/profile/{userId}/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @PathVariable String userId,
+            @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal String authenticatedUserId) {
+
+        if (!userId.equals(authenticatedUserId)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+        }
+        
+        try {
+            userService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+            return ResponseEntity.ok(Map.of("success", true, "message", "Password changed successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,

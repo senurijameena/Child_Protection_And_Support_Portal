@@ -763,6 +763,7 @@ public class UserServiceImpl implements UserService {
         dto.setFullName(user.getFullName());
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
+        dto.setProfilePhoto(user.getProfilePhoto());
         dto.setRole(user.getRole());
         dto.setActive(user.isActive());
         dto.setApproved(user.isApproved());
@@ -815,5 +816,22 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
         return convertToDTO(user);
+    }
+
+    @Override
+    public void changePassword(String userId, String currentPassword, String newPassword) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found");
+        }
+        User user = userOpt.get();
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

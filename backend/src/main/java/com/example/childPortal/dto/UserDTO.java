@@ -7,6 +7,7 @@ public class UserDTO {
     private String fullName;
     private String email;
     private String phone;
+    private String profilePhoto;
     private Role role;
     private boolean active;
     private boolean approved;
@@ -21,6 +22,8 @@ public class UserDTO {
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getProfilePhoto() { return profilePhoto; }
+    public void setProfilePhoto(String profilePhoto) { this.profilePhoto = profilePhoto; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
     public boolean isActive() { return active; }

@@ -23,6 +23,12 @@ import { REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
 const STATUS_OPTIONS = ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'CANCELLED']
 const PRIORITY_OPTIONS = ['HIGH', 'MEDIUM', 'LOW']
 
+function maskUserId(id: string | undefined, anonymous: boolean): string {
+  if (anonymous || !id) return 'Anonymous'
+  if (id.length <= 8) return `${id.slice(0, 4)}****`
+  return `${id.slice(0, 4)}****${id.slice(-4)}`
+}
+
 export function SocialWorkerRequestsPage() {
   const { user } = useAuth()
   const userId = user?.userId ?? ''
@@ -197,12 +203,12 @@ export function SocialWorkerRequestsPage() {
               <Table hover responsive className="mb-0">
                 <thead>
                   <tr>
-                    <th>Tracking ID</th>
-                    <th>Type</th>
-                    <th>Requester</th>
-                    <th>Status</th>
+                    <th>Request ID</th>
+                    <th>Category</th>
                     <th>Priority</th>
-                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Assigned Date</th>
+                    <th>Public User ID</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -220,11 +226,9 @@ export function SocialWorkerRequestsPage() {
                       </td>
                       <td>{HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}</td>
                       <td>
-                        {r.anonymous ? (
-                          <Badge bg="secondary">Anonymous</Badge>
-                        ) : (
-                          r.requesterName || 'Requester'
-                        )}
+                        <Badge bg={r.priority === 'HIGH' ? 'danger' : 'secondary'}>
+                          {r.priority || 'MEDIUM'}
+                        </Badge>
                       </td>
                       <td>
                         <Badge
@@ -241,13 +245,11 @@ export function SocialWorkerRequestsPage() {
                           {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}
                         </Badge>
                       </td>
-                      <td>
-                        <Badge bg={r.priority === 'HIGH' ? 'danger' : 'secondary'}>
-                          {r.priority || 'MEDIUM'}
-                        </Badge>
-                      </td>
                       <td className="text-muted small">
                         {r.requestDate ? new Date(r.requestDate).toLocaleDateString() : '-'}
+                      </td>
+                      <td>
+                        <span className="font-monospace small">{maskUserId(r.requesterUserId, r.anonymous)}</span>
                       </td>
                       <td>
                         {canAccept(r) && (
@@ -313,14 +315,14 @@ export function SocialWorkerRequestsPage() {
                     </Badge>
                   </div>
                   <div className="small text-muted mb-2">
-                    {HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}
+                    {HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']} ·{' '}
+                    <Badge bg={r.priority === 'HIGH' ? 'danger' : 'secondary'}>{r.priority || 'MEDIUM'}</Badge>
                   </div>
                   <div className="small mb-2">
-                    {r.anonymous ? (
-                      <Badge bg="secondary">Anonymous</Badge>
-                    ) : (
-                      r.requesterName || 'Requester'
-                    )}
+                    Assigned: {r.requestDate ? new Date(r.requestDate).toLocaleDateString() : '-'}
+                  </div>
+                  <div className="small mb-2">
+                    <span className="font-monospace">{maskUserId(r.requesterUserId, r.anonymous)}</span>
                   </div>
                   <div className="d-flex gap-1 flex-wrap">
                     {canAccept(r) && (

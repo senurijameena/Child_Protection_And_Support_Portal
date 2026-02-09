@@ -61,7 +61,7 @@ export function SocialWorkerMessagesPage() {
     <div className="animate-fade-in-up">
       <div className="mb-4">
         <h1 className="h3 fw-bold text-dark mb-1">Messages</h1>
-        <p className="text-muted mb-0">Secure internal messaging with public users. Supports attachments and message history.</p>
+        <p className="text-muted mb-0">Internal messaging with public users. Message history linked to each help request. Evidence is handled separately.</p>
       </div>
       <Card className="border-0 shadow-sm rounded-3 overflow-hidden">
         <div className="row g-0" style={{ minHeight: 400 }}>

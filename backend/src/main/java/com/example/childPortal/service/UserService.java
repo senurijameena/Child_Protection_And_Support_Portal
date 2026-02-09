@@ -41,4 +41,6 @@ public interface UserService {
     void removeProfilePhoto(String userId);
 
     UserDTO updateUserProfile(String userId, UserUpdateRequest updateRequest);
+
+    void changePassword(String userId, String currentPassword, String newPassword);
 }

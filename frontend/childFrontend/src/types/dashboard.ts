@@ -32,6 +32,10 @@ export type HelpType =
   | 'SHELTER'
   | 'CLOTHING'
   | 'COUNSELING'
+  | 'LEGAL_PROTECTION'
+  | 'LIVELIHOOD_EMPLOYMENT'
+  | 'DISABILITY_SUPPORT'
+  | 'EMERGENCY_DISASTER'
   | 'OTHER'
 
 export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED'
@@ -149,5 +153,9 @@ export const HELP_TYPE_LABELS: Record<HelpType, string> = {
   SHELTER: 'Shelter',
   CLOTHING: 'Clothing',
   COUNSELING: 'Counseling',
-  OTHER: 'Other',
+  LEGAL_PROTECTION: 'Legal / Protection',
+  LIVELIHOOD_EMPLOYMENT: 'Livelihood / Employment',
+  DISABILITY_SUPPORT: 'Disability / Special Needs',
+  EMERGENCY_DISASTER: 'Emergency / Disaster',
+  OTHER: 'Custom / Other',
 }

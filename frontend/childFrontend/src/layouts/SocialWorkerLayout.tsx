@@ -12,7 +12,7 @@ const sidebarItems = [
   { path: '/social-worker/library', label: 'Resource Library', icon: '📚' },
   { path: '/social-worker/transfers', label: 'Transfers', icon: '🔄' },
   { path: '/social-worker/reports', label: 'Reports', icon: '📊' },
-  { path: '/social-worker/profile', label: 'Profile', icon: '👤' },
+  { path: '/social-worker/profile', label: 'Profile & Settings', icon: '👤' },
 ]
 
 export function SocialWorkerLayout() {

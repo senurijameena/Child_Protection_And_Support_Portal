@@ -16,7 +16,7 @@ import {
 } from '../../services/adminApi'
 import type { AnnouncementDTO } from '../../types/admin'
 
-const ANNOUNCEMENT_TYPES = ['INFO', 'WARNING', 'SUCCESS', 'MAINTENANCE']
+const ANNOUNCEMENT_TYPES = ['GENERAL', 'MAINTENANCE', 'FEATURE', 'WORKSHOP']
 
 export function SystemAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<AnnouncementDTO[]>([])
@@ -26,7 +26,7 @@ export function SystemAnnouncementsPage() {
   const [form, setForm] = useState({
     title: '',
     message: '',
-    type: 'INFO',
+    type: 'GENERAL',
     active: true,
     expiresAt: '',
   })
@@ -49,7 +49,7 @@ export function SystemAnnouncementsPage() {
     setForm({
       title: '',
       message: '',
-      type: 'INFO',
+      type: 'GENERAL',
       active: true,
       expiresAt: '',
     })
@@ -64,7 +64,7 @@ export function SystemAnnouncementsPage() {
         await updateAnnouncement(editing.id, {
           title: form.title,
           message: form.message,
-          type: form.type,
+          type: form.type as AnnouncementDTO['type'],
           active: form.active,
           expiresAt: form.expiresAt || undefined,
         })
@@ -72,7 +72,7 @@ export function SystemAnnouncementsPage() {
         await createAnnouncement({
           title: form.title,
           message: form.message,
-          type: form.type,
+          type: form.type as AnnouncementDTO['type'],
           active: form.active,
           expiresAt: form.expiresAt || undefined,
         })
@@ -144,7 +144,7 @@ export function SystemAnnouncementsPage() {
                   <tr key={a.id}>
                     <td className="fw-medium">{a.title || '-'}</td>
                     <td>
-                      <Badge bg="secondary">{a.type || 'INFO'}</Badge>
+                      <Badge bg="secondary">{a.type || 'GENERAL'}</Badge>
                     </td>
                     <td className="text-muted" style={{ maxWidth: 250 }}>
                       {a.message?.slice(0, 60) || '-'}

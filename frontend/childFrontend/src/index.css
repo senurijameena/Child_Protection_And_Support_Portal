@@ -97,6 +97,7 @@ html {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -105,6 +106,84 @@ html {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.8s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.8s ease-out forwards;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.hero-overlay {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+.scale-hover {
+  transition: transform 0.3s ease;
+}
+
+.scale-hover:hover {
+  transform: scale(1.05);
 }
 
 /* Nav link hover */
@@ -184,9 +263,11 @@ html {
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
 }
+
 .admin-sidebar-link:hover {
   background-color: var(--accent-light-blue);
 }
+
 .admin-sidebar-active {
   background-color: var(--accent-light-blue);
   border-left-color: var(--trust-blue);
@@ -198,14 +279,17 @@ html {
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
 }
+
 .police-sidebar-link:hover {
   background-color: rgba(59, 130, 246, 0.08);
 }
+
 .police-sidebar-active {
   background-color: rgba(59, 130, 246, 0.08);
   border-left-color: #3b82f6;
   font-weight: 600;
 }
+
 .police-theme-bg {
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
@@ -214,45 +298,63 @@ html {
 .sw-sidebar-header {
   background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
 }
+
 .sw-sidebar-link {
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
 }
+
 .sw-sidebar-link:hover {
   background-color: rgba(45, 106, 79, 0.08);
 }
+
 .sw-sidebar-active {
   background-color: rgba(45, 106, 79, 0.1);
   border-left-color: #2d6a4f;
   font-weight: 600;
   color: #1b4332 !important;
 }
+
 .sw-theme-bg {
   background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 50%, #f8fafc 100%);
 }
+
 .sw-logout-btn:hover {
   border-color: #2d6a4f;
   color: #2d6a4f;
   background-color: rgba(45, 106, 79, 0.06);
 }
+
 .sw-btn-primary {
   background-color: #2d6a4f;
   border-color: #2d6a4f;
   color: #fff;
 }
+
 .sw-btn-primary:hover {
   background-color: #1b4332;
   border-color: #1b4332;
   color: #fff;
 }
+
 .sw-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(45, 106, 79, 0.15) !important;
 }
 
 @media print {
-  .nav, aside, .navbar, .btn, .modal, nav, header:not(.print-header) {
+
+  .nav,
+  aside,
+  .navbar,
+  .btn,
+  .modal,
+  nav,
+  header:not(.print-header) {
     display: none !important;
   }
-  .print\:block { display: block !important; }
+
+  .print\:block {
+    display: block !important;
+  }
 }

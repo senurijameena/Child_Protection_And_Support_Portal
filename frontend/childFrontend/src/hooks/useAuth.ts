@@ -32,5 +32,16 @@ export function useAuth() {
     setUser(null)
   }
 
-  return { user, loading, isAuthenticated: !!user, logout }
+  const refreshUser = () => {
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored))
+      } catch {
+        setUser(null)
+      }
+    }
+  }
+
+  return { user, loading, isAuthenticated: !!user, logout, refreshUser }
 }

@@ -96,7 +96,7 @@ export interface AnnouncementDTO {
   title?: string
   message?: string
   icon?: string
-  type?: string
+  type?: 'GENERAL' | 'MAINTENANCE' | 'FEATURE' | 'WORKSHOP'
   active: boolean
   createdAt?: string
   expiresAt?: string

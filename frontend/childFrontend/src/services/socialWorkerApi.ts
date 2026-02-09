@@ -170,3 +170,35 @@ export async function getUnreadCount(): Promise<number> {
 export async function markNotificationRead(id: string) {
   return apiPut(`/notifications/${id}/read`, {})
 }
+
+// User profile (shared across roles)
+export async function getUserProfile(userId: string) {
+  return apiGet<{ id: string; fullName?: string; email?: string; phone?: string; profilePhoto?: string }>(`/user/profile/${userId}`)
+}
+
+export async function updateUserProfile(userId: string, data: { fullName?: string; phone?: string }) {
+  return apiPut<{ success: boolean; user?: unknown }>(`/user/profile/${userId}`, data)
+}
+
+export async function uploadProfilePhoto(userId: string, file: File) {
+  const fd = new FormData()
+  fd.append('photo', file)
+  const res = await fetch(
+    `${import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api')}/user/profile/${userId}/photo`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: fd,
+    }
+  )
+  const data = await res.json().catch(() => ({})) as { success?: boolean; photoUrl?: string; message?: string }
+  if (!res.ok) throw new Error(data.message || 'Upload failed')
+  return data.photoUrl as string
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  return apiPut(`/user/profile/${userId}/change-password`, {
+    currentPassword,
+    newPassword,
+  })
+}

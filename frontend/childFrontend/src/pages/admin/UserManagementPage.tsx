@@ -22,6 +22,33 @@ import { ROLE_LABELS } from '../../types/auth'
 
 const ROLE_OPTIONS = ['PU', 'PO', 'SW', 'ADMIN']
 
+const formatUserId = (rawId?: string, role?: string) => {
+  if (!rawId) return '-'
+  const upperRole = (role || '').toUpperCase()
+  let prefix = ''
+
+  switch (upperRole) {
+    case 'PU':
+    case 'PUBLIC':
+      prefix = 'PU-'
+      break
+    case 'PO':
+    case 'POLICE':
+      prefix = 'PO-'
+      break
+    case 'SW':
+    case 'SOCIAL_WORKER':
+      prefix = 'SW-'
+      break
+    default:
+      // For admins or unknown roles, show the raw ID
+      return rawId
+  }
+
+  const last4 = rawId.slice(-4).toUpperCase()
+  return `${prefix}${last4}`
+}
+
 export function UserManagementPage() {
   const [users, setUsers] = useState<UserManagementDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,8 +147,12 @@ export function UserManagementPage() {
     <div className="animate-fade-in-up">
       <div className="mb-4">
         <h1 className="h3 fw-bold text-dark mb-1">User Management</h1>
-        <p className="text-muted mb-0">
+        <p className="text-muted mb-1">
           Manage Public Users, Police, and Social Workers. Admin sees full identity for anonymous submissions.
+        </p>
+        <p className="text-muted small mb-0">
+          User IDs follow the format <code>ROLE-XXXX</code> (for example: <code>PU-0001</code>,{' '}
+          <code>PO-0007</code>, <code>SW-0123</code>).
         </p>
       </div>
 
@@ -184,7 +215,11 @@ export function UserManagementPage() {
               ) : (
                 filtered.map((u) => (
                   <tr key={u.userId}>
-                    <td><code className="small">{u.userId || '-'}</code></td>
+                    <td>
+                      <code className="small">
+                        {formatUserId(u.userId, u.role)}
+                      </code>
+                    </td>
                     <td className="fw-medium">{u.fullName || '-'}</td>
                     <td>{u.email || '-'}</td>
                     <td>

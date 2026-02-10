@@ -15,13 +15,14 @@ import {
 } from '../../services/adminApi'
 import type { FeedbackResponseDTO } from '../../types/admin'
 
-const STATUS_OPTIONS = ['SUBMITTED', 'REVIEWED', 'RESPONDED', 'RESOLVED']
+const STATUS_OPTIONS = ['SUBMITTED', 'RESPONDED']
 
 export function FeedbackManagementPage() {
   const [feedback, setFeedback] = useState<FeedbackResponseDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('')
   const [showRespondModal, setShowRespondModal] = useState(false)
+  const [showViewModal, setShowViewModal] = useState(false)
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackResponseDTO | null>(null)
   const [responseText, setResponseText] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
@@ -42,6 +43,11 @@ export function FeedbackManagementPage() {
     if (filterStatus && f.status !== filterStatus) return false
     return true
   })
+
+  const openView = (f: FeedbackResponseDTO) => {
+    setSelectedFeedback(f)
+    setShowViewModal(true)
+  }
 
   const openRespond = (f: FeedbackResponseDTO) => {
     setSelectedFeedback(f)
@@ -124,7 +130,7 @@ export function FeedbackManagementPage() {
                 <th>Status</th>
                 <th>Admin Response</th>
                 <th>Date</th>
-                <th className="text-end">Actions</th>
+                <th className="text-end">View / Respond</th>
               </tr>
             </thead>
             <tbody>
@@ -151,17 +157,34 @@ export function FeedbackManagementPage() {
                       )}
                     </td>
                     <td>
-                      <Badge
-                        bg={
-                          f.status === 'SUBMITTED'
-                            ? 'warning'
-                            : f.status === 'RESOLVED'
-                              ? 'success'
-                              : 'secondary'
-                        }
-                      >
-                        {f.status || '-'}
-                      </Badge>
+                      <div className="d-flex align-items-center gap-2">
+                        <Badge
+                          bg={
+                            f.status === 'SUBMITTED'
+                              ? 'warning'
+                              : f.status === 'RESPONDED'
+                                ? 'success'
+                                : 'secondary'
+                          }
+                        >
+                          {f.status || '-'}
+                        </Badge>
+                        <Form.Select
+                          size="sm"
+                          style={{ width: 'auto', minWidth: '120px' }}
+                          value={f.status || ''}
+                          onChange={(e) =>
+                            handleStatusChange(f.id, e.target.value)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </div>
                     </td>
                     <td className="text-muted small" style={{ maxWidth: 150 }}>
                       {f.adminResponse
@@ -174,28 +197,22 @@ export function FeedbackManagementPage() {
                         : '-'}
                     </td>
                     <td className="text-end">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        className="me-2"
-                        onClick={() => openRespond(f)}
-                      >
-                        Respond
-                      </Button>
-                      <Form.Select
-                        size="sm"
-                        style={{ width: 'auto', display: 'inline-block' }}
-                        value={f.status || ''}
-                        onChange={(e) =>
-                          handleStatusChange(f.id, e.target.value)
-                        }
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </Form.Select>
+                      <div className="d-flex gap-2 justify-content-end">
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => openView(f)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => openRespond(f)}
+                        >
+                          Respond
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -204,6 +221,87 @@ export function FeedbackManagementPage() {
           </Table>
         </Card.Body>
       </Card>
+
+      <Modal show={showViewModal} onHide={() => setShowViewModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Feedback Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedFeedback && (
+            <div>
+              <div className="mb-4 p-3 bg-light rounded">
+                <strong className="d-block mb-2">User Feedback:</strong>
+                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+                  {selectedFeedback.description || '-'}
+                </p>
+              </div>
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <strong>Type:</strong> {selectedFeedback.type || '-'}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>User:</strong>{' '}
+                  {selectedFeedback.anonymous
+                    ? 'Anonymous'
+                    : selectedFeedback.userName || '-'}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Category:</strong> {selectedFeedback.category || '-'}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Rating:</strong>{' '}
+                  {selectedFeedback.rating != null ? (
+                    <Badge bg="warning">{selectedFeedback.rating}/5</Badge>
+                  ) : (
+                    '-'
+                  )}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Status:</strong>{' '}
+                  <Badge
+                    bg={
+                      selectedFeedback.status === 'SUBMITTED'
+                        ? 'warning'
+                        : selectedFeedback.status === 'RESPONDED'
+                          ? 'success'
+                          : 'secondary'
+                    }
+                  >
+                    {selectedFeedback.status || '-'}
+                  </Badge>
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong>Submitted Date:</strong>{' '}
+                  {selectedFeedback.createdAt
+                    ? new Date(selectedFeedback.createdAt).toLocaleString()
+                    : '-'}
+                </div>
+              </div>
+              {selectedFeedback.adminResponse && (
+                <div className="mb-3 mt-3 p-3 bg-light rounded">
+                  <strong className="d-block mb-2">Admin Response:</strong>
+                  <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedFeedback.adminResponse}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowViewModal(false)}>
+            Close
+          </Button>
+          {selectedFeedback && (
+            <Button variant="primary" onClick={() => {
+              setShowViewModal(false)
+              openRespond(selectedFeedback)
+            }}>
+              Respond
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
 
       <Modal show={showRespondModal} onHide={() => setShowRespondModal(false)}>
         <Modal.Header closeButton>

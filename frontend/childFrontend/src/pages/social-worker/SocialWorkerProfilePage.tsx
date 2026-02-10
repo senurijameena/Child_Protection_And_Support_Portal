@@ -13,6 +13,32 @@ import { FileUploadField } from '../../components/auth/FileUploadField'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api')
 
+const formatUserId = (rawId?: string, role?: string) => {
+  if (!rawId) return '-'
+  const upperRole = (role || '').toUpperCase()
+  let prefix = ''
+
+  switch (upperRole) {
+    case 'SW':
+    case 'SOCIAL_WORKER':
+      prefix = 'SW-'
+      break
+    case 'PO':
+    case 'POLICE':
+      prefix = 'PO-'
+      break
+    case 'PU':
+    case 'PUBLIC':
+      prefix = 'PU-'
+      break
+    default:
+      return rawId
+  }
+
+  const last4 = rawId.slice(-4).toUpperCase()
+  return `${prefix}${last4}`
+}
+
 export function SocialWorkerProfilePage() {
   const { user, refreshUser } = useAuth()
   const userId = user?.userId ?? ''
@@ -225,7 +251,9 @@ export function SocialWorkerProfilePage() {
                   <div className="row g-3">
                     <div className="col-md-6">
                       <Form.Label className="small text-muted">Social Worker ID</Form.Label>
-                      <p className="mb-0 fw-medium font-monospace">{user?.userId || '-'}</p>
+                      <p className="mb-0 fw-medium font-monospace">
+                        {formatUserId(user?.userId, user?.role)}
+                      </p>
                     </div>
                     {!editMode ? (
                       <>

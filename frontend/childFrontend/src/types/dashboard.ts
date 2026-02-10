@@ -141,6 +141,21 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   CANCELLED: 'Cancelled',
 }
 
+// Bootstrap badge variants per case status for consistent coloring in UI
+export const CASE_STATUS_BADGE_VARIANTS: Record<
+  CaseStatus,
+  'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'dark'
+> = {
+  REPORTED: 'info', // newly submitted, informational
+  UNDER_REVIEW: 'warning', // accepted / under review - highlight in yellow
+  ASSIGNED: 'primary', // actively owned
+  INVESTIGATING: 'warning', // in progress / attention
+  RESOLVED: 'success', // successfully resolved
+  CLOSED: 'dark', // finalized / archived
+  REJECTED: 'danger', // negative outcome
+  CANCELLED: 'danger', // also negative / stopped
+}
+
 export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   REQUESTED: 'Submitted',
   UNDER_REVIEW: 'Under Review',

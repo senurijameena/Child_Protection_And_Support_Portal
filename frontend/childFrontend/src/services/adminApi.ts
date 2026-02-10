@@ -8,6 +8,7 @@ import type {
   AnnouncementDTO,
   DuplicateDetectionDTO,
   FeedbackResponseDTO,
+  UserStatisticsDTO,
 } from '../types/admin'
 import type { CaseDTO, HelpRequestDTO } from '../types/dashboard'
 
@@ -20,6 +21,10 @@ export async function getAdminDashboardOverview(): Promise<AdminDashboardOvervie
 
 export async function getDashboardMetrics() {
   return API.apiGet<AdminDashboardOverviewDTO['metrics']>('/analytics/dashboard')
+}
+
+export async function getUserStatistics(): Promise<UserStatisticsDTO> {
+  return API.apiGet<UserStatisticsDTO>('/analytics/users/statistics')
 }
 
 // Cases - admin uses full details

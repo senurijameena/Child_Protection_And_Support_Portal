@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup, Button, Form, Alert } from 'react-bootstrap'
 import { apiGet } from '../../services/api'
-import { CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
+import { CASE_STATUS_BADGE_VARIANTS, CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
 import type { CaseDTO } from '../../types/dashboard'
 import type { PoliceStationDTO } from '../../types/admin'
 import { assignCaseToStation, getAllPoliceStations, updateCaseStatus } from '../../services/adminApi'
@@ -121,7 +121,10 @@ export function AdminCaseDetailsPage() {
           <h2 className="h4 fw-bold mb-0">
             Case {c.trackingId || c.id}
           </h2>
-          <Badge bg="light" text="dark" className="mt-1">
+          <Badge
+            bg={CASE_STATUS_BADGE_VARIANTS[(c.status as keyof typeof CASE_STATUS_BADGE_VARIANTS) || 'REPORTED']}
+            className="mt-1"
+          >
             {CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
           </Badge>
         </div>

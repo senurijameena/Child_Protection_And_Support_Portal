@@ -67,6 +67,18 @@ export interface UserManagementDTO {
   yearsOfExperience?: string
 }
 
+export interface UserStatisticsDTO {
+  totalUsers: number
+  activeUsers: number
+  pendingUsers: number
+  suspendedUsers: number
+  usersByRole?: Record<string, number>
+  totalPoliceOfficers: number
+  totalSocialWorkers: number
+  totalPublicUsers: number
+  totalAdmins: number
+}
+
 export interface PoliceStationDTO {
   id: string
   stationName?: string

@@ -62,7 +62,8 @@ public class UserServiceImpl implements UserService {
     private SequenceService sequenceService;
 
     /**
-     * Generates a standardized user ID: ROLE-0001 (e.g. PO-0001, SW-0001, PU-0001, AD-0001).
+     * Generates a standardized user ID: ROLE-0001 (e.g. PO-0001, SW-0001, PU-0001,
+     * AD-0001).
      * Separate sequence per role, zero-padded 4 digits, backend-only.
      */
     private String generateUserId(Role role) {
@@ -210,7 +211,8 @@ public class UserServiceImpl implements UserService {
         User user = new User();
         user.setId(generateUserId(Role.PO));
         user.setFullName(request.getFullName() != null && !request.getFullName().isEmpty()
-                ? request.getFullName() : request.getOfficerInChargeName());
+                ? request.getFullName()
+                : request.getOfficerInChargeName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setAddress(request.getAddress());
@@ -229,7 +231,8 @@ public class UserServiceImpl implements UserService {
             station.setAddress(request.getAddress());
             station.setContactNumber(request.getPhone());
             station.setEmail(request.getEmail());
-            station.setOfficerInChargeName(request.getOfficerInChargeName() != null ? request.getOfficerInChargeName() : request.getFullName());
+            station.setOfficerInChargeName(request.getOfficerInChargeName() != null ? request.getOfficerInChargeName()
+                    : request.getFullName());
             station.setRegisteredUserId(user.getId());
             station.setLocationCoordinates(request.getLocationCoordinates());
             station.setOfficerIdProofUrl(request.getOfficerIdProofUrl());
@@ -242,7 +245,8 @@ public class UserServiceImpl implements UserService {
             try {
                 notificationService.sendRegistrationSuccessEmail(user.getId(), user.getRole().name());
             } catch (Exception emailException) {
-                System.err.println("Warning: Failed to send registration success email to " + user.getEmail() + ": " + emailException.getMessage());
+                System.err.println("Warning: Failed to send registration success email to " + user.getEmail() + ": "
+                        + emailException.getMessage());
             }
 
             LoginResponse response = new LoginResponse(token, user.getId(), user.getEmail(), user.getFullName(),
@@ -255,7 +259,8 @@ public class UserServiceImpl implements UserService {
                     userRepository.delete(user);
                 }
             } catch (Exception deleteException) {
-                System.err.println("Failed to cleanup user after police station registration error: " + deleteException.getMessage());
+                System.err.println("Failed to cleanup user after police station registration error: "
+                        + deleteException.getMessage());
             }
             return new LoginResponse(null, "Registration failed: " + e.getMessage(), false);
         }
@@ -763,12 +768,24 @@ public class UserServiceImpl implements UserService {
         dto.setFullName(user.getFullName());
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
+        dto.setAddress(user.getAddress()); // Added address from User
         dto.setProfilePhoto(user.getProfilePhoto());
         dto.setRole(user.getRole());
         dto.setActive(user.isActive());
         dto.setApproved(user.isApproved());
         dto.setRegistrationDate(user.getRegistrationDate());
         dto.setLastLogin(user.getLastLogin());
+
+        if (user.getRole() == Role.SW) {
+            socialWorkerRepository.findByUserId(user.getId()).ifPresent(worker -> {
+                dto.setLicenseNumber(worker.getLicenseNumber());
+                dto.setOrganization(worker.getOrganization());
+                dto.setSpecializations(worker.getSpecializations());
+                dto.setYearsOfExperience(String.valueOf(worker.getYearsOfExperience()));
+                dto.setCertificationDocumentUrl(worker.getIdDocumentUrl());
+            });
+        }
+
         return dto;
     }
 
@@ -810,11 +827,41 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getFullName() != null) {
             user.setFullName(updateRequest.getFullName());
         }
+        if (updateRequest.getEmail() != null) {
+            user.setEmail(updateRequest.getEmail());
+        }
         if (updateRequest.getPhone() != null) {
             user.setPhone(updateRequest.getPhone());
         }
+        if (updateRequest.getAddress() != null) {
+            user.setAddress(updateRequest.getAddress());
+        }
 
         userRepository.save(user);
+
+        if (user.getRole() == Role.SW) {
+            SocialWorker worker = socialWorkerRepository.findByUserId(userId).orElse(new SocialWorker());
+            if (worker.getUserId() == null) {
+                worker.setUserId(userId);
+            }
+            if (updateRequest.getLicenseNumber() != null)
+                worker.setLicenseNumber(updateRequest.getLicenseNumber());
+            if (updateRequest.getOrganization() != null)
+                worker.setOrganization(updateRequest.getOrganization());
+            if (updateRequest.getSpecializations() != null)
+                worker.setSpecializations(updateRequest.getSpecializations());
+            if (updateRequest.getYearsOfExperience() != null) {
+                try {
+                    worker.setYearsOfExperience(Integer.parseInt(updateRequest.getYearsOfExperience()));
+                } catch (NumberFormatException e) {
+                    // ignore
+                }
+            }
+            if (updateRequest.getCertificationDocumentUrl() != null)
+                worker.setIdDocumentUrl(updateRequest.getCertificationDocumentUrl());
+            socialWorkerRepository.save(worker);
+        }
+
         return convertToDTO(user);
     }
 

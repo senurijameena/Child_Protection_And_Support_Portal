@@ -45,14 +45,14 @@ export function HeroSection() {
             </p>
             <div className="d-flex flex-wrap gap-3 animate-fade-in-up">
               <Link
-                to="/report-case"
+                to="/login"
                 className="btn btn-primary px-5 py-3 rounded-pill fw-bold fs-5 shadow-lg scale-hover"
                 style={{ transition: 'transform 0.3s' }}
               >
                 Report a Case
               </Link>
               <Link
-                to="/request-help"
+                to="/login"
                 className="btn btn-light px-5 py-3 rounded-pill fw-bold fs-5 shadow-lg scale-hover"
                 style={{ transition: 'transform 0.3s' }}
               >

@@ -89,6 +89,20 @@ export interface ServiceOfferDTO {
   offerDate?: string
 }
 
+export type ServicePackageStatus = 'DRAFT' | 'PUBLISHED'
+
+export interface ServicePackageDTO {
+  id: string
+  title: string
+  requestType: HelpType
+  description?: string
+  estimatedDuration?: string
+  items: string[]
+  status: ServicePackageStatus
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface NotificationDTO {
   id: string
   userId?: string

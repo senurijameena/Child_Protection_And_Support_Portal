@@ -11,6 +11,15 @@
   --white-accent: #f8fafc;
   --trust-blue: #0ea5e9;
   --trust-green: #10b981;
+
+  /* Admin light premium palette */
+  --admin-light-bg: #f8fafc; /* Background */
+  --admin-light-card-bg: #ffffff; /* Card background */
+  --admin-light-border: #e5e7eb; /* Borders */
+  --admin-light-text: #0f172a; /* Text primary */
+  --admin-light-text-muted: #64748b; /* Text muted */
+  --admin-light-primary: #2563eb; /* Royal blue */
+  --admin-light-accent: #22c55e; /* Soft green */
 }
 
 * {
@@ -262,16 +271,61 @@ html {
 .admin-sidebar-link {
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
+  border-radius: 999px 0 0 999px;
+  margin: 0 0.5rem 0.15rem 0.5rem;
+  color: var(--admin-light-text-muted, #64748b) !important;
+  font-size: 0.9rem;
 }
 
 .admin-sidebar-link:hover {
-  background-color: var(--accent-light-blue);
+  background-color: #eff6ff; /* subtle royal blue tint */
+  color: var(--admin-light-text, #0f172a) !important;
 }
 
 .admin-sidebar-active {
-  background-color: var(--accent-light-blue);
-  border-left-color: var(--trust-blue);
+  background-color: #ffffff;
+  border-left-color: var(--admin-light-primary, #2563eb);
   font-weight: 600;
+  color: var(--admin-light-text, #0f172a) !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.admin-sidebar-icon {
+  opacity: 0.9;
+}
+
+.admin-sidebar-label {
+  letter-spacing: 0.01em;
+}
+
+/* Admin light premium shell */
+.admin-shell-light {
+  background-color: var(--admin-light-bg, #f8fafc);
+  color: var(--admin-light-text, #0f172a);
+}
+
+.admin-shell-light .text-muted {
+  color: var(--admin-light-text-muted, #64748b) !important;
+}
+
+.admin-shell-light .card {
+  background-color: var(--admin-light-card-bg, #ffffff);
+  border: 1px solid var(--admin-light-border, #e5e7eb);
+  border-radius: 0.75rem;
+}
+
+.admin-shell-light .card-header {
+  background-color: var(--admin-light-card-bg, #ffffff);
+  border-bottom: 1px solid var(--admin-light-border, #e5e7eb);
+}
+
+.admin-shell-light .table {
+  color: var(--admin-light-text, #0f172a);
+}
+
+.admin-shell-light .table thead th,
+.admin-shell-light .table tbody td {
+  border-color: var(--admin-light-border, #e5e7eb);
 }
 
 /* Police dashboard - authoritative, muted blues & grays */

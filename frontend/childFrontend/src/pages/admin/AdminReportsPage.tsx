@@ -323,8 +323,8 @@ export function AdminReportsPage() {
       console.error('PDF export error:', error)
       alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
       throw error
-    }
-  }
+        }
+      }
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -394,15 +394,15 @@ export function AdminReportsPage() {
           <div className="row g-3">
             <div className="col-md-4">
               <Form.Group>
-                <Form.Label>Report Type</Form.Label>
+            <Form.Label>Report Type</Form.Label>
                 <Form.Select
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value as ReportType)}
                 >
                   <option value="cases">Cases</option>
                   <option value="help-requests">Help Requests</option>
-                </Form.Select>
-              </Form.Group>
+            </Form.Select>
+          </Form.Group>
             </div>
 
             <div className="col-md-4">
@@ -441,7 +441,7 @@ export function AdminReportsPage() {
                     >
                       <option value="case">Case ID</option>
                       <option value="help">Help ID</option>
-                    </Form.Select>
+            </Form.Select>
                     <Form.Control
                       type="text"
                       placeholder={idType === 'case' ? 'Enter Case ID' : 'Enter Help ID'}
@@ -452,7 +452,7 @@ export function AdminReportsPage() {
                   <small className="text-muted">
                     Use the system ID from the admin dashboards (case or help request details URL).
                   </small>
-                </Form.Group>
+          </Form.Group>
               </div>
             )}
           </div>
@@ -481,7 +481,7 @@ export function AdminReportsPage() {
               disabled={loading}
             >
               Export PDF
-            </Button>
+          </Button>
           </div>
         </Card.Body>
       </Card>

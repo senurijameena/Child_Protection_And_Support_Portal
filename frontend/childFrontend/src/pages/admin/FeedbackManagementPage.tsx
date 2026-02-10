@@ -158,17 +158,17 @@ export function FeedbackManagementPage() {
                     </td>
                     <td>
                       <div className="d-flex align-items-center gap-2">
-                        <Badge
-                          bg={
-                            f.status === 'SUBMITTED'
-                              ? 'warning'
+                      <Badge
+                        bg={
+                          f.status === 'SUBMITTED'
+                            ? 'warning'
                               : f.status === 'RESPONDED'
-                                ? 'success'
-                                : 'secondary'
-                          }
-                        >
-                          {f.status || '-'}
-                        </Badge>
+                              ? 'success'
+                              : 'secondary'
+                        }
+                      >
+                        {f.status || '-'}
+                      </Badge>
                         <Form.Select
                           size="sm"
                           style={{ width: 'auto', minWidth: '120px' }}
@@ -198,9 +198,9 @@ export function FeedbackManagementPage() {
                     </td>
                     <td className="text-end">
                       <div className="d-flex gap-2 justify-content-end">
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
                           onClick={() => openView(f)}
                         >
                           View
@@ -208,10 +208,10 @@ export function FeedbackManagementPage() {
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => openRespond(f)}
-                        >
-                          Respond
-                        </Button>
+                        onClick={() => openRespond(f)}
+                      >
+                        Respond
+                      </Button>
                       </div>
                     </td>
                   </tr>

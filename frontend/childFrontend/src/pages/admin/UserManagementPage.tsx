@@ -25,8 +25,15 @@ const ROLE_OPTIONS = ['PU', 'PO', 'SW', 'ADMIN']
 const formatUserId = (rawId?: string, role?: string) => {
   if (!rawId) return '-'
   const upperRole = (role || '').toUpperCase()
-  let prefix = ''
+  const numericPart = rawId.replace(/\D/g, '') || rawId
 
+  // Admin: AD-000 style (3 digits from the end)
+  if (upperRole === 'ADMIN') {
+    const last3 = numericPart.slice(-3) || numericPart
+    return `AD-${last3.padStart(3, '0')}`
+  }
+
+  let prefix = ''
   switch (upperRole) {
     case 'PU':
     case 'PUBLIC':
@@ -41,12 +48,12 @@ const formatUserId = (rawId?: string, role?: string) => {
       prefix = 'SW-'
       break
     default:
-      // For admins or unknown roles, show the raw ID
+      // Unknown roles: show raw ID
       return rawId
   }
 
-  const last4 = rawId.slice(-4).toUpperCase()
-  return `${prefix}${last4}`
+  const last4 = numericPart.slice(-4) || numericPart
+  return `${prefix}${last4.padStart(4, '0')}`
 }
 
 export function UserManagementPage() {

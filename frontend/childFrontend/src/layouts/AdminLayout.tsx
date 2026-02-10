@@ -28,11 +28,15 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="min-vh-100 d-flex bg-light">
+    <div className="min-vh-100 d-flex bg-light admin-shell-light">
       {/* Sidebar - desktop */}
       <aside
-        className="d-none d-lg-flex flex-column border-end bg-white shadow-sm"
-        style={{ width: 260, minHeight: '100vh' }}
+        className="d-none d-lg-flex flex-column border-end shadow-sm"
+        style={{
+          width: 260,
+          minHeight: '100vh',
+          background: 'linear-gradient(180deg, #e7f1ff 0%, #f8fafc 40%, #ffffff 100%)',
+        }}
       >
         <div className="p-4 border-bottom">
           <Link to="/admin" className="text-decoration-none d-flex align-items-center gap-2">
@@ -52,11 +56,12 @@ export function AdminLayout() {
               to={item.path}
               end={item.path === '/admin'}
               className={({ isActive }) =>
-                `d-flex align-items-center gap-2 px-4 py-3 text-dark text-decoration-none admin-sidebar-link ${isActive ? 'admin-sidebar-active' : ''}`
+                `d-flex align-items-center gap-1 px-3 py-2 text-dark text-decoration-none admin-sidebar-link ${
+                  isActive ? 'admin-sidebar-active' : ''
+                }`
               }
             >
-              <span className="fs-5">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="admin-sidebar-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
@@ -85,7 +90,7 @@ export function AdminLayout() {
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Admin Portal</Offcanvas.Title>
         </Offcanvas.Header>
-        <Offcanvas.Body className="p-0">
+        <Offcanvas.Body className="p-0" style={{ backgroundColor: '#f8fafc' }}>
           {sidebarItems.map((item) => (
             <NavLink
               key={item.path}
@@ -93,11 +98,12 @@ export function AdminLayout() {
               end={item.path === '/admin'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `d-flex align-items-center gap-2 px-4 py-3 text-dark text-decoration-none ${isActive ? 'bg-primary text-white' : ''}`
+                `d-flex align-items-center gap-1 px-3 py-2 text-dark text-decoration-none admin-sidebar-link ${
+                  isActive ? 'admin-sidebar-active' : ''
+                }`
               }
             >
-              <span className="fs-5">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="admin-sidebar-label">{item.label}</span>
             </NavLink>
           ))}
         </Offcanvas.Body>

@@ -58,7 +58,7 @@ export function AdminHelpRequestDetailsPage() {
         </Badge>
       </h2>
       <div className="row g-4">
-        <div className="col-lg-8">
+        <div className="col-12 col-lg-8">
           <Card className="border-0 shadow-sm rounded-4 mb-4">
             <Card.Header className="bg-white border-0 pt-3">
               <h5 className="mb-0">Details</h5>
@@ -97,22 +97,22 @@ export function AdminHelpRequestDetailsPage() {
               </p>
               <p className="text-muted">{r.description || '-'}</p>
               {r.documentUrls && r.documentUrls.length > 0 && (
-                <div>
-                  <strong>Evidence / Documents (Uploaded by Requester):</strong>
-                  <ul className="mb-0 mt-2">
+                <div className="mt-4">
+                  <h6 className="mb-1">Evidence / Documents</h6>
+                  <div className="d-flex flex-wrap gap-2">
                     {r.documentUrls.map((url, i) => (
-                      <li key={i}>
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary"
-                        >
-                          {url.split('/').pop()}
-                        </a>
-                      </li>
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-outline-primary"
+                        aria-label={`View evidence ${i + 1}`}
+                      >
+                        View
+                      </a>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </Card.Body>
@@ -120,45 +120,66 @@ export function AdminHelpRequestDetailsPage() {
           {timeline.length > 0 && (
             <Card className="border-0 shadow-sm rounded-4">
               <Card.Header className="bg-white border-0 pt-3">
-                <h5 className="mb-0">Progress Timeline</h5>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 className="mb-0">Progress Timeline</h5>
+                    <span className="text-muted small">Chronological log of all updates and actions</span>
+                  </div>
+                  <Badge bg="light" text="dark" className="small">
+                    {timeline.length} event{timeline.length > 1 ? 's' : ''}
+                  </Badge>
+                </div>
               </Card.Header>
               <Card.Body>
                 <ListGroup variant="flush">
-                  {timeline.map((item, i) => (
-                    <ListGroup.Item
-                      key={item.id || i}
-                      className="border-0 border-start border-2 border-primary ps-3"
-                    >
-                      <small className="text-muted">
-                        {item.eventTime ? new Date(item.eventTime).toLocaleString() : '-'}
-                        {item.performedByName && ` · ${item.performedByName}`}
-                      </small>
-                      <p className="mb-0">{item.description || '-'}</p>
-                    </ListGroup.Item>
-                  ))}
+                  {timeline.map((item, i) => {
+                    const isLast = i === timeline.length - 1
+                    const timestamp = item.eventTime ? new Date(item.eventTime).toLocaleString() : '-'
+                    return (
+                      <ListGroup.Item key={item.id || i} className="border-0 px-0">
+                        <div className="d-flex">
+                          <div className="me-3 d-flex flex-column align-items-center">
+                            <div
+                              className="rounded-circle bg-primary"
+                              style={{ width: 10, height: 10 }}
+                            />
+                            {!isLast && (
+                              <div
+                                style={{
+                                  width: 2,
+                                  flexGrow: 1,
+                                  backgroundColor: '#e5e7eb',
+                                  marginTop: 2,
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-start mb-1">
+                              <small className="text-muted">{timestamp}</small>
+                              {item.eventType && (
+                                <Badge bg="secondary" className="text-uppercase small">
+                                  {item.eventType}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="fw-medium small text-dark">
+                              {item.description || '-'}
+                            </div>
+                            {item.performedByName && (
+                              <div className="text-muted small mt-1">
+                                By {item.performedByName}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </ListGroup.Item>
+                    )
+                  })}
                 </ListGroup>
               </Card.Body>
             </Card>
           )}
-        </div>
-        <div className="col-lg-4">
-          <Card className="border-0 shadow-sm rounded-4">
-            <Card.Header className="bg-white border-0 pt-3">
-              <h5 className="mb-0">Assignment</h5>
-            </Card.Header>
-            <Card.Body>
-              <p className="text-muted mb-2">
-                {r.assignedWorkerId
-                  ? 'Assigned to social worker'
-                  : 'Not yet assigned'}
-              </p>
-              <Link to="/admin/help-requests">
-                <span className="btn btn-outline-primary btn-sm">
-                  Assign / Reassign
-                </span>
-              </Link>
-            </Card.Body>
-          </Card>
         </div>
       </div>
     </div>

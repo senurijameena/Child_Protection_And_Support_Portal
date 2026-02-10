@@ -152,6 +152,19 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   CANCELLED: 'Cancelled',
 }
 
+export const REQUEST_STATUS_BADGE_VARIANTS: Record<
+  RequestStatus,
+  'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'dark'
+> = {
+  REQUESTED: 'info', // newly submitted
+  UNDER_REVIEW: 'warning', // accepted / under review
+  ASSIGNED: 'primary', // owned
+  IN_PROGRESS: 'warning', // ongoing
+  COMPLETED: 'success', // done
+  REJECTED: 'danger',
+  CANCELLED: 'danger',
+}
+
 export const CASE_TYPE_LABELS: Record<CaseType, string> = {
   MISSING_CHILD: 'Missing Child',
   CHILD_ABUSE: 'Child Abuse',

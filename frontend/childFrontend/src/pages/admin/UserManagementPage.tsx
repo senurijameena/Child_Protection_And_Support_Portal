@@ -230,7 +230,17 @@ export function UserManagementPage() {
                     <td className="fw-medium">{u.fullName || '-'}</td>
                     <td>{u.email || '-'}</td>
                     <td>
-                      <Badge bg="secondary">
+                      <Badge
+                        bg={
+                          u.role === 'ADMIN'
+                            ? 'dark'
+                            : u.role === 'PO' || u.role === 'POLICE'
+                              ? 'primary'
+                              : u.role === 'SW' || u.role === 'SOCIAL_WORKER'
+                                ? 'secondary'
+                                : 'info'
+                        }
+                      >
                         {ROLE_LABELS[(u.role as keyof typeof ROLE_LABELS) || 'PU']}
                       </Badge>
                     </td>
@@ -243,9 +253,9 @@ export function UserManagementPage() {
                     </td>
                     <td>
                       {u.approved ? (
-                        <Badge bg="success">Approved</Badge>
+                        <Badge bg="primary">Approved</Badge>
                       ) : (
-                        <Badge bg="warning">Pending</Badge>
+                        <Badge bg="secondary">Not Approved</Badge>
                       )}
                     </td>
                     <td className="text-muted small">
@@ -254,50 +264,54 @@ export function UserManagementPage() {
                         : '-'}
                     </td>
                     <td className="text-end">
-                      <Dropdown>
-                        <Dropdown.Toggle
-                          variant="outline-primary"
-                          size="sm"
-                          id={`actions-${u.userId}`}
-                        >
-                          Actions
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu align="end">
-                          {!u.approved && (
-                            <>
+                      {u.role === 'PO' || u.role === 'POLICE' ? (
+                        <span className="text-muted small">No actions</span>
+                      ) : (
+                        <Dropdown>
+                          <Dropdown.Toggle
+                            variant="outline-primary"
+                            size="sm"
+                            id={`actions-${u.userId}`}
+                          >
+                            Actions
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu align="end">
+                            {!u.approved && (
+                              <>
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setSelectedUser(u)
+                                    setShowApproveModal(true)
+                                  }}
+                                  disabled={actionLoading}
+                                >
+                                  Approve
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setSelectedUser(u)
+                                    setShowRejectModal(true)
+                                  }}
+                                  className="text-danger"
+                                >
+                                  Reject
+                                </Dropdown.Item>
+                              </>
+                            )}
+                            {u.approved && u.role !== 'ADMIN' && (
                               <Dropdown.Item
                                 onClick={() => {
                                   setSelectedUser(u)
-                                  setShowApproveModal(true)
+                                  setShowLockModal(true)
                                 }}
                                 disabled={actionLoading}
                               >
-                                Approve
+                                {u.active ? 'Lock / Deactivate' : 'Activate'}
                               </Dropdown.Item>
-                              <Dropdown.Item
-                                onClick={() => {
-                                  setSelectedUser(u)
-                                  setShowRejectModal(true)
-                                }}
-                                className="text-danger"
-                              >
-                                Reject
-                              </Dropdown.Item>
-                            </>
-                          )}
-                          {u.approved && u.role !== 'ADMIN' && (
-                            <Dropdown.Item
-                              onClick={() => {
-                                setSelectedUser(u)
-                                setShowLockModal(true)
-                              }}
-                              disabled={actionLoading}
-                            >
-                              {u.active ? 'Lock / Deactivate' : 'Activate'}
-                            </Dropdown.Item>
-                          )}
-                        </Dropdown.Menu>
-                      </Dropdown>
+                            )}
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      )}
                     </td>
                   </tr>
                 ))

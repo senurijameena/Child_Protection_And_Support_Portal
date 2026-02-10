@@ -13,6 +13,7 @@ export function LoginPage() {
   const [role, setRole] = useState<Role | ''>('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault()
@@ -104,18 +105,29 @@ export function LoginPage() {
 
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="login-password">Password</Form.Label>
-                <Form.Control
-                  id="login-password"
-                  type="password"
-                  placeholder="Your password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    setError('')
-                  }}
-                  className="auth-input"
-                  autoComplete="current-password"
-                />
+                <div className="position-relative">
+                  <Form.Control
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Your password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      setError('')
+                    }}
+                    className="auth-input pe-5"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="btn btn-sm btn-link position-absolute top-50 end-0 translate-middle-y me-2 px-1 text-muted"
+                    style={{ textDecoration: 'none' }}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <span aria-hidden="true">👁</span>
+                  </button>
+                </div>
               </Form.Group>
 
               <Form.Group className="mb-3">

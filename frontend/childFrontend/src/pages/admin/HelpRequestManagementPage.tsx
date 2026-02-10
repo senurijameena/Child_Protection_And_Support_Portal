@@ -19,7 +19,7 @@ import {
 } from '../../services/adminApi'
 import type { HelpRequestDTO } from '../../types/dashboard'
 import type { SocialWorkerDTO } from '../../types/admin'
-import { REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
+import { REQUEST_STATUS_BADGE_VARIANTS, REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
 
 const STATUS_OPTIONS = [
   'REQUESTED',
@@ -216,13 +216,9 @@ export function HelpRequestManagementPage() {
                     <td>
                       <Badge
                         bg={
-                          r.status === 'REQUESTED' || r.status === 'UNDER_REVIEW'
-                            ? 'warning'
-                            : r.status === 'COMPLETED'
-                              ? 'success'
-                              : r.status === 'REJECTED'
-                                ? 'danger'
-                                : 'primary'
+                          REQUEST_STATUS_BADGE_VARIANTS[
+                            (r.status as keyof typeof REQUEST_STATUS_BADGE_VARIANTS) || 'REQUESTED'
+                          ]
                         }
                       >
                         {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}

@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom'
 import { Card, Row, Col, Badge, Spinner, Table } from 'react-bootstrap'
 import { getAdminDashboardOverview } from '../../services/adminApi'
 import type { AdminDashboardOverviewDTO } from '../../types/admin'
-import { CASE_STATUS_LABELS, REQUEST_STATUS_LABELS } from '../../types/dashboard'
+import {
+  CASE_STATUS_BADGE_VARIANTS,
+  CASE_STATUS_LABELS,
+  REQUEST_STATUS_BADGE_VARIANTS,
+  REQUEST_STATUS_LABELS,
+} from '../../types/dashboard'
 
 export function AdminDashboard() {
   const [data, setData] = useState<AdminDashboardOverviewDTO | null>(null)
@@ -41,7 +46,6 @@ export function AdminDashboard() {
       value: m.totalCases,
       sub: `${m.activeCases} active`,
       color: 'primary',
-      icon: '📁',
       link: '/admin/cases',
     },
     {
@@ -49,7 +53,6 @@ export function AdminDashboard() {
       value: m.totalHelpRequests,
       sub: `${m.pendingHelpRequests} pending`,
       color: 'success',
-      icon: '🙋',
       link: '/admin/help-requests',
     },
     {
@@ -57,30 +60,13 @@ export function AdminDashboard() {
       value: m.totalUsers,
       sub: `${m.pendingApprovals} pending approval`,
       color: 'info',
-      icon: '👥',
       link: '/admin/users',
-    },
-    {
-      title: 'Resolved Cases',
-      value: m.resolvedCases,
-      sub: `${m.caseResolutionRate?.toFixed(1) || 0}% resolution rate`,
-      color: 'secondary',
-      icon: '✅',
-    },
-    {
-      title: 'Emergency Cases',
-      value: m.emergencyCases,
-      sub: 'Requires attention',
-      color: 'danger',
-      icon: '🚨',
-      link: '/admin/cases?status=REPORTED',
     },
     {
       title: 'Pending Transfers',
       value: data.pendingTransfers?.length ?? 0,
       sub: 'Awaiting action',
       color: 'warning',
-      icon: '🔄',
       link: '/admin/transfers',
     },
   ]
@@ -99,50 +85,20 @@ export function AdminDashboard() {
           <Col key={card.title} xs={12} sm={6} lg={4}>
             {card.link ? (
               <Link to={card.link} className="text-decoration-none text-dark">
-                <Card
-                  className="border-0 shadow-sm rounded-3 h-100 admin-stat-card bg-white"
-                  style={{ transition: 'transform 0.2s, box-shadow 0.2s' }}
-                >
-                  <Card.Body className="d-flex align-items-center gap-3">
-                    <div
-                      className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                      style={{
-                        width: 48,
-                        height: 48,
-                        backgroundColor: `var(--accent-light-blue)`,
-                      }}
-                    >
-                      <span className="fs-4">{card.icon}</span>
-                    </div>
-                    <div className="flex-grow-1 min-w-0">
-                      <div className="text-muted small">{card.title}</div>
-                      <div className="fw-bold fs-4">{card.value}</div>
-                      <div className="text-muted small">{card.sub}</div>
-                    </div>
+                <Card className="border-0 shadow-sm rounded-3 h-100 admin-stat-card bg-white">
+                  <Card.Body className="py-3">
+                    <div className="text-muted text-uppercase small mb-1">{card.title}</div>
+                    <div className="fw-bold display-6 text-dark mb-1">{card.value}</div>
+                    <div className="text-muted small">{card.sub}</div>
                   </Card.Body>
                 </Card>
               </Link>
             ) : (
-              <Card
-                className="border-0 shadow-sm rounded-3 h-100 admin-stat-card bg-white"
-                style={{ transition: 'transform 0.2s, box-shadow 0.2s' }}
-              >
-                <Card.Body className="d-flex align-items-center gap-3">
-                  <div
-                    className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                    style={{
-                      width: 48,
-                      height: 48,
-                      backgroundColor: `var(--accent-light-blue)`,
-                    }}
-                  >
-                    <span className="fs-4">{card.icon}</span>
-                  </div>
-                  <div className="flex-grow-1 min-w-0">
-                    <div className="text-muted small">{card.title}</div>
-                    <div className="fw-bold fs-4">{card.value}</div>
-                    <div className="text-muted small">{card.sub}</div>
-                  </div>
+              <Card className="border-0 shadow-sm rounded-3 h-100 admin-stat-card bg-white">
+                <Card.Body className="py-3">
+                  <div className="text-muted text-uppercase small mb-1">{card.title}</div>
+                  <div className="fw-bold display-6 text-dark mb-1">{card.value}</div>
+                  <div className="text-muted small">{card.sub}</div>
                 </Card.Body>
               </Card>
             )}
@@ -187,14 +143,14 @@ export function AdminDashboard() {
                         <td>
                           <Badge
                             bg={
-                              c.status === 'REPORTED' || c.status === 'UNDER_REVIEW'
-                                ? 'warning'
-                                : c.status === 'CLOSED' || c.status === 'RESOLVED'
-                                  ? 'success'
-                                  : 'primary'
+                              CASE_STATUS_BADGE_VARIANTS[
+                                (c.status as keyof typeof CASE_STATUS_BADGE_VARIANTS) || 'REPORTED'
+                              ]
                             }
                           >
-                            {CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
+                            {c.status === 'UNDER_REVIEW'
+                              ? 'Accepted'
+                              : CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
                           </Badge>
                         </td>
                         <td className="text-muted small">
@@ -249,11 +205,9 @@ export function AdminDashboard() {
                         <td>
                           <Badge
                             bg={
-                              r.status === 'REQUESTED' || r.status === 'UNDER_REVIEW'
-                                ? 'warning'
-                                : r.status === 'COMPLETED'
-                                  ? 'success'
-                                  : 'primary'
+                              REQUEST_STATUS_BADGE_VARIANTS[
+                                (r.status as keyof typeof REQUEST_STATUS_BADGE_VARIANTS) || 'REQUESTED'
+                              ]
                             }
                           >
                             {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}

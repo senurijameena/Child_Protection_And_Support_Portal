@@ -118,21 +118,33 @@ export function AdminLayout() {
               onClick={() => setSidebarOpen(true)}
               className="d-lg-none"
             />
-            <Navbar.Brand as={Link} to="/admin" className="d-none d-lg-block ms-2">
-              Child Protection Portal
+            <Navbar.Brand className="d-flex align-items-center justify-content-between w-100 ms-2">
+              <Link to="/admin" className="text-decoration-none text-dark fw-semibold">
+                Child Protection Portal
+              </Link>
+              <div className="d-flex align-items-center gap-3">
+                <Link
+                  to="/admin/notifications"
+                  className="position-relative d-inline-flex align-items-center justify-content-center rounded-circle border bg-white"
+                  style={{ width: 34, height: 34, borderColor: '#e5e7eb', color: '#0f172a' }}
+                  aria-label="View notifications"
+                >
+                  <span className="fs-6">🔔</span>
+                </Link>
+                <span className="px-3 py-1 rounded-pill bg-light border small text-muted">
+                  {user?.fullName || 'Administrator'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="btn btn-outline-danger btn-sm"
+                >
+                  Logout
+                </button>
+              </div>
             </Navbar.Brand>
             <Navbar.Collapse id="admin-nav" className="justify-content-end">
-              <Nav className="d-flex align-items-center">
-                <AdminNotificationDropdown />
-                <Dropdown align="end">
-                  <Dropdown.Toggle variant="light" className="border-0">
-                    {user?.fullName || user?.email || 'Admin'}
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Nav>
+              <Nav className="d-flex align-items-center" />
             </Navbar.Collapse>
           </Container>
         </Navbar>

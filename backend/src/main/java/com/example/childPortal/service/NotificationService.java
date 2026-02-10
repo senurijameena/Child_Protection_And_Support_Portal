@@ -273,6 +273,62 @@ public class NotificationService {
         }
     }
 
+    /**
+     * Broadcast a maintenance announcement notification to all users.
+     */
+    public void sendMaintenanceAnnouncementToAllUsers(String announcementId, String title, String message) {
+        List<User> allUsers = userRepository.findAll();
+        String notificationTitle = (title != null && !title.isBlank()) ? title : "System Maintenance Notice";
+        String notificationMessage = (message != null && !message.isBlank())
+                ? message
+                : "The system will undergo maintenance. Some features may be temporarily unavailable.";
+
+        for (User user : allUsers) {
+            // Informational broadcast, no specific action URL required
+            logNotification(user.getId(), "MAINTENANCE_ANNOUNCEMENT", notificationTitle, notificationMessage, null);
+        }
+    }
+
+    /**
+     * Send workshop announcement emails to all public users and social workers.
+     */
+    public void sendWorkshopAnnouncementEmailToPublicAndSocialWorkers(String title, String message) {
+        String subject = (title != null && !title.isBlank())
+                ? "[Workshop] " + title
+                : "Upcoming Workshop - Child Protection and Support Portal";
+        String body = (message != null && !message.isBlank())
+                ? message
+                : "You are invited to an upcoming workshop on child protection and support. Please log in to the portal for more details.";
+
+        // Public users
+        List<User> publicUsers = userRepository.findByRole(Role.PU);
+        for (User user : publicUsers) {
+            sendEmail(user.getEmail(), subject, body);
+        }
+
+        // Social workers
+        List<User> socialWorkers = userRepository.findByRole(Role.SW);
+        for (User user : socialWorkers) {
+            sendEmail(user.getEmail(), subject, body);
+        }
+    }
+
+    /**
+     * Broadcast a maintenance announcement notification to all users.
+     */
+    public void sendMaintenanceAnnouncementToAllUsers(String announcementId, String title, String message) {
+        List<User> allUsers = userRepository.findAll();
+        String notificationTitle = (title != null && !title.isBlank()) ? title : "System Maintenance Notice";
+        String notificationMessage = (message != null && !message.isBlank())
+                ? message
+                : "The system will undergo maintenance. Some features may be temporarily unavailable.";
+
+        for (User user : allUsers) {
+            // Informational broadcast, no specific action URL required
+            logNotification(user.getId(), "MAINTENANCE_ANNOUNCEMENT", notificationTitle, notificationMessage, null);
+        }
+    }
+
     private void sendEmail(String to, String subject, String content) {
         try {
             if (mailSender == null) {

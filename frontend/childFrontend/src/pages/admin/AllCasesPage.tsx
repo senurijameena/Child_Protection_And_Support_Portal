@@ -4,7 +4,7 @@ import { Card, Table, Badge, Form, Spinner } from 'react-bootstrap'
 import { getAllCasesWithDetails, getAllPoliceStations } from '../../services/adminApi'
 import type { CaseDTO } from '../../types/dashboard'
 import type { PoliceStationDTO } from '../../types/admin'
-import { CASE_STATUS_LABELS, CASE_STATUS_BADGE_VARIANTS, CASE_TYPE_LABELS } from '../../types/dashboard'
+import { CASE_STATUS_BADGE_VARIANTS, CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
 
 const STATUS_FILTERS: { code: string; label: string }[] = [
   { code: 'REPORTED', label: 'Submitted' },

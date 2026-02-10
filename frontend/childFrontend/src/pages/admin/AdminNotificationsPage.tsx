@@ -59,7 +59,9 @@ export function AdminNotificationsPage() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h1 className="h3 fw-bold text-dark mb-1">Notifications</h1>
-          <p className="text-muted mb-0">Case and help request updates</p>
+          <p className="text-muted mb-0 small">
+            Case and help request updates for administrators. Unread: <strong>{unreadCount}</strong>
+          </p>
         </div>
         {unreadCount > 0 && (
           <Button variant="outline-primary" size="sm" onClick={handleMarkAllRead}>
@@ -77,19 +79,34 @@ export function AdminNotificationsPage() {
                 <ListGroup.Item
                   key={n.id}
                   action
-                  className={`py-3 ${n.read ? '' : 'bg-light'}`}
+                  className={`py-3 border-0 border-bottom ${
+                    n.read ? 'bg-white' : 'bg-light'
+                  }`}
+                  style={{
+                    borderLeft: n.read
+                      ? '4px solid transparent'
+                      : '4px solid var(--admin-light-primary, #2563eb)',
+                  }}
                   onClick={() => handleClick(n)}
                 >
                   <div className="d-flex justify-content-between align-items-start gap-2">
                     <div className="min-w-0 flex-grow-1">
                       <div className="d-flex align-items-center gap-2 mb-1">
-                        <Badge bg="secondary" className="text-uppercase">
+                        <Badge bg="secondary" className="text-uppercase small">
                           {NOTIFICATION_TYPE_LABELS[n.type || ''] || n.type || 'Update'}
                         </Badge>
-                        {!n.read && <Badge bg="primary">New</Badge>}
+                        {!n.read && (
+                          <Badge bg="primary" pill className="small">
+                            New
+                          </Badge>
+                        )}
                       </div>
-                      <div className="fw-medium">{n.title}</div>
-                      <div className="text-muted small">{n.message}</div>
+                      <div className="fw-semibold small text-dark">
+                        {n.title || 'Notification'}
+                      </div>
+                      <div className="text-muted small text-truncate">
+                        {n.message}
+                      </div>
                       <div className="text-muted mt-1" style={{ fontSize: '0.75rem' }}>
                         {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
                       </div>

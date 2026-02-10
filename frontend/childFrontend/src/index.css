@@ -319,6 +319,15 @@ html {
   border-bottom: 1px solid var(--admin-light-border, #e5e7eb);
 }
 
+.admin-stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+
 .admin-shell-light .table {
   color: var(--admin-light-text, #0f172a);
 }

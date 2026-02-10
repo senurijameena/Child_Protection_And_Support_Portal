@@ -37,13 +37,11 @@ import { HelpRequestManagementPage } from './pages/admin/HelpRequestManagementPa
 import { AdminHelpRequestDetailsPage } from './pages/admin/AdminHelpRequestDetailsPage'
 import { UserManagementPage } from './pages/admin/UserManagementPage'
 import { TransferRequestManagementPage } from './pages/admin/TransferRequestManagementPage'
-import { DuplicateDetectionPage } from './pages/admin/DuplicateDetectionPage'
 import { SystemAnnouncementsPage } from './pages/admin/SystemAnnouncementsPage'
 import { FeedbackManagementPage } from './pages/admin/FeedbackManagementPage'
 import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage'
 import { AdminReportsPage } from './pages/admin/AdminReportsPage'
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { PoliceDashboard } from './pages/police/PoliceDashboard'
 import { PoliceCasesPage } from './pages/police/PoliceCasesPage'
 import { PoliceCaseDetailsPage } from './pages/police/PoliceCaseDetailsPage'
@@ -137,9 +135,7 @@ function App() {
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="users" element={<UserManagementPage />} />
         <Route path="reports" element={<AdminReportsPage />} />
-        <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="transfers" element={<TransferRequestManagementPage />} />
-        <Route path="duplicates" element={<DuplicateDetectionPage />} />
         <Route path="announcements" element={<SystemAnnouncementsPage />} />
         <Route path="feedback" element={<FeedbackManagementPage />} />
       </Route>

@@ -7,16 +7,14 @@ import { AdminNotificationDropdown } from '../components/admin/AdminNotification
 const sidebarItems = [
   { path: '/admin', label: 'Dashboard', icon: '📊' },
   { path: '/admin/notifications', label: 'Notifications', icon: '🔔' },
+  { path: '/admin/users', label: 'Users', icon: '👥' },
   { path: '/admin/cases', label: 'Cases', icon: '📁' },
   { path: '/admin/help-requests', label: 'Help Requests', icon: '🙋' },
   { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
-  { path: '/admin/users', label: 'User Approvals', icon: '👥' },
   { path: '/admin/transfers', label: 'Transfer Requests', icon: '🔄' },
-  { path: '/admin/duplicates', label: 'Duplicate Detection', icon: '🔍' },
   { path: '/admin/announcements', label: 'System Announcements', icon: '📢' },
   { path: '/admin/feedback', label: 'Feedback', icon: '💬' },
   { path: '/admin/reports', label: 'Reports', icon: '📄' },
-  { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export function AdminLayout() {

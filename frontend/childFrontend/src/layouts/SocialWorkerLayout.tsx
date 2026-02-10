@@ -1,24 +1,27 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Navbar, Nav, Container, Dropdown, Offcanvas } from 'react-bootstrap'
+import { Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
+import { SocialWorkerHeader } from '../components/social-worker/SocialWorkerHeader'
 
 const sidebarItems = [
-  { path: '/social-worker', label: 'Dashboard', icon: '🏠' },
-  { path: '/social-worker/requests', label: 'Requests', icon: '📋' },
-  { path: '/social-worker/calendar', label: 'Calendar', icon: '📅' },
-  { path: '/social-worker/messages', label: 'Messages', icon: '💬' },
-  { path: '/social-worker/packages', label: 'Packages', icon: '📦' },
-  { path: '/social-worker/library', label: 'Resource Library', icon: '📚' },
-  { path: '/social-worker/transfers', label: 'Transfers', icon: '🔄' },
-  { path: '/social-worker/reports', label: 'Reports', icon: '📊' },
-  { path: '/social-worker/profile', label: 'Profile & Settings', icon: '👤' },
+  { path: '/social-worker', label: 'Dashboard', icon: '🏠', end: true },
+  { path: '/social-worker/requests', label: 'Assigned Requests', icon: '📋', end: false },
+  { path: '/social-worker/packages', label: 'Service Packages', icon: '📦', end: false },
+  { path: '/social-worker/library', label: 'Resource Management', icon: '📚', end: false },
+  { path: '/social-worker/messages', label: 'Messages', icon: '💬', end: false },
+  { path: '/social-worker/follow-ups', label: 'Follow-ups', icon: '⏰', end: false },
+  { path: '/social-worker/reports', label: 'Reports', icon: '📊', end: false },
+  { path: '/social-worker/profile', label: 'Profile', icon: '👤', end: false },
 ]
+
+const SYSTEM_VERSION = '1.0.0'
 
 export function SocialWorkerLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -26,113 +29,167 @@ export function SocialWorkerLayout() {
   }
 
   return (
-    <div className="min-vh-100 d-flex sw-theme-bg">
-      {/* Sidebar - desktop */}
+    <div className="sw-layout min-vh-100 d-flex sw-theme-bg">
+      {/* Sidebar - desktop (collapsible) */}
       <aside
-        className="d-none d-lg-flex flex-column border-end bg-white shadow-sm"
-        style={{ width: 260, minHeight: '100vh' }}
+        className={`d-none d-lg-flex flex-column sw-sidebar border-end position-fixed overflow-hidden ${
+          sidebarCollapsed ? 'sw-sidebar-collapsed' : ''
+        }`}
+        style={{
+          width: sidebarCollapsed ? 72 : 260,
+          minHeight: '100vh',
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          backgroundColor: '#fff',
+        }}
       >
-        <div className="p-4 border-bottom sw-sidebar-header">
-          <Link to="/social-worker" className="text-decoration-none d-flex align-items-center gap-2">
-            <img
-              src="/images/logo.jpeg"
-              alt="Logo"
-              style={{ height: 36, width: 'auto' }}
-              className="rounded"
-            />
-            <span className="fw-bold text-white">Social Worker</span>
+        <div className="sw-sidebar-header d-flex align-items-center p-3">
+          <Link
+            to="/social-worker"
+            className="text-decoration-none d-flex align-items-center gap-2 flex-grow-1 min-w-0"
+          >
+            <div className="bg-white rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: 36, height: 36 }}>
+              <img
+                src="/images/logo.jpeg"
+                alt="Logo"
+                style={{ height: 28, width: 28, objectFit: 'contain' }}
+              />
+            </div>
+            {!sidebarCollapsed && (
+              <span className="fw-bold text-white text-truncate" style={{ fontSize: '0.9rem', letterSpacing: '0.5px' }}>
+                CHILD SUPPORT
+              </span>
+            )}
           </Link>
+          <button
+            type="button"
+            className="btn btn-link p-0 text-white opacity-75 ms-1 d-flex align-items-center justify-content-center border-0"
+            style={{ width: 28, height: 28 }}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span className="fs-6">{sidebarCollapsed ? '→' : '←'}</span>
+          </button>
         </div>
-        <nav className="flex-grow-1 py-3 overflow-auto bg-white">
+
+        <nav className="flex-grow-1 py-4 overflow-auto sw-sidebar-nav">
           {sidebarItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
-              end={item.path === '/social-worker'}
-              className={({ isActive }) =>
-                `d-flex align-items-center gap-2 px-4 py-3 text-dark text-decoration-none sw-sidebar-link ${isActive ? 'sw-sidebar-active' : ''}`
+              end={item.end ?? item.path === '/social-worker'}
+              onClick={() => setMobileSidebarOpen(false)}
+              className={({ isActive: active }) =>
+               `sw-sidebar-link d-flex align-items-center gap-3 text-decoration-none ${
+                  active ? 'sw-sidebar-active' : ''
+                }`
               }
+              title={sidebarCollapsed ? item.label : undefined}
             >
-              <span className="fs-5">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="sw-sidebar-icon fs-5" style={{ width: 24 }}>
+                {item.icon}
+              </span>
+              {!sidebarCollapsed && <span className="small fw-medium">{item.label}</span>}
             </NavLink>
           ))}
         </nav>
-        <div className="p-3 border-top bg-white">
-          <div className="px-3 py-2 text-muted small">
-            {user?.fullName || user?.email || 'Social Worker'}
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="btn btn-outline-secondary btn-sm w-100 rounded sw-logout-btn"
-          >
-            Logout
-          </button>
+
+        <div className="p-3 border-top mt-auto bg-light bg-opacity-50">
+          {!sidebarCollapsed ? (
+            <div className="d-flex flex-column gap-2">
+              <div className="px-2 py-1 text-muted small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>
+                Signed in as
+              </div>
+              <div className="px-2 mb-2">
+                <div className="text-dark small fw-bold text-truncate">
+                  {user?.fullName || 'Social Worker'}
+                </div>
+                <div className="text-muted" style={{ fontSize: '0.7rem' }}>
+                  Professional ID: {user?.userId?.slice(0, 8) || 'N/A'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn btn-outline-danger btn-sm w-100 rounded-2 sw-logout-btn py-2 fw-semibold"
+                style={{ fontSize: '0.8rem' }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button
+               type="button"
+               onClick={handleLogout}
+               className="btn btn-link p-0 text-danger w-100 d-flex justify-content-center"
+               title="Sign Out"
+            >
+               🚪
+            </button>
+          )}
         </div>
       </aside>
 
+      {/* Spacer for fixed sidebar */}
+      <div
+        className="d-none d-lg-block flex-shrink-0"
+        style={{ width: sidebarCollapsed ? 72 : 260, transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
+      />
+
       {/* Mobile: offcanvas sidebar */}
       <Offcanvas
-        show={sidebarOpen}
-        onHide={() => setSidebarOpen(false)}
+        show={mobileSidebarOpen}
+        onHide={() => setMobileSidebarOpen(false)}
         placement="start"
-        className="d-lg-none"
-        style={{ width: 260 }}
+        className="d-lg-none border-0"
+        style={{ width: 280 }}
       >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>Social Worker Portal</Offcanvas.Title>
+        <Offcanvas.Header closeButton className="bg-light">
+          <Offcanvas.Title className="fw-bold text-teal">Social Worker Portal</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body className="p-0">
-          {sidebarItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/social-worker'}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `d-flex align-items-center gap-2 px-4 py-3 text-dark text-decoration-none ${isActive ? 'sw-sidebar-active' : ''}`
-              }
-            >
-              <span className="fs-5">{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+          <div className="py-3">
+            {sidebarItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.end ?? item.path === '/social-worker'}
+                onClick={() => setMobileSidebarOpen(false)}
+                className={({ isActive: active }) =>
+                  `d-flex align-items-center gap-3 px-4 py-3 text-dark text-decoration-none ${
+                    active ? 'sw-sidebar-active mx-2' : ''
+                  }`
+                }
+              >
+                <span className="fs-5">{item.icon}</span>
+                <span className="fw-medium">{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
         </Offcanvas.Body>
       </Offcanvas>
 
       {/* Main content */}
       <div className="flex-grow-1 d-flex flex-column min-vw-0">
-        <Navbar expand="lg" className="bg-white shadow-sm py-2 border-bottom">
-          <Container fluid className="px-3 px-lg-4">
-            <Navbar.Toggle
-              aria-controls="sw-nav"
-              onClick={() => setSidebarOpen(true)}
-              className="d-lg-none"
-            />
-            <Navbar.Brand as={Link} to="/social-worker" className="d-none d-lg-block ms-2 text-dark">
-              Child Protection Portal
-            </Navbar.Brand>
-            <Navbar.Collapse id="sw-nav" className="justify-content-end">
-              <Nav>
-                <Dropdown align="end">
-                  <Dropdown.Toggle variant="light" className="border-0">
-                    {user?.fullName || user?.email || 'Social Worker'}
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
+        {/* Header - Modern Professional Design */}
+        <SocialWorkerHeader />
 
-        <main className="flex-grow-1 py-4 overflow-auto">
-          <Container fluid className="px-3 px-lg-4">
+        <main className="flex-grow-1 py-4 overflow-auto sw-main">
+          <div className="px-3 px-lg-4">
             <Outlet />
-          </Container>
+          </div>
         </main>
+
+        {/* Footer - minimal */}
+        <footer className="sw-footer py-2 px-4 border-top bg-white">
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 small text-muted">
+            <span>v{SYSTEM_VERSION} · © {new Date().getFullYear()} Child Protection Portal</span>
+            <div>
+              <Link to="/privacy-safety" className="text-muted text-decoration-none me-3">
+                Privacy & Ethics
+              </Link>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   )

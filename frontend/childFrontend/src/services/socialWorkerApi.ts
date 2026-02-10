@@ -5,6 +5,7 @@ import type {
   MessageDTO,
   ConversationDTO,
   RequestStatus,
+  ServicePackageDTO,
 } from '../types/dashboard'
 
 export interface FollowUpDTO {
@@ -226,4 +227,37 @@ export async function changePassword(userId: string, currentPassword: string, ne
     currentPassword,
     newPassword,
   })
+}
+
+// Service packages (templates, managed by social worker)
+export async function getServicePackages(params?: {
+  type?: string
+  status?: string
+  search?: string
+}): Promise<ServicePackageDTO[]> {
+  const query = new URLSearchParams()
+  if (params?.type) query.set('type', params.type)
+  if (params?.status) query.set('status', params.status)
+  if (params?.search) query.set('search', params.search)
+
+  const qs = query.toString()
+  const path = qs ? `/service-packages?${qs}` : '/service-packages'
+  return apiGet<ServicePackageDTO[]>(path)
+}
+
+export async function createServicePackage(
+  data: Omit<ServicePackageDTO, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<ServicePackageDTO> {
+  return apiPost<ServicePackageDTO>('/service-packages', data)
+}
+
+export async function updateServicePackage(
+  id: string,
+  data: Omit<ServicePackageDTO, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<ServicePackageDTO> {
+  return apiPut<ServicePackageDTO>(`/service-packages/${id}`, data)
+}
+
+export async function deleteServicePackage(id: string): Promise<void> {
+  await apiDelete(`/service-packages/${id}`)
 }

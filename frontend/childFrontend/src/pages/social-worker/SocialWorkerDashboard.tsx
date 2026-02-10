@@ -1,428 +1,659 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Card, Row, Col, Spinner, Tab, Tabs } from 'react-bootstrap'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
-  PieChart,
-  Pie
-} from 'recharts'
+import { Card, Container, Row, Col, ProgressBar, Badge } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
-import {
-  getAssignedRequests,
-  getMyFollowUps,
-  getOffersByWorker,
-  getNotifications,
-} from '../../services/socialWorkerApi'
+import { getAssignedRequests, getMyFollowUps, type FollowUpDTO } from '../../services/socialWorkerApi'
 import type { HelpRequestDTO } from '../../types/dashboard'
-import type { FollowUpDTO } from '../../services/socialWorkerApi'
-import { HELP_TYPE_LABELS } from '../../types/dashboard'
-import { SmartRequestTable } from '../../components/social-worker/SmartRequestTable'
+import './SocialWorkerDashboard.css'
 
-// Chart colors
-const CHART_COLORS = {
-  ASSIGNED: '#f59e0b',
-  IN_PROGRESS: '#3b82f6',
-  COMPLETED: '#22c55e',
-  REJECTED: '#ef4444',
-  CANCELLED: '#6b7280',
-  UNDER_REVIEW: '#8b5cf6',
-  REQUESTED: '#94a3b8',
-}
-
-const PIE_COLORS = {
-  COUNSELING: '#2d6a4f',
-  FOOD_ASSISTANCE: '#40916c',
-  EDUCATION_SUPPORT: '#52b788',
-  MEDICAL_HELP: '#74c69d',
-  SHELTER: '#95d5b2',
-  CLOTHING: '#b7e4c7',
-  LEGAL_PROTECTION: '#0f766e',
-  LIVELIHOOD_EMPLOYMENT: '#0369a1',
-  DISABILITY_SUPPORT: '#4b5563',
-  EMERGENCY_DISASTER: '#b91c1c',
-  OTHER: '#d8f3dc',
-}
-
-function maskUserId(id: string | undefined, anonymous: boolean): string {
-  if (anonymous || !id) return 'Anonymous'
-  if (id.length <= 8) return `${id.slice(0, 4)}****`
-  return `${id.slice(0, 4)}****${id.slice(-4)}`
+interface CaseStats {
+  active: number
+  pending: number
+  completed: number
+  followUp: number
 }
 
 export function SocialWorkerDashboard() {
   const { user } = useAuth()
-  const userId = user?.userId ?? ''
-  const [requests, setRequests] = useState<HelpRequestDTO[]>([])
+
+  const [caseStats, setCaseStats] = useState<CaseStats | null>(null)
+  const [recentRequests, setRecentRequests] = useState<HelpRequestDTO[]>([])
   const [followUps, setFollowUps] = useState<FollowUpDTO[]>([])
-  const [notifications, setNotifications] = useState<{ id: string; title?: string; message?: string; read: boolean; actionUrl?: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics'>('overview')
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false)
-      return
+    let isMounted = true
+
+    const loadData = async () => {
+      if (!user?.userId) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        const [assignedRequests, followUps] = await Promise.all([
+          getAssignedRequests(user.userId),
+          getMyFollowUps(),
+        ])
+
+        if (!isMounted) return
+
+        const active = assignedRequests.filter(
+          (r) => r.status === 'ASSIGNED' || r.status === 'IN_PROGRESS'
+        ).length
+        const pending = assignedRequests.filter(
+          (r) => r.status === 'REQUESTED' || r.status === 'UNDER_REVIEW'
+        ).length
+        const completed = assignedRequests.filter((r) => r.status === 'COMPLETED').length
+
+        setCaseStats({
+          active,
+          pending,
+          completed,
+          followUp: followUps.length,
+        })
+
+        // Show latest assigned requests (up to 5)
+        const sortedRequests = [...assignedRequests].sort((a, b) => {
+          const aDate = a.requestDate ? new Date(a.requestDate).getTime() : 0
+          const bDate = b.requestDate ? new Date(b.requestDate).getTime() : 0
+          return bDate - aDate
+        })
+
+        setRecentRequests(sortedRequests.slice(0, 5))
+
+        // Upcoming follow-ups (sorted by scheduled date)
+        const sortedFollowUps = [...followUps].sort((a, b) => {
+          const aDate = a.scheduledDate ? new Date(a.scheduledDate).getTime() : 0
+          const bDate = b.scheduledDate ? new Date(b.scheduledDate).getTime() : 0
+          return aDate - bDate
+        })
+
+        setFollowUps(sortedFollowUps)
+        setError(null)
+      } catch (err) {
+        console.error('Failed to load social worker dashboard data', err)
+        setError((err as Error).message)
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
     }
-    Promise.all([
-      getAssignedRequests(userId),
-      getMyFollowUps(),
-      getOffersByWorker(userId),
-      getNotifications().catch(() => []),
-    ])
-      .then(([reqs, follow, offers, notifs]) => {
-        setRequests(reqs)
-        setFollowUps(follow)
-        setNotifications(Array.isArray(notifs) ? notifs : [])
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
-      .finally(() => setLoading(false))
-  }, [userId])
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center py-5">
-        <Spinner animation="border" style={{ color: '#2d6a4f' }} />
-      </div>
-    )
-  }
+    loadData()
 
-  if (error) {
-    return (
-      <div className="alert alert-danger">
-        {error}
-      </div>
-    )
-  }
+    return () => {
+      isMounted = false
+    }
+  }, [user?.userId])
 
-  // Analytics metrics
-  const totalAssigned = requests.length
-  const pendingAcceptance = requests.filter((r) => r.status === 'ASSIGNED').length
-  const activeRequests = requests.filter((r) => r.status === 'IN_PROGRESS').length
-  const completedRequests = requests.filter((r) => r.status === 'COMPLETED').length
-  const rejectedRequests = requests.filter((r) => r.status === 'REJECTED').length
-  const completionRate = totalAssigned > 0 ? Math.round((completedRequests / totalAssigned) * 100) : 0
-
-  // Status distribution for bar chart
-  const statusData = [
-    { status: 'Assigned', count: requests.filter((r) => r.status === 'ASSIGNED').length, color: CHART_COLORS.ASSIGNED },
-    { status: 'In Progress', count: requests.filter((r) => r.status === 'IN_PROGRESS').length, color: CHART_COLORS.IN_PROGRESS },
-    { status: 'Completed', count: requests.filter((r) => r.status === 'COMPLETED').length, color: CHART_COLORS.COMPLETED },
-    { status: 'Closed/Rejected', count: requests.filter((r) => r.status === 'REJECTED' || r.status === 'CANCELLED').length, color: CHART_COLORS.REJECTED },
-  ]
-
-  // Line chart: requests by month
-  const requestsByMonth = requests.reduce<Record<string, number>>((acc, r) => {
-    const d = r.requestDate ? new Date(r.requestDate) : new Date()
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    acc[key] = (acc[key] || 0) + 1
-    return acc
-  }, {})
-  const lineData = Object.entries(requestsByMonth)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-6)
-    .map(([month, count]) => ({ month: month.replace('-', '/'), count }))
-
-  // Helper for empty data visualization
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 border border-light shadow-sm rounded">
-          <p className="mb-0 small fw-bold">{label}</p>
-          <p className="mb-0 small" style={{ color: payload[0].color }}>
-            {`${payload[0].name}: ${payload[0].value}`}
-          </p>
+  const StatCard = ({
+    label,
+    value,
+    icon,
+    color,
+  }: {
+    label: string
+    value: number
+    icon: string
+    color: string
+  }) => (
+    <Card className="sw-stat-card border-0 h-100">
+      <Card.Body className="d-flex align-items-center justify-content-between">
+        <div>
+          <p className="text-muted small fw-600 mb-1">{label}</p>
+          <h3 className="mb-0 fw-700" style={{ color }}>
+            {value}
+          </h3>
         </div>
-      )
+        <div className="stat-icon" style={{ fontSize: '2.5rem' }}>
+          {icon}
+        </div>
+      </Card.Body>
+    </Card>
+  )
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High':
+        return 'danger'
+      case 'Medium':
+        return 'warning'
+      case 'Low':
+        return 'success'
+      default:
+        return 'secondary'
     }
-    return null
   }
 
-  // Pie chart: service package distribution
-  const typeDistribution = Object.entries(HELP_TYPE_LABELS).map(([k, v]) => ({
-    type: v,
-    key: k,
-    count: requests.filter((r) => r.helpType === k).length,
-    color: (PIE_COLORS as Record<string, string>)[k] || '#6b7280'
-  })).filter((d) => d.count > 0)
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active':
+        return 'success'
+      case 'Pending':
+        return 'warning'
+      case 'In Progress':
+        return 'info'
+      case 'Completed':
+        return 'secondary'
+      default:
+        return 'light'
+    }
+  }
 
-  const statCards = [
-    { title: 'Total Assigned', value: totalAssigned, sub: 'Help requests assigned to you', color: '#2d6a4f', icon: '📋' },
-    { title: 'Active Requests', value: activeRequests, sub: 'Currently in progress', color: '#40916c', icon: '🔄' },
-    { title: 'Completed', value: completedRequests, sub: 'Resolved or closed', color: '#22c55e', icon: '✅' },
-    { title: 'Pending Acceptance', value: pendingAcceptance, sub: 'Awaiting your acceptance', color: '#f59e0b', icon: '⏳' },
-    { title: 'Rejected Packages', value: rejectedRequests, sub: 'Service packages declined', color: '#ef4444', icon: '❌' },
-  ]
+  const formatDateTime = (iso?: string) => {
+    if (!iso) return ''
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleString()
+  }
 
-  const alerts = [
-    ...notifications.filter((n) => !n.read).slice(0, 5).map((n) => ({
-      type: 'info' as const,
-      title: n.title || 'Notification',
-      message: n.message,
-      link: n.actionUrl,
-    })),
-    ...requests.filter((r) => r.status === 'ASSIGNED').slice(0, 2).map((r) => ({
-      type: 'assignment' as const,
-      title: 'New Assignment',
-      message: `${r.trackingId || r.id?.slice(0, 8)} - Accept or decline`,
-      link: `/social-worker/requests/${r.id}`,
-    })),
-  ]
+  const getOverdueByText = (iso?: string) => {
+    if (!iso) return ''
+    const dueDate = new Date(iso)
+    if (Number.isNaN(dueDate.getTime())) return ''
+    const now = new Date()
+    const diffMs = now.getTime() - dueDate.getTime()
+    if (diffMs <= 0) return ''
+    const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)))
+    return `Overdue by ${days} day${days > 1 ? 's' : ''}`
+  }
+
+  const getTaskStatusVariant = (status?: string) => {
+    switch (status) {
+      case 'URGENT':
+      case 'MISSED':
+        return 'danger'
+      case 'UPCOMING':
+      case 'SCHEDULED':
+      case 'CONFIRMED':
+        return 'success'
+      default:
+        return 'secondary'
+    }
+  }
+
+  const totalAssignedRequests =
+    (caseStats?.active ?? 0) + (caseStats?.pending ?? 0) + (caseStats?.completed ?? 0)
+
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+
+  const overdueFollowUps = followUps.filter((task) => {
+    if (!task.scheduledDate) return false
+    const date = new Date(task.scheduledDate)
+    if (Number.isNaN(date.getTime())) return false
+    const isCompleted = task.status === 'COMPLETED' || task.status === 'DONE'
+    return !isCompleted && date < startOfToday
+  })
+
+  const todaysFollowUps = followUps.filter((task) => {
+    if (!task.scheduledDate) return false
+    const date = new Date(task.scheduledDate)
+    if (Number.isNaN(date.getTime())) return false
+    return date >= startOfToday && date < endOfToday
+  })
+
+  const overdueFollowUpsCount = overdueFollowUps.length
+  const todaysFollowUpsCount = todaysFollowUps.length
+
+  const pendingFeedbackCount = 0 // TODO: Integrate with real feedback data when available
 
   return (
-    <div className="animate-fade-in-up">
-      <div className="mb-4">
-        <h1 className="h3 fw-bold text-dark mb-1">Care & Support Dashboard</h1>
-        <p className="text-muted mb-0">
-          Manage assigned help requests, deliver services, and track performance.
-        </p>
-      </div>
+    <Container fluid className="py-4 sw-dashboard">
+      {error && (
+        <Row className="mb-3">
+          <Col xs={12}>
+            <div className="alert alert-danger mb-0 small">{error}</div>
+          </Col>
+        </Row>
+      )}
+      {/* Header Section */}
+      <Row className="mb-5">
+        <Col xs={12}>
+          <div className="sw-dashboard-header mb-4">
+            <h1 className="h2 fw-700 mb-1">Welcome back! 👋</h1>
+            <p className="text-muted mb-0">
+              Here's your dashboard overview. Stay on top of your assigned cases and upcoming tasks.
+            </p>
+          </div>
+        </Col>
+      </Row>
 
-      <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab((k as 'overview' | 'analytics') || 'overview')} className="mb-4">
-        <Tab eventKey="overview" title="📊 Overview">
-          <Row className="g-3 mb-4">
-            {statCards.map((card) => (
-              <Col key={card.title} xs={12} sm={6} lg={4} xl>
-                <Card className="border-0 shadow-sm rounded-3 h-100 sw-stat-card">
-                  <Card.Body className="d-flex align-items-center gap-3">
-                    <div
-                      className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                      style={{ width: 48, height: 48, backgroundColor: `${card.color}18` }}
-                    >
-                      <span className="fs-4">{card.icon}</span>
-                    </div>
-                    <div className="flex-grow-1 min-w-0">
-                      <div className="text-muted small">{card.title}</div>
-                      <div className="fw-bold fs-4" style={{ color: card.color }}>{card.value}</div>
-                      <div className="text-muted small">{card.sub}</div>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+      {/* Statistics Cards */}
+      <Row className="mb-5 g-3">
+        <Col xs={12} sm={6} lg={3}>
+          <StatCard
+            label="Total Assigned Requests"
+            value={totalAssignedRequests}
+            icon="📂"
+            color="var(--sw-primary-blue)"
+          />
+        </Col>
+        <Col xs={12} sm={6} lg={3}>
+          <StatCard
+            label="Overdue Follow-ups"
+            value={overdueFollowUpsCount}
+            icon="⚠️"
+            color="#ef4444"
+          />
+        </Col>
+        <Col xs={12} sm={6} lg={3}>
+          <StatCard
+            label="Today’s Scheduled Follow-ups"
+            value={todaysFollowUpsCount}
+            icon="📅"
+            color="#10b981"
+          />
+        </Col>
+        <Col xs={12} sm={6} lg={3}>
+          <StatCard
+            label="Pending Feedback"
+            value={pendingFeedbackCount}
+            icon="⭐"
+            color="#f59e0b"
+          />
+        </Col>
+      </Row>
 
-          <Card className="border-0 shadow-sm rounded-3 mb-4">
-            <Card.Header className="bg-white border-0 pt-3">
-              <h5 className="mb-0">Completion Rate</h5>
+      {/* Overdue Cases & Today's Schedule */}
+      <Row className="g-4 mb-5">
+        {/* Overdue Cases Panel */}
+        <Col xs={12} lg={7}>
+          <Card className="sw-card border-0 h-100">
+            <Card.Header className="bg-white border-0 pt-4 pb-3">
+              <h5 className="mb-0 fw-700">Overdue Follow-ups</h5>
             </Card.Header>
-            <Card.Body>
-              <div className="d-flex align-items-center gap-3">
-                <div className="flex-grow-1">
-                  <div className="progress" style={{ height: 20, borderRadius: 10 }}>
-                    <div
-                      className="progress-bar"
-                      style={{ width: `${completionRate}%`, backgroundColor: '#2d6a4f' }}
-                    />
-                  </div>
+            <Card.Body className="p-0">
+              {loading && followUps.length === 0 ? (
+                <div className="p-5 text-center text-muted">
+                  <p className="mb-0">Loading overdue follow-ups...</p>
                 </div>
-                <span className="fw-bold" style={{ color: '#2d6a4f', minWidth: 60 }}>{completionRate}%</span>
-              </div>
-              <p className="text-muted small mb-0 mt-2">Completed requests out of total assigned</p>
+              ) : overdueFollowUps.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0">
+                    <thead className="border-top">
+                      <tr className="text-muted small">
+                        <th className="px-4 py-3">Request / Follow-up</th>
+                        <th className="py-3">Child / User</th>
+                        <th className="py-3">Type</th>
+                        <th className="py-3">Due Date</th>
+                        <th className="py-3 text-center">Status</th>
+                        <th className="py-3 text-end pe-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {overdueFollowUps.map((task) => (
+                        <tr
+                          key={task.id}
+                          className="border-bottom"
+                          style={{ backgroundColor: 'rgba(248, 113, 113, 0.04)' }}
+                        >
+                          <td className="px-4 py-3 small">
+                            <div className="fw-600">#{task.helpRequestId ?? task.id}</div>
+                            <div className="text-danger small">{getOverdueByText(task.scheduledDate)}</div>
+                          </td>
+                          <td className="py-3 small">
+                            {task.childName || 'Public user'}
+                          </td>
+                          <td className="py-3 small">
+                            {task.type || 'Follow-up'}
+                          </td>
+                          <td className="py-3 small">
+                            {formatDateTime(task.scheduledDate) || 'Not set'}
+                          </td>
+                          <td className="py-3 text-center">
+                            <Badge bg={getTaskStatusVariant(task.status)}>
+                              {task.status || 'URGENT'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-end pe-4">
+                            <div className="d-flex justify-content-end gap-2">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-primary rounded-pill"
+                              >
+                                View case
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger rounded-pill"
+                              >
+                                Send reminder
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-5 text-center text-muted">
+                  <p className="mb-0">No overdue follow-ups 🎉</p>
+                </div>
+              )}
             </Card.Body>
           </Card>
+        </Col>
 
-          {alerts.length > 0 && (
-            <Card className="border-0 shadow-sm rounded-3 mb-4 border-start border-4" style={{ borderLeftColor: '#2d6a4f' }}>
-              <Card.Header className="bg-white border-0 pt-3">
-                <h5 className="mb-0">Alerts & Notifications</h5>
-              </Card.Header>
-              <Card.Body className="py-2">
-                {alerts.map((a, i) => (
-                  <div key={i} className="d-flex align-items-center gap-2 p-2 rounded bg-light mb-2">
-                    <span className="badge" style={{ backgroundColor: a.type === 'assignment' ? '#2d6a4f' : '#6b7280' }}>
-                      {a.type === 'assignment' ? 'New' : 'Info'}
-                    </span>
-                    <div className="flex-grow-1">
-                      <strong className="small">{a.title}</strong>
-                      <p className="mb-0 text-muted small">{a.message}</p>
-                    </div>
-                    {a.link && (
-                      <Link to={a.link || '#'} className="btn btn-sm sw-btn-primary">View</Link>
-                    )}
-                  </div>
-                ))}
-              </Card.Body>
-            </Card>
-          )}
-
-          <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="mb-0 fw-bold">My Assigned Requests</h5>
-              <Link to="/social-worker/requests" className="btn btn-sm sw-btn-primary">View All</Link>
-            </div>
-            <SmartRequestTable requests={requests} maskUserId={maskUserId} />
-          </div>
-        </Tab>
-
-        <Tab eventKey="analytics" title="📈 Analytics">
-          <div className="mb-4">
-            <h5 className="fw-bold mb-2">Analytics & Performance Overview</h5>
-            <p className="text-muted small mb-0">Visual charts for your workload and service distribution</p>
-          </div>
-
-          <Row className="g-4 mb-4">
-            {statCards.map((card) => (
-              <Col key={card.title} xs={6} md={4} lg={2}>
-                <Card className="border-0 shadow-sm h-100">
-                  <Card.Body className="text-center py-3">
-                    <div className="text-muted small">{card.title}</div>
-                    <div className="fw-bold fs-4" style={{ color: card.color }}>{card.value}</div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-
-          <Row className="g-4 mb-4">
-            <Col lg={6}>
-              <Card className="border-0 shadow-sm rounded-3 h-100">
-                <Card.Header className="bg-white border-0 pt-3">
-                  <h5 className="mb-0">Requests by Status</h5>
-                  <p className="text-muted small mb-0">Bar Chart</p>
-                </Card.Header>
-                <Card.Body style={{ minHeight: 300 }}>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={statusData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="count" name="Requests" radius={[4, 4, 0, 0]}>
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col lg={6}>
-              <Card className="border-0 shadow-sm rounded-3 h-100">
-                <Card.Header className="bg-white border-0 pt-3">
-                  <h5 className="mb-0">Requests Handled Over Time</h5>
-                  <p className="text-muted small mb-0">Line Chart</p>
-                </Card.Header>
-                <Card.Body style={{ minHeight: 300 }}>
-                  {lineData.length === 0 ? (
-                    <div className="d-flex align-items-center justify-content-center h-100 text-muted">
-                      No data available
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={lineData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                        <YAxis allowDecimals={false} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Line
-                          type="monotone"
-                          dataKey="count"
-                          name="Requests"
-                          stroke="#2d6a4f"
-                          strokeWidth={3}
-                          dot={{ fill: '#2d6a4f', r: 4 }}
-                          activeDot={{ r: 6 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row className="g-4 mb-4">
-            <Col lg={6}>
-              <Card className="border-0 shadow-sm rounded-3 h-100">
-                <Card.Header className="bg-white border-0 pt-3">
-                  <h5 className="mb-0">Service Package Distribution</h5>
-                  <p className="text-muted small mb-0">By Type</p>
-                </Card.Header>
-                <Card.Body style={{ minHeight: 300 }}>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={typeDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="count"
-                        nameKey="type"
-                      >
-                        {typeDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="d-flex flex-wrap justify-content-center gap-3 mt-3">
-                    {typeDistribution.map((entry, index) => (
-                      <div key={index} className="d-flex align-items-center gap-1">
-                        <div style={{ width: 10, height: 10, backgroundColor: entry.color, borderRadius: '50%' }} />
-                        <span className="small text-muted">{entry.type}</span>
+        {/* Today's Schedule Panel */}
+        <Col xs={12} lg={5}>
+          <Card className="sw-card border-0 h-100">
+            <Card.Header className="bg-white border-0 pt-4 pb-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0 fw-700">Today&apos;s Schedule</h5>
+                <div className="small text-success d-flex align-items-center gap-2">
+                  <span>📅</span>
+                  <span>Today</span>
+                </div>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              {loading && followUps.length === 0 ? (
+                <div className="p-5 text-center text-muted">
+                  <p className="mb-0">Loading today&apos;s schedule...</p>
+                </div>
+              ) : todaysFollowUps.length > 0 ? (
+                <div className="d-flex flex-column gap-3">
+                  {todaysFollowUps.map((task) => (
+                    <div
+                      key={task.id}
+                      className="p-3 rounded-2 border border-light bg-light bg-opacity-50 transition-all hover-lift"
+                    >
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <h6 className="mb-1 fw-600 text-dark">
+                            {task.type || 'Follow-up'}
+                            {task.childName ? ` • ${task.childName}` : ''}
+                          </h6>
+                          <p className="mb-1 text-muted small d-flex align-items-center gap-2">
+                            <span>🕒</span>
+                            {formatDateTime(task.scheduledDate) || 'Not scheduled'}
+                          </p>
+                        </div>
+                        <Badge bg={getTaskStatusVariant(task.status)} className="ms-2">
+                          {task.status || 'SCHEDULED'}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col lg={6}>
-              <Card className="border-0 shadow-sm rounded-3 h-100">
-                <Card.Header className="bg-white border-0 pt-3">
-                  <h5 className="mb-0">Completion Rate</h5>
-                  <p className="text-muted small mb-0">Progress Indicator</p>
-                </Card.Header>
-                <Card.Body className="d-flex flex-column justify-content-center align-items-center">
-                  <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: 200, height: 200 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Completed', value: completionRate, color: '#2d6a4f' },
-                            { name: 'Remaining', value: 100 - completionRate, color: '#e5e7eb' }
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          startAngle={90}
-                          endAngle={-270}
-                          innerRadius={80}
-                          outerRadius={90}
-                          dataKey="value"
-                          stroke="none"
+                      <div className="d-flex flex-wrap gap-2 mt-2">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-success rounded-pill"
                         >
-                          <Cell key="completed" fill="#2d6a4f" />
-                          <Cell key="remaining" fill="#e5e7eb" />
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="position-absolute d-flex flex-column align-items-center">
-                      <span className="display-4 fw-bold" style={{ color: '#2d6a4f' }}>{completionRate}%</span>
-                      <span className="small text-muted">Success Rate</span>
+                          Mark as completed
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary rounded-pill"
+                        >
+                          Reschedule
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary rounded-pill"
+                        >
+                          Send message
+                        </button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-5 text-center text-muted">
+                  <p className="mb-0">No follow-ups scheduled for today</p>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row className="g-4 mb-5">
+        {/* Recent Requests */}
+        <Col xs={12}>
+          <Card className="sw-card border-0 h-100">
+            <Card.Header className="bg-white border-0 pt-4 pb-3">
+              <h5 className="mb-0 fw-700">Recent Requests</h5>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading && recentRequests.length === 0 ? (
+                <div className="p-5 text-center text-muted">
+                  <p className="mb-0">Loading recent requests...</p>
+                </div>
+              ) : recentRequests.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0">
+                    <thead className="border-top">
+                      <tr className="text-muted small">
+                        <th className="px-4 py-3">Requester / ID</th>
+                        <th className="py-3">Type</th>
+                        <th className="py-3">Status</th>
+                        <th className="py-3 text-center">Priority</th>
+                        <th className="py-3 text-end pe-4">Requested At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentRequests.map((req) => (
+                        <tr key={req.id} className="border-bottom">
+                          <td className="px-4 py-3">
+                            <div className="fw-600">
+                              {req.requesterName || 'Anonymous Requester'}
+                            </div>
+                            <div className="text-muted small">#{req.trackingId ?? req.id}</div>
+                          </td>
+                          <td className="py-3 small">{req.helpType ?? 'Support Request'}</td>
+                          <td className="py-3">
+                            <Badge bg={getStatusColor(req.status ?? '')}>
+                              {req.status ?? 'UNKNOWN'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-center">
+                            <Badge bg={getPriorityColor(req.priority ?? '')}>
+                              {req.priority ?? 'MEDIUM'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-end pe-4 text-muted small">
+                            {formatDateTime(req.requestDate)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-5 text-center text-muted">
+                  <p className="mb-0">No recent requests</p>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Quick Actions / Shortcuts */}
+      <Row className="g-3 mb-5">
+        <Col xs={12} md={6} lg={4}>
+          <Card className="sw-quick-action-card h-100 cursor-pointer">
+            <Card.Body className="d-flex align-items-center justify-content-between p-3">
+              <div>
+                <h6 className="card-title mb-1 fw-600">Create Service Package</h6>
+                <p className="text-muted small mb-0">
+                  Bundle support options for a vulnerable child.
+                </p>
+              </div>
+              <div className="quick-action-icon fs-2">📦</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col xs={12} md={6} lg={4}>
+          <Card className="sw-quick-action-card h-100 cursor-pointer">
+            <Card.Body className="d-flex align-items-center justify-content-between p-3">
+              <div>
+                <h6 className="card-title mb-1 fw-600">View All Cases</h6>
+                <p className="text-muted small mb-0">
+                  Browse and filter all assigned and historical cases.
+                </p>
+              </div>
+              <div className="quick-action-icon fs-2">📁</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col xs={12} md={6} lg={4}>
+          <Card className="sw-quick-action-card h-100 cursor-pointer">
+            <Card.Body className="d-flex align-items-center justify-content-between p-3">
+              <div>
+                <h6 className="card-title mb-1 fw-600">View Resources</h6>
+                <p className="text-muted small mb-0">
+                  Access shelters, counselors, and community partners.
+                </p>
+              </div>
+              <div className="quick-action-icon fs-2">🗂️</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col xs={12} md={6} lg={4}>
+          <Card className="sw-quick-action-card h-100 cursor-pointer">
+            <Card.Body className="d-flex align-items-center justify-content-between p-3">
+              <div>
+                <h6 className="card-title mb-1 fw-600">Send Message</h6>
+                <p className="text-muted small mb-0">
+                  Quickly reach out to a family or resource person.
+                </p>
+              </div>
+              <div className="quick-action-icon fs-2">💬</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col xs={12} md={6} lg={4}>
+          <Card className="sw-quick-action-card h-100 cursor-pointer">
+            <Card.Body className="d-flex align-items-center justify-content-between p-3">
+              <div>
+                <h6 className="card-title mb-1 fw-600">Request Escalation</h6>
+                <p className="text-muted small mb-0">
+                  Flag complex cases for supervisor or legal review.
+                </p>
+              </div>
+              <div className="quick-action-icon fs-2">⚠️</div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Workload Progress */}
+      <Row>
+        <Col xs={12}>
+          <Card className="sw-card border-0">
+            <Card.Header className="bg-white border-0 pt-4 pb-3">
+              <h5 className="mb-0 fw-700">Case Workload Progress</h5>
+            </Card.Header>
+            <Card.Body>
+              <Row className="g-4">
+                <Col xs={12} sm={6} lg={3}>
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="small fw-600 text-dark">
+                        Active Cases
+                      </span>
+                      <span className="text-muted small">
+                        {caseStats?.active ?? 0}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      now={
+                        caseStats && caseStats.active > 0
+                          ? (caseStats.active / caseStats.active) * 100
+                          : 0
+                      }
+                      className="sw-progress-bar"
+                      style={{ height: '8px' }}
+                    />
                   </div>
-                  <p className="text-muted small text-center mt-3 mb-0">
-                    {completedRequests} of {totalAssigned} requests completed successfully
-                  </p>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </Tab>
-      </Tabs>
-    </div>
+                </Col>
+                <Col xs={12} sm={6} lg={3}>
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="small fw-600 text-dark">
+                        Follow-ups
+                      </span>
+                      <span className="text-muted small">
+                        {caseStats?.followUp ?? 0}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      now={
+                        caseStats && caseStats.followUp > 0
+                          ? (caseStats.followUp / caseStats.followUp) * 100
+                          : 0
+                      }
+                      variant="success"
+                      className="sw-progress-bar"
+                      style={{ height: '8px' }}
+                    />
+                  </div>
+                </Col>
+                <Col xs={12} sm={6} lg={3}>
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="small fw-600 text-dark">
+                        Monthly Target
+                      </span>
+                      <span className="text-muted small">68%</span>
+                    </div>
+                    <ProgressBar
+                      now={68}
+                      className="sw-progress-bar"
+                      style={{ height: '8px' }}
+                    />
+                  </div>
+                </Col>
+                <Col xs={12} sm={6} lg={3}>
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="small fw-600 text-dark">
+                        Team Capacity
+                      </span>
+                      <span className="text-muted small">45%</span>
+                    </div>
+                    <ProgressBar
+                      now={45}
+                      variant="info"
+                      className="sw-progress-bar"
+                      style={{ height: '8px' }}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Footer / Helpful Info */}
+      <Row className="mt-4">
+        <Col xs={12}>
+          <footer className="text-center text-muted small py-3">
+            <div className="mb-1">
+              <strong>Emergency contacts:</strong> 119 &nbsp;|&nbsp; 1929 &nbsp;|&nbsp; Local Child
+              Protection Unit
+            </div>
+            <div className="mb-1">
+              <a href="/resources" className="text-decoration-none me-3">
+                View resources
+              </a>
+              <a href="/help" className="text-decoration-none">
+                Get support
+              </a>
+            </div>
+            <div>
+              &copy; {new Date().getFullYear()} Child Protection &amp; Support Portal
+            </div>
+          </footer>
+        </Col>
+      </Row>
+    </Container>
   )
 }

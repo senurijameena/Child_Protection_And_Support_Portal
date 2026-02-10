@@ -1,0 +1,346 @@
+/* ================================================
+   Social Worker Dashboard - Cards & Widgets
+   Color Palette: Soft Blue, Light Green, White
+   ================================================ */
+
+.sw-dashboard {
+  background: linear-gradient(135deg, #f9fafb 0%, #f0f9ff 100%);
+  min-height: calc(100vh - 80px);
+  padding: 2rem 1rem;
+}
+
+/* Dashboard Header */
+.sw-dashboard-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  padding: 2rem;
+  border-radius: 16px;
+  border-left: 4px solid var(--sw-primary-blue);
+  box-shadow: var(--sw-shadow-sm);
+}
+
+.sw-dashboard-header h1 {
+  color: var(--sw-text-dark);
+  background: linear-gradient(135deg, var(--sw-primary-blue), var(--sw-primary-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Stat Cards */
+.sw-stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 1px solid var(--sw-border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--sw-shadow-sm);
+}
+
+.sw-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sw-shadow-md);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.sw-stat-card .stat-icon {
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.sw-stat-card:hover .stat-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Quick Action Cards */
+.sw-quick-action-card {
+  background: linear-gradient(135deg, #ffffff 0%, var(--sw-pale-blue) 100%);
+  border: 1px solid var(--sw-border-color);
+  border-radius: 12px;
+  box-shadow: var(--sw-shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.sw-quick-action-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--sw-shadow-md);
+  border-color: var(--sw-primary-blue);
+  background: linear-gradient(135deg, #ffffff 0%, var(--sw-light-blue) 100%);
+}
+
+.sw-quick-action-card .quick-action-icon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+}
+
+.sw-quick-action-card:hover .quick-action-icon {
+  transform: scale(1.15) rotate(5deg);
+  filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.3));
+}
+
+.sw-quick-action-card .card-title {
+  color: var(--sw-text-dark);
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.sw-quick-action-card:hover .card-title {
+  color: var(--sw-primary-blue);
+}
+
+/* General Card Styles */
+.sw-card {
+  background: white;
+  border: 1px solid var(--sw-border-color);
+  border-radius: 12px;
+  box-shadow: var(--sw-shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.sw-card:hover {
+  box-shadow: var(--sw-shadow-md);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.sw-card .card-header {
+  background: linear-gradient(135deg, var(--sw-light-blue) 0%, var(--sw-pale-green) 100%);
+  border-bottom: 1px solid var(--sw-border-color);
+  padding: 1.5rem !important;
+}
+
+.sw-card .card-header h5 {
+  color: var(--sw-text-dark);
+  margin: 0;
+}
+
+.sw-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Table Styles */
+.sw-card .table {
+  margin-bottom: 0;
+}
+
+.sw-card .table thead tr {
+  background-color: var(--sw-bg-light);
+  border-bottom: 2px solid var(--sw-border-color);
+}
+
+.sw-card .table thead th {
+  border-bottom: none;
+  color: var(--sw-text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sw-card .table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.sw-card .table tbody tr:hover {
+  background-color: var(--sw-pale-blue);
+}
+
+.sw-card .table tbody td {
+  border-bottom-color: var(--sw-border-color);
+  color: var(--sw-text-dark);
+}
+
+/* Progress Bar */
+.sw-progress-bar {
+  background-color: var(--sw-light-blue);
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px;
+}
+
+.sw-progress-bar .progress-bar {
+  background: linear-gradient(90deg, var(--sw-primary-blue), var(--sw-primary-green));
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.sw-progress-bar.bg-success .progress-bar {
+  background: linear-gradient(90deg, var(--sw-primary-green), #34d399);
+}
+
+.sw-progress-bar.bg-info .progress-bar {
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Badge Styling */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+  .sw-dashboard {
+    padding: 1.5rem 1rem;
+  }
+
+  .sw-dashboard-header {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .sw-dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .sw-dashboard {
+    padding: 1rem;
+  }
+
+  .sw-dashboard-header {
+    padding: 1rem;
+  }
+
+  .sw-dashboard-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .sw-card .card-header {
+    padding: 1rem !important;
+  }
+
+  .sw-card .card-body {
+    padding: 1rem;
+  }
+
+  .sw-card .table {
+    font-size: 0.85rem;
+  }
+
+  .sw-card .table th,
+  .sw-card .table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sw-dashboard > * {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.sw-dashboard > :nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.sw-dashboard > :nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.sw-dashboard > :nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.sw-dashboard > :nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.sw-dashboard > :nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+/* Cursor Pointer */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Smooth Transitions */
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .sw-dashboard {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  }
+
+  .sw-dashboard-header {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  }
+
+  .sw-dashboard-header h1 {
+    color: #f3f4f6;
+  }
+
+  .sw-stat-card,
+  .sw-quick-action-card,
+  .sw-card {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+
+  .sw-card .card-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+    border-bottom-color: #4b5563;
+  }
+
+  .sw-card .table thead tr {
+    background-color: #1f2937;
+  }
+
+  .sw-card .table tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  .sw-card .table tbody td {
+    color: #d1d5db;
+  }
+
+  .sw-stat-card h3 {
+    color: #f3f4f6 !important;
+  }
+
+  .sw-progress-bar {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sw-dashboard {
+    background: white;
+  }
+
+  .sw-stat-card,
+  .sw-quick-action-card,
+  .sw-card {
+    page-break-inside: avoid;
+  }
+}

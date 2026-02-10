@@ -49,15 +49,19 @@ import { PoliceMessagesPage } from './pages/police/PoliceMessagesPage'
 import { PoliceReportsPage } from './pages/police/PoliceReportsPage'
 import { PoliceProfilePage } from './pages/police/PoliceProfilePage'
 import { SocialWorkerDashboard } from './pages/social-worker/SocialWorkerDashboard'
-import { SocialWorkerRequestsPage } from './pages/social-worker/SocialWorkerRequestsPage'
-import { SocialWorkerRequestDetailsPage } from './pages/social-worker/SocialWorkerRequestDetailsPage'
-import { SocialWorkerMessagesPage } from './pages/social-worker/SocialWorkerMessagesPage'
-import { SocialWorkerPackagesPage } from './pages/social-worker/SocialWorkerPackagesPage'
-import { SocialWorkerReportsPage } from './pages/social-worker/SocialWorkerReportsPage'
-import { SocialWorkerProfilePage } from './pages/social-worker/SocialWorkerProfilePage'
-import { SocialWorkerCalendarPage } from './pages/social-worker/SocialWorkerCalendarPage'
-import { SocialWorkerLibraryPage } from './pages/social-worker/SocialWorkerLibraryPage'
-import { SocialWorkerTransfersPage } from './pages/social-worker/SocialWorkerTransfersPage'
+import {
+  SocialWorkerRequestsPage,
+  SocialWorkerRequestDetailsPage,
+  SocialWorkerCalendarPage,
+  SocialWorkerFollowUpsPage,
+  SocialWorkerMessagesPage,
+  SocialWorkerLibraryPage,
+  SocialWorkerTransfersPage,
+  SocialWorkerPackagesPage,
+  SocialWorkerReportsPage,
+  SocialWorkerProfilePage,
+} from './pages/social-worker/SocialWorkerPages'
+
 
 function App() {
   return (
@@ -166,6 +170,7 @@ function App() {
         <Route path="requests" element={<SocialWorkerRequestsPage />} />
         <Route path="requests/:requestId" element={<SocialWorkerRequestDetailsPage />} />
         <Route path="calendar" element={<SocialWorkerCalendarPage />} />
+        <Route path="follow-ups" element={<SocialWorkerFollowUpsPage />} />
         <Route path="messages" element={<SocialWorkerMessagesPage />} />
         <Route path="library" element={<SocialWorkerLibraryPage />} />
         <Route path="transfers" element={<SocialWorkerTransfersPage />} />

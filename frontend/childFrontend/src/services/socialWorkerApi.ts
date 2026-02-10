@@ -173,10 +173,35 @@ export async function markNotificationRead(id: string) {
 
 // User profile (shared across roles)
 export async function getUserProfile(userId: string) {
-  return apiGet<{ id: string; fullName?: string; email?: string; phone?: string; profilePhoto?: string }>(`/user/profile/${userId}`)
+  return apiGet<{
+    id: string
+    fullName?: string
+    email?: string
+    phone?: string
+    address?: string
+    profilePhoto?: string
+    licenseNumber?: string
+    organization?: string
+    specializations?: string[]
+    yearsOfExperience?: string
+    certificationDocumentUrl?: string
+  }>(`/user/profile/${userId}`)
 }
 
-export async function updateUserProfile(userId: string, data: { fullName?: string; phone?: string }) {
+export async function updateUserProfile(
+  userId: string,
+  data: {
+    fullName?: string
+    email?: string
+    phone?: string
+    address?: string
+    licenseNumber?: string
+    organization?: string
+    specializations?: string[]
+    yearsOfExperience?: string
+    certificationDocumentUrl?: string
+  }
+) {
   return apiPut<{ success: boolean; user?: unknown }>(`/user/profile/${userId}`, data)
 }
 

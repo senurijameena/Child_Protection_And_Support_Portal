@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, Row, Col, Badge, Spinner, Table, Tab, Tabs } from 'react-bootstrap'
+import { Card, Row, Col, Spinner, Tab, Tabs } from 'react-bootstrap'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie
+} from 'recharts'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getAssignedRequests,
@@ -10,7 +24,8 @@ import {
 } from '../../services/socialWorkerApi'
 import type { HelpRequestDTO } from '../../types/dashboard'
 import type { FollowUpDTO } from '../../services/socialWorkerApi'
-import { REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
+import { HELP_TYPE_LABELS } from '../../types/dashboard'
+import { SmartRequestTable } from '../../components/social-worker/SmartRequestTable'
 
 // Chart colors
 const CHART_COLORS = {
@@ -117,26 +132,28 @@ export function SocialWorkerDashboard() {
     .slice(-6)
     .map(([month, count]) => ({ month: month.replace('-', '/'), count }))
 
-  const maxLineValue = Math.max(...lineData.map((d) => d.count), 1)
+  // Helper for empty data visualization
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border border-light shadow-sm rounded">
+          <p className="mb-0 small fw-bold">{label}</p>
+          <p className="mb-0 small" style={{ color: payload[0].color }}>
+            {`${payload[0].name}: ${payload[0].value}`}
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
 
   // Pie chart: service package distribution
   const typeDistribution = Object.entries(HELP_TYPE_LABELS).map(([k, v]) => ({
     type: v,
     key: k,
     count: requests.filter((r) => r.helpType === k).length,
+    color: (PIE_COLORS as Record<string, string>)[k] || '#6b7280'
   })).filter((d) => d.count > 0)
-
-  const totalPie = typeDistribution.reduce((s, d) => s + d.count, 0)
-  const pieGradient = typeDistribution.reduce<{ start: number; end: number; color: string }[]>((acc, d, i) => {
-    const prevEnd = acc.length > 0 ? acc[acc.length - 1].end : 0
-    const slice = totalPie > 0 ? (d.count / totalPie) * 360 : 0
-    acc.push({
-      start: prevEnd,
-      end: prevEnd + slice,
-      color: (PIE_COLORS as Record<string, string>)[d.key] || '#6b7280',
-    })
-    return acc
-  }, [])
 
   const statCards = [
     { title: 'Total Assigned', value: totalAssigned, sub: 'Help requests assigned to you', color: '#2d6a4f', icon: '📋' },
@@ -238,50 +255,13 @@ export function SocialWorkerDashboard() {
             </Card>
           )}
 
-          <Card className="border-0 shadow-sm rounded-3">
-            <Card.Header className="bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Recent Assigned Requests</h5>
+          <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="mb-0 fw-bold">My Assigned Requests</h5>
               <Link to="/social-worker/requests" className="btn btn-sm sw-btn-primary">View All</Link>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {requests.length === 0 ? (
-                <div className="p-5 text-muted text-center">No requests assigned yet.</div>
-              ) : (
-                <Table hover responsive className="mb-0">
-                  <thead>
-                    <tr>
-                      <th>Request ID</th>
-                      <th>Category</th>
-                      <th>Priority</th>
-                      <th>Status</th>
-                      <th>Assigned Date</th>
-                      <th>Requester</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requests.slice(0, 6).map((r) => (
-                      <tr key={r.id}>
-                        <td>
-                          <Link to={`/social-worker/requests/${r.id}`} className="text-decoration-none" style={{ color: '#2d6a4f' }}>
-                            {r.trackingId || r.id?.slice(0, 8)}
-                          </Link>
-                        </td>
-                        <td>{HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}</td>
-                        <td><Badge bg={r.priority === 'HIGH' ? 'danger' : 'secondary'}>{r.priority || 'MEDIUM'}</Badge></td>
-                        <td>
-                          <Badge bg={r.status === 'ASSIGNED' ? 'warning' : r.status === 'IN_PROGRESS' ? 'info' : 'success'}>
-                            {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}
-                          </Badge>
-                        </td>
-                        <td className="text-muted small">{r.requestDate ? new Date(r.requestDate).toLocaleDateString() : '-'}</td>
-                        <td>{maskUserId(r.requesterUserId, r.anonymous ? true : false)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-            </Card.Body>
-          </Card>
+            </div>
+            <SmartRequestTable requests={requests} maskUserId={maskUserId} />
+          </div>
         </Tab>
 
         <Tab eventKey="analytics" title="📈 Analytics">
@@ -310,28 +290,20 @@ export function SocialWorkerDashboard() {
                   <h5 className="mb-0">Requests by Status</h5>
                   <p className="text-muted small mb-0">Bar Chart</p>
                 </Card.Header>
-                <Card.Body>
-                  {statusData.every((d) => d.count === 0) ? (
-                    <div className="text-muted text-center py-4">No data yet</div>
-                  ) : (
-                    <div className="d-flex flex-column gap-2">
-                      {statusData.map((d) => {
-                        const max = Math.max(...statusData.map((x) => x.count), 1)
-                        const pct = (d.count / max) * 100
-                        return (
-                          <div key={d.status}>
-                            <div className="d-flex justify-content-between small mb-1">
-                              <span>{d.status}</span>
-                              <span className="fw-medium">{d.count}</span>
-                            </div>
-                            <div className="progress" style={{ height: 8, borderRadius: 4 }}>
-                              <div className="progress-bar" style={{ width: `${pct}%`, backgroundColor: d.color }} />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
+                <Card.Body style={{ minHeight: 300 }}>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={statusData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="count" name="Requests" radius={[4, 4, 0, 0]}>
+                        {statusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </Card.Body>
               </Card>
             </Col>
@@ -341,27 +313,29 @@ export function SocialWorkerDashboard() {
                   <h5 className="mb-0">Requests Handled Over Time</h5>
                   <p className="text-muted small mb-0">Line Chart</p>
                 </Card.Header>
-                <Card.Body>
+                <Card.Body style={{ minHeight: 300 }}>
                   {lineData.length === 0 ? (
-                    <div className="text-muted text-center py-4">No data yet</div>
-                  ) : (
-                    <div className="d-flex align-items-end gap-3" style={{ height: 180 }}>
-                      {lineData.map((d, i) => (
-                        <div key={d.month} className="flex-grow-1 d-flex flex-column align-items-center">
-                          <div
-                            className="w-100 rounded-top"
-                            style={{
-                              height: `${(d.count / maxLineValue) * 140}px`,
-                              minHeight: d.count > 0 ? 8 : 0,
-                              backgroundColor: '#2d6a4f',
-                              opacity: 0.8,
-                            }}
-                          />
-                          <span className="small text-muted mt-2">{d.month}</span>
-                          <span className="small fw-medium">{d.count}</span>
-                        </div>
-                      ))}
+                    <div className="d-flex align-items-center justify-content-center h-100 text-muted">
+                      No data available
                     </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={lineData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          name="Requests"
+                          stroke="#2d6a4f"
+                          strokeWidth={3}
+                          dot={{ fill: '#2d6a4f', r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   )}
                 </Card.Body>
               </Card>
@@ -370,43 +344,39 @@ export function SocialWorkerDashboard() {
 
           <Row className="g-4 mb-4">
             <Col lg={6}>
-              <Card className="border-0 shadow-sm rounded-3">
+              <Card className="border-0 shadow-sm rounded-3 h-100">
                 <Card.Header className="bg-white border-0 pt-3">
                   <h5 className="mb-0">Service Package Distribution</h5>
-                  <p className="text-muted small mb-0">By Type (Counseling, Financial Aid, Shelter, etc.)</p>
+                  <p className="text-muted small mb-0">By Type</p>
                 </Card.Header>
-                <Card.Body>
-                  {typeDistribution.length === 0 ? (
-                    <div className="text-muted text-center py-4">No data yet</div>
-                  ) : (
-                    <div className="d-flex flex-wrap gap-3 align-items-center">
-                      <div
-                        className="rounded-circle d-flex align-items-center justify-content-center"
-                        style={{
-                          width: 120,
-                          height: 120,
-                          background: pieGradient.length > 0
-                            ? `conic-gradient(${pieGradient.map((g) => `${g.color} ${g.start}deg ${g.end}deg`).join(', ')})`
-                            : '#e5e7eb',
-                        }}
-                      />
-                      <div className="d-flex flex-column gap-1">
-                        {typeDistribution.map((d) => (
-                          <div key={d.key} className="d-flex align-items-center gap-2">
-                            <div
-                              className="rounded"
-                              style={{
-                                width: 12,
-                                height: 12,
-                                backgroundColor: (PIE_COLORS as Record<string, string>)[d.key] || '#6b7280',
-                              }}
-                            />
-                            <span className="small">{d.type}: {d.count}</span>
-                          </div>
+                <Card.Body style={{ minHeight: 300 }}>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={typeDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="count"
+                        nameKey="type"
+                      >
+                        {typeDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="d-flex flex-wrap justify-content-center gap-3 mt-3">
+                    {typeDistribution.map((entry, index) => (
+                      <div key={index} className="d-flex align-items-center gap-1">
+                        <div style={{ width: 10, height: 10, backgroundColor: entry.color, borderRadius: '50%' }} />
+                        <span className="small text-muted">{entry.type}</span>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
@@ -416,26 +386,36 @@ export function SocialWorkerDashboard() {
                   <h5 className="mb-0">Completion Rate</h5>
                   <p className="text-muted small mb-0">Progress Indicator</p>
                 </Card.Header>
-                <Card.Body className="d-flex flex-column justify-content-center">
-                  <div className="text-center mb-3">
-                    <div
-                      className="d-inline-flex align-items-center justify-content-center rounded-circle position-relative"
-                      style={{
-                        width: 140,
-                        height: 140,
-                        background: `conic-gradient(#2d6a4f 0deg ${completionRate * 3.6}deg, #e5e7eb ${completionRate * 3.6}deg 360deg)`,
-                      }}
-                    >
-                      <div
-                        className="rounded-circle bg-white d-flex align-items-center justify-content-center"
-                        style={{ width: 100, height: 100 }}
-                      >
-                        <span className="fw-bold fs-2" style={{ color: '#2d6a4f' }}>{completionRate}%</span>
-                      </div>
+                <Card.Body className="d-flex flex-column justify-content-center align-items-center">
+                  <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: 200, height: 200 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Completed', value: completionRate, color: '#2d6a4f' },
+                            { name: 'Remaining', value: 100 - completionRate, color: '#e5e7eb' }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          startAngle={90}
+                          endAngle={-270}
+                          innerRadius={80}
+                          outerRadius={90}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          <Cell key="completed" fill="#2d6a4f" />
+                          <Cell key="remaining" fill="#e5e7eb" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="position-absolute d-flex flex-column align-items-center">
+                      <span className="display-4 fw-bold" style={{ color: '#2d6a4f' }}>{completionRate}%</span>
+                      <span className="small text-muted">Success Rate</span>
                     </div>
                   </div>
-                  <p className="text-muted small text-center mb-0">
-                    {completedRequests} of {totalAssigned} requests completed
+                  <p className="text-muted small text-center mt-3 mb-0">
+                    {completedRequests} of {totalAssigned} requests completed successfully
                   </p>
                 </Card.Body>
               </Card>

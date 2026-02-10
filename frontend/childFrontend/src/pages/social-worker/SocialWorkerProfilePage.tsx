@@ -8,16 +8,40 @@ import {
   uploadProfilePhoto,
   changePassword,
 } from '../../services/socialWorkerApi'
+import { uploadRegistrationDocument } from '../../services/authApi'
+import { FileUploadField } from '../../components/auth/FileUploadField'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api')
 
 export function SocialWorkerProfilePage() {
   const { user, refreshUser } = useAuth()
   const userId = user?.userId ?? ''
-  const [profile, setProfile] = useState<{ id?: string; fullName?: string; email?: string; phone?: string; profilePhoto?: string } | null>(null)
+  const [profile, setProfile] = useState<{
+    id?: string
+    fullName?: string
+    email?: string
+    phone?: string
+    address?: string
+    profilePhoto?: string
+    licenseNumber?: string
+    organization?: string
+    specializations?: string[]
+    yearsOfExperience?: string
+    certificationDocumentUrl?: string
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
-  const [editForm, setEditForm] = useState({ fullName: '', phone: '' })
+  const [editForm, setEditForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    licenseNumber: '',
+    organization: '',
+    specializations: '',
+    yearsOfExperience: '',
+    certificationDocumentUrl: '',
+  })
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ type: 'success' | 'danger'; text: string } | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -35,7 +59,17 @@ export function SocialWorkerProfilePage() {
     getUserProfile(userId)
       .then((p) => {
         setProfile(p)
-        setEditForm({ fullName: p?.fullName || '', phone: p?.phone || '' })
+        setEditForm({
+          fullName: p?.fullName || '',
+          email: p?.email || '',
+          phone: p?.phone || '',
+          address: p?.address || '',
+          licenseNumber: p?.licenseNumber || '',
+          organization: p?.organization || '',
+          specializations: p?.specializations ? p.specializations.join(', ') : '',
+          yearsOfExperience: p?.yearsOfExperience || '',
+          certificationDocumentUrl: p?.certificationDocumentUrl || '',
+        })
       })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false))
@@ -52,8 +86,19 @@ export function SocialWorkerProfilePage() {
     setSaveLoading(true)
     setSaveMsg(null)
     try {
-      await updateUserProfile(userId, { fullName: editForm.fullName.trim(), phone: editForm.phone.trim() })
-      setProfile((prev) => prev ? { ...prev, ...editForm } : null)
+      const specList = editForm.specializations.split(',').map(s => s.trim()).filter(Boolean)
+      await updateUserProfile(userId, {
+        fullName: editForm.fullName.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        address: editForm.address.trim(),
+        licenseNumber: editForm.licenseNumber.trim(),
+        organization: editForm.organization.trim(),
+        specializations: specList,
+        yearsOfExperience: editForm.yearsOfExperience.trim(),
+        certificationDocumentUrl: editForm.certificationDocumentUrl.trim(),
+      })
+      setProfile((prev) => prev ? { ...prev, ...editForm, specializations: specList } : null)
       setEditMode(false)
       setSaveMsg({ type: 'success', text: 'Profile updated successfully.' })
       refreshUser?.()
@@ -185,7 +230,7 @@ export function SocialWorkerProfilePage() {
                     {!editMode ? (
                       <>
                         <div className="col-md-6">
-                          <Form.Label className="small text-muted">Name</Form.Label>
+                          <Form.Label className="small text-muted">Full Name</Form.Label>
                           <p className="mb-0 fw-medium">{profile?.fullName || user?.fullName || '-'}</p>
                         </div>
                         <div className="col-md-6">
@@ -193,14 +238,42 @@ export function SocialWorkerProfilePage() {
                           <p className="mb-0 fw-medium">{profile?.email || user?.email || '-'}</p>
                         </div>
                         <div className="col-md-6">
-                          <Form.Label className="small text-muted">Contact</Form.Label>
+                          <Form.Label className="small text-muted">Phone</Form.Label>
                           <p className="mb-0 fw-medium">{profile?.phone || '-'}</p>
                         </div>
                         <div className="col-md-6">
-                          <Form.Label className="small text-muted">Assigned Region</Form.Label>
-                          <p className="mb-0 fw-medium text-muted">—</p>
+                          <Form.Label className="small text-muted">Address</Form.Label>
+                          <p className="mb-0 fw-medium">{profile?.address || '-'}</p>
                         </div>
-                        <div className="col-12">
+                        <div className="col-md-6">
+                          <Form.Label className="small text-muted">License Number</Form.Label>
+                          <p className="mb-0 fw-medium">{profile?.licenseNumber || '-'}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label className="small text-muted">Organization</Form.Label>
+                          <p className="mb-0 fw-medium">{profile?.organization || '-'}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label className="small text-muted">Specializations</Form.Label>
+                          <p className="mb-0 fw-medium">{profile?.specializations?.join(', ') || '-'}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label className="small text-muted">Years of Experience</Form.Label>
+                          <p className="mb-0 fw-medium">{profile?.yearsOfExperience || '-'}</p>
+                        </div>
+                        <div className="col-md-12">
+                          <Form.Label className="small text-muted">Certification Certificate</Form.Label>
+                          {profile?.certificationDocumentUrl ? (
+                            <div className="mt-1">
+                              <a href={profile.certificationDocumentUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary">
+                                View Certificate
+                              </a>
+                            </div>
+                          ) : (
+                            <p className="mb-0 fw-medium text-muted">-</p>
+                          )}
+                        </div>
+                        <div className="col-12 mt-4">
                           <Button variant="outline-secondary" size="sm" onClick={() => setEditMode(true)}>
                             Edit Profile
                           </Button>
@@ -209,7 +282,7 @@ export function SocialWorkerProfilePage() {
                     ) : (
                       <>
                         <div className="col-md-6">
-                          <Form.Label>Name</Form.Label>
+                          <Form.Label>Full Name</Form.Label>
                           <Form.Control
                             value={editForm.fullName}
                             onChange={(e) => setEditForm((f) => ({ ...f, fullName: e.target.value }))}
@@ -217,21 +290,98 @@ export function SocialWorkerProfilePage() {
                           />
                         </div>
                         <div className="col-md-6">
-                          <Form.Label>Contact (phone)</Form.Label>
+                          <Form.Label>Email</Form.Label>
+                          <Form.Control
+                            value={editForm.email}
+                            onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                            placeholder="Email address"
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label>Phone</Form.Label>
                           <Form.Control
                             value={editForm.phone}
                             onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
                             placeholder="Phone number"
                           />
                         </div>
-                        <div className="col-12">
+                        <div className="col-md-6">
+                          <Form.Label>Address</Form.Label>
+                          <Form.Control
+                            value={editForm.address}
+                            onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))}
+                            placeholder="Full address"
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label>License Number</Form.Label>
+                          <Form.Control
+                            value={editForm.licenseNumber}
+                            onChange={(e) => setEditForm((f) => ({ ...f, licenseNumber: e.target.value }))}
+                            placeholder="Social work license number"
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label>Organization</Form.Label>
+                          <Form.Control
+                            value={editForm.organization}
+                            onChange={(e) => setEditForm((f) => ({ ...f, organization: e.target.value }))}
+                            placeholder="Employing organization"
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label>Specializations</Form.Label>
+                          <Form.Control
+                            value={editForm.specializations}
+                            onChange={(e) => setEditForm((f) => ({ ...f, specializations: e.target.value }))}
+                            placeholder="e.g. Child Welfare, Family Services"
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Label>Years of Experience</Form.Label>
+                          <Form.Control
+                            value={editForm.yearsOfExperience}
+                            onChange={(e) => setEditForm((f) => ({ ...f, yearsOfExperience: e.target.value }))}
+                            placeholder="e.g. 5"
+                          />
+                        </div>
+                        <div className="col-md-12">
+                          <FileUploadField
+                            label="Certification Certificate"
+                            value={editForm.certificationDocumentUrl}
+                            onChange={(url: string) => setEditForm((f) => ({ ...f, certificationDocumentUrl: url }))}
+                            onUpload={uploadRegistrationDocument}
+                            required={false}
+                          />
+                          {editForm.certificationDocumentUrl && (
+                            <div className="mt-1">
+                              <a
+                                href={editForm.certificationDocumentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-decoration-none small me-3"
+                              >
+                                📄 View current certificate
+                              </a>
+                              <Button
+                                variant="link"
+                                className="text-danger p-0 small text-decoration-none"
+                                onClick={() => setEditForm((f) => ({ ...f, certificationDocumentUrl: '' }))}
+                              >
+                                ❌ Remove
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="col-12 mt-4">
                           <Button
                             className="sw-btn-primary me-2"
                             size="sm"
                             onClick={handleSaveProfile}
                             disabled={saveLoading}
                           >
-                            {saveLoading ? 'Saving...' : 'Save'}
+                            {saveLoading ? 'Saving...' : 'Save Changes'}
                           </Button>
                           <Button variant="outline-secondary" size="sm" onClick={() => setEditMode(false)}>
                             Cancel

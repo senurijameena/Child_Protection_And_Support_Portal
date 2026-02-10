@@ -18,6 +18,7 @@ const initialForm: RegisterRequest = {
   confirmPassword: '',
   role: 'PU',
   termsAccepted: false,
+  profilePhoto: '',
   stationName: '',
   district: '',
   city: '',
@@ -256,6 +257,14 @@ export function SignupForm() {
 
           {form.role === 'SW' && (
             <>
+              <FileUploadField
+                label="Profile Photo (optional)"
+                value={form.profilePhoto ?? ''}
+                onChange={(v) => update('profilePhoto', v)}
+                onUpload={uploadRegistrationDocument}
+                required={false}
+                error={errors.profilePhoto}
+              />
               <Input name="licenseNumber" label="License Number" required placeholder="Social work license number" />
               <Input name="organization" label="Organization" placeholder="Employing organization" />
               <Input name="specializations" label="Specializations" placeholder="e.g. Child Welfare, Family Services" />

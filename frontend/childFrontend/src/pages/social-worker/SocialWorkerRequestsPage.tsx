@@ -24,12 +24,6 @@ const CASE_TYPE_MAP: Record<Exclude<CaseTypeFilter, 'ALL'>, HelpType[]> = {
   SHELTER: ['SHELTER'],
 }
 
-const PRIORITY_ORDER: Record<string, number> = {
-  HIGH: 0,
-  MEDIUM: 1,
-  LOW: 2,
-}
-
 const formatDateTime = (iso?: string) => {
   if (!iso) return ''
   const date = new Date(iso)

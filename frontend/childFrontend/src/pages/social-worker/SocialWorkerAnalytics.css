@@ -1,0 +1,254 @@
+/* ================================================
+   Social Worker Analytics - Charts & Metrics
+   ================================================ */
+
+.sw-analytics {
+  background: linear-gradient(135deg, #f9fafb 0%, #f0f9ff 100%);
+  min-height: calc(100vh - 80px);
+  padding: 2rem 1rem;
+}
+
+/* Analytics Header */
+.sw-analytics-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  padding: 2rem;
+  border-radius: 16px;
+  border-left: 4px solid var(--sw-primary-blue);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.sw-analytics-header h1 {
+  color: var(--sw-text-dark);
+  background: linear-gradient(135deg, var(--sw-primary-blue), var(--sw-primary-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Metric Cards */
+.sw-metric-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sw-metric-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.sw-metric-card .metric-icon {
+  transition: all 0.3s ease;
+}
+
+.sw-metric-card:hover .metric-icon {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* Chart Cards */
+.sw-chart-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.sw-chart-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.sw-chart-card .card-header {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.sw-chart-card .card-header h6 {
+  color: var(--sw-text-dark);
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+}
+
+.sw-chart-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Filter Controls */
+.sw-filter-select {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  background: white;
+  color: var(--sw-text-dark);
+  transition: all 0.2s ease;
+}
+
+.sw-filter-select:focus {
+  border-color: var(--sw-primary-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Chart Tooltips & Legend */
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+.recharts-tooltip-label {
+  color: var(--sw-text-dark);
+  font-weight: 600;
+}
+
+.recharts-tooltip-item {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.recharts-legend {
+  padding-top: 1rem !important;
+}
+
+.recharts-legend-item-text {
+  color: #6b7280 !important;
+  font-size: 0.85rem !important;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .sw-chart-card .card-body {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sw-analytics-header {
+    padding: 1.5rem;
+  }
+
+  .sw-analytics-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .sw-metric-card {
+    margin-bottom: 1rem;
+  }
+
+  .sw-chart-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .sw-chart-card .card-body {
+    min-height: 250px;
+  }
+}
+
+/* Performance Summary Stats */
+.stat-summary {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-summary:hover {
+  border-color: var(--sw-primary-blue);
+  transform: translateY(-2px);
+}
+
+.stat-summary .stat-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-summary .stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--sw-primary-blue);
+}
+
+/* Color Coding */
+.color-success {
+  color: #10b981;
+}
+
+.color-warning {
+  color: #f59e0b;
+}
+
+.color-danger {
+  color: #ef4444;
+}
+
+.color-info {
+  color: #3b82f6;
+}
+
+.color-purple {
+  color: #8b5cf6;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sw-metric-card,
+.sw-chart-card {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* CSS Variable Definitions (fallback) */
+:root {
+  --sw-primary-blue: #3b82f6;
+  --sw-primary-green: #10b981;
+  --sw-text-dark: #1f2937;
+  --sw-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --sw-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --sw-border-color: #e5e7eb;
+  --sw-pale-blue: #eff6ff;
+  --sw-light-blue: #dbeafe;
+}
+
+/* Desktop Layout Adjustments */
+@media (min-width: 1400px) {
+  .sw-analytics {
+    padding: 3rem 2rem;
+  }
+
+  .sw-analytics-header {
+    padding: 2.5rem;
+    border-radius: 20px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sw-analytics {
+    background: white;
+  }
+
+  .sw-metric-card,
+  .sw-chart-card {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #d1d5db;
+  }
+}

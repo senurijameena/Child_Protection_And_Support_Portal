@@ -97,7 +97,6 @@ export function SocialWorkerLibraryPage() {
     type: 'HOSPITAL',
     availability: 'AVAILABLE',
     emergencySupport: false,
-    status: 'PENDING',
   })
 
   const filteredResources = useMemo(() => {
@@ -121,7 +120,6 @@ export function SocialWorkerLibraryPage() {
       type: 'HOSPITAL',
       availability: 'AVAILABLE',
       emergencySupport: false,
-      status: 'PENDING',
     })
     setShowForm(true)
   }
@@ -139,13 +137,17 @@ export function SocialWorkerLibraryPage() {
   }
 
   const handleSubmit = () => {
-    if (!formData.name || !formData.type || !formData.availability || !formData.status) {
+    if (!formData.name || !formData.type || !formData.availability) {
       return
     }
 
     if (editingId) {
       setResources((prev) =>
-        prev.map((r) => (r.id === editingId ? { ...(r as Resource), ...(formData as Resource) } : r))
+        prev.map((r) =>
+          r.id === editingId
+            ? { ...(r as Resource), ...(formData as Resource), status: r.status }
+            : r
+        )
       )
     } else {
       const newResource: Resource = {
@@ -158,7 +160,7 @@ export function SocialWorkerLibraryPage() {
         capacity: formData.capacity,
         availability: formData.availability,
         emergencySupport: !!formData.emergencySupport,
-        status: formData.status,
+        status: 'ACTIVE',
         notes: formData.notes,
       }
       setResources((prev) => [newResource, ...prev])
@@ -435,7 +437,7 @@ export function SocialWorkerLibraryPage() {
                 }
               />
             </Col>
-            <Col xs={6} md={4}>
+            <Col xs={12} md={6}>
               <Form.Label className="small fw-600 text-muted">Availability status</Form.Label>
               <Form.Select
                 value={formData.availability ?? 'AVAILABLE'}
@@ -451,23 +453,7 @@ export function SocialWorkerLibraryPage() {
                 <option value="FULL">Full</option>
               </Form.Select>
             </Col>
-            <Col xs={6} md={4}>
-              <Form.Label className="small fw-600 text-muted">Status</Form.Label>
-              <Form.Select
-                value={formData.status ?? 'PENDING'}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    status: e.target.value as ResourceStatus,
-                  }))
-                }
-              >
-                <option value="PENDING">Pending</option>
-                <option value="ACTIVE">Active</option>
-                <option value="ARCHIVED">Archived</option>
-              </Form.Select>
-            </Col>
-            <Col xs={12} md={4}>
+            <Col xs={12} md={6}>
               <Form.Check
                 type="switch"
                 id="emergencySupport"

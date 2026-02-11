@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup, Button, Form, Alert } from 'react-bootstrap'
 import { apiGet } from '../../services/api'

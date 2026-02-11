@@ -12,9 +12,11 @@ export type RequestStatus =
   | 'REQUESTED'
   | 'UNDER_REVIEW'
   | 'ASSIGNED'
+  | 'PACKAGE_PROPOSED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'REJECTED'
+  | 'PACKAGE_REJECTED'
   | 'CANCELLED'
 
 export type CaseType =
@@ -61,6 +63,9 @@ export interface CaseDTO {
   caseNotes?: string
 }
 
+/** Status of the service package applied to a help request (public user view). */
+export type AppliedPackageStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED'
+
 export interface HelpRequestDTO {
   id: string
   trackingId?: string
@@ -75,6 +80,12 @@ export interface HelpRequestDTO {
   assignedWorkerId?: string
   requestDate?: string
   priority?: string
+  /** Applied service package (when SW has sent one for approval). */
+  appliedPackage?: ServicePackageDTO
+  /** Public user acceptance status of the applied package. */
+  appliedPackageStatus?: AppliedPackageStatus
+  /** When the service package was applied to this request (ISO date). */
+  appliedPackageAppliedAt?: string
 }
 
 export interface ServiceOfferDTO {
@@ -160,9 +171,11 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   REQUESTED: 'Submitted',
   UNDER_REVIEW: 'Under Review',
   ASSIGNED: 'Assigned',
+  PACKAGE_PROPOSED: 'Package Proposed',
   IN_PROGRESS: 'In Progress',
   COMPLETED: 'Completed',
   REJECTED: 'Rejected',
+  PACKAGE_REJECTED: 'Package Rejected',
   CANCELLED: 'Cancelled',
 }
 
@@ -170,13 +183,22 @@ export const REQUEST_STATUS_BADGE_VARIANTS: Record<
   RequestStatus,
   'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'dark'
 > = {
-  REQUESTED: 'info', // newly submitted
-  UNDER_REVIEW: 'warning', // accepted / under review
-  ASSIGNED: 'primary', // owned
-  IN_PROGRESS: 'warning', // ongoing
-  COMPLETED: 'success', // done
+  REQUESTED: 'info',
+  UNDER_REVIEW: 'warning',
+  ASSIGNED: 'primary',
+  PACKAGE_PROPOSED: 'warning',
+  IN_PROGRESS: 'warning',
+  COMPLETED: 'success',
   REJECTED: 'danger',
+  PACKAGE_REJECTED: 'danger',
   CANCELLED: 'danger',
+}
+
+/** Labels for applied package acceptance (shown in Help Details). */
+export const APPLIED_PACKAGE_STATUS_LABELS: Record<AppliedPackageStatus, string> = {
+  PENDING: 'Pending Approval',
+  ACCEPTED: 'Accepted',
+  REJECTED: 'Rejected',
 }
 
 export const CASE_TYPE_LABELS: Record<CaseType, string> = {

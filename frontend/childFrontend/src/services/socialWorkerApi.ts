@@ -71,6 +71,16 @@ export async function uploadRequestDocument(
   return apiPostFormData<HelpRequestDTO>(`/help-requests/${requestId}/document`, fd)
 }
 
+// Apply a service package to a help request and send it to the public user for approval
+export async function applyServicePackageToRequest(
+  requestId: string,
+  packageId: string
+): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/apply-package`, {
+    packageId,
+  })
+}
+
 // Service offers
 export async function createServiceOffer(data: {
   helpRequestId: string
@@ -243,6 +253,10 @@ export async function getServicePackages(params?: {
   const qs = query.toString()
   const path = qs ? `/service-packages?${qs}` : '/service-packages'
   return apiGet<ServicePackageDTO[]>(path)
+}
+
+export async function getServicePackage(id: string): Promise<ServicePackageDTO> {
+  return apiGet<ServicePackageDTO>(`/service-packages/${id}`)
 }
 
 export async function createServicePackage(

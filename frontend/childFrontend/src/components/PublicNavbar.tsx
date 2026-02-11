@@ -1,110 +1,174 @@
-import { Link } from 'react-router-dom'
-import { Navbar, Nav, Container, Button } from 'react-bootstrap'
+import { Link, useLocation } from 'react-router-dom'
+import { Nav } from 'react-bootstrap'
 import { useState } from 'react'
 
+const SIDEBAR_WIDTH = 260
+
+const infoLinks = [
+  { to: '/how-it-works', label: 'How It Works' },
+  { to: '/case-types', label: 'Case Types Guide' },
+  { to: '/report-vs-request', label: 'Report vs Request' },
+  { to: '/anonymous-reporting', label: 'Anonymous Reporting' },
+  { to: '/privacy-safety', label: 'Privacy & Safety' },
+  { to: '/awareness', label: 'Awareness & Education' },
+]
+
 export function PublicNavbar() {
-  const [expanded, setExpanded] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(true)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const location = useLocation()
+
+  const isActive = (path: string) => location.pathname === path
+  const isInfoActive = infoLinks.some((l) => l.to === location.pathname)
 
   return (
-    <Navbar expanded={expanded} onToggle={setExpanded} expand="xl" className="bg-white shadow-sm py-3" fixed="top">
-      <Container fluid className="px-3 px-lg-5">
-        <Navbar.Brand as={Link} to="/" className="fw-bold text-primary fs-5 d-flex align-items-center gap-2">
-          <img
-            src="/images/logo.jpeg"
-            alt="Child Protection Portal"
-            className="d-inline-block logo-navbar"
-            style={{ height: '32px', width: 'auto', maxHeight: '32px', objectFit: 'contain' }}
-          />
-          <span className="d-none d-lg-inline">Child Protection Portal</span>
-          <span className="d-inline d-lg-none">CPP</span>
-        </Navbar.Brand>
+    <>
+      {/* Mobile overlay */}
+      <div
+        className="d-lg-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+        style={{ zIndex: 1040, display: mobileOpen ? 'block' : 'none' }}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
 
-        {/* Auth buttons - visible on desktop */}
-        <div className="d-none d-xl-flex gap-2 ms-auto">
-          <Button
-            as={Link}
-            to="/login"
-            variant="outline-primary"
-            size="sm"
-            className="px-3 py-1 rounded-pill fw-medium"
-            style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}
-          >
-            Login
-          </Button>
-          <Button
-            as={Link}
-            to="/signup"
-            variant="primary"
-            size="sm"
-            className="px-3 py-1 rounded-pill fw-medium btn-primary-custom"
-            style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}
-          >
-            Sign Up
-          </Button>
-        </div>
+      {/* Mobile toggle button */}
+      <button
+        className="d-lg-none position-fixed top-0 start-0 m-3 btn btn-light border shadow-sm rounded-circle p-2"
+        style={{ zIndex: 1050 }}
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open menu"
+      >
+        <span className="navbar-toggler-icon" />
+      </button>
 
-        <Navbar.Toggle aria-controls="main-navbar" className="border-0" />
-        <Navbar.Collapse id="main-navbar">
-          <Nav className="mx-auto gap-1 gap-xl-2 w-100 w-xl-auto">
-            <Nav.Link as={Link} to="/" onClick={() => setExpanded(false)} className="px-3 py-2">Home</Nav.Link>
+      {/* Vertical sidebar */}
+      <aside
+        className="public-sidebar bg-white shadow-sm position-fixed top-0 start-0 h-100 overflow-y-auto"
+        style={{
+          width: SIDEBAR_WIDTH,
+          zIndex: 1050,
+          transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s ease',
+        }}
+      >
+        <div className="d-lg-block" style={{ width: SIDEBAR_WIDTH, minHeight: '100vh', display: mobileOpen ? 'block' : 'none' }} />
+      </aside>
 
-            {/* Information submenu items - shown as regular links in mobile */}
-            <div className="d-xl-none">
-              <div className="px-3 py-2 text-secondary fw-semibold small">INFORMATION</div>
-              <Nav.Link as={Link} to="/how-it-works" onClick={() => setExpanded(false)} className="px-4 py-2">How It Works</Nav.Link>
-              <Nav.Link as={Link} to="/case-types" onClick={() => setExpanded(false)} className="px-4 py-2">Case Types Guide</Nav.Link>
-              <Nav.Link as={Link} to="/report-vs-request" onClick={() => setExpanded(false)} className="px-4 py-2">Report vs Request</Nav.Link>
-              <Nav.Link as={Link} to="/anonymous-reporting" onClick={() => setExpanded(false)} className="px-4 py-2">Anonymous Reporting</Nav.Link>
-              <Nav.Link as={Link} to="/privacy-safety" onClick={() => setExpanded(false)} className="px-4 py-2">Privacy & Safety</Nav.Link>
-              <Nav.Link as={Link} to="/awareness" onClick={() => setExpanded(false)} className="px-4 py-2">Awareness & Education</Nav.Link>
-            </div>
+      <aside
+        className="public-sidebar bg-white shadow-sm position-fixed top-0 start-0 h-100 overflow-y-auto d-none d-lg-block"
+        style={{ width: SIDEBAR_WIDTH, zIndex: 1030 }}
+      >
+        <div className="d-flex flex-column h-100" style={{ width: SIDEBAR_WIDTH }}>
+          {/* Brand */}
+          <div className="p-4 border-bottom">
+            <Navbar.Brand as={Link} to="/" className="fw-bold text-primary fs-5 d-flex align-items-center gap-2 text-decoration-none">
+              <img
+                src="/images/logo.jpeg"
+                alt="Child Protection Portal"
+                className="d-inline-block logo-navbar"
+                style={{ height: '32px', width: 'auto', maxHeight: '32px', objectFit: 'contain' }}
+              />
+              <span>Child Protection Portal</span>
+            </Navbar.Brand>
+          </div>
 
-            {/* Information dropdown - shown only on desktop */}
-            <div className="d-none d-xl-block dropdown">
-              <button className="btn btn-link text-secondary text-decoration-none fw-medium px-3 py-2 nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                Information
+          {/* Nav links */}
+          <Nav className="flex-column flex-grow-1 p-3 gap-1">
+            <Nav.Link
+              as={Link}
+              to="/"
+              onClick={() => setMobileOpen(false)}
+              className={`public-sidebar-link rounded px-3 py-2 ${isActive('/') ? 'public-sidebar-active' : ''}`}
+            >
+              Home
+            </Nav.Link>
+
+            {/* Information section */}
+            <div className="mt-2">
+              <button
+                className={`public-sidebar-link w-100 d-flex align-items-center justify-content-between rounded px-3 py-2 border-0 bg-transparent text-start ${isInfoActive ? 'public-sidebar-active' : 'text-secondary'}`}
+                onClick={() => setInfoOpen(!infoOpen)}
+              >
+                <span className="fw-medium">Information</span>
+                <span className="small">{infoOpen ? '▼' : '▶'}</span>
               </button>
-              <ul className="dropdown-menu">
-                <li><Link className="dropdown-item" to="/how-it-works">How It Works</Link></li>
-                <li><Link className="dropdown-item" to="/case-types">Case Types Guide</Link></li>
-                <li><Link className="dropdown-item" to="/report-vs-request">Report vs Request</Link></li>
-                <li><Link className="dropdown-item" to="/anonymous-reporting">Anonymous Reporting</Link></li>
-                <li><Link className="dropdown-item" to="/privacy-safety">Privacy & Safety</Link></li>
-                <li><Link className="dropdown-item" to="/awareness">Awareness & Education</Link></li>
-              </ul>
+              {infoOpen && (
+                <div className="ms-3 mt-1">
+                  {infoLinks.map(({ to, label }) => (
+                    <Nav.Link
+                      key={to}
+                      as={Link}
+                      to={to}
+                      onClick={() => setMobileOpen(false)}
+                      className={`public-sidebar-link rounded px-3 py-2 small ${isActive(to) ? 'public-sidebar-active' : ''}`}
+                    >
+                      {label}
+                    </Nav.Link>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <Nav.Link as={Link} to="/support-locations" onClick={() => setExpanded(false)} className="px-3 py-2">Support Locations</Nav.Link>
-            <Nav.Link as={Link} to="/contact-directory" onClick={() => setExpanded(false)} className="px-3 py-2">Contact Directory</Nav.Link>
-            <Nav.Link as={Link} to="/faq" onClick={() => setExpanded(false)} className="px-3 py-2">FAQs</Nav.Link>
-            <Nav.Link as={Link} to="/contact-us" onClick={() => setExpanded(false)} className="px-3 py-2">Contact Us</Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/support-locations"
+              onClick={() => setMobileOpen(false)}
+              className={`public-sidebar-link rounded px-3 py-2 ${isActive('/support-locations') ? 'public-sidebar-active' : ''}`}
+            >
+              Support Locations
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/contact-directory"
+              onClick={() => setMobileOpen(false)}
+              className={`public-sidebar-link rounded px-3 py-2 ${isActive('/contact-directory') ? 'public-sidebar-active' : ''}`}
+            >
+              Contact Directory
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/faq"
+              onClick={() => setMobileOpen(false)}
+              className={`public-sidebar-link rounded px-3 py-2 ${isActive('/faq') ? 'public-sidebar-active' : ''}`}
+            >
+              FAQs
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/contact-us"
+              onClick={() => setMobileOpen(false)}
+              className={`public-sidebar-link rounded px-3 py-2 ${isActive('/contact-us') ? 'public-sidebar-active' : ''}`}
+            >
+              Contact Us
+            </Nav.Link>
+          </Nav>
 
-            {/* Auth buttons in mobile menu */}
-            <div className="d-xl-none mt-3 px-3 d-flex flex-column gap-2">
-              <Button
-                as={Link}
+          {/* Auth buttons */}
+          <div className="p-3 border-top">
+            <div className="d-flex flex-column gap-2">
+              <Link
                 to="/login"
-                variant="outline-primary"
-                className="w-100 py-2 rounded-pill fw-medium"
-                onClick={() => setExpanded(false)}
+                className="btn btn-outline-primary py-2 rounded-pill fw-medium text-center"
+                onClick={() => setMobileOpen(false)}
                 style={{ textDecoration: 'none' }}
               >
                 Login
-              </Button>
-              <Button
-                as={Link}
+              </Link>
+              <Link
                 to="/signup"
-                variant="primary"
-                className="w-100 py-2 rounded-pill fw-medium btn-primary-custom"
-                onClick={() => setExpanded(false)}
+                className="btn btn-primary py-2 rounded-pill fw-medium btn-primary-custom text-center text-white"
+                onClick={() => setMobileOpen(false)}
                 style={{ textDecoration: 'none' }}
               >
                 Sign Up
-              </Button>
+              </Link>
             </div>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+          </div>
+        </div>
+      </aside>
+
+      {/* Spacer for main content - only for desktop where sidebar is always visible */}
+      <div className="d-none d-lg-block" style={{ width: SIDEBAR_WIDTH, flexShrink: 0 }} />
+    </>
   )
 }

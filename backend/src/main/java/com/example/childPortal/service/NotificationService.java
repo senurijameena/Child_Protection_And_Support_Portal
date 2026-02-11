@@ -313,22 +313,6 @@ public class NotificationService {
         }
     }
 
-    /**
-     * Broadcast a maintenance announcement notification to all users.
-     */
-    public void sendMaintenanceAnnouncementToAllUsers(String announcementId, String title, String message) {
-        List<User> allUsers = userRepository.findAll();
-        String notificationTitle = (title != null && !title.isBlank()) ? title : "System Maintenance Notice";
-        String notificationMessage = (message != null && !message.isBlank())
-                ? message
-                : "The system will undergo maintenance. Some features may be temporarily unavailable.";
-
-        for (User user : allUsers) {
-            // Informational broadcast, no specific action URL required
-            logNotification(user.getId(), "MAINTENANCE_ANNOUNCEMENT", notificationTitle, notificationMessage, null);
-        }
-    }
-
     private void sendEmail(String to, String subject, String content) {
         try {
             if (mailSender == null) {

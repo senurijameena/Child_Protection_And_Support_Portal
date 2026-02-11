@@ -1,107 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Card, Container, Badge, Button, Row, Col, Form } from 'react-bootstrap'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getHelpRequest, getMyFollowUps, getUserProfile, type FollowUpDTO } from '../../services/socialWorkerApi'
-import type { HelpRequestDTO, HelpType } from '../../types/dashboard'
-import { HELP_TYPE_LABELS } from '../../types/dashboard'
+import { Card, Container, Badge, Button, Row, Col, Form, Modal } from 'react-bootstrap'
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  getHelpRequest,
+  getMyFollowUps,
+  getUserProfile,
+  getServicePackages,
+  updateRequestStatus,
+  applyServicePackageToRequest,
+  type FollowUpDTO,
+} from '../../services/socialWorkerApi'
+import type { ServicePackageDTO } from '../../types/dashboard'
+import type { HelpRequestDTO, HelpType, AppliedPackageStatus } from '../../types/dashboard'
+import { HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
-
-type PackageStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'IN_PROGRESS' | 'COMPLETED'
-
-type ServiceCategoryId =
-  | 'FOOD'
-  | 'EDUCATION'
-  | 'MEDICAL'
-  | 'SHELTER'
-  | 'CLOTHING'
-  | 'COUNSELING'
-  | 'OTHER'
-
-interface ServiceItemConfig {
-  id: string
-  category: ServiceCategoryId
-  label: string
-}
-
-const RESOURCE_OPTIONS: string[] = [
-  'Local child protection unit',
-  'Nearest government hospital / clinic',
-  'Nearest pediatric / children’s hospital',
-  'Accredited counseling center / psychologist',
-  'Registered NGO / charity partner',
-  'Emergency shelter / safe house',
-  'School social worker / counselor',
-  'Community development officer',
-  'Legal aid commission / child court unit',
-  'Other (custom arrangement)',
-]
-
-const SERVICE_ITEMS: ServiceItemConfig[] = [
-  // Food Assistance
-  { id: 'food-grocery-vouchers', category: 'FOOD', label: 'Grocery vouchers' },
-  { id: 'food-meal-kits', category: 'FOOD', label: 'Meal kits' },
-  { id: 'food-hot-meals', category: 'FOOD', label: 'Hot meal delivery' },
-  { id: 'food-nutrition-counsel', category: 'FOOD', label: 'Nutritional counseling' },
-  { id: 'food-special-diet', category: 'FOOD', label: 'Special dietary support' },
-  // Educational Support
-  { id: 'edu-school-fees', category: 'EDUCATION', label: 'School fees' },
-  { id: 'edu-books', category: 'EDUCATION', label: 'Books & stationery' },
-  { id: 'edu-uniforms', category: 'EDUCATION', label: 'Uniforms' },
-  { id: 'edu-online-tools', category: 'EDUCATION', label: 'Online learning tools' },
-  { id: 'edu-tuition', category: 'EDUCATION', label: 'Tuition / mentoring' },
-  { id: 'edu-scholarships', category: 'EDUCATION', label: 'Scholarships' },
-  // Medical Help
-  { id: 'med-consultation', category: 'MEDICAL', label: 'Doctor consultation' },
-  { id: 'med-medicines', category: 'MEDICAL', label: 'Medicines / prescriptions' },
-  { id: 'med-hospital-visits', category: 'MEDICAL', label: 'Hospital visits' },
-  { id: 'med-lab-tests', category: 'MEDICAL', label: 'Lab tests' },
-  { id: 'med-vaccination', category: 'MEDICAL', label: 'Vaccination support' },
-  { id: 'med-mental-health', category: 'MEDICAL', label: 'Mental health checkups' },
-  // Shelter
-  { id: 'shelter-temp-accommodation', category: 'SHELTER', label: 'Temporary accommodation' },
-  { id: 'shelter-rent-assistance', category: 'SHELTER', label: 'Rent assistance' },
-  { id: 'shelter-safe-house', category: 'SHELTER', label: 'Safe house referral' },
-  { id: 'shelter-utilities', category: 'SHELTER', label: 'Utility support' },
-  { id: 'shelter-relocation', category: 'SHELTER', label: 'Emergency relocation' },
-  // Clothing
-  { id: 'clothing-everyday', category: 'CLOTHING', label: 'Everyday clothing' },
-  { id: 'clothing-school', category: 'CLOTHING', label: 'School uniforms' },
-  { id: 'clothing-seasonal', category: 'CLOTHING', label: 'Winter / summer clothing' },
-  { id: 'clothing-footwear', category: 'CLOTHING', label: 'Footwear' },
-  { id: 'clothing-hygiene-kits', category: 'CLOTHING', label: 'Hygiene kits' },
-  // Counseling
-  { id: 'counsel-individual', category: 'COUNSELING', label: 'Individual counseling' },
-  { id: 'counsel-family', category: 'COUNSELING', label: 'Family therapy' },
-  { id: 'counsel-trauma', category: 'COUNSELING', label: 'Trauma support' },
-  { id: 'counsel-guidance', category: 'COUNSELING', label: 'Career / educational guidance' },
-  { id: 'counsel-support-group', category: 'COUNSELING', label: 'Support group sessions' },
-  // Other
-  { id: 'other-legal-aid', category: 'OTHER', label: 'Legal aid' },
-  { id: 'other-transport', category: 'OTHER', label: 'Transportation support' },
-  { id: 'other-job-placement', category: 'OTHER', label: 'Job placement' },
-  { id: 'other-childcare', category: 'OTHER', label: 'Childcare' },
-  { id: 'other-misc', category: 'OTHER', label: 'Miscellaneous items as needed' },
-]
-
-const SERVICE_CATEGORY_LABELS: Record<ServiceCategoryId, string> = {
-  FOOD: 'Food Assistance',
-  EDUCATION: 'Educational Support',
-  MEDICAL: 'Medical Help',
-  SHELTER: 'Shelter',
-  CLOTHING: 'Clothing',
-  COUNSELING: 'Counseling',
-  OTHER: 'Other',
-}
-
-const SERVICE_CATEGORY_COLORS: Record<ServiceCategoryId, { bg: string; border: string; text: string }> = {
-  FOOD: { bg: '#fef3c7', border: '#fbbf24', text: '#92400e' },
-  EDUCATION: { bg: '#dbeafe', border: '#60a5fa', text: '#1e3a8a' },
-  MEDICAL: { bg: '#fecdd3', border: '#fb7185', text: '#881337' },
-  SHELTER: { bg: '#d1fae5', border: '#34d399', text: '#065f46' },
-  CLOTHING: { bg: '#e9d5ff', border: '#a78bfa', text: '#5b21b6' },
-  COUNSELING: { bg: '#fed7aa', border: '#fb923c', text: '#7c2d12' },
-  OTHER: { bg: '#e5e7eb', border: '#9ca3af', text: '#374151' },
-}
 
 const formatDateTime = (iso?: string) => {
   if (!iso) return ''
@@ -155,6 +67,10 @@ const getStatusVariantAndLabel = (
   switch (status) {
     case 'ASSIGNED':
       return { variant: 'info', label: 'Assigned' }
+    case 'PACKAGE_PROPOSED':
+      return { variant: 'warning', label: 'Package Proposed' }
+    case 'PACKAGE_REJECTED':
+      return { variant: 'danger', label: 'Package Rejected' }
     case 'IN_PROGRESS':
       return { variant: 'success', label: 'In Progress' }
     case 'REQUESTED':
@@ -170,6 +86,8 @@ const getStatusVariantAndLabel = (
 export function SocialWorkerRequestDetailsPage() {
   const { requestId } = useParams<{ requestId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const applyPackageId = searchParams.get('applyPackage')
 
   const [request, setRequest] = useState<HelpRequestDTO | null>(null)
   const [followUps, setFollowUps] = useState<FollowUpDTO[]>([])
@@ -182,13 +100,67 @@ export function SocialWorkerRequestDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Service package state
-  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({})
-  const [itemResource, setItemResource] = useState<Record<string, string>>({})
-  const [packageFollowUpAt, setPackageFollowUpAt] = useState<string>('')
-  const [packageNotes, setPackageNotes] = useState<string>('')
-  const [packageStatus, setPackageStatus] = useState<PackageStatus>('DRAFT')
-  const [packageMessage, setPackageMessage] = useState<string | null>(null)
+  // Apply existing package modal
+  const [showApplyModal, setShowApplyModal] = useState(false)
+  const [availablePackages, setAvailablePackages] = useState<ServicePackageDTO[]>([])
+  const [selectedPackageId, setSelectedPackageId] = useState<string>('')
+  const [applyPackageLoading, setApplyPackageLoading] = useState(false)
+  const [applyPackageMessage, setApplyPackageMessage] = useState<string | null>(null)
+  const [closeRequestLoading, setCloseRequestLoading] = useState(false)
+
+  useEffect(() => {
+    if (applyPackageId) setShowApplyModal(true)
+  }, [applyPackageId])
+
+  useEffect(() => {
+    if (!showApplyModal) return
+    const load = async () => {
+      try {
+        const all = await getServicePackages({ status: 'PUBLISHED' })
+        setAvailablePackages(all)
+        setSelectedPackageId((prev) => {
+          if (applyPackageId && all.some((p) => p.id === applyPackageId)) return applyPackageId
+          if (all.length > 0) return all[0].id
+          return prev
+        })
+      } catch (err) {
+        console.error('Failed to load packages', err)
+      }
+    }
+    void load()
+  }, [showApplyModal, applyPackageId])
+
+  const handleApplyPackage = async () => {
+    if (!selectedPackageId || !requestId) return
+    setApplyPackageLoading(true)
+    setApplyPackageMessage(null)
+    try {
+      const updated = await applyServicePackageToRequest(requestId, selectedPackageId)
+      setRequest(updated)
+      setApplyPackageMessage('Service package applied. Sent to Public User for approval.')
+      setTimeout(() => {
+        setShowApplyModal(false)
+        setApplyPackageMessage(null)
+      }, 1500)
+    } catch (err) {
+      setApplyPackageMessage((err as Error).message ?? 'Failed to apply package')
+    } finally {
+      setApplyPackageLoading(false)
+    }
+  }
+
+  const handleCloseRequest = async () => {
+    if (!requestId) return
+    setCloseRequestLoading(true)
+    try {
+      const updated = await updateRequestStatus(requestId, 'CANCELLED')
+      setRequest(updated)
+    } catch (err) {
+      console.error('Failed to close request', err)
+    } finally {
+      setCloseRequestLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!requestId) {
@@ -263,50 +235,6 @@ export function SocialWorkerRequestDetailsPage() {
     return due < now && !followUps.some((fu) => fu.status === 'COMPLETED' || fu.status === 'DONE')
   }, [earliestDueDate, followUps])
 
-  const selectedServiceItems = useMemo(
-    () => SERVICE_ITEMS.filter((item) => selectedItems[item.id]),
-    [selectedItems]
-  )
-
-  const groupedServiceItems = useMemo(() => {
-    const groups: Record<ServiceCategoryId, ServiceItemConfig[]> = {
-      FOOD: [],
-      EDUCATION: [],
-      MEDICAL: [],
-      SHELTER: [],
-      CLOTHING: [],
-      COUNSELING: [],
-      OTHER: [],
-    }
-    SERVICE_ITEMS.forEach((item) => {
-      groups[item.category].push(item)
-    })
-    return groups
-  }, [])
-
-  const handleToggleItem = (id: string) => {
-    setSelectedItems((prev) => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const handleSaveDraft = () => {
-    setPackageStatus('DRAFT')
-    setPackageMessage('Service package saved as draft (not sent to user).')
-  }
-
-  const handleSendToUser = () => {
-    setPackageStatus('PENDING_APPROVAL')
-    setPackageMessage('Service package sent to public user. Status: Pending approval.')
-  }
-
-  const handleCancelPackage = () => {
-    setSelectedItems({})
-    setItemResource({})
-    setPackageFollowUpAt('')
-    setPackageNotes('')
-    setPackageStatus('DRAFT')
-    setPackageMessage(null)
-  }
-
   if (loading && !request) {
     return (
       <Container fluid className="py-4 sw-dashboard">
@@ -341,10 +269,22 @@ export function SocialWorkerRequestDetailsPage() {
     )
   }
 
+  const effectiveStatus =
+    request.appliedPackageStatus === 'REJECTED'
+      ? 'PACKAGE_REJECTED'
+      : request.appliedPackageStatus === 'ACCEPTED'
+        ? 'IN_PROGRESS'
+        : request.appliedPackage && (!request.appliedPackageStatus || request.appliedPackageStatus === 'PENDING')
+          ? 'PACKAGE_PROPOSED'
+          : request.status
   const { variant: statusVariant, label: statusLabel } = getStatusVariantAndLabel(
-    request.status,
+    effectiveStatus,
     isOverdue
   )
+  const pkgStatus: AppliedPackageStatus | undefined = request.appliedPackageStatus
+  const packageStatusLabel = pkgStatus ? APPLIED_PACKAGE_STATUS_LABELS[pkgStatus] : 'Pending Approval'
+  const packageStatusVariant =
+    pkgStatus === 'ACCEPTED' ? 'success' : pkgStatus === 'REJECTED' ? 'danger' : 'warning'
 
   const helpIcon = getHelpTypeIcon(request.helpType)
   const helpLabel = request.helpType ? HELP_TYPE_LABELS[request.helpType] : 'Support request'
@@ -471,216 +411,114 @@ export function SocialWorkerRequestDetailsPage() {
             </Card.Body>
           </Card>
 
-          {/* Service Package Builder */}
-          <Card className="sw-card border-0">
-            <Card.Header className="bg-white border-0 pt-4 pb-3 d-flex justify-content-between align-items-center">
-              <div>
-                <h5 className="mb-0 fw-700">Service Package</h5>
-                <small className="text-muted">
-                  Select services, attach resources, and set a single follow-up schedule for this
-                  package.
-                </small>
-              </div>
-              <Badge
-                bg={
-                  packageStatus === 'DRAFT'
-                    ? 'secondary'
-                    : packageStatus === 'PENDING_APPROVAL'
-                      ? 'warning'
-                      : packageStatus === 'IN_PROGRESS'
-                        ? 'primary'
-                        : 'success'
-                }
-              >
-                {packageStatus === 'DRAFT' && 'Draft'}
-                {packageStatus === 'PENDING_APPROVAL' && 'Pending approval'}
-                {packageStatus === 'IN_PROGRESS' && 'In progress'}
-                {packageStatus === 'COMPLETED' && 'Completed'}
-              </Badge>
-            </Card.Header>
-            <Card.Body>
-              <Row className="g-4">
-                {/* Left column: Categories and tickable items */}
-                <Col xs={12} md={6}>
-                  {(
-                    Object.keys(SERVICE_CATEGORY_LABELS) as ServiceCategoryId[]
-                  ).map((categoryId) => {
-                    const items = groupedServiceItems[categoryId]
-                    const colors = SERVICE_CATEGORY_COLORS[categoryId]
-                    return (
-                      <Card
-                        key={categoryId}
-                        className="mb-3"
-                        style={{
-                          backgroundColor: colors.bg,
-                          borderColor: colors.border,
-                          borderWidth: '2px',
-                        }}
-                      >
-                        <Card.Body className="p-3">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0 fw-600" style={{ color: colors.text }}>
-                              {SERVICE_CATEGORY_LABELS[categoryId]}
-                            </h6>
-                          </div>
-                          <div className="d-flex flex-column gap-1 small">
-                            {items.map((item) => (
-                              <label
-                                key={item.id}
-                                className="d-flex align-items-center gap-2 cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  className="form-check-input"
-                                  checked={!!selectedItems[item.id]}
-                                  onChange={() => handleToggleItem(item.id)}
-                                />
-                                <span>{item.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    )
-                  })}
-                </Col>
-
-                {/* Right column: Resources & package-level schedule */}
-                <Col xs={12} md={6}>
-                  <div className="mb-3">
-                    <h6 className="fw-600 mb-2">Resources & package schedule</h6>
-                    <small className="text-muted d-block mb-2">
-                      Attach hospitals, NGOs, shelters or other resources to each selected service
-                      and choose one follow-up date &amp; time and overall notes for this package.
-                    </small>
-                    <div className="mb-3">
-                      <div className="mb-1 small text-muted">Package follow-up date &amp; time</div>
-                      <Form.Control
-                        type="datetime-local"
-                        size="sm"
-                        value={packageFollowUpAt}
-                        onChange={(e) => setPackageFollowUpAt(e.target.value)}
-                      />
+          {/* 📦 Applied Service Package Panel – appears after package is applied */}
+          {request.appliedPackage && (
+            <Card className="sw-card border-0 mb-4 border-primary border-2">
+              <Card.Header className="bg-white border-0 pt-4 pb-3">
+                <h5 className="mb-0 fw-700">📦 Applied Service Package</h5>
+              </Card.Header>
+              <Card.Body>
+                {/* A. Package Overview Card (Top Summary) */}
+                <Card className="border-0 bg-light bg-opacity-50 mb-3">
+                  <Card.Body className="py-3">
+                    <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                      <h6 className="mb-0 fw-700">{request.appliedPackage.title}</h6>
+                      <Badge bg={packageStatusVariant}>{packageStatusLabel}</Badge>
                     </div>
-                    <div className="mb-3">
-                      <div className="mb-1 small text-muted">Package notes</div>
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        size="sm"
-                        placeholder="Overall notes or special instructions for this package"
-                        value={packageNotes}
-                        onChange={(e) => setPackageNotes(e.target.value)}
-                      />
+                    {request.appliedPackage.description && (
+                      <p className="small text-muted mb-2">{request.appliedPackage.description}</p>
+                    )}
+                    <Row className="g-2 small">
+                      <Col xs={6} md={3}>
+                        <span className="text-muted">Total services:</span>{' '}
+                        <span className="fw-600">{request.appliedPackage.items?.length ?? 0}</span>
+                      </Col>
+                      <Col xs={6} md={3}>
+                        <span className="text-muted">Duration:</span>{' '}
+                        <span className="fw-600">{request.appliedPackage.estimatedDuration ?? '—'}</span>
+                      </Col>
+                      <Col xs={6} md={3}>
+                        <span className="text-muted">Applied date:</span>{' '}
+                        <span className="fw-600">
+                          {request.appliedPackageAppliedAt
+                            ? formatDateTime(request.appliedPackageAppliedAt)
+                            : '—'}
+                        </span>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+                {/* Scenario A: User Accepted – Request status In Progress, each service Pending Execution, SW action buttons */}
+                {pkgStatus === 'ACCEPTED' && (
+                  <div className="mt-3">
+                    <h6 className="fw-600 mb-2">Services – Execution</h6>
+                    <p className="small text-muted mb-3">Request status: In Progress. Each service is pending execution. Use the actions below.</p>
+                    <ul className="list-unstyled mb-0">
+                      {(request.appliedPackage?.items ?? []).map((item) => (
+                        <li key={item} className="d-flex flex-wrap align-items-center justify-content-between py-2 border-bottom border-light gap-2">
+                          <span className="fw-500">{item}</span>
+                          <Badge bg="secondary" className="me-2">Pending Execution</Badge>
+                          <div className="d-flex flex-wrap gap-1">
+                            <Button variant="outline-success" size="sm">Start Service</Button>
+                            <Button variant="outline-primary" size="sm">Assign Resource</Button>
+                            <Button variant="outline-info" size="sm">Add Follow-up</Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Scenario B: Pending (adjustment need) – can Revise or Apply different package */}
+                {(!pkgStatus || pkgStatus === 'PENDING') && (
+                  <div className="mt-3">
+                    <p className="small text-muted mb-2">Waiting for public user to accept or reject this package.</p>
+                    <p className="small text-muted mb-2">If the user requested <strong>adjustments</strong>, you can:</p>
+                    <div className="d-flex flex-wrap gap-2">
+                      <Button variant="outline-primary" size="sm" onClick={() => setShowApplyModal(true)}>
+                        Revise package
+                      </Button>
+                      <Button variant="outline-secondary" size="sm" onClick={() => setShowApplyModal(true)}>
+                        Apply different package
+                      </Button>
                     </div>
                   </div>
-                  {selectedServiceItems.length === 0 ? (
-                    <div className="small text-muted">
-                      Select one or more service items on the left to configure resources and
-                      follow-ups.
-                    </div>
-                  ) : (
-                    <div className="d-flex flex-column gap-3">
-                      {selectedServiceItems.map((item) => (
-                        <Card key={item.id} className="border-0 bg-light bg-opacity-50">
-                          <Card.Body className="p-3">
-                            <div className="fw-600 small mb-1">{item.label}</div>
-                            <div className="mb-2 small text-muted">
-                              Resource / provider (hospital, NGO, shelter, etc.)
-                            </div>
-                            <Form.Select
-                              size="sm"
-                              className="mb-2"
-                              value={itemResource[item.id] ?? ''}
-                              onChange={(e) =>
-                                setItemResource((prev) => ({
-                                  ...prev,
-                                  [item.id]: e.target.value,
-                                }))
-                              }
-                            >
-                              <option value="">Select a resource</option>
-                              {RESOURCE_OPTIONS.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Card.Body>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
+                )}
 
-                  {/* Simple review preview */}
-                  {selectedServiceItems.length > 0 && (
-                    <div className="mt-4 small">
-                      <h6 className="fw-600 mb-2">Review package</h6>
-                      {packageFollowUpAt && (
-                        <div className="mb-1">
-                          <span className="text-muted">Follow-up:</span>{' '}
-                          <span className="fw-500">{packageFollowUpAt}</span>
-                        </div>
-                      )}
-                      {packageNotes && (
-                        <div className="mb-2">
-                          <span className="text-muted">Notes:</span>{' '}
-                          <span className="fw-500">{packageNotes}</span>
-                        </div>
-                      )}
-                      <ul className="mb-0 ps-3">
-                        {selectedServiceItems.map((item) => (
-                          <li key={item.id} className="mb-1">
-                            <span className="fw-500">{item.label}</span>
-                            {itemResource[item.id] && (
-                              <span className="text-muted">
-                                {' '}
-                                • {itemResource[item.id]}
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
+                {/* Scenario C: Fully Rejected – Request status Package Rejected, SW can Revise / Apply different / Close */}
+                {pkgStatus === 'REJECTED' && (
+                  <div className="mt-3">
+                    <p className="small text-muted mb-2">The public user rejected this package. Request status: <strong>Package Rejected</strong>.</p>
+                    <p className="small fw-600 mb-2">You can:</p>
+                    <div className="d-flex flex-wrap gap-2">
+                      <Button variant="outline-primary" size="sm" onClick={() => setShowApplyModal(true)}>
+                        Revise package
+                      </Button>
+                      <Button variant="outline-secondary" size="sm" onClick={() => setShowApplyModal(true)}>
+                        Apply different package
+                      </Button>
+                      <Button variant="outline-danger" size="sm" onClick={handleCloseRequest} disabled={closeRequestLoading}>
+                        {closeRequestLoading ? 'Closing…' : 'Close request'}
+                      </Button>
                     </div>
-                  )}
-                </Col>
-              </Row>
-              {packageMessage && (
-                <div className="alert alert-info small mt-3 mb-2">
-                  {packageMessage}
-                </div>
-              )}
-              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4">
-                <div className="small text-muted">
-                  After the package is accepted by the public user, items will move into execution
-                  and tracking.
-                </div>
-                <div className="d-flex flex-wrap gap-2">
-                  <Button
-                    variant="outline-secondary"
-                    size="sm"
-                    onClick={handleCancelPackage}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={handleSaveDraft}
-                  >
-                    Save draft
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleSendToUser}
-                  >
-                    Send to user
-                  </Button>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+          )}
+
+          {/* Apply Service Package – when no package applied yet */}
+          {!request.appliedPackage && (
+            <div className="mb-3">
+              <Button
+                variant="outline-success"
+                size="sm"
+                onClick={() => setShowApplyModal(true)}
+              >
+                ➕ Apply Service Package
+              </Button>
+            </div>
+          )}
         </Col>
 
         {/* Right: Public User / Requester Info */}
@@ -738,6 +576,65 @@ export function SocialWorkerRequestDetailsPage() {
           </Card>
         </Col>
       </Row>
+
+      {/* Apply Service Package Modal */}
+      <Modal show={showApplyModal} onHide={() => setShowApplyModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Apply Service Package</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-muted small mb-3">
+            Select an Active package to apply to this help request. The public user will receive it for approval.
+          </p>
+          <Form.Group className="mb-3">
+            <Form.Label>Select package</Form.Label>
+            <Form.Select
+              value={selectedPackageId}
+              onChange={(e) => setSelectedPackageId(e.target.value)}
+            >
+              <option value="">Choose a package…</option>
+              {availablePackages.map((pkg) => (
+                <option key={pkg.id} value={pkg.id}>
+                  {pkg.title} ({pkg.items?.length ?? 0} services)
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          {selectedPackageId && (
+            <div className="mb-3">
+              <h6 className="fw-600 mb-2">Preview included services</h6>
+              {(() => {
+                const pkg = availablePackages.find((p) => p.id === selectedPackageId)
+                if (!pkg?.items?.length) return <div className="small text-muted">No items.</div>
+                return (
+                  <ul className="mb-0 ps-3 small">
+                    {pkg.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )
+              })()}
+            </div>
+          )}
+          {applyPackageMessage && (
+            <div className={`alert small mb-0 ${applyPackageMessage.includes('Failed') ? 'alert-danger' : 'alert-success'}`}>
+              {applyPackageMessage}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowApplyModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleApplyPackage}
+            disabled={!selectedPackageId || applyPackageLoading}
+          >
+            {applyPackageLoading ? 'Sending…' : 'Send to Public User for Approval'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   )
 }

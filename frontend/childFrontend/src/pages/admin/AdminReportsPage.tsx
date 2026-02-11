@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Card, Button, Form, Spinner, Table } from 'react-bootstrap'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -258,7 +258,6 @@ export function AdminReportsPage() {
       ])
 
       // Add table
-      // @ts-expect-error - jsPDF autotable plugin typing
       autoTable(doc, {
         head: [[
           'Type', 'ID', 'Tracking ID', 'Title', 'Description',
@@ -377,8 +376,6 @@ export function AdminReportsPage() {
       setLoading(false)
     }
   }
-
-  const hasData = rows.length > 0
 
   return (
     <div className="animate-fade-in-up">

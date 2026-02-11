@@ -21,6 +21,10 @@ public class UserUpdateRequest {
     private String address;
     private String certificationDocumentUrl;
 
+    public String getFullName() {
+        return fullName;
+    }
+
     public String getAddress() {
         return address;
     }

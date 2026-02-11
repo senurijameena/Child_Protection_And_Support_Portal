@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Navbar, Nav, Container, Dropdown, Offcanvas } from 'react-bootstrap'
+import { Navbar, Nav, Container, Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
-import { AdminNotificationDropdown } from '../components/admin/AdminNotificationDropdown'
 
 const sidebarItems = [
   { path: '/admin', label: 'Dashboard', icon: '📊' },

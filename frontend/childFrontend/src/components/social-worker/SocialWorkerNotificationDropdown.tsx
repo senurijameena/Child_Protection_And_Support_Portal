@@ -1,15 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dropdown, Badge, Spinner } from 'react-bootstrap'
+import { Dropdown, Badge, Spinner, Button } from 'react-bootstrap'
 import { getNotifications, markNotificationRead } from '../../services/socialWorkerApi'
 import type { NotificationDTO } from '../../types/dashboard'
-
-const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
-  HIGH_RISK: 'Urgent',
-  FOLLOW_UP_DUE: 'Follow-up',
-  NEW_ASSIGNMENT: 'Assignment',
-  REQUEST_UPDATE: 'Request',
-}
 
 function isUrgentType(type: string | undefined): boolean {
   return type === 'HIGH_RISK' || type === 'FOLLOW_UP_DUE' || type === 'URGENT'

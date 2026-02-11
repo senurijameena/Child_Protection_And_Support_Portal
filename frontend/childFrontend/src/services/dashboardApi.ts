@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPut, apiPostFormData } from './api'
-import type { CaseDTO, HelpRequestDTO, ServiceOfferDTO, NotificationDTO, MessageDTO, ConversationDTO } from '../types/dashboard'
+import type { CaseDTO, HelpRequestDTO, ServiceOfferDTO, NotificationDTO, MessageDTO, ConversationDTO, ServicePackageDTO } from '../types/dashboard'
 
 // Cases
 export async function getMyCases(): Promise<CaseDTO[]> {
@@ -41,6 +41,43 @@ export async function getMyRequests(): Promise<HelpRequestDTO[]> {
 
 export async function getHelpRequest(requestId: string): Promise<HelpRequestDTO> {
   return apiGet<HelpRequestDTO>(`/help-requests/${requestId}`)
+}
+
+/** Get applied service package for a help request (public user). Returns null if none applied. */
+export async function getAppliedPackage(requestId: string): Promise<ServicePackageDTO | null> {
+  try {
+    const r = await apiGet<HelpRequestDTO>(`/help-requests/${requestId}`)
+    return r.appliedPackage ?? null
+  } catch {
+    return null
+  }
+}
+
+/** Public user: Accept the applied service package. */
+export async function acceptAppliedPackage(requestId: string): Promise<HelpRequestDTO> {
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/accept`, {})
+}
+
+/** Public user: Reject the applied service package. */
+export async function rejectAppliedPackage(requestId: string, reason?: string): Promise<HelpRequestDTO> {
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/reject`, { reason: reason ?? '' })
+}
+
+/** Public user: Submit follow-up & execution plan after accepting package. Auto-marked in calendar. */
+export async function submitPackageFollowUp(
+  requestId: string,
+  data: { followUpDate: string; followUpType: 'VISIT' | 'CALL' | 'SESSION'; notes?: string }
+): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/package/follow-up`, data)
+}
+
+/** Public user: Request adjustment for a specific service item. */
+export async function requestServiceAdjustment(
+  requestId: string,
+  serviceItem: string,
+  message: string
+): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/package/adjustment`, { serviceItem, message })
 }
 
 export async function createHelpRequest(data: {

@@ -7,7 +7,9 @@ import com.example.childPortal.model.HelpType;
 import com.example.childPortal.model.Priority;
 import com.example.childPortal.model.Role;
 import com.example.childPortal.model.User;
+import com.example.childPortal.model.ServicePackage;
 import com.example.childPortal.repository.HelpRequestRepository;
+import com.example.childPortal.repository.ServicePackageRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.HelpRequestService;
 import com.example.childPortal.service.NotificationService;
@@ -25,6 +27,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Autowired
     private HelpRequestRepository helpRequestRepository;
+
+    @Autowired
+    private ServicePackageRepository servicePackageRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -532,6 +537,67 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                 .orElse(null);
     }
 
+    @Override
+    public HelpRequestDTO applyServicePackageToRequest(String requestId, String packageId, String appliedBy) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    ServicePackage servicePackage = servicePackageRepository.findById(packageId)
+                            .orElseThrow(() -> new RuntimeException("Service package not found"));
+
+                    HelpRequest.RequestStatus oldStatus = helpRequest.getStatus();
+                    helpRequest.setAppliedServicePackageId(servicePackage.getId());
+                    helpRequest.setAppliedServicePackageAppliedAt(LocalDateTime.now());
+                    helpRequest.setAppliedServicePackageStatus("PENDING");
+                    helpRequest.setStatus(HelpRequest.RequestStatus.PACKAGE_PROPOSED);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+
+                    helpRequestRepository.save(helpRequest);
+
+                    if (timelineService != null) {
+                        try {
+                            String updaterName = userRepository.findById(appliedBy).map(User::getFullName)
+                                    .orElse("Unknown");
+                            timelineService.createHelpRequestStatusChangeEvent(
+                                    requestId,
+                                    appliedBy,
+                                    updaterName,
+                                    oldStatus,
+                                    HelpRequest.RequestStatus.PACKAGE_PROPOSED,
+                                    "Service package proposed: " + servicePackage.getTitle());
+                        } catch (Exception e) {
+                            System.err.println("Error adding timeline event for package proposal: " + e.getMessage());
+                        }
+                    }
+
+                    if (notificationService != null && helpRequest.getRequesterUserId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getRequesterUserId(),
+                                    helpRequest.getId(),
+                                    "PACKAGE_PROPOSED",
+                                    helpRequest.isAnonymous());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying requester of package proposal: " + e.getMessage());
+                        }
+                    }
+
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    "PACKAGE_PROPOSED",
+                                    appliedBy,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin of package proposal: " + e.getMessage());
+                        }
+                    }
+
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
     private HelpRequestDTO convertToFilteredDTO(HelpRequest helpRequest) {
         HelpRequestDTO dto = new HelpRequestDTO();
         dto.setId(helpRequest.getId());
@@ -549,6 +615,25 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         dto.setAssignedWorkerId(helpRequest.getAssignedWorkerId());
         dto.setRequestDate(helpRequest.getRequestDate());
         dto.setPriority(helpRequest.getPriority());
+
+        // Map applied service package, if any
+        if (helpRequest.getAppliedServicePackageId() != null) {
+            servicePackageRepository.findById(helpRequest.getAppliedServicePackageId()).ifPresent(pkg -> {
+                com.example.childPortal.dto.ServicePackageDTO pkgDto = new com.example.childPortal.dto.ServicePackageDTO();
+                pkgDto.setId(pkg.getId());
+                pkgDto.setTitle(pkg.getTitle());
+                pkgDto.setRequestType(pkg.getRequestType());
+                pkgDto.setDescription(pkg.getDescription());
+                pkgDto.setEstimatedDuration(pkg.getEstimatedDuration());
+                pkgDto.setItems(pkg.getItems());
+                pkgDto.setStatus(pkg.getStatus());
+                pkgDto.setCreatedAt(pkg.getCreatedAt());
+                pkgDto.setUpdatedAt(pkg.getUpdatedAt());
+                dto.setAppliedPackage(pkgDto);
+            });
+            dto.setAppliedPackageStatus(helpRequest.getAppliedServicePackageStatus());
+            dto.setAppliedPackageAppliedAt(helpRequest.getAppliedServicePackageAppliedAt());
+        }
 
         try {
             org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext()

@@ -6,8 +6,9 @@ import { SocialWorkerHeader } from '../components/social-worker/SocialWorkerHead
 
 const sidebarItems = [
   { path: '/social-worker', label: 'Dashboard', icon: '🏠', end: true },
+  { path: '/social-worker/analytics', label: 'Analytics', icon: '📈', end: false },
   { path: '/social-worker/requests', label: 'Assigned Requests', icon: '📋', end: false },
-  { path: '/social-worker/packages', label: 'Service Packages', icon: '📦', end: false },
+  { path: '/social-worker/packages', label: 'Service Packages', icon: '🧩', end: false },
   { path: '/social-worker/library', label: 'Resource Management', icon: '📚', end: false },
   { path: '/social-worker/messages', label: 'Messages', icon: '💬', end: false },
   { path: '/social-worker/follow-ups', label: 'Follow-ups', icon: '⏰', end: false },

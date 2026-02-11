@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Card, Container, Row, Col, ProgressBar, Badge } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
 import { getAssignedRequests, getMyFollowUps, type FollowUpDTO } from '../../services/socialWorkerApi'
-import type { HelpRequestDTO } from '../../types/dashboard'
+import {
+  type HelpRequestDTO,
+  REQUEST_STATUS_BADGE_VARIANTS,
+  REQUEST_STATUS_LABELS,
+} from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
 
 interface CaseStats {
@@ -278,7 +283,6 @@ export function SocialWorkerDashboard() {
                     <thead className="border-top">
                       <tr className="text-muted small">
                         <th className="px-4 py-3">Request / Follow-up</th>
-                        <th className="py-3">Child / User</th>
                         <th className="py-3">Type</th>
                         <th className="py-3">Due Date</th>
                         <th className="py-3 text-center">Status</th>
@@ -293,11 +297,8 @@ export function SocialWorkerDashboard() {
                           style={{ backgroundColor: 'rgba(248, 113, 113, 0.04)' }}
                         >
                           <td className="px-4 py-3 small">
-                            <div className="fw-600">#{task.helpRequestId ?? task.id}</div>
+                            <div className="fw-600">{task.helpRequestId ?? '-'}</div>
                             <div className="text-danger small">{getOverdueByText(task.scheduledDate)}</div>
-                          </td>
-                          <td className="py-3 small">
-                            {task.childName || 'Public user'}
                           </td>
                           <td className="py-3 small">
                             {task.type || 'Follow-up'}
@@ -312,12 +313,14 @@ export function SocialWorkerDashboard() {
                           </td>
                           <td className="py-3 text-end pe-4">
                             <div className="d-flex justify-content-end gap-2">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-primary rounded-pill"
-                              >
-                                View case
-                              </button>
+                              {task.helpRequestId && (
+                                <Link
+                                  to={`/social-worker/requests/${task.helpRequestId}`}
+                                  className="btn btn-sm btn-outline-primary rounded-pill"
+                                >
+                                  View help
+                                </Link>
+                              )}
                               <button
                                 type="button"
                                 className="btn btn-sm btn-outline-danger rounded-pill"
@@ -447,8 +450,17 @@ export function SocialWorkerDashboard() {
                           </td>
                           <td className="py-3 small">{req.helpType ?? 'Support Request'}</td>
                           <td className="py-3">
-                            <Badge bg={getStatusColor(req.status ?? '')}>
-                              {req.status ?? 'UNKNOWN'}
+                            <Badge
+                              bg={
+                                REQUEST_STATUS_BADGE_VARIANTS[
+                                  (req.status as keyof typeof REQUEST_STATUS_BADGE_VARIANTS) ??
+                                    'REQUESTED'
+                                ]
+                              }
+                            >
+                              {REQUEST_STATUS_LABELS[
+                                (req.status as keyof typeof REQUEST_STATUS_LABELS) ?? 'REQUESTED'
+                              ]}
                             </Badge>
                           </td>
                           <td className="py-3 text-center">

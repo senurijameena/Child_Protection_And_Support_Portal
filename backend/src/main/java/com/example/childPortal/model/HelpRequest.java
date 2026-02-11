@@ -33,13 +33,23 @@ public class HelpRequest {
 
     private String requestNotes;
 
+    // Service package proposed by social worker for this help request
+    private String appliedServicePackageId;
+    private LocalDateTime appliedServicePackageAppliedAt;
+    /**
+     * Simple string status for the applied package: PENDING, ACCEPTED, REJECTED, etc.
+     */
+    private String appliedServicePackageStatus;
+
     public enum RequestStatus {
         REQUESTED,
         UNDER_REVIEW,
         ASSIGNED,
+        PACKAGE_PROPOSED,
         IN_PROGRESS,
         COMPLETED,
         REJECTED,
+        PACKAGE_REJECTED,
         CANCELLED
     }
 
@@ -209,6 +219,30 @@ public class HelpRequest {
 
     public void setRequestNotes(String requestNotes) {
         this.requestNotes = requestNotes;
+    }
+
+    public String getAppliedServicePackageId() {
+        return appliedServicePackageId;
+    }
+
+    public void setAppliedServicePackageId(String appliedServicePackageId) {
+        this.appliedServicePackageId = appliedServicePackageId;
+    }
+
+    public LocalDateTime getAppliedServicePackageAppliedAt() {
+        return appliedServicePackageAppliedAt;
+    }
+
+    public void setAppliedServicePackageAppliedAt(LocalDateTime appliedServicePackageAppliedAt) {
+        this.appliedServicePackageAppliedAt = appliedServicePackageAppliedAt;
+    }
+
+    public String getAppliedServicePackageStatus() {
+        return appliedServicePackageStatus;
+    }
+
+    public void setAppliedServicePackageStatus(String appliedServicePackageStatus) {
+        this.appliedServicePackageStatus = appliedServicePackageStatus;
     }
 
 }

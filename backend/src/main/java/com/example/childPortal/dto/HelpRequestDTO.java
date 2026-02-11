@@ -3,6 +3,7 @@ package com.example.childPortal.dto;
 import com.example.childPortal.model.HelpType;
 import com.example.childPortal.model.HelpRequest.RequestStatus;
 import com.example.childPortal.model.Priority;
+import com.example.childPortal.dto.ServicePackageDTO;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +25,14 @@ public class HelpRequestDTO {
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime requestDate;
     private Priority priority;
+
+    // Applied service package (when a social worker has proposed one)
+    private ServicePackageDTO appliedPackage;
+    // Public user acceptance status of the applied package (PENDING / ACCEPTED / REJECTED / etc.)
+    private String appliedPackageStatus;
+    // When the service package was applied to this request
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    private LocalDateTime appliedPackageAppliedAt;
 
     public HelpRequestDTO() {
     }
@@ -200,5 +209,29 @@ public class HelpRequestDTO {
 
     public void setPriority(Priority priority) {
         this.priority = priority;
+    }
+
+    public ServicePackageDTO getAppliedPackage() {
+        return appliedPackage;
+    }
+
+    public void setAppliedPackage(ServicePackageDTO appliedPackage) {
+        this.appliedPackage = appliedPackage;
+    }
+
+    public String getAppliedPackageStatus() {
+        return appliedPackageStatus;
+    }
+
+    public void setAppliedPackageStatus(String appliedPackageStatus) {
+        this.appliedPackageStatus = appliedPackageStatus;
+    }
+
+    public LocalDateTime getAppliedPackageAppliedAt() {
+        return appliedPackageAppliedAt;
+    }
+
+    public void setAppliedPackageAppliedAt(LocalDateTime appliedPackageAppliedAt) {
+        this.appliedPackageAppliedAt = appliedPackageAppliedAt;
     }
 }

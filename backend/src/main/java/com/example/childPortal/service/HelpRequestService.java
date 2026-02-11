@@ -38,4 +38,10 @@ public interface HelpRequestService {
     HelpRequestDTO declineHelpRequest(String requestId, String reason, String declinedBy);
 
     HelpRequestDTO addDocumentToHelpRequest(String requestId, String documentUrl);
+
+  /**
+   * Apply a published service package to a help request and send it to the public user
+   * for approval. This moves the request into the "PACKAGE_PROPOSED" phase.
+   */
+  HelpRequestDTO applyServicePackageToRequest(String requestId, String packageId, String appliedBy);
 }

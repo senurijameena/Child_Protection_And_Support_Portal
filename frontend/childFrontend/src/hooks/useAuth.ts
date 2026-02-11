@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react'
+import type { Role } from '../types/auth'
 
 interface User {
   userId: string
   email?: string
   fullName?: string
-  role?: string
+  role?: Role
+  phone?: string
+  address?: string
+  profilePhoto?: string
+
+  // Social worker / police extra details that may be present in stored user
+  licenseNumber?: string
+  organization?: string
+  specializations?: string[] | string
+  yearsOfExperience?: string
+  certificationDocumentUrl?: string
 }
 
 export function useAuth() {

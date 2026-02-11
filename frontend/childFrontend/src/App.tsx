@@ -49,6 +49,7 @@ import { PoliceMessagesPage } from './pages/police/PoliceMessagesPage'
 import { PoliceReportsPage } from './pages/police/PoliceReportsPage'
 import { PoliceProfilePage } from './pages/police/PoliceProfilePage'
 import { SocialWorkerDashboard } from './pages/social-worker/SocialWorkerDashboard'
+import { SocialWorkerAnalyticsPage } from './pages/social-worker/SocialWorkerAnalytics'
 import {
   SocialWorkerRequestsPage,
   SocialWorkerRequestDetailsPage,
@@ -57,10 +58,11 @@ import {
   SocialWorkerMessagesPage,
   SocialWorkerLibraryPage,
   SocialWorkerTransfersPage,
-  SocialWorkerPackagesPage,
   SocialWorkerReportsPage,
   SocialWorkerProfilePage,
 } from './pages/social-worker/SocialWorkerPages'
+import { ServicePackageListingPage } from './pages/social-worker/ServicePackageListingPage'
+import { ServicePackageFormPage } from './pages/social-worker/ServicePackageFormPage'
 
 
 function App() {
@@ -167,6 +169,7 @@ function App() {
         }
       >
         <Route index element={<SocialWorkerDashboard />} />
+        <Route path="analytics" element={<SocialWorkerAnalyticsPage />} />
         <Route path="requests" element={<SocialWorkerRequestsPage />} />
         <Route path="requests/:requestId" element={<SocialWorkerRequestDetailsPage />} />
         <Route path="calendar" element={<SocialWorkerCalendarPage />} />
@@ -174,7 +177,9 @@ function App() {
         <Route path="messages" element={<SocialWorkerMessagesPage />} />
         <Route path="library" element={<SocialWorkerLibraryPage />} />
         <Route path="transfers" element={<SocialWorkerTransfersPage />} />
-        <Route path="packages" element={<SocialWorkerPackagesPage />} />
+        <Route path="packages" element={<ServicePackageListingPage />} />
+        <Route path="packages/create" element={<ServicePackageFormPage />} />
+        <Route path="packages/:packageId/edit" element={<ServicePackageFormPage />} />
         <Route path="reports" element={<SocialWorkerReportsPage />} />
         <Route path="profile" element={<SocialWorkerProfilePage />} />
       </Route>

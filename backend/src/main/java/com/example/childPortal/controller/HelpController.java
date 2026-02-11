@@ -132,6 +132,19 @@ public class HelpController {
         return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
     }
 
+   @PostMapping("/{requestId}/apply-package")
+   public ResponseEntity<HelpRequestDTO> applyServicePackageToRequest(
+           @PathVariable String requestId,
+           @RequestBody java.util.Map<String, String> body,
+           @AuthenticationPrincipal String userId) {
+       String packageId = body.get("packageId");
+       if (packageId == null || packageId.trim().isEmpty()) {
+           return ResponseEntity.badRequest().build();
+       }
+       HelpRequestDTO updatedRequest = helpRequestService.applyServicePackageToRequest(requestId, packageId, userId);
+       return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+   }
+
     @PostMapping("/{requestId}/document")
     public ResponseEntity<HelpRequestDTO> uploadDocument(
             @PathVariable String requestId,

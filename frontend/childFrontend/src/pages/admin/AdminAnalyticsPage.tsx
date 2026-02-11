@@ -104,14 +104,6 @@ export function AdminAnalyticsPage() {
     count,
   }))
 
-  const roleDistributionData =
-    userStats?.usersByRole
-      ? Object.entries(userStats.usersByRole).map(([role, count]) => ({
-          role,
-          count,
-        }))
-      : []
-
   const stationVsWorkerData = [
     { category: 'Police Stations', count: totalPoliceStations },
     { category: 'Social Workers', count: totalSocialWorkers },

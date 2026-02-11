@@ -11,6 +11,7 @@ import {
   Tab,
   Tabs,
 } from 'react-bootstrap'
+import { getUploadBaseUrl } from '../../services/api'
 import {
   getCase,
   getCaseTimeline,
@@ -208,17 +209,37 @@ export function PoliceCaseDetailsPage() {
                 </Card.Header>
                 <Card.Body>
                   <p><strong>Reporter:</strong> {c.anonymous ? <Badge bg="secondary">Anonymous</Badge> : 'Reporter'}</p>
+                  <p><strong>Approximate Age:</strong> {c.approximateAge || '-'}</p>
+                  <p><strong>Gender:</strong> {c.gender || '-'}</p>
                   <p><strong>Location:</strong> {c.location || '-'}</p>
                   <p><strong>Submitted:</strong> {c.reportDate ? new Date(c.reportDate).toLocaleString() : '-'}</p>
                   <p><strong>Description:</strong></p>
                   <p className="text-muted">{c.caseDescription || '-'}</p>
+                  {c.physicalIdentificationMarks && (
+                    <div className="mt-3 p-3 bg-light rounded-3">
+                      <h6 className="mb-2">Physical Identification Marks</h6>
+                      <p className="text-muted mb-0">{c.physicalIdentificationMarks}</p>
+                    </div>
+                  )}
+                  {c.lastSeenDressDetails && (
+                    <div className="mt-3 p-3 bg-light rounded-3">
+                      <h6 className="mb-2">Last Seen Dress Details</h6>
+                      <p className="text-muted mb-0">{c.lastSeenDressDetails}</p>
+                    </div>
+                  )}
+                  {c.photographUrl && (
+                    <div className="mt-3 p-3 bg-light rounded-3">
+                      <h6 className="mb-2">Child's Photograph</h6>
+                      <img src={`${getUploadBaseUrl()}${c.photographUrl}`} alt="Child photograph" style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }} />
+                    </div>
+                  )}
                   {c.evidenceUrls && c.evidenceUrls.length > 0 && (
                     <div>
                       <strong>Evidence:</strong>
                       <ul className="mb-0">
                         {c.evidenceUrls.map((url, i) => (
                           <li key={i}>
-                            <a href={url} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
+                            <a href={`${getUploadBaseUrl()}${url}`} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
                           </li>
                         ))}
                       </ul>
@@ -285,7 +306,7 @@ export function PoliceCaseDetailsPage() {
                       <ul className="mb-0">
                         {c.evidenceUrls.map((url, i) => (
                           <li key={i}>
-                            <a href={url} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
+                            <a href={`${getUploadBaseUrl()}${url}`} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
                           </li>
                         ))}
                       </ul>

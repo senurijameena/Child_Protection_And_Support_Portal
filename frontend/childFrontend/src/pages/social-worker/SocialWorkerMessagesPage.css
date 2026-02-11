@@ -1,0 +1,17 @@
+.messages-page .conversations-col { max-height: 72vh; }
+.messages-page .conversations-list { overflow-y: auto; max-height: 60vh; }
+.conversation-item { padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 6px; }
+.conversation-item:hover { background: rgba(0,0,0,0.02); }
+.conversation-item.active { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.12); }
+
+.chat-col { min-height: 72vh; }
+.message-list { background: #f8fafc; border-radius: 6px; }
+.message-row { margin-bottom: 12px; display: flex; }
+.message-row.me { justify-content: flex-end; }
+.message-row.them { justify-content: flex-start; }
+.message-bubble { max-width: 74%; padding: 10px 12px; border-radius: 10px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+.message-row.me .message-bubble { background: #dbeafe; }
+.message-text { white-space: pre-wrap; }
+.message-meta { margin-top: 6px; font-size: 0.75rem; }
+
+.info-col { min-height: 72vh; }

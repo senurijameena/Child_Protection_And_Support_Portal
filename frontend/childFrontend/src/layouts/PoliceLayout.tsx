@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Navbar, Nav, Container, Dropdown, Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
+import SystemAnnouncementBanner from '../components/SystemAnnouncementBanner'
 
 const sidebarItems = [
   { path: '/police', label: 'Dashboard', icon: '📋' },
@@ -126,6 +127,7 @@ export function PoliceLayout() {
 
         <main className="flex-grow-1 py-4 overflow-auto">
           <Container fluid className="px-3 px-lg-4">
+            <SystemAnnouncementBanner />
             <Outlet />
           </Container>
         </main>

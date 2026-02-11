@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
 import { SocialWorkerHeader } from '../components/social-worker/SocialWorkerHeader'
+import { SocialWorkerNotificationDropdown } from '../components/social-worker/SocialWorkerNotificationDropdown'
+import SystemAnnouncementBanner from '../components/SystemAnnouncementBanner'
 
 const sidebarItems = [
   { path: '/social-worker', label: 'Dashboard', icon: '🏠', end: true },
@@ -12,7 +14,6 @@ const sidebarItems = [
   { path: '/social-worker/library', label: 'Resource Management', icon: '📚', end: false },
   { path: '/social-worker/messages', label: 'Messages', icon: '💬', end: false },
   { path: '/social-worker/follow-ups', label: 'Follow-ups', icon: '⏰', end: false },
-  { path: '/social-worker/reports', label: 'Reports', icon: '📊', end: false },
   { path: '/social-worker/profile', label: 'Profile', icon: '👤', end: false },
 ]
 
@@ -96,7 +97,13 @@ export function SocialWorkerLayout() {
 
         <div className="p-3 border-top mt-auto bg-light bg-opacity-50">
           {!sidebarCollapsed ? (
-            <div className="d-flex flex-column gap-2">
+            <div className="d-flex flex-column gap-3">
+              <div className="d-flex justify-content-between align-items-center px-2">
+                <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>
+                  Notifications
+                </span>
+                <SocialWorkerNotificationDropdown />
+              </div>
               <div className="px-2 py-1 text-muted small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>
                 Signed in as
               </div>
@@ -173,6 +180,7 @@ export function SocialWorkerLayout() {
       <div className="flex-grow-1 d-flex flex-column min-vw-0">
         {/* Header - Modern Professional Design */}
         <SocialWorkerHeader />
+        <SystemAnnouncementBanner />
 
         <main className="flex-grow-1 py-4 overflow-auto sw-main">
           <div className="px-3 px-lg-4">

@@ -71,6 +71,42 @@ export async function uploadRequestDocument(
   return apiPostFormData<HelpRequestDTO>(`/help-requests/${requestId}/document`, fd)
 }
 
+// Update service item execution status (PENDING, IN_PROGRESS, SCHEDULED, COMPLETED).
+// When status is IN_PROGRESS, optional startDate (ISO string) and notes can be provided.
+export async function updateServiceItemStatus(
+  requestId: string,
+  serviceItem: string,
+  status: string,
+  options?: { startDate?: string; notes?: string }
+): Promise<HelpRequestDTO> {
+  const body: Record<string, unknown> = { serviceItem, status }
+  if (options?.startDate) body.startDate = options.startDate
+  if (options?.notes) body.notes = options.notes
+  // debug: log the exact endpoint and payload to help diagnose 404s
+  console.debug('Calling updateServiceItemStatus', {
+    url: `/help-requests/${requestId}/package/service/status`,
+    body,
+  })
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/service/status`, body)
+}
+
+// Assign resource and scheduled date to a service item
+export async function assignServiceItemResource(
+  requestId: string,
+  serviceItem: string,
+  data: { assignedResource?: string; scheduledDate?: string; notes?: string }
+): Promise<HelpRequestDTO> {
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/service/resource`, { serviceItem, ...data })
+}
+
+// Submit package follow-up (visit, call, session)
+export async function submitPackageFollowUp(
+  requestId: string,
+  data: { followUpDate: string; followUpType: string; notes?: string }
+): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/package/follow-up`, data)
+}
+
 // Apply a service package to a help request and send it to the public user for approval
 export async function applyServicePackageToRequest(
   requestId: string,
@@ -169,6 +205,16 @@ export async function getHelpRequestTimeline(helpRequestId: string) {
   return apiGet(`/timeline/help-request/${helpRequestId}`)
 }
 
+// Create a timeline entry for a help request. Backend accepts generic timeline create payload.
+export async function createHelpRequestTimelineNote(helpRequestId: string, description: string) {
+  return apiPost('/timeline/create', {
+    helpRequestId,
+    eventType: 'SERVICE_STARTED',
+    description,
+    eventTime: new Date().toISOString(),
+  })
+}
+
 // Notifications
 export async function getNotifications(): Promise<{ id: string; type?: string; title?: string; message?: string; read: boolean; actionUrl?: string; createdAt?: string }[]> {
   return apiGet('/notifications')
@@ -180,6 +226,10 @@ export async function getUnreadCount(): Promise<number> {
 
 export async function markNotificationRead(id: string) {
   return apiPut(`/notifications/${id}/read`, {})
+}
+
+export async function markAllNotificationsRead() {
+  return apiPut('/notifications/read-all', {})
 }
 
 // User profile (shared across roles)

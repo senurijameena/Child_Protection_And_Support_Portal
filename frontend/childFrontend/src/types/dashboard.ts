@@ -61,6 +61,10 @@ export interface CaseDTO {
   emergency?: boolean
   priority?: string
   caseNotes?: string
+  gender?: string
+  photographUrl?: string
+  physicalIdentificationMarks?: string
+  lastSeenDressDetails?: string
 }
 
 /** Status of the service package applied to a help request (public user view). */
@@ -75,17 +79,43 @@ export interface HelpRequestDTO {
   helpType?: HelpType
   description?: string
   location?: string
+  gender?: string
   documentUrls?: string[]
   status?: RequestStatus
   assignedWorkerId?: string
   requestDate?: string
   priority?: string
+  // Food Assistance fields
+  familyMembers?: number
+  monthlyIncomeRange?: string
+  employmentStatus?: string
+  // Education fields
+  schoolGrade?: string
+  requiredItems?: string[]
+  examYear?: string
+  // Medical fields
+  conditionDescription?: string
+  urgencyLevel?: string
+  hospitalName?: string
+  estimatedCost?: string
+  medicalReportUrl?: string
+  // Shelter fields
+  currentHousingType?: string
+  riskOfEviction?: boolean
+  immediateDanger?: boolean
+  // Clothing fields
+  quantityNeeded?: string
+  // Counseling fields
+  counselingType?: string
+  preferredContactMethod?: string
   /** Applied service package (when SW has sent one for approval). */
   appliedPackage?: ServicePackageDTO
   /** Public user acceptance status of the applied package. */
   appliedPackageStatus?: AppliedPackageStatus
   /** When the service package was applied to this request (ISO date). */
   appliedPackageAppliedAt?: string
+  /** Per-service execution status (populated when PU accepts). */
+  appliedPackageItemExecutions?: ServiceItemExecutionDTO[]
 }
 
 export interface ServiceOfferDTO {
@@ -101,6 +131,15 @@ export interface ServiceOfferDTO {
 }
 
 export type ServicePackageStatus = 'DRAFT' | 'PUBLISHED'
+
+/** Per-service execution status within an applied package */
+export interface ServiceItemExecutionDTO {
+  serviceItem: string
+  status: 'PENDING' | 'IN_PROGRESS' | 'SCHEDULED' | 'COMPLETED'
+  assignedResource?: string
+  scheduledDate?: string
+  notes?: string
+}
 
 export interface ServicePackageDTO {
   id: string

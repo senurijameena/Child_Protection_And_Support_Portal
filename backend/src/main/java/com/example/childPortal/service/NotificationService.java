@@ -153,11 +153,8 @@ public class NotificationService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Always send app notification with actionUrl
-        String actionUrl = "/admin/help-requests/" + requestId; // Social workers likely view details here or a
-                                                                // dedicated route
-        // Assuming social worker dashboard route for viewing request details
-        actionUrl = "/dashboard/requests/" + requestId; // Adjust as per frontend route if needed, currently
-                                                        // "details-modal" pattern usually
+        // Social workers view assigned requests in their dashboard at /social-worker/requests/:requestId
+        String actionUrl = "/social-worker/requests/" + requestId;
 
         String title = "New Help Request Assigned";
         logNotification(userId, "HELP_REQUEST_ASSIGNED", title,

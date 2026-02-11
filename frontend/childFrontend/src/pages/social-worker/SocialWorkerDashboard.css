@@ -285,6 +285,68 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Horizontal Timeline */
+.sw-timeline-horizontal {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem 0.25rem;
+}
+
+.sw-timeline-horizontal::-webkit-scrollbar {
+  height: 6px;
+}
+
+.sw-timeline-horizontal::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.7);
+  border-radius: 999px;
+}
+
+.sw-timeline-step {
+  min-width: 180px;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sw-timeline-dot-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sw-timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--sw-primary-blue), var(--sw-primary-green));
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.sw-timeline-connector {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.7), rgba(148, 163, 184, 0.2));
+  margin-left: 0.5rem;
+  border-radius: 999px;
+}
+
+.sw-timeline-content {
+  font-size: 0.75rem;
+}
+
+.sw-timeline-message {
+  font-weight: 500;
+  color: var(--sw-text-dark);
+}
+
+.sw-timeline-actor,
+.sw-timeline-time {
+  color: var(--sw-text-muted);
+}
+
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .sw-dashboard {
@@ -333,6 +395,23 @@
 }
 
 /* Print Styles */
+@media print {
+  .sw-dashboard {
+    background: white;
+  }
+}
+
+/* Remove border between a request row and its expanded timeline */
+.sw-card .table tr.no-border-bottom td {
+  border-bottom: none !important;
+}
+
+/* Ensure the following row (timeline row) does not show a top border when previous row had no border */
+.sw-card .table tr.no-border-bottom + tr td {
+  border-top: none !important;
+}
+
+/* Print page-break control */
 @media print {
   .sw-dashboard {
     background: white;

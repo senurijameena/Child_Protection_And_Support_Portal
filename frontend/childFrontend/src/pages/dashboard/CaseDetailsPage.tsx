@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup } from 'react-bootstrap'
+import { getUploadBaseUrl } from '../../services/api'
 import { getCase, getCaseTimeline } from '../../services/dashboardApi'
 import { CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
 import type { CaseDTO } from '../../types/dashboard'
@@ -59,7 +60,7 @@ export function CaseDetailsPage() {
                   <ul className="mb-0">
                     {c.evidenceUrls.map((url, i) => (
                       <li key={i}>
-                        <a href={url} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
+                        <a href={`${getUploadBaseUrl()}${url}`} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
                       </li>
                     ))}
                   </ul>

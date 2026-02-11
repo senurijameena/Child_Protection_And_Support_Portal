@@ -18,9 +18,14 @@ export function ReportCasePage() {
   const [anonymous, setAnonymous] = useState(false)
   const [caseType, setCaseType] = useState<CaseType>('OTHER')
   const [caseDescription, setCaseDescription] = useState('')
+  const [approximateAge, setApproximateAge] = useState('')
+  const [gender, setGender] = useState('')
   const [location, setLocation] = useState('')
   const [incidentDate, setIncidentDate] = useState('')
+  const [physicalIdentificationMarks, setPhysicalIdentificationMarks] = useState('')
+  const [lastSeenDressDetails, setLastSeenDressDetails] = useState('')
   const [evidenceUrls, setEvidenceUrls] = useState<string[]>([])
+  const [photographUrl, setPhotographUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -40,6 +45,21 @@ export function ReportCasePage() {
     }
   }
 
+  const handlePhotographUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const url = await uploadRegistrationDocument(file)
+      setPhotographUrl(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Photo upload failed')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -53,8 +73,13 @@ export function ReportCasePage() {
         anonymous,
         caseType,
         caseDescription: caseDescription.trim(),
+        approximateAge: approximateAge.trim() || undefined,
+        gender: gender.trim() || undefined,
         location: location.trim() || undefined,
         incidentDate: toISOString(incidentDate),
+        physicalIdentificationMarks: physicalIdentificationMarks.trim() || undefined,
+        lastSeenDressDetails: lastSeenDressDetails.trim() || undefined,
+        photographUrl: photographUrl || undefined,
         evidenceUrls: evidenceUrls.length > 0 ? evidenceUrls : undefined,
       })
       if (res.success) {
@@ -105,6 +130,25 @@ export function ReportCasePage() {
               />
             </Form.Group>
             <Form.Group className="mb-3">
+              <Form.Label>Approximate age (optional)</Form.Label>
+              <Form.Control
+                type="text"
+                value={approximateAge}
+                onChange={(e) => setApproximateAge(e.target.value)}
+                placeholder="e.g. 5–7 years, under 10"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Gender (optional)</Form.Label>
+              <Form.Select value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="">Select Gender</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+                <option value="NOT_SPECIFIED">Not Specified</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Location (optional)</Form.Label>
               <Form.Control
                 type="text"
@@ -121,8 +165,46 @@ export function ReportCasePage() {
                 onChange={(e) => setIncidentDate(e.target.value)}
               />
             </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Physical Identification Marks (optional)</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={physicalIdentificationMarks}
+                onChange={(e) => setPhysicalIdentificationMarks(e.target.value)}
+                placeholder="Describe any scars, marks, tattoos, birthmarks, or other identifying features..."
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Last Seen Dress Details (optional)</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={lastSeenDressDetails}
+                onChange={(e) => setLastSeenDressDetails(e.target.value)}
+                placeholder="Describe the clothing the child was wearing when last seen..."
+              />
+            </Form.Group>
             <Form.Group className="mb-4">
-              <Form.Label>Evidence (images, documents, videos)</Form.Label>
+              <Form.Label>Photograph (optional)</Form.Label>
+              <Form.Control
+                type="file"
+                accept=".jpg,.jpeg,.png,.gif"
+                onChange={handlePhotographUpload}
+                disabled={uploading}
+              />
+              {uploading && <small className="text-muted">Uploading...</small>}
+              {photographUrl && (
+                <div className="mt-2">
+                  <small className="text-success">✓ Photo uploaded</small>
+                  <div>
+                    <img src={photographUrl} alt="Child photograph" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '8px' }} />
+                  </div>
+                </div>
+              )}
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>Additional Evidence (images, documents, videos)</Form.Label>
               <Form.Control type="file" accept=".pdf,.jpg,.jpeg,.png,.mp4" onChange={handleFileUpload} disabled={uploading} />
               {uploading && <small className="text-muted">Uploading...</small>}
               {evidenceUrls.length > 0 && (

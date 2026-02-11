@@ -44,4 +44,36 @@ public interface HelpRequestService {
    * for approval. This moves the request into the "PACKAGE_PROPOSED" phase.
    */
   HelpRequestDTO applyServicePackageToRequest(String requestId, String packageId, String appliedBy);
+
+  /**
+   * Public user accepts the applied service package. Sets appliedPackageStatus to ACCEPTED,
+   * request status to IN_PROGRESS.
+   */
+  HelpRequestDTO acceptAppliedPackage(String requestId, String acceptedByUserId);
+
+  /**
+   * Public user rejects the applied service package. Sets appliedPackageStatus to REJECTED,
+   * request status to PACKAGE_REJECTED.
+   */
+  HelpRequestDTO rejectAppliedPackage(String requestId, String reason, String rejectedByUserId);
+
+  /**
+   * SW updates a service item's execution status (PENDING, IN_PROGRESS, SCHEDULED, COMPLETED).
+   * When status is IN_PROGRESS, optional startDate and notes can be provided; a timeline event is added.
+   */
+  HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status, String updatedByUserId);
+  HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status, String updatedByUserId,
+      java.time.LocalDateTime startDate, String notes);
+
+  /**
+   * SW assigns resource and scheduled date to a service item.
+   */
+  HelpRequestDTO assignServiceItemResource(String requestId, String serviceItem, String assignedResource,
+      java.time.LocalDateTime scheduledDate, String notes, String updatedByUserId);
+
+  /**
+   * PU or SW submits a follow-up for the package (e.g. visit, call, session). Creates FollowUp and links to request.
+   */
+  HelpRequestDTO submitPackageFollowUp(String requestId, String followUpDate, String followUpType, String notes,
+      String submittedByUserId);
 }

@@ -200,6 +200,49 @@ html {
   background-color: rgba(14, 165, 233, 0.1) !important;
 }
 
+/* Public vertical sidebar layout */
+.public-layout {
+  min-height: 100vh;
+}
+
+.public-layout-main {
+  margin-left: 0;
+  padding-top: 0;
+  padding-left: 0;
+}
+
+@media (min-width: 992px) {
+  .public-layout-main {
+    margin-left: 260px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .public-layout-main {
+    padding-top: 4.5rem;
+    padding-left: 0.5rem;
+  }
+}
+
+/* Public sidebar nav links */
+.public-sidebar-link {
+  transition: all 0.2s ease;
+  color: #64748b;
+  text-decoration: none;
+  display: block;
+}
+
+.public-sidebar-link:hover {
+  background-color: rgba(14, 165, 233, 0.1);
+  color: var(--primary-color, #2563eb);
+}
+
+.public-sidebar-active {
+  background-color: rgba(14, 165, 233, 0.12);
+  color: var(--primary-color, #2563eb) !important;
+  font-weight: 600;
+}
+
 /* Logo size constraints - override any Bootstrap/img defaults */
 .logo-navbar {
   height: 32px !important;

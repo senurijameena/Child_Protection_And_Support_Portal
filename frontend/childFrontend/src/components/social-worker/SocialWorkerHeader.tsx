@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Dropdown, Badge } from 'react-bootstrap'
+import { Dropdown } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
-import { getNotifications, getUnreadCount, markNotificationRead } from '../../services/socialWorkerApi'
-import type { NotificationDTO } from '../../types/dashboard'
+
 import './SocialWorkerHeader.css'
+import { SocialWorkerNotificationDropdown } from './SocialWorkerNotificationDropdown'
 
 type AvailabilityStatus = 'active' | 'busy' | 'offline'
 
@@ -79,31 +79,9 @@ export function SocialWorkerHeader() {
   const navigate = useNavigate()
   const [status, setStatus] = useState<AvailabilityStatus>('active')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [notifications, setNotifications] = useState<NotificationDTO[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
 
-  useEffect(() => {
-    let isMounted = true
-
-    const loadNotifications = async () => {
-      try {
-        const [list, count] = await Promise.all([getNotifications(), getUnreadCount()])
-        if (!isMounted) return
-        setNotifications(list)
-        setUnreadCount(typeof count === 'number' ? count : 0)
-      } catch (err) {
-        console.error('Failed to load notifications', err)
-      }
-    }
-
-    loadNotifications()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
   const handleStatusChange = (newStatus: AvailabilityStatus) => {
     setStatus(newStatus)
@@ -134,23 +112,7 @@ export function SocialWorkerHeader() {
     navigate('/')
   }
 
-  const handleNotificationClick = async (notif: NotificationDTO) => {
-    try {
-      if (!notif.read) {
-        await markNotificationRead(notif.id)
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
-        )
-        setUnreadCount((prev) => Math.max(0, prev - 1))
-      }
 
-      if (notif.actionUrl) {
-        navigate(notif.actionUrl)
-      }
-    } catch (err) {
-      console.error('Failed to mark notification as read', err)
-    }
-  }
 
   const getInitials = (fullName?: string) => {
     if (!fullName) return 'SW'
@@ -162,13 +124,6 @@ export function SocialWorkerHeader() {
   }
 
   const currentStatus = STATUS_CONFIG[status]
-
-  const formatTimestamp = (iso?: string) => {
-    if (!iso) return ''
-    const date = new Date(iso)
-    if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleString()
-  }
 
   return (
     <header className="sw-header sticky-top border-0 shadow-sm">
@@ -208,7 +163,7 @@ export function SocialWorkerHeader() {
           </button>
 
           {/* Center: Global Search (desktop and tablet) */}
-          <div className="d-none d-md-flex flex-grow-1 justify-content-center px-3">
+          <div className="d-none d-md-flex grow justify-content-center px-3">
             <div className="sw-search-wrapper position-relative w-100" style={{ maxWidth: '520px' }}>
               <span className="sw-search-icon position-absolute top-50 translate-middle-y ms-3">
                 🔍
@@ -247,7 +202,7 @@ export function SocialWorkerHeader() {
                             {result.type === 'user' && '👤'}
                             {result.type === 'caseType' && '📂'}
                           </span>
-                          <div className="flex-grow-1">
+                          <div className="grow">
                             <div className="fw-600 small text-dark">{result.label}</div>
                             {result.subtitle && (
                               <div className="text-muted small">{result.subtitle}</div>
@@ -300,89 +255,7 @@ export function SocialWorkerHeader() {
               </Dropdown.Menu>
             </Dropdown>
 
-            {/* Notifications Bell */}
-            <Dropdown className="position-relative">
-              <Dropdown.Toggle
-                as="button"
-                className="sw-notification-btn btn btn-link text-decoration-none text-dark border-0 position-relative p-2 transition-all"
-                id="notification-dropdown"
-                title="Notifications"
-              >
-                <span className="fs-5">🔔</span>
-                {unreadCount > 0 && (
-                  <Badge
-                    bg="danger"
-                    className="position-absolute top-0 end-0 translate-middle-y"
-                    style={{ fontSize: '0.65rem', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Dropdown.Toggle>
-              <Dropdown.Menu align="end" className="mt-2 border-0 shadow-lg rounded-3 sw-notification-menu">
-                <div className="px-3 py-2 border-bottom">
-                  <h6 className="mb-0 fw-bold text-dark" style={{ fontSize: '0.9rem' }}>
-                    Notifications
-                  </h6>
-                </div>
-                <div className="sw-notification-list">
-                  {notifications.length > 0 ? (
-                    notifications.map((notif) => (
-                      <Dropdown.Item
-                        key={notif.id}
-                        onClick={() => handleNotificationClick(notif)}
-                        className={`px-3 py-3 border-bottom transition-all ${
-                          !notif.read ? 'bg-light' : ''
-                        }`}
-                      >
-                        <div className="d-flex gap-2">
-                          <span className="text-decoration-none" style={{ fontSize: '1.1rem' }}>
-                            {notif.type === 'CASE_ASSIGNED' && '📌'}
-                            {notif.type === 'HELP_REQUEST_ASSIGNED' && '📌'}
-                            {notif.type === 'HELP_REQUEST_UPDATE' && '✏️'}
-                            {notif.type === 'NEW_MESSAGE' && '💬'}
-                            {notif.type === 'WORKLOAD_ALERT' && '⚠️'}
-                          </span>
-                          <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-start mb-1">
-                              <p className="mb-0 fw-600 text-dark" style={{ fontSize: '0.85rem' }}>
-                                {notif.title || 'Notification'}
-                              </p>
-                              {!notif.read && (
-                                <span
-                                  className="rounded-circle"
-                                  style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    backgroundColor: '#3b82f6',
-                                    display: 'inline-block',
-                                    marginLeft: '8px',
-                                  }}
-                                ></span>
-                              )}
-                            </div>
-                            <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-                              {notif.message}
-                            </p>
-                            <p className="text-muted" style={{ fontSize: '0.7rem', marginBottom: 0 }}>
-                              {formatTimestamp(notif.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-                      </Dropdown.Item>
-                    ))
-                  ) : (
-                    <Dropdown.Item disabled className="px-3 py-3 text-muted text-center">
-                      <small>No notifications</small>
-                    </Dropdown.Item>
-                  )}
-                </div>
-                <Dropdown.Divider className="m-0" />
-                <Dropdown.Item className="px-3 py-2 text-center text-primary fw-500 small">
-                  View All Notifications
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+            <SocialWorkerNotificationDropdown />
 
             {/* Profile Dropdown */}
             <Dropdown>
@@ -416,7 +289,10 @@ export function SocialWorkerHeader() {
                   <span className="me-2">👤</span>
                   View Profile
                 </Dropdown.Item>
-                <Dropdown.Item href="/social-worker/change-password" className="px-3 py-2">
+                <Dropdown.Item
+                  className="px-3 py-2"
+                  onClick={() => navigate('/social-worker/profile#change-password')}
+                >
                   <span className="me-2">🔐</span>
                   Change Password
                 </Dropdown.Item>

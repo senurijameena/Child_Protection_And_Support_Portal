@@ -5,6 +5,14 @@ import { getMyRequests } from '../../services/dashboardApi'
 import { REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
 import type { HelpRequestDTO } from '../../types/dashboard'
 
+const getPriorityVariant = (priority?: string) => {
+  const p = priority?.toUpperCase()
+  if (p === 'HIGH') return 'danger'
+  if (p === 'MEDIUM') return 'warning'
+  if (p === 'LOW') return 'primary'
+  return 'secondary'
+}
+
 export function MyRequestsPage() {
   const [requests, setRequests] = useState<HelpRequestDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,6 +67,7 @@ export function MyRequestsPage() {
                 <tr>
                   <th>ID</th>
                   <th>Type</th>
+                  <th>Priority</th>
                   <th>Status</th>
                   <th>Date</th>
                   <th></th>
@@ -67,7 +76,7 @@ export function MyRequestsPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center text-muted py-4">
+                    <td colSpan={6} className="text-center text-muted py-4">
                       No requests found. <Link to="/dashboard/request-help">Request help</Link>
                     </td>
                   </tr>
@@ -80,6 +89,11 @@ export function MyRequestsPage() {
                         </Link>
                       </td>
                       <td>{HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}</td>
+                      <td>
+                        <Badge bg={getPriorityVariant(r.priority)}>
+                          {(r.priority || 'MEDIUM').toUpperCase()}
+                        </Badge>
+                      </td>
                       <td>
                         <Badge bg="light" text="dark">
                           {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}

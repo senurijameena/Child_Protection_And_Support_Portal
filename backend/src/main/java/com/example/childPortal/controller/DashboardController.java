@@ -57,14 +57,17 @@ public class DashboardController {
                                                 r.getStatus() == RequestStatus.IN_PROGRESS)
                                 .count();
 
-                List<ServiceOfferDTO> userOffers = serviceOfferService.getOffersForUser(userId);
-
-                long pendingOffers = userOffers.stream()
-                                .filter(o -> o.getOfferedToUserId() != null &&
-                                                o.getOfferedToUserId().equals(userId) &&
-                                                o.getStatus() == OfferStatus.PENDING)
+                // Pending offers: help requests with applied service package awaiting user response
+                long pendingOffers = userRequests.stream()
+                                .filter(r -> r.getAppliedPackage() != null &&
+                                                ("PENDING".equals(r.getAppliedPackageStatus()) || r.getAppliedPackageStatus() == null))
                                 .count();
-                long acceptedServices = userOffers.stream()
+                // Accepted services: help requests with accepted package + legacy ServiceOffer accepted count
+                long acceptedServices = userRequests.stream()
+                                .filter(r -> r.getAppliedPackage() != null && "ACCEPTED".equals(r.getAppliedPackageStatus()))
+                                .count();
+                List<ServiceOfferDTO> userOffers = serviceOfferService.getOffersForUser(userId);
+                acceptedServices += userOffers.stream()
                                 .filter(o -> o.getOfferedToUserId() != null &&
                                                 o.getOfferedToUserId().equals(userId) &&
                                                 o.getStatus() == OfferStatus.ACCEPTED)
@@ -75,9 +78,13 @@ public class DashboardController {
                 stats.put("pendingOffers", pendingOffers);
                 stats.put("totalCases", (long) userCases.size());
                 stats.put("totalRequests", (long) userRequests.size());
-                stats.put("totalOffers", (long) userOffers.stream()
+                long totalOffersFromRequests = userRequests.stream()
+                                .filter(r -> r.getAppliedPackage() != null)
+                                .count();
+                long totalOffersFromServiceOffers = userOffers.stream()
                                 .filter(o -> o.getOfferedToUserId() != null && o.getOfferedToUserId().equals(userId))
-                                .count());
+                                .count();
+                stats.put("totalOffers", totalOffersFromRequests + totalOffersFromServiceOffers);
                 stats.put("resolvedCases", resolvedCases);
                 stats.put("activeRequests", activeRequests);
                 stats.put("acceptedServices", acceptedServices);

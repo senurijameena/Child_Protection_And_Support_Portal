@@ -41,6 +41,20 @@ public class HelpRequest {
      */
     private String appliedServicePackageStatus;
 
+    /**
+     * Per-service execution status. Populated when PU accepts the package.
+     * Each item: PENDING -> IN_PROGRESS / SCHEDULED -> COMPLETED.
+     */
+    private java.util.List<ServiceItemExecution> appliedPackageItemExecutions;
+
+    public java.util.List<ServiceItemExecution> getAppliedPackageItemExecutions() {
+        return appliedPackageItemExecutions;
+    }
+
+    public void setAppliedPackageItemExecutions(java.util.List<ServiceItemExecution> appliedPackageItemExecutions) {
+        this.appliedPackageItemExecutions = appliedPackageItemExecutions;
+    }
+
     public enum RequestStatus {
         REQUESTED,
         UNDER_REVIEW,

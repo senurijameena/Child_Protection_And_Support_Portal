@@ -1,23 +1,48 @@
 import { useEffect, useState } from 'react'
 import { Card, Spinner, Button, Form, Modal } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getOffersForUser, respondToOffer } from '../../services/dashboardApi'
+import { getMyRequests, acceptAppliedPackage, rejectAppliedPackage } from '../../services/dashboardApi'
 import { HELP_TYPE_LABELS } from '../../types/dashboard'
-import type { ServiceOfferDTO } from '../../types/dashboard'
+import type { HelpRequestDTO, ServicePackageDTO, AppliedPackageStatus } from '../../types/dashboard'
+
+/** Applied package from a help request, used for display as an "offer" */
+type AppliedPackageOffer = {
+  requestId: string
+  requestTrackingId?: string
+  pkg: ServicePackageDTO
+  status: AppliedPackageStatus
+  appliedAt?: string
+  helpType?: string
+}
+
+function mapRequestsToOffers(requests: HelpRequestDTO[]): AppliedPackageOffer[] {
+  return requests
+    .filter((r) => r.appliedPackage != null)
+    .map((r) => ({
+      requestId: r.id,
+      requestTrackingId: r.trackingId,
+      pkg: r.appliedPackage!,
+      status: (r.appliedPackageStatus ?? 'PENDING') as AppliedPackageStatus,
+      appliedAt: r.appliedPackageAppliedAt,
+      helpType: r.helpType,
+    }))
+}
 
 export function ServiceOffersPage() {
   const { user } = useAuth()
-  const [offers, setOffers] = useState<ServiceOfferDTO[]>([])
+  const [offers, setOffers] = useState<AppliedPackageOffer[]>([])
   const [loading, setLoading] = useState(true)
   const [responding, setResponding] = useState<string | null>(null)
-  const [modalOffer, setModalOffer] = useState<ServiceOfferDTO | null>(null)
+  const [rejectRequestId, setRejectRequestId] = useState<string | null>(null)
   const [rejectMessage, setRejectMessage] = useState('')
+  const [rejectError, setRejectError] = useState<string | null>(null)
 
   const load = () => {
     if (!user?.userId) return
-    getOffersForUser(user.userId)
-      .then(setOffers)
-      .catch(() => {})
+    getMyRequests()
+      .then((requests) => setOffers(mapRequestsToOffers(requests)))
+      .catch(() => setOffers([]))
       .finally(() => setLoading(false))
   }
 
@@ -25,15 +50,30 @@ export function ServiceOffersPage() {
     load()
   }, [user?.userId])
 
-  const handleRespond = async (offerId: string, accepted: boolean) => {
-    setResponding(offerId)
+  const handleAccept = async (requestId: string) => {
+    setResponding(requestId)
     try {
-      await respondToOffer(offerId, accepted, rejectMessage || undefined)
-      setModalOffer(null)
+      await acceptAppliedPackage(requestId)
+      setRejectRequestId(null)
       setRejectMessage('')
       load()
     } catch {
       // ignore
+    } finally {
+      setResponding(null)
+    }
+  }
+
+  const handleReject = async (requestId: string) => {
+    setResponding(requestId)
+    setRejectError(null)
+    try {
+      await rejectAppliedPackage(requestId, rejectMessage || undefined)
+      setRejectRequestId(null)
+      setRejectMessage('')
+      load()
+    } catch (err) {
+      setRejectError(err instanceof Error ? err.message : 'Failed to reject. Please try again.')
     } finally {
       setResponding(null)
     }
@@ -58,24 +98,34 @@ export function ServiceOffersPage() {
           <h5 className="text-primary mb-3">Pending</h5>
           <div className="row g-3">
             {pending.map((o) => (
-              <div key={o.id} className="col-md-6">
+              <div key={o.requestId} className="col-md-6">
                 <Card className="border-0 shadow-sm rounded-4 h-100">
                   <Card.Body>
                     <p className="mb-1">
+                      <strong>Package:</strong> {o.pkg.title}
+                    </p>
+                    <p className="mb-1">
                       <strong>Type:</strong>{' '}
-                      {HELP_TYPE_LABELS[(o.serviceType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}
+                      {HELP_TYPE_LABELS[(o.helpType as keyof typeof HELP_TYPE_LABELS) || o.pkg.requestType] ?? o.pkg.requestType ?? 'Other'}
                     </p>
                     <p className="mb-1">
                       <strong>Offered:</strong>{' '}
-                      {o.offerDate ? new Date(o.offerDate).toLocaleString() : '-'}
+                      {o.appliedAt ? new Date(o.appliedAt).toLocaleString() : '-'}
                     </p>
-                    <p className="mb-3 text-muted">{o.serviceDetails || '-'}</p>
-                    <div className="d-flex gap-2">
+                    {o.pkg.description && (
+                      <p className="mb-2 text-muted small">{o.pkg.description}</p>
+                    )}
+                    {o.pkg.items?.length > 0 && (
+                      <p className="mb-2 small text-muted">
+                        Services: {o.pkg.items.join(', ')}
+                      </p>
+                    )}
+                    <div className="d-flex gap-2 flex-wrap">
                       <Button
                         variant="success"
                         size="sm"
                         className="rounded-pill"
-                        onClick={() => handleRespond(o.id, true)}
+                        onClick={() => handleAccept(o.requestId)}
                         disabled={!!responding}
                       >
                         Accept
@@ -84,10 +134,16 @@ export function ServiceOffersPage() {
                         variant="outline-danger"
                         size="sm"
                         className="rounded-pill"
-                        onClick={() => setModalOffer(o)}
+                        onClick={() => setRejectRequestId(o.requestId)}
                       >
                         Reject
                       </Button>
+                      <Link
+                        to={`/dashboard/requests/${o.requestId}`}
+                        className="btn btn-outline-primary btn-sm rounded-pill"
+                      >
+                        View request
+                      </Link>
                     </div>
                   </Card.Body>
                 </Card>
@@ -101,17 +157,26 @@ export function ServiceOffersPage() {
           <h5 className="text-secondary mb-3">Past Offers</h5>
           <div className="row g-3">
             {others.map((o) => (
-              <div key={o.id} className="col-md-6">
+              <div key={o.requestId} className="col-md-6">
                 <Card className="border-0 shadow-sm rounded-4 h-100 border">
                   <Card.Body>
                     <p className="mb-1">
+                      <strong>Package:</strong> {o.pkg.title}
+                    </p>
+                    <p className="mb-1">
                       <strong>Type:</strong>{' '}
-                      {HELP_TYPE_LABELS[(o.serviceType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}
+                      {HELP_TYPE_LABELS[(o.helpType as keyof typeof HELP_TYPE_LABELS) || o.pkg.requestType] ?? o.pkg.requestType ?? 'Other'}
                     </p>
                     <p className="mb-1">
                       <strong>Status:</strong> <span className="badge bg-secondary">{o.status}</span>
                     </p>
-                    <p className="mb-0 text-muted">{o.serviceDetails || '-'}</p>
+                    <p className="mb-2 text-muted small">{o.pkg.description || '-'}</p>
+                    <Link
+                      to={`/dashboard/requests/${o.requestId}`}
+                      className="btn btn-outline-primary btn-sm rounded-pill"
+                    >
+                      View request
+                    </Link>
                   </Card.Body>
                 </Card>
               </div>
@@ -122,16 +187,17 @@ export function ServiceOffersPage() {
       {offers.length === 0 && (
         <Card className="border-0 shadow-sm rounded-4">
           <Card.Body className="text-center text-muted py-5">
-            No service offers yet. Offers will appear here when a social worker proposes a package.
+            No service offers yet. Offers will appear here when a social worker proposes a package for one of your help requests.
           </Card.Body>
         </Card>
       )}
 
-      <Modal show={!!modalOffer} onHide={() => setModalOffer(null)} centered>
+      <Modal show={!!rejectRequestId} onHide={() => { setRejectRequestId(null); setRejectError(null); }} centered>
         <Modal.Header closeButton>
           <Modal.Title>Reject Offer</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {rejectError && <div className="alert alert-danger small mb-2">{rejectError}</div>}
           <Form.Label>Optional message (why you need modifications)</Form.Label>
           <Form.Control
             as="textarea"
@@ -142,10 +208,10 @@ export function ServiceOffersPage() {
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setModalOffer(null)}>Cancel</Button>
+          <Button variant="secondary" onClick={() => setRejectRequestId(null)}>Cancel</Button>
           <Button
             variant="danger"
-            onClick={() => modalOffer && handleRespond(modalOffer.id, false)}
+            onClick={() => rejectRequestId && handleReject(rejectRequestId)}
             disabled={!!responding}
           >
             Reject

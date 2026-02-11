@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, Container, Row, Col, Button, Form, Badge, Modal } from 'react-bootstrap'
 import './SocialWorkerDashboard.css'
 
@@ -40,50 +40,30 @@ const STATUS_VARIANTS: Record<ResourceStatus, string> = {
   ARCHIVED: 'secondary',
 }
 
-const initialResources: Resource[] = [
-  {
-    id: 'res-1',
-    name: 'Colombo Children’s Hospital',
-    type: 'HOSPITAL',
-    contactPhone: '+94 11 234 5678',
-    contactEmail: 'peds-referrals@cch.lk',
-    location: 'Colombo 10',
-    capacity: '10 pediatric beds',
-    availability: 'AVAILABLE',
-    emergencySupport: true,
-    status: 'ACTIVE',
-    notes: '24/7 emergency support, pediatric trauma team available.',
-  },
-  {
-    id: 'res-2',
-    name: 'Safe Haven Shelter',
-    type: 'SHELTER',
-    contactPhone: '+94 77 555 1122',
-    contactEmail: 'intake@safehaven.lk',
-    location: 'Gampaha District',
-    capacity: '12 family units',
-    availability: 'BUSY',
-    emergencySupport: true,
-    status: 'PENDING',
-    notes: 'Requires phone triage before admission.',
-  },
-  {
-    id: 'res-3',
-    name: 'Hope For Kids Foundation',
-    type: 'NGO',
-    contactPhone: '+94 71 222 3344',
-    contactEmail: 'support@hope4kids.lk',
-    location: 'Kandy',
-    capacity: 'Caseworkers: 6',
-    availability: 'AVAILABLE',
-    emergencySupport: false,
-    status: 'ACTIVE',
-    notes: 'Focus on educational support and counseling.',
-  },
-]
+const RESOURCE_STORAGE_KEY = 'sw_resources'
+
+const loadResourcesFromStorage = (): Resource[] => {
+  try {
+    const raw = localStorage.getItem(RESOURCE_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed as Resource[]
+  } catch {
+    return []
+  }
+}
+
+const saveResourcesToStorage = (resources: Resource[]) => {
+  try {
+    localStorage.setItem(RESOURCE_STORAGE_KEY, JSON.stringify(resources))
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export function SocialWorkerLibraryPage() {
-  const [resources, setResources] = useState<Resource[]>(initialResources)
+  const [resources, setResources] = useState<Resource[]>([])
 
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<'ALL' | ResourceTypeId>('ALL')
@@ -98,6 +78,19 @@ export function SocialWorkerLibraryPage() {
     availability: 'AVAILABLE',
     emergencySupport: false,
   })
+
+  useEffect(() => {
+    const initial = loadResourcesFromStorage()
+    setResources(initial)
+  }, [])
+
+  const updateResources = (updater: (prev: Resource[]) => Resource[]) => {
+    setResources((prev) => {
+      const next = updater(prev)
+      saveResourcesToStorage(next)
+      return next
+    })
+  }
 
   const filteredResources = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -131,7 +124,7 @@ export function SocialWorkerLibraryPage() {
   }
 
   const handleArchive = (res: Resource) => {
-    setResources((prev) =>
+    updateResources((prev) =>
       prev.map((r) => (r.id === res.id ? { ...r, status: 'ARCHIVED', availability: 'FULL' } : r))
     )
   }
@@ -142,11 +135,9 @@ export function SocialWorkerLibraryPage() {
     }
 
     if (editingId) {
-      setResources((prev) =>
+      updateResources((prev) =>
         prev.map((r) =>
-          r.id === editingId
-            ? { ...(r as Resource), ...(formData as Resource), status: r.status }
-            : r
+          r.id === editingId ? { ...(r as Resource), ...(formData as Resource), status: r.status } : r
         )
       )
     } else {
@@ -163,7 +154,7 @@ export function SocialWorkerLibraryPage() {
         status: 'ACTIVE',
         notes: formData.notes,
       }
-      setResources((prev) => [newResource, ...prev])
+      updateResources((prev) => [newResource, ...prev])
     }
 
     setShowForm(false)

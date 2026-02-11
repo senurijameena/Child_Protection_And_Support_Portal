@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup, Button, Form, Modal } from 'react-bootstrap'
+import { getUploadBaseUrl } from '../../services/api'
 import {
   getHelpRequest,
   getHelpRequestTimeline,
   acceptAppliedPackage,
   rejectAppliedPackage,
-  submitPackageFollowUp,
   requestServiceAdjustment,
 } from '../../services/dashboardApi'
 import { REQUEST_STATUS_LABELS, REQUEST_STATUS_BADGE_VARIANTS, HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
@@ -18,12 +18,12 @@ const formatDate = (iso?: string) => {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString()
 }
 
-type FollowUpType = 'VISIT' | 'CALL' | 'SESSION'
-
-const FOLLOW_UP_TYPE_LABELS: Record<FollowUpType, string> = {
-  VISIT: 'Visit',
-  CALL: 'Call',
-  SESSION: 'Session',
+const getPriorityVariant = (priority: unknown) => {
+  const p = String(priority ?? '').toUpperCase()
+  if (p === 'HIGH') return 'danger'
+  if (p === 'MEDIUM') return 'warning'
+  if (p === 'LOW') return 'primary'
+  return 'secondary'
 }
 
 export function RequestDetailsPage() {
@@ -35,10 +35,6 @@ export function RequestDetailsPage() {
   const [packageRejecting, setPackageRejecting] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState(false)
-  const [followUpDate, setFollowUpDate] = useState('')
-  const [followUpType, setFollowUpType] = useState<FollowUpType>('VISIT')
-  const [followUpNotes, setFollowUpNotes] = useState('')
-  const [followUpSubmitting, setFollowUpSubmitting] = useState(false)
   const [adjustmentItem, setAdjustmentItem] = useState<string | null>(null)
   const [adjustmentMessage, setAdjustmentMessage] = useState('')
   const [adjustmentSubmitting, setAdjustmentSubmitting] = useState(false)
@@ -108,26 +104,6 @@ export function RequestDetailsPage() {
     }
   }
 
-  const handleSubmitFollowUp = async () => {
-    if (!requestId || !followUpDate.trim()) return
-    setFollowUpSubmitting(true)
-    setMessage(null)
-    try {
-      const updated = await submitPackageFollowUp(requestId, {
-        followUpDate: new Date(followUpDate).toISOString(),
-        followUpType,
-        notes: followUpNotes.trim() || undefined,
-      })
-      setR(updated)
-      setMessage('Follow-up submitted. Help Details have been updated. The social worker has been notified.')
-      load()
-    } catch (err) {
-      setMessage((err as Error).message ?? 'Failed to submit follow-up.')
-    } finally {
-      setFollowUpSubmitting(false)
-    }
-  }
-
   const handleRequestAdjustment = async () => {
     if (!requestId || !adjustmentItem || !adjustmentMessage.trim()) return
     setAdjustmentSubmitting(true)
@@ -179,6 +155,12 @@ export function RequestDetailsPage() {
             </Card.Header>
             <Card.Body>
               <p><strong>Type:</strong> {HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}</p>
+              <p>
+                <strong>Priority:</strong>{' '}
+                <Badge bg={getPriorityVariant(r.priority)}>
+                  {(r.priority || 'MEDIUM').toUpperCase()}
+                </Badge>
+              </p>
               <p><strong>Submitted:</strong> {r.requestDate ? new Date(r.requestDate).toLocaleString() : '-'}</p>
               <p><strong>Location:</strong> {r.location || '-'}</p>
               <p><strong>Description:</strong></p>
@@ -189,7 +171,7 @@ export function RequestDetailsPage() {
                   <ul className="mb-0">
                     {r.documentUrls.map((url, i) => (
                       <li key={i}>
-                        <a href={url} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
+                        <a href={`${getUploadBaseUrl()}${url}`} target="_blank" rel="noopener noreferrer">{url.split('/').pop()}</a>
                       </li>
                     ))}
                   </ul>
@@ -286,64 +268,55 @@ export function RequestDetailsPage() {
                   </>
                 )}
 
-                {/* Follow-Up & Execution Plan – after acceptance */}
-                {isAccepted && (
-                  <div className="mt-4 p-3 rounded-3 bg-light">
-                    <h6 className="fw-600 mb-2">Follow-Up &amp; Execution Plan</h6>
-                    <p className="small text-muted mb-3">
-                      Add your preferred follow-up schedule. It will be auto-marked in the calendar and the social worker will be notified.
-                    </p>
-                    <Form>
-                      <Form.Group className="mb-3">
-                        <Form.Label className="small">Date</Form.Label>
-                        <Form.Control
-                          type="datetime-local"
-                          value={followUpDate}
-                          onChange={(e) => setFollowUpDate(e.target.value)}
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3">
-                        <Form.Label className="small">Type</Form.Label>
-                        <Form.Select
-                          value={followUpType}
-                          onChange={(e) => setFollowUpType(e.target.value as FollowUpType)}
-                        >
-                          {(Object.keys(FOLLOW_UP_TYPE_LABELS) as FollowUpType[]).map((t) => (
-                            <option key={t} value={t}>{FOLLOW_UP_TYPE_LABELS[t]}</option>
-                          ))}
-                        </Form.Select>
-                        <Form.Text className="text-muted">Visit / Call / Session</Form.Text>
-                      </Form.Group>
-                      <Form.Group className="mb-3">
-                        <Form.Label className="small">Notes (optional)</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={2}
-                          placeholder="Any special instructions or preferences"
-                          value={followUpNotes}
-                          onChange={(e) => setFollowUpNotes(e.target.value)}
-                        />
-                      </Form.Group>
-                      <Button
-                        variant="primary"
-                        onClick={handleSubmitFollowUp}
-                        disabled={followUpSubmitting || !followUpDate.trim()}
-                      >
-                        {followUpSubmitting ? 'Submitting…' : 'Submit follow-up schedule'}
-                      </Button>
-                    </Form>
-                    <p className="small text-muted mt-2 mb-0">
-                      Once submitted, status will update on the Help Details page and the social worker will be notified.
-                    </p>
-                    <p className="small text-muted mt-2 mb-0">
-                      <strong>Service execution after approval:</strong> After you accept and submit your follow-up, the package items move into execution and tracking. The social worker will coordinate delivery.
-                    </p>
-                  </div>
-                )}
+                {/* Follow-Up & Execution Plan section removed */}
 
                 {isRejected && (
                   <p className="text-muted small mb-0">You rejected this package. The social worker has been notified and may propose a different plan.</p>
                 )}
+
+                {/* When accepted: show service execution status so PU sees "Service Started" etc. */}
+                {isAccepted && (pkg?.items?.length ?? 0) > 0 && (() => {
+                  const appliedExecutions = ((r as any)?.appliedPackageItemExecutions ?? []) as any[]
+                  const executions =
+                    appliedExecutions.length > 0
+                      ? appliedExecutions
+                      : (pkg?.items ?? []).map((s) => ({ serviceItem: s, status: 'PENDING' as const }))
+
+                  return (
+                    <div className="mt-3 pt-3 border-top">
+                      <h6 className="fw-600 mb-2">Service status</h6>
+                      <ul className="list-unstyled mb-0">
+                        {executions.map((itemOrExec: any) => {
+                          const item = itemOrExec?.serviceItem ?? ''
+                          const status = itemOrExec?.status ?? 'PENDING'
+                          const label =
+                            status === 'IN_PROGRESS'
+                              ? 'Service Started'
+                              : status === 'COMPLETED'
+                                ? 'Completed'
+                                : status === 'SCHEDULED'
+                                  ? 'Scheduled'
+                                  : 'Pending'
+                          const variant =
+                            status === 'IN_PROGRESS'
+                              ? 'primary'
+                              : status === 'COMPLETED'
+                                ? 'success'
+                                : 'secondary'
+                          return (
+                            <li
+                              key={item}
+                              className="d-flex align-items-center justify-content-between py-2 border-bottom border-light"
+                            >
+                              <span>{item}</span>
+                              <Badge bg={variant}>{label}</Badge>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  )
+                })()}
               </Card.Body>
             </Card>
           )}

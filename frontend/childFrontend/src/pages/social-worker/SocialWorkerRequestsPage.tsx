@@ -9,12 +9,15 @@ import {
 } from '../../services/socialWorkerApi'
 import type { HelpRequestDTO, HelpType } from '../../types/dashboard'
 import { HELP_TYPE_LABELS } from '../../types/dashboard'
+import { SmartRequestTable } from '../../components/social-worker/SmartRequestTable'
+import HorizontalTimeline, { type TimelineStep } from '../../components/ui/HorizontalTimeline'
 import './SocialWorkerDashboard.css'
 
 type PriorityFilter = 'ALL' | 'LOW' | 'MEDIUM' | 'HIGH'
 type CaseTypeFilter = 'ALL' | 'COUNSELING' | 'FINANCIAL' | 'MEDICAL' | 'SHELTER'
 type StatusFilter = 'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING' | 'OVERDUE'
 type ConsentFilter = 'ALL' | 'FULL' | 'PARTIAL' | 'ANONYMOUS'
+type ViewMode = 'CARD' | 'LIST'
 
 const CASE_TYPE_MAP: Record<Exclude<CaseTypeFilter, 'ALL'>, HelpType[]> = {
   COUNSELING: ['COUNSELING'],
@@ -98,6 +101,10 @@ export function SocialWorkerRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [consentFilter, setConsentFilter] = useState<ConsentFilter>('ALL')
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('CARD')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const itemsPerPage = viewMode === 'CARD' ? 6 : 10
 
   useEffect(() => {
     if (!user?.userId) {
@@ -173,6 +180,7 @@ export function SocialWorkerRequestsPage() {
     setCaseTypeFilter('ALL')
     setStatusFilter('ALL')
     setConsentFilter('ALL')
+    setCurrentPage(1)
   }
 
   const filteredAndSortedRequests = useMemo(() => {
@@ -241,10 +249,69 @@ export function SocialWorkerRequestsPage() {
     })
   }, [requests, search, priorityFilter, caseTypeFilter, statusFilter, consentFilter, overdueRequestIds, requestDueMap])
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedRequests.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedRequests = filteredAndSortedRequests.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1)
+  }, [search, priorityFilter, caseTypeFilter, statusFilter, consentFilter])
+
   const selectedRequest = useMemo(
     () => filteredAndSortedRequests.find((r) => r.id === selectedRequestId) ?? null,
     [filteredAndSortedRequests, selectedRequestId]
   )
+
+  // Build timeline steps from help request and related follow-ups
+  const buildTimelineSteps = (req: HelpRequestDTO): TimelineStep[] => {
+    const steps: TimelineStep[] = []
+    
+    // Requested step
+    steps.push({
+      id: 'requested',
+      label: 'Requested',
+      status: ['REQUESTED', 'UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED'].includes(req.status || 'REQUESTED') ? 'completed' : 'pending',
+      date: req.requestDate ? new Date(req.requestDate).toLocaleDateString() : undefined,
+      icon: '📝',
+    })
+
+    // Under Review step
+    steps.push({
+      id: 'review',
+      label: 'Under Review',
+      status: ['UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED'].includes(req.status || 'REQUESTED') ? 'completed' : 'pending',
+      icon: '👁️',
+    })
+
+    // Assigned step
+    steps.push({
+      id: 'assigned',
+      label: 'Assigned',
+      status: ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'].includes(req.status || 'REQUESTED') ? 'completed' : 'pending',
+      icon: '✓',
+    })
+
+    // In Progress step
+    steps.push({
+      id: 'progress',
+      label: 'In Progress',
+      status: req.status === 'IN_PROGRESS' ? 'active' : ['COMPLETED'].includes(req.status || 'REQUESTED') ? 'completed' : 'pending',
+      icon: '⚙️',
+    })
+
+    // Completed step
+    steps.push({
+      id: 'completed',
+      label: 'Completed',
+      status: req.status === 'COMPLETED' ? 'completed' : 'pending',
+      icon: '✅',
+    })
+
+    return steps
+  }
 
   const getConsentLabel = (req: HelpRequestDTO) => {
     if (req.anonymous) return 'Anonymous'
@@ -263,6 +330,12 @@ export function SocialWorkerRequestsPage() {
 
   const handleViewDetails = (req: HelpRequestDTO) => {
     navigate(`/social-worker/requests/${req.id}`)
+  }
+
+  const maskUserIdForTable = (id: string | undefined, anonymous: boolean): string => {
+    if (anonymous || !id) return 'Anonymous'
+    if (id.length <= 8) return id
+    return `${id.slice(0, 4)}…${id.slice(-4)}`
   }
 
   const handleAccept = async (req: HelpRequestDTO) => {
@@ -422,6 +495,32 @@ export function SocialWorkerRequestsPage() {
       {/* List + Optional Right Panel */}
       <Row className="g-4">
         <Col xs={12} lg={selectedRequest ? 8 : 12}>
+          {/* View Mode Toggle */}
+          <div className="mb-3 d-flex justify-content-between align-items-center">
+            <div className="d-flex gap-2">
+              <Button
+                variant={viewMode === 'CARD' ? 'primary' : 'outline-secondary'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('CARD')
+                  setCurrentPage(1)
+                }}
+              >
+                📇 Card View
+              </Button>
+              <Button
+                variant={viewMode === 'LIST' ? 'primary' : 'outline-secondary'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('LIST')
+                  setCurrentPage(1)
+                }}
+              >
+                📋 List View
+              </Button>
+            </div>
+          </div>
+
           {loading && filteredAndSortedRequests.length === 0 ? (
             <Card className="sw-card border-0">
               <Card.Body className="p-5 text-center text-muted">
@@ -434,132 +533,171 @@ export function SocialWorkerRequestsPage() {
                 No assigned requests match your filters.
               </Card.Body>
             </Card>
-          ) : (
-            <Row className="g-3">
-              {filteredAndSortedRequests.map((req) => {
-                const isOverdue = overdueRequestIds.has(req.id)
-                const isSelected = selectedRequestId === req.id
-                const helpIcon = getHelpTypeIcon(req.helpType)
-                const helpLabel = req.helpType ? HELP_TYPE_LABELS[req.helpType] : 'Support request'
-                const consent = getConsentLabel(req)
-                const status = req.status
-                const isRejected = status === 'REJECTED'
-                const canTakeAssignmentAction =
-                  status === 'ASSIGNED' || status === 'REQUESTED' || status === 'UNDER_REVIEW'
+          ) : viewMode === 'CARD' ? (
+            <>
+              <Row className="g-3 mb-4">
+                {paginatedRequests.map((req) => {
+                  const isOverdue = overdueRequestIds.has(req.id)
+                  const isSelected = selectedRequestId === req.id
+                  const helpIcon = getHelpTypeIcon(req.helpType)
+                  const helpLabel = req.helpType ? HELP_TYPE_LABELS[req.helpType] : 'Support request'
+                  const consent = getConsentLabel(req)
+                  const status = req.status
+                  const isRejected = status === 'REJECTED'
+                  const canTakeAssignmentAction =
+                    status === 'ASSIGNED' || status === 'REQUESTED' || status === 'UNDER_REVIEW'
 
-                return (
-                  <Col xs={12} md={6} xl={4} key={req.id}>
-                    <Card
-                      className={`sw-card h-100 hover-lift cursor-pointer ${isSelected ? 'border-primary' : ''
-                        }`}
-                      style={
-                        isOverdue
-                          ? { backgroundColor: 'rgba(248, 113, 113, 0.04)', borderColor: '#fecaca' }
-                          : undefined
-                      }
-                      onClick={() => handleCardClick(req)}
-                    >
-                      <Card.Body className="d-flex flex-column justify-content-between">
-                        <div className="mb-3">
-                          <div className="d-flex justify-content-between align-items-start mb-1">
-                            <div>
-                              <div className="small text-muted">Request ID</div>
-                              <div className="fw-600">
-                                #{req.trackingId ?? req.id}
+                  return (
+                    <Col xs={12} md={6} xl={4} key={req.id}>
+                      <Card
+                        className={`sw-card h-100 hover-lift cursor-pointer ${isSelected ? 'border-primary' : ''
+                          }`}
+                        style={
+                          isOverdue
+                            ? { backgroundColor: 'rgba(248, 113, 113, 0.04)', borderColor: '#fecaca' }
+                            : undefined
+                        }
+                        onClick={() => handleCardClick(req)}
+                      >
+                        <Card.Body className="d-flex flex-column justify-content-between">
+                          <div className="mb-3">
+                            <div className="d-flex justify-content-between align-items-start mb-1">
+                              <div>
+                                <div className="small text-muted">Request ID</div>
+                                <div className="fw-600">
+                                  #{req.trackingId ?? req.id}
+                                </div>
                               </div>
+                              <Badge bg={getPriorityVariant(req.priority)}>
+                                {req.priority?.toUpperCase() ?? 'MEDIUM'}
+                              </Badge>
                             </div>
-                            <Badge bg={getPriorityVariant(req.priority)}>
-                              {req.priority?.toUpperCase() ?? 'MEDIUM'}
-                            </Badge>
+                            <div className="small text-muted mb-1">
+                              {req.requesterName && !req.anonymous
+                                ? req.requesterName
+                                : 'Public user'}
+                              {' • '}
+                              {consent}
+                            </div>
+                            <div className="d-flex align-items-center gap-2 small text-muted">
+                              <span>{helpIcon}</span>
+                              <span>{helpLabel}</span>
+                            </div>
                           </div>
-                          <div className="small text-muted mb-1">
-                            {req.requesterName && !req.anonymous
-                              ? req.requesterName
-                              : 'Public user'}
-                            {' • '}
-                            {consent}
+                          <div className="small mb-3">
+                            <div className="d-flex justify-content-between mb-1">
+                              <span className="text-muted">Assigned</span>
+                              <span className="fw-500">
+                                {formatDateTime(req.requestDate) || 'Not set'}
+                              </span>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <span className="text-muted">Status</span>
+                              <Badge bg={getStatusVariant(req.status)}>
+                                {req.status ?? 'ASSIGNED'}
+                              </Badge>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center mt-1">
+                              <span className="text-muted">Follow-up due</span>
+                              <span className="small fw-500">
+                                {getDueDateLabel(req)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="d-flex align-items-center gap-2 small text-muted">
-                            <span>{helpIcon}</span>
-                            <span>{helpLabel}</span>
-                          </div>
-                        </div>
-                        <div className="small mb-3">
-                          <div className="d-flex justify-content-between mb-1">
-                            <span className="text-muted">Assigned</span>
-                            <span className="fw-500">
-                              {formatDateTime(req.requestDate) || 'Not set'}
-                            </span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <span className="text-muted">Status</span>
-                            <Badge bg={getStatusVariant(req.status)}>
-                              {req.status ?? 'ASSIGNED'}
-                            </Badge>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mt-1">
-                            <span className="text-muted">Follow-up due</span>
-                            <span className="small fw-500">
-                              {getDueDateLabel(req)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="d-flex flex-wrap gap-2 mt-2">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleViewDetails(req)
-                            }}
-                          >
-                            View details
-                          </Button>
-                          {canTakeAssignmentAction && !isRejected && (
-                            <>
-                              <Button
-                                variant="outline-success"
-                                size="sm"
-                                disabled={updatingId === req.id}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  void handleAccept(req)
-                                }}
-                              >
-                                Accept
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                disabled={updatingId === req.id}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  void handleDecline(req)
-                                }}
-                              >
-                                Decline
-                              </Button>
-                            </>
-                          )}
-                          {!isRejected && (
+                          <div className="d-flex flex-wrap gap-2 mt-2">
                             <Button
-                              variant="outline-secondary"
+                              variant="primary"
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                // TODO: Open messaging panel
+                                handleViewDetails(req)
                               }}
                             >
-                              Message
+                              View details
                             </Button>
-                          )}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                )
-              })}
-            </Row>
+                            {canTakeAssignmentAction && !isRejected && (
+                              <>
+                                <Button
+                                  variant="outline-success"
+                                  size="sm"
+                                  disabled={updatingId === req.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleAccept(req)
+                                  }}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  disabled={updatingId === req.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleDecline(req)
+                                  }}
+                                >
+                                  Decline
+                                </Button>
+                              </>
+                            )}
+                            {!isRejected && (
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // TODO: Open messaging panel
+                                }}
+                              >
+                                Message
+                              </Button>
+                            )}
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  )
+                })}
+              </Row>
+
+              {/* Pagination for Card View */}
+              {totalPages > 1 && (
+                <Card className="sw-card border-0 mb-4">
+                  <Card.Body className="d-flex justify-content-between align-items-center py-3">
+                    <div className="small text-muted">
+                      Showing {startIndex + 1}–{Math.min(endIndex, filteredAndSortedRequests.length)} of {filteredAndSortedRequests.length} requests
+                    </div>
+                    <div className="d-flex gap-2 align-items-center">
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      >
+                        ← Previous
+                      </Button>
+                      <span className="small fw-500 px-2">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      >
+                        Next →
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              )}
+            </>
+          ) : (
+            <>
+              {/* List View - Table */}
+              <SmartRequestTable requests={filteredAndSortedRequests} maskUserId={maskUserIdForTable} />
+            </>
           )}
         </Col>
 
@@ -583,6 +721,14 @@ export function SocialWorkerRequestsPage() {
                     {' • '}
                     {getConsentLabel(selectedRequest)}
                   </div>
+                </div>
+                <div className="mb-4">
+                  <div className="text-muted mb-3 small fw-600">Progress Timeline</div>
+                  <HorizontalTimeline
+                    steps={buildTimelineSteps(selectedRequest)}
+                    compact={true}
+                    showDates={false}
+                  />
                 </div>
                 <div className="mb-3 small">
                   <div className="text-muted mb-1">Summary</div>

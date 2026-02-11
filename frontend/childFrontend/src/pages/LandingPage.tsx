@@ -7,15 +7,15 @@ import { LandingFooter } from '../components/LandingFooter'
 
 export function LandingPage() {
   return (
-    <>
+    <div className="d-flex flex-column min-vh-100">
       <PublicNavbar />
-      <main>
+      <main className="flex-grow-1">
         <HeroSection />
         <AboutSection />
         <FeaturesSection />
         <TestimonialsSection />
-        <LandingFooter />
       </main>
-    </>
+      <LandingFooter />
+    </div>
   )
 }

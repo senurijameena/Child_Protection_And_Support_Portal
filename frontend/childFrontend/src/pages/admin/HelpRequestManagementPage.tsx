@@ -45,6 +45,14 @@ export function HelpRequestManagementPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
+  const getPriorityVariant = (priority?: string) => {
+    const p = priority?.toUpperCase()
+    if (p === 'HIGH') return 'danger'
+    if (p === 'MEDIUM') return 'warning'
+    if (p === 'LOW') return 'primary'
+    return 'secondary'
+  }
+
   const loadRequests = () => {
     setLoading(true)
     getAllHelpRequests()
@@ -181,6 +189,7 @@ export function HelpRequestManagementPage() {
               <tr>
                 <th>ID</th>
                 <th>Type</th>
+                <th>Priority</th>
                 <th>Requester</th>
                 <th>Location</th>
                 <th>Status</th>
@@ -192,7 +201,7 @@ export function HelpRequestManagementPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-5 text-muted">
+                  <td colSpan={9} className="text-center py-5 text-muted">
                     No help requests found
                   </td>
                 </tr>
@@ -204,6 +213,11 @@ export function HelpRequestManagementPage() {
                     </td>
                     <td>
                       {HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}
+                    </td>
+                    <td>
+                      <Badge bg={getPriorityVariant(r.priority)}>
+                        {(r.priority || 'MEDIUM').toUpperCase()}
+                      </Badge>
                     </td>
                     <td>
                       {r.anonymous ? (

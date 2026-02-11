@@ -8,6 +8,7 @@ import com.example.childPortal.model.Priority;
 import com.example.childPortal.model.Role;
 import com.example.childPortal.model.User;
 import com.example.childPortal.model.ServicePackage;
+import com.example.childPortal.model.ServiceItemExecution;
 import com.example.childPortal.repository.HelpRequestRepository;
 import com.example.childPortal.repository.ServicePackageRepository;
 import com.example.childPortal.repository.UserRepository;
@@ -42,6 +43,9 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
     @Autowired
     private com.example.childPortal.service.CaseTimelineService timelineService;
+
+    @Autowired(required = false)
+    private com.example.childPortal.service.FollowUpService followUpService;
 
     @Override
     public HelpResponse createHelpRequest(HelpRequestDTO helpRequestDTO, String requesterUserId) {
@@ -598,6 +602,273 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                 .orElse(null);
     }
 
+    @Override
+    public HelpRequestDTO acceptAppliedPackage(String requestId, String acceptedByUserId) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    if (helpRequest.getAppliedServicePackageId() == null) {
+                        return null;
+                    }
+                    if (!acceptedByUserId.equals(helpRequest.getRequesterUserId())) {
+                        return null;
+                    }
+                    if (!"PENDING".equals(helpRequest.getAppliedServicePackageStatus())) {
+                        return convertToFilteredDTO(helpRequest);
+                    }
+                    helpRequest.setAppliedServicePackageStatus("ACCEPTED");
+                    helpRequest.setStatus(HelpRequest.RequestStatus.IN_PROGRESS);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+                    // Initialize per-service executions as PENDING
+                    ServicePackage pkg = servicePackageRepository.findById(helpRequest.getAppliedServicePackageId()).orElse(null);
+                    if (pkg != null && pkg.getItems() != null && !pkg.getItems().isEmpty()) {
+                        List<ServiceItemExecution> executions = new java.util.ArrayList<>();
+                        for (String item : pkg.getItems()) {
+                            executions.add(new ServiceItemExecution(item, "PENDING"));
+                        }
+                        helpRequest.setAppliedPackageItemExecutions(executions);
+                    }
+                    helpRequestRepository.save(helpRequest);
+
+                    if (timelineService != null) {
+                        try {
+                            String userName = userRepository.findById(acceptedByUserId).map(User::getFullName).orElse("User");
+                            timelineService.createHelpRequestStatusChangeEvent(
+                                    requestId, acceptedByUserId, userName,
+                                    HelpRequest.RequestStatus.PACKAGE_PROPOSED,
+                                    HelpRequest.RequestStatus.IN_PROGRESS,
+                                    "Public user accepted the service package.");
+                        } catch (Exception e) {
+                            System.err.println("Error adding timeline event: " + e.getMessage());
+                        }
+                    }
+                    if (notificationService != null && helpRequest.getAssignedWorkerId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getAssignedWorkerId(),
+                                    helpRequest.getId(),
+                                    "PACKAGE_ACCEPTED",
+                                    false);
+                        } catch (Exception e) {
+                            System.err.println("Error notifying worker: " + e.getMessage());
+                        }
+                    }
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    "PACKAGE_ACCEPTED",
+                                    acceptedByUserId,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin: " + e.getMessage());
+                        }
+                    }
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO rejectAppliedPackage(String requestId, String reason, String rejectedByUserId) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    if (helpRequest.getAppliedServicePackageId() == null) {
+                        return null;
+                    }
+                    if (!rejectedByUserId.equals(helpRequest.getRequesterUserId())) {
+                        return null;
+                    }
+                    if (!"PENDING".equals(helpRequest.getAppliedServicePackageStatus())) {
+                        return convertToFilteredDTO(helpRequest);
+                    }
+                    helpRequest.setAppliedServicePackageStatus("REJECTED");
+                    helpRequest.setStatus(HelpRequest.RequestStatus.PACKAGE_REJECTED);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+                    String note = reason != null && !reason.isBlank() ? " Rejection reason: " + reason : "";
+                    String currentNotes = helpRequest.getRequestNotes();
+                    String rejectNote = "Public user rejected the service package." + note;
+                    helpRequest.setRequestNotes(currentNotes != null && !currentNotes.isEmpty()
+                            ? currentNotes + "\n" + rejectNote : rejectNote);
+                    helpRequestRepository.save(helpRequest);
+
+                    if (timelineService != null) {
+                        try {
+                            String userName = userRepository.findById(rejectedByUserId).map(User::getFullName).orElse("User");
+                            timelineService.createHelpRequestStatusChangeEvent(
+                                    requestId, rejectedByUserId, userName,
+                                    HelpRequest.RequestStatus.PACKAGE_PROPOSED,
+                                    HelpRequest.RequestStatus.PACKAGE_REJECTED,
+                                    "Public user rejected the service package." + note);
+                        } catch (Exception e) {
+                            System.err.println("Error adding timeline event: " + e.getMessage());
+                        }
+                    }
+                    if (notificationService != null && helpRequest.getAssignedWorkerId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getAssignedWorkerId(),
+                                    helpRequest.getId(),
+                                    "PACKAGE_REJECTED",
+                                    false);
+                        } catch (Exception e) {
+                            System.err.println("Error notifying worker: " + e.getMessage());
+                        }
+                    }
+                    if (notificationService != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdateToAdmin(
+                                    helpRequest.getId(),
+                                    "PACKAGE_REJECTED",
+                                    rejectedByUserId,
+                                    helpRequest.getTrackingId());
+                        } catch (Exception e) {
+                            System.err.println("Error notifying admin: " + e.getMessage());
+                        }
+                    }
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status, String updatedByUserId) {
+        return updateServiceItemStatus(requestId, serviceItem, status, updatedByUserId, null, null);
+    }
+
+    @Override
+    public HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status, String updatedByUserId,
+            LocalDateTime startDate, String notes) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    // If there is an applied package but executions were never initialized
+                    // (older records), bootstrap executions from the current package items.
+                    if (hr.getAppliedPackageItemExecutions() == null || hr.getAppliedPackageItemExecutions().isEmpty()) {
+                        if (hr.getAppliedServicePackageId() != null) {
+                            servicePackageRepository.findById(hr.getAppliedServicePackageId()).ifPresent(pkg -> {
+                                if (pkg.getItems() != null && !pkg.getItems().isEmpty()) {
+                                    java.util.List<ServiceItemExecution> executions = new java.util.ArrayList<>();
+                                    for (String item : pkg.getItems()) {
+                                        executions.add(new ServiceItemExecution(item, "PENDING"));
+                                    }
+                                    hr.setAppliedPackageItemExecutions(executions);
+                                }
+                            });
+                        }
+                    }
+
+                    if (hr.getAppliedPackageItemExecutions() == null || hr.getAppliedPackageItemExecutions().isEmpty()) {
+                        return null;
+                    }
+
+                    if (!"PENDING".equals(hr.getAppliedServicePackageStatus())
+                            && !"ACCEPTED".equals(hr.getAppliedServicePackageStatus())) {
+                        return null;
+                    }
+                    for (ServiceItemExecution ex : hr.getAppliedPackageItemExecutions()) {
+                        if (serviceItem != null && serviceItem.equals(ex.getServiceItem())) {
+                            ex.setStatus(status != null ? status : "PENDING");
+                            if ("IN_PROGRESS".equals(status)) {
+                                if (startDate != null) ex.setScheduledDate(startDate);
+                                if (notes != null) ex.setNotes(notes);
+                                if (timelineService != null) {
+                                    try {
+                                        String userName = userRepository.findById(updatedByUserId).map(User::getFullName).orElse("Social Worker");
+                                        String desc = "Service \"" + serviceItem + "\" started by " + userName;
+                                        if (notes != null && !notes.isBlank()) desc += ". Notes: " + notes;
+                                        timelineService.createHelpRequestNoteAddedEvent(requestId, updatedByUserId, userName, desc);
+                                    } catch (Exception e) {
+                                        // ignore
+                                    }
+                                }
+                            }
+                            hr.setLastUpdated(LocalDateTime.now());
+                            helpRequestRepository.save(hr);
+                            return convertToFilteredDTO(hr);
+                        }
+                    }
+                    return null;
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO assignServiceItemResource(String requestId, String serviceItem, String assignedResource,
+            LocalDateTime scheduledDate, String notes, String updatedByUserId) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    if (hr.getAppliedPackageItemExecutions() == null) return null;
+                    for (ServiceItemExecution ex : hr.getAppliedPackageItemExecutions()) {
+                        if (serviceItem != null && serviceItem.equals(ex.getServiceItem())) {
+                            if (assignedResource != null) ex.setAssignedResource(assignedResource);
+                            if (scheduledDate != null) ex.setScheduledDate(scheduledDate);
+                            if (notes != null) ex.setNotes(notes);
+                            if (scheduledDate != null && ex.getStatus() != null && "PENDING".equals(ex.getStatus())) {
+                                ex.setStatus("SCHEDULED");
+                            }
+                            hr.setLastUpdated(LocalDateTime.now());
+                            helpRequestRepository.save(hr);
+
+                            if (timelineService != null && assignedResource != null) {
+                                try {
+                                    String userName = userRepository.findById(updatedByUserId)
+                                            .map(User::getFullName)
+                                            .orElse("Social Worker");
+                                    StringBuilder desc = new StringBuilder();
+                                    desc.append("Resource \"").append(assignedResource)
+                                            .append("\" assigned to service \"").append(serviceItem).append("\" by ")
+                                            .append(userName);
+                                    if (scheduledDate != null) {
+                                        desc.append(" (expected on ").append(scheduledDate).append(")");
+                                    }
+                                    if (notes != null && !notes.isBlank()) {
+                                        desc.append(". Notes: ").append(notes);
+                                    }
+                                    timelineService.createHelpRequestNoteAddedEvent(
+                                            requestId,
+                                            updatedByUserId,
+                                            userName,
+                                            desc.toString());
+                                } catch (Exception e) {
+                                    // ignore timeline failures
+                                }
+                            }
+                            return convertToFilteredDTO(hr);
+                        }
+                    }
+                    return null;
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO submitPackageFollowUp(String requestId, String followUpDate, String followUpType, String notes,
+            String submittedByUserId) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    if (followUpService == null) return convertToFilteredDTO(hr);
+                    com.example.childPortal.model.FollowUp fu = new com.example.childPortal.model.FollowUp();
+                    fu.setHelpRequestId(requestId);
+                    fu.setSocialWorkerId(hr.getAssignedWorkerId() != null ? hr.getAssignedWorkerId() : submittedByUserId);
+                    fu.setType(followUpType != null ? followUpType : "VISIT");
+                    fu.setNotes(notes);
+                    fu.setStatus("SCHEDULED");
+                    if (followUpDate != null && !followUpDate.isEmpty()) {
+                        try {
+                            fu.setScheduledDate(LocalDateTime.parse(followUpDate.replace("Z", "").substring(0, 19)));
+                        } catch (Exception e) {
+                            fu.setScheduledDate(LocalDateTime.now());
+                        }
+                    } else {
+                        fu.setScheduledDate(LocalDateTime.now());
+                    }
+                    followUpService.createFollowUp(fu);
+                    hr.setLastUpdated(LocalDateTime.now());
+                    helpRequestRepository.save(hr);
+                    return convertToFilteredDTO(hr);
+                })
+                .orElse(null);
+    }
+
     private HelpRequestDTO convertToFilteredDTO(HelpRequest helpRequest) {
         HelpRequestDTO dto = new HelpRequestDTO();
         dto.setId(helpRequest.getId());
@@ -633,6 +904,19 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             });
             dto.setAppliedPackageStatus(helpRequest.getAppliedServicePackageStatus());
             dto.setAppliedPackageAppliedAt(helpRequest.getAppliedServicePackageAppliedAt());
+        }
+        if (helpRequest.getAppliedPackageItemExecutions() != null) {
+            dto.setAppliedPackageItemExecutions(helpRequest.getAppliedPackageItemExecutions().stream()
+                    .map(ex -> {
+                        com.example.childPortal.dto.ServiceItemExecutionDTO exDto = new com.example.childPortal.dto.ServiceItemExecutionDTO();
+                        exDto.setServiceItem(ex.getServiceItem());
+                        exDto.setStatus(ex.getStatus());
+                        exDto.setAssignedResource(ex.getAssignedResource());
+                        exDto.setScheduledDate(ex.getScheduledDate());
+                        exDto.setNotes(ex.getNotes());
+                        return exDto;
+                    })
+                    .collect(Collectors.toList()));
         }
 
         try {

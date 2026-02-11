@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, Container, Row, Col, ProgressBar, Badge } from 'react-bootstrap'
+import { Card, Container, Row, Col, Badge } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
 import { getAssignedRequests, getMyFollowUps, type FollowUpDTO } from '../../services/socialWorkerApi'
 import {
@@ -9,6 +9,9 @@ import {
   REQUEST_STATUS_LABELS,
 } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
+import VerticalTimeline from '../../components/ui/VerticalTimeline'
+import type { TimelineStep } from '../../components/ui/HorizontalTimeline'
+import { getHelpRequestTimeline } from '../../services/socialWorkerApi'
 
 interface CaseStats {
   active: number
@@ -22,6 +25,7 @@ export function SocialWorkerDashboard() {
 
   const [caseStats, setCaseStats] = useState<CaseStats | null>(null)
   const [recentRequests, setRecentRequests] = useState<HelpRequestDTO[]>([])
+  const [assignedRequestsState, setAssignedRequestsState] = useState<HelpRequestDTO[]>([])
   const [followUps, setFollowUps] = useState<FollowUpDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,6 +62,8 @@ export function SocialWorkerDashboard() {
           completed,
           followUp: followUps.length,
         })
+
+        setAssignedRequestsState(assignedRequests)
 
         // Show latest assigned requests (up to 5)
         const sortedRequests = [...assignedRequests].sort((a, b) => {
@@ -120,19 +126,6 @@ export function SocialWorkerDashboard() {
     </Card>
   )
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High':
-        return 'danger'
-      case 'Medium':
-        return 'warning'
-      case 'Low':
-        return 'success'
-      default:
-        return 'secondary'
-    }
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active':
@@ -183,6 +176,95 @@ export function SocialWorkerDashboard() {
   const totalAssignedRequests =
     (caseStats?.active ?? 0) + (caseStats?.pending ?? 0) + (caseStats?.completed ?? 0)
 
+  const getRequestDisplayId = (helpRequestId?: string | null) => {
+    if (!helpRequestId) return '-'
+    const req = assignedRequestsState.find((r) => r.id === helpRequestId)
+    return req?.trackingId ?? helpRequestId
+  }
+
+  // Timeline UI state
+  const [visibleTimelines, setVisibleTimelines] = useState<Record<string, boolean>>({})
+  const [timelineData, setTimelineData] = useState<Record<string, any[]>>({})
+  const [loadingTimelines, setLoadingTimelines] = useState<Record<string, boolean>>({})
+
+  const toggleTimeline = async (requestId: string) => {
+    setVisibleTimelines((prev) => ({ ...prev, [requestId]: !prev[requestId] }))
+
+    // If opening timeline and data not yet loaded, fetch it
+    if (!visibleTimelines[requestId] && !timelineData[requestId]) {
+      try {
+        setLoadingTimelines((prev) => ({ ...prev, [requestId]: true }))
+        const tl = await getHelpRequestTimeline(requestId)
+        // normalize timeline items
+        const items = Array.isArray(tl)
+          ? tl.map((e: any) => ({ id: e.id, message: e.description || e.message, timestamp: e.eventTime || e.timestamp, actor: e.performedByName || e.actor }))
+          : []
+        setTimelineData((prev) => ({ ...prev, [requestId]: items }))
+      } catch (err) {
+        console.error('Failed to load timeline for request', requestId, err)
+        setTimelineData((prev) => ({ ...prev, [requestId]: [] }))
+      } finally {
+        setLoadingTimelines((prev) => ({ ...prev, [requestId]: false }))
+      }
+    }
+  }
+
+  const findEventTime = (events: any[], keywords: string[]): string | undefined => {
+    if (!events || events.length === 0) return undefined
+    const lowKeywords = keywords.map((k) => k.toLowerCase())
+    for (const ev of events) {
+      const text = ((ev.message || ev.description || '') + ' ' + (ev.actor || '')).toLowerCase()
+      if (lowKeywords.some((kw) => text.includes(kw))) {
+        return ev.timestamp || ev.eventTime || ev.createdAt || ev.time
+      }
+    }
+    return undefined
+  }
+
+  const buildVerticalSteps = (req: HelpRequestDTO, events: any[]): TimelineStep[] => {
+    const steps: TimelineStep[] = []
+
+    const add = (id: string, label: string, date?: string, desc?: string) => {
+      let status: TimelineStep['status'] = 'pending'
+      if (date) status = 'completed'
+      else {
+        // Map label to known request statuses to detect "active" step
+        if (label === 'Submitted' && req.status === 'REQUESTED') status = 'active'
+        if (label === 'Package Applied' && req.status === 'PACKAGE_PROPOSED') status = 'active'
+        if (label === 'Package Accepted' && req.appliedPackageStatus === 'ACCEPTED') status = 'active'
+        if (label === 'Assigned' && req.status === 'ASSIGNED') status = 'active'
+        if (label === 'In Progress' && req.status === 'IN_PROGRESS') status = 'active'
+        if (label === 'Completed' && req.status === 'COMPLETED') status = 'active'
+      }
+
+      steps.push({ id, label, date, description: desc, status })
+    }
+
+    // Submitted
+    add('requested', 'Submitted', req.requestDate)
+
+    // Package applied
+    add('package_applied', 'Package Applied', req.appliedPackageAppliedAt)
+
+    // Package accepted (try to find in timeline)
+    const pkgAcceptedAt = findEventTime(events, ['package accepted', 'accepted package', 'accepted the package'])
+    add('package_accepted', 'Package Accepted', pkgAcceptedAt)
+
+    // Assigned
+    const assignedAt = findEventTime(events, ['assigned to', 'assigned', 'assignment'])
+    add('assigned', 'Assigned', assignedAt)
+
+    // In Progress
+    const inProgressAt = findEventTime(events, ['in progress', 'started', 'service started', 'started service'])
+    add('in_progress', 'In Progress', inProgressAt)
+
+    // Completed
+    const completedAt = findEventTime(events, ['completed', 'marked as completed', 'request completed'])
+    add('completed', 'Completed', completedAt)
+
+    return steps
+  }
+
   const now = new Date()
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
@@ -220,10 +302,20 @@ export function SocialWorkerDashboard() {
       <Row className="mb-5">
         <Col xs={12}>
           <div className="sw-dashboard-header mb-4">
-            <h1 className="h2 fw-700 mb-1">Welcome back! 👋</h1>
-            <p className="text-muted mb-0">
-              Here's your dashboard overview. Stay on top of your assigned cases and upcoming tasks.
-            </p>
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div>
+                <h1 className="h2 fw-700 mb-1">Welcome back! 👋</h1>
+                <p className="text-muted mb-0">
+                  Here's your dashboard overview. Stay on top of your assigned cases and upcoming tasks.
+                </p>
+              </div>
+              <Link
+                to="/social-worker/reports"
+                className="btn btn-outline-primary rounded-pill"
+              >
+                View Reports
+              </Link>
+            </div>
           </div>
         </Col>
       </Row>
@@ -282,7 +374,7 @@ export function SocialWorkerDashboard() {
                   <table className="table table-hover mb-0">
                     <thead className="border-top">
                       <tr className="text-muted small">
-                        <th className="px-4 py-3">Request / Follow-up</th>
+                        <th className="px-4 py-3">Request ID</th>
                         <th className="py-3">Type</th>
                         <th className="py-3">Due Date</th>
                         <th className="py-3 text-center">Status</th>
@@ -297,8 +389,12 @@ export function SocialWorkerDashboard() {
                           style={{ backgroundColor: 'rgba(248, 113, 113, 0.04)' }}
                         >
                           <td className="px-4 py-3 small">
-                            <div className="fw-600">{task.helpRequestId ?? '-'}</div>
-                            <div className="text-danger small">{getOverdueByText(task.scheduledDate)}</div>
+                            <div className="fw-600">
+                              {getRequestDisplayId(task.helpRequestId)}
+                            </div>
+                            <div className="text-danger small">
+                              {getOverdueByText(task.scheduledDate)}
+                            </div>
                           </td>
                           <td className="py-3 small">
                             {task.type || 'Follow-up'}
@@ -318,15 +414,9 @@ export function SocialWorkerDashboard() {
                                   to={`/social-worker/requests/${task.helpRequestId}`}
                                   className="btn btn-sm btn-outline-primary rounded-pill"
                                 >
-                                  View help
+                                  View
                                 </Link>
                               )}
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger rounded-pill"
-                              >
-                                Send reminder
-                              </button>
                             </div>
                           </td>
                         </tr>
@@ -435,43 +525,61 @@ export function SocialWorkerDashboard() {
                         <th className="px-4 py-3">Requester / ID</th>
                         <th className="py-3">Type</th>
                         <th className="py-3">Status</th>
-                        <th className="py-3 text-center">Priority</th>
+                        <th className="py-3">Timeline</th>
                         <th className="py-3 text-end pe-4">Requested At</th>
                       </tr>
                     </thead>
                     <tbody>
                       {recentRequests.map((req) => (
-                        <tr key={req.id} className="border-bottom">
-                          <td className="px-4 py-3">
-                            <div className="fw-600">
-                              {req.requesterName || 'Anonymous Requester'}
-                            </div>
-                            <div className="text-muted small">#{req.trackingId ?? req.id}</div>
-                          </td>
-                          <td className="py-3 small">{req.helpType ?? 'Support Request'}</td>
-                          <td className="py-3">
-                            <Badge
-                              bg={
-                                REQUEST_STATUS_BADGE_VARIANTS[
-                                  (req.status as keyof typeof REQUEST_STATUS_BADGE_VARIANTS) ??
-                                    'REQUESTED'
-                                ]
-                              }
-                            >
-                              {REQUEST_STATUS_LABELS[
-                                (req.status as keyof typeof REQUEST_STATUS_LABELS) ?? 'REQUESTED'
-                              ]}
-                            </Badge>
-                          </td>
-                          <td className="py-3 text-center">
-                            <Badge bg={getPriorityColor(req.priority ?? '')}>
-                              {req.priority ?? 'MEDIUM'}
-                            </Badge>
-                          </td>
-                          <td className="py-3 text-end pe-4 text-muted small">
-                            {formatDateTime(req.requestDate)}
-                          </td>
-                        </tr>
+                        <>
+                          <tr key={req.id} className={`${visibleTimelines[req.id] ? 'align-middle no-border-bottom' : 'border-bottom align-middle'}`}>
+                            <td className="px-4 py-3">
+                              <div className="fw-600">{req.requesterName || 'Anonymous Requester'}</div>
+                              <div className="text-muted small">#{req.trackingId ?? req.id}</div>
+                            </td>
+                            <td className="py-3 small">{req.helpType ?? 'Support Request'}</td>
+                            <td className="py-3">
+                              <Badge
+                                bg={
+                                  REQUEST_STATUS_BADGE_VARIANTS[
+                                    (req.status as keyof typeof REQUEST_STATUS_BADGE_VARIANTS) ??
+                                      'REQUESTED'
+                                  ]
+                                }
+                              >
+                                {REQUEST_STATUS_LABELS[
+                                  (req.status as keyof typeof REQUEST_STATUS_LABELS) ?? 'REQUESTED'
+                                ]}
+                              </Badge>
+                            </td>
+
+                            <td className="py-3 small">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-primary rounded-pill"
+                                onClick={() => toggleTimeline(req.id)}
+                              >
+                                {visibleTimelines[req.id] ? 'Hide timeline' : 'View timeline'}
+                              </button>
+                            </td>
+
+                            <td className="py-3 text-end pe-4 text-muted small">{formatDateTime(req.requestDate)}</td>
+                          </tr>
+
+                          {visibleTimelines[req.id] && (
+                            <tr key={`${req.id}-timeline`} className="border-bottom">
+                              <td colSpan={5} className="px-4 py-3 bg-light">
+                                {loadingTimelines[req.id] ? (
+                                  <div className="small text-muted">Loading timeline...</div>
+                                ) : timelineData[req.id] && timelineData[req.id].length > 0 ? (
+                                  <VerticalTimeline steps={buildVerticalSteps(req, timelineData[req.id])} compact />
+                                ) : (
+                                  <div className="small text-muted">No timeline events</div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </>
                       ))}
                     </tbody>
                   </table>
@@ -540,108 +648,7 @@ export function SocialWorkerDashboard() {
             </Card.Body>
           </Card>
         </Col>
-        <Col xs={12} md={6} lg={4}>
-          <Card className="sw-quick-action-card h-100 cursor-pointer">
-            <Card.Body className="d-flex align-items-center justify-content-between p-3">
-              <div>
-                <h6 className="card-title mb-1 fw-600">Request Escalation</h6>
-                <p className="text-muted small mb-0">
-                  Flag complex cases for supervisor or legal review.
-                </p>
-              </div>
-              <div className="quick-action-icon fs-2">⚠️</div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
 
-      {/* Workload Progress */}
-      <Row>
-        <Col xs={12}>
-          <Card className="sw-card border-0">
-            <Card.Header className="bg-white border-0 pt-4 pb-3">
-              <h5 className="mb-0 fw-700">Case Workload Progress</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row className="g-4">
-                <Col xs={12} sm={6} lg={3}>
-                  <div className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="small fw-600 text-dark">
-                        Active Cases
-                      </span>
-                      <span className="text-muted small">
-                        {caseStats?.active ?? 0}
-                      </span>
-                    </div>
-                    <ProgressBar
-                      now={
-                        caseStats && caseStats.active > 0
-                          ? (caseStats.active / caseStats.active) * 100
-                          : 0
-                      }
-                      className="sw-progress-bar"
-                      style={{ height: '8px' }}
-                    />
-                  </div>
-                </Col>
-                <Col xs={12} sm={6} lg={3}>
-                  <div className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="small fw-600 text-dark">
-                        Follow-ups
-                      </span>
-                      <span className="text-muted small">
-                        {caseStats?.followUp ?? 0}
-                      </span>
-                    </div>
-                    <ProgressBar
-                      now={
-                        caseStats && caseStats.followUp > 0
-                          ? (caseStats.followUp / caseStats.followUp) * 100
-                          : 0
-                      }
-                      variant="success"
-                      className="sw-progress-bar"
-                      style={{ height: '8px' }}
-                    />
-                  </div>
-                </Col>
-                <Col xs={12} sm={6} lg={3}>
-                  <div className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="small fw-600 text-dark">
-                        Monthly Target
-                      </span>
-                      <span className="text-muted small">68%</span>
-                    </div>
-                    <ProgressBar
-                      now={68}
-                      className="sw-progress-bar"
-                      style={{ height: '8px' }}
-                    />
-                  </div>
-                </Col>
-                <Col xs={12} sm={6} lg={3}>
-                  <div className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="small fw-600 text-dark">
-                        Team Capacity
-                      </span>
-                      <span className="text-muted small">45%</span>
-                    </div>
-                    <ProgressBar
-                      now={45}
-                      variant="info"
-                      className="sw-progress-bar"
-                      style={{ height: '8px' }}
-                    />
-                  </div>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
       </Row>
 
       {/* Footer / Helpful Info */}

@@ -1,0 +1,69 @@
+.vertical-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vt-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.vt-marker {
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.vt-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sw-teal);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.08);
+}
+
+.vt-line {
+  width: 2px;
+  background: #e6e9ef;
+  flex: 1 1 auto;
+  margin-top: 6px;
+}
+
+.vt-content {
+  flex: 1 1 auto;
+}
+
+.vt-label {
+  font-weight: 600;
+}
+
+.vt-date {
+  color: #6b7280;
+}
+
+.timeline-step.step-completed .vt-dot,
+.vt-step.step-completed .vt-dot {
+  background: var(--bs-success);
+}
+
+.vt-step.step-active .vt-dot {
+  background: var(--bs-info);
+}
+
+.vt-step.step-pending .vt-dot {
+  background: #e5e7eb;
+}
+
+.vertical-timeline.compact .vt-label {
+  font-size: 0.9rem;
+}
+
+.vertical-timeline.compact .vt-desc,
+.vertical-timeline.compact .vt-date {
+  font-size: 0.8rem;
+}

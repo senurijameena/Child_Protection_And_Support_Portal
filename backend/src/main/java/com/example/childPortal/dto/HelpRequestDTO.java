@@ -4,6 +4,7 @@ import com.example.childPortal.model.HelpType;
 import com.example.childPortal.model.HelpRequest.RequestStatus;
 import com.example.childPortal.model.Priority;
 import com.example.childPortal.dto.ServicePackageDTO;
+import com.example.childPortal.dto.ServiceItemExecutionDTO;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class HelpRequestDTO {
     // When the service package was applied to this request
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime appliedPackageAppliedAt;
+    // Per-service execution status (populated when PU accepts)
+    private List<ServiceItemExecutionDTO> appliedPackageItemExecutions;
 
     public HelpRequestDTO() {
     }
@@ -233,5 +236,13 @@ public class HelpRequestDTO {
 
     public void setAppliedPackageAppliedAt(LocalDateTime appliedPackageAppliedAt) {
         this.appliedPackageAppliedAt = appliedPackageAppliedAt;
+    }
+
+    public List<ServiceItemExecutionDTO> getAppliedPackageItemExecutions() {
+        return appliedPackageItemExecutions;
+    }
+
+    public void setAppliedPackageItemExecutions(List<ServiceItemExecutionDTO> appliedPackageItemExecutions) {
+        this.appliedPackageItemExecutions = appliedPackageItemExecutions;
     }
 }

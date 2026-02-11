@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup, Button, Form, Alert } from 'react-bootstrap'
-import { apiGet } from '../../services/api'
+import { apiGet, getUploadBaseUrl } from '../../services/api'
 import { CASE_STATUS_BADGE_VARIANTS, CASE_STATUS_LABELS, CASE_TYPE_LABELS } from '../../types/dashboard'
 import type { CaseDTO } from '../../types/dashboard'
 import type { PoliceStationDTO } from '../../types/admin'
@@ -163,18 +163,43 @@ export function AdminCaseDetailsPage() {
                 {c.reportDate ? new Date(c.reportDate).toLocaleString() : '-'}
               </p>
               <p>
+                <strong>Approximate Age:</strong> {c.approximateAge || '-'}
+              </p>
+              <p>
+                <strong>Gender:</strong> {c.gender || '-'}
+              </p>
+              <p>
                 <strong>Location:</strong> {c.location || '-'}
               </p>
               <p>
                 <strong>Description:</strong>
               </p>
               <p className="text-muted">{c.caseDescription || '-'}</p>
+              {c.physicalIdentificationMarks && (
+                <div className="mt-3 p-3 bg-light rounded-3">
+                  <h6 className="mb-2">Physical Identification Marks</h6>
+                  <p className="text-muted mb-0">{c.physicalIdentificationMarks}</p>
+                </div>
+              )}
+              {c.lastSeenDressDetails && (
+                <div className="mt-3 p-3 bg-light rounded-3">
+                  <h6 className="mb-2">Last Seen Dress Details</h6>
+                  <p className="text-muted mb-0">{c.lastSeenDressDetails}</p>
+                </div>
+              )}
+              {c.photographUrl && (
+                <div className="mt-3 p-3 bg-light rounded-3">
+                  <h6 className="mb-2">Child's Photograph</h6>
+                  <img src={`${getUploadBaseUrl()}${c.photographUrl}`} alt="Child photograph" style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }} />
+                </div>
+              )}
               {c.evidenceUrls && c.evidenceUrls.length > 0 && (
                 <div className="mt-4">
                   <h6 className="mb-1">Evidence</h6>
                   <div className="text-muted small mb-2">Read-only evidence uploaded by the reporter</div>
                   <div className="d-flex flex-wrap gap-3">
                     {c.evidenceUrls.map((url, i) => {
+                      const fullUrl = `${getUploadBaseUrl()}${url}`
                       const lower = url.toLowerCase()
                       const isImage =
                         lower.endsWith('.jpg') ||
@@ -187,9 +212,9 @@ export function AdminCaseDetailsPage() {
                       return (
                         <Card key={url} style={{ width: 180 }} className="border-0 shadow-sm">
                           {isImage ? (
-                            <a href={url} target="_blank" rel="noopener noreferrer">
+                            <a href={fullUrl} target="_blank" rel="noopener noreferrer">
                               <img
-                                src={url}
+                                src={fullUrl}
                                 alt={label}
                                 className="card-img-top"
                                 style={{ maxHeight: 120, objectFit: 'cover' }}
@@ -205,7 +230,7 @@ export function AdminCaseDetailsPage() {
                               {label}
                             </div>
                             <a
-                              href={url}
+                              href={fullUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="small text-primary d-block mt-1"

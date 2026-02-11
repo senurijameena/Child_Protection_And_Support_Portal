@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup } from 'react-bootstrap'
-import { apiGet } from '../../services/api'
+import { apiGet, getUploadBaseUrl } from '../../services/api'
 import { REQUEST_STATUS_LABELS, HELP_TYPE_LABELS } from '../../types/dashboard'
 import type { HelpRequestDTO } from '../../types/dashboard'
 
@@ -18,6 +18,14 @@ export function AdminHelpRequestDetailsPage() {
   const [r, setR] = useState<HelpRequestDTO | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
+
+  const getPriorityVariant = (priority?: string) => {
+    const p = priority?.toUpperCase()
+    if (p === 'HIGH') return 'danger'
+    if (p === 'MEDIUM') return 'warning'
+    if (p === 'LOW') return 'primary'
+    return 'secondary'
+  }
 
   useEffect(() => {
     if (!requestId) return
@@ -82,6 +90,12 @@ export function AdminHelpRequestDetailsPage() {
                 )}
               </p>
               <p>
+                <strong>Gender:</strong> {r.gender || '-'}
+              </p>
+              <p>
+                <strong>Approximate Age:</strong> {r.approximateAge || '-'}
+              </p>
+              <p>
                 <strong>Submitted:</strong>{' '}
                 {r.requestDate ? new Date(r.requestDate).toLocaleString() : '-'}
               </p>
@@ -90,12 +104,80 @@ export function AdminHelpRequestDetailsPage() {
               </p>
               <p>
                 <strong>Priority:</strong>{' '}
-                <Badge bg="secondary">{r.priority || 'Medium'}</Badge>
+                <Badge bg={getPriorityVariant(r.priority)}>
+                  {(r.priority || 'MEDIUM').toUpperCase()}
+                </Badge>
               </p>
               <p>
                 <strong>Description:</strong>
               </p>
               <p className="text-muted">{r.description || '-'}</p>
+
+              {/* 🥘 Food Assistance Conditional Fields */}
+              {r.helpType === 'FOOD_ASSISTANCE' && (
+                <div className="mt-4 p-3 bg-light rounded-3">
+                  <h6 className="mb-3">🥘 Food Assistance Details</h6>
+                  <p><strong>Family Members:</strong> {r.familyMembers || '-'}</p>
+                  <p><strong>Monthly Income Range:</strong> {r.monthlyIncomeRange || '-'}</p>
+                  <p><strong>Employment Status:</strong> {r.employmentStatus || '-'}</p>
+                </div>
+              )}
+
+              {/* 🎓 Education Conditional Fields */}
+              {r.helpType === 'EDUCATION_SUPPORT' && (
+                <div className="mt-4 p-3 bg-light rounded-3">
+                  <h6 className="mb-3">🎓 Education Support Details</h6>
+                  <p><strong>School Grade:</strong> {r.schoolGrade || '-'}</p>
+                  <p><strong>Required Items:</strong> {r.requiredItems?.length ? r.requiredItems.join(', ') : '-'}</p>
+                  <p><strong>Exam Year:</strong> {r.examYear || '-'}</p>
+                </div>
+              )}
+
+              {/* 🏥 Medical Conditional Fields */}
+              {r.helpType === 'MEDICAL_HELP' && (
+                <div className="mt-4 p-3 bg-light rounded-3">
+                  <h6 className="mb-3">🏥 Medical Help Details</h6>
+                  <p><strong>Condition Description:</strong> {r.conditionDescription || '-'}</p>
+                  <p><strong>Urgency Level:</strong> {r.urgencyLevel || '-'}</p>
+                  <p><strong>Hospital/Clinic:</strong> {r.hospitalName || '-'}</p>
+                  <p><strong>Estimated Cost:</strong> {r.estimatedCost || '-'}</p>
+                  {r.medicalReportUrl && (
+                    <div className="mt-2">
+                      <a href={`${getUploadBaseUrl()}${r.medicalReportUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary">
+                        View Medical Report
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 🏠 Shelter Conditional Fields */}
+              {r.helpType === 'SHELTER' && (
+                <div className="mt-4 p-3 bg-light rounded-3">
+                  <h6 className="mb-3">🏠 Shelter Details</h6>
+                  <p><strong>Current Housing Type:</strong> {r.currentHousingType || '-'}</p>
+                  <p><strong>Risk of Eviction:</strong> <Badge bg={r.riskOfEviction ? 'danger' : 'success'}>{r.riskOfEviction ? 'Yes' : 'No'}</Badge></p>
+                  <p><strong>Immediate Danger:</strong> <Badge bg={r.immediateDanger ? 'danger' : 'success'}>{r.immediateDanger ? 'Yes' : 'No'}</Badge></p>
+                </div>
+              )}
+
+              {/* 👕 Clothing Conditional Fields */}
+              {r.helpType === 'CLOTHING' && (
+                <div className="mt-4 p-3 bg-light rounded-3">
+                  <h6 className="mb-3">👕 Clothing Details</h6>
+                  <p><strong>Quantity Needed:</strong> {r.quantityNeeded || '-'}</p>
+                </div>
+              )}
+
+              {/* 🧠 Counseling Conditional Fields */}
+              {r.helpType === 'COUNSELING' && (
+                <div className="mt-4 p-3 bg-light rounded-3">
+                  <h6 className="mb-3">🧠 Counseling Details</h6>
+                  <p><strong>Counseling Type:</strong> {r.counselingType || '-'}</p>
+                  <p><strong>Preferred Contact Method:</strong> {r.preferredContactMethod || '-'}</p>
+                </div>
+              )}
+
               {r.documentUrls && r.documentUrls.length > 0 && (
                 <div className="mt-4">
                   <h6 className="mb-1">Evidence / Documents</h6>
@@ -103,7 +185,7 @@ export function AdminHelpRequestDetailsPage() {
                     {r.documentUrls.map((url, i) => (
                       <a
                         key={url}
-                        href={url}
+                        href={`${getUploadBaseUrl()}${url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-sm btn-outline-primary"

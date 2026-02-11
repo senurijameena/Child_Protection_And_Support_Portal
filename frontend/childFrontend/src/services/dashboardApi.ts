@@ -14,9 +14,14 @@ export async function reportCase(data: {
   anonymous: boolean
   caseType: string
   caseDescription: string
+  approximateAge?: string
   location?: string
   incidentDate?: string // ISO string for LocalDateTime
   evidenceUrls?: string[]
+  gender?: string
+  photographUrl?: string
+  physicalIdentificationMarks?: string
+  lastSeenDressDetails?: string
 }) {
   return apiPost<{ success: boolean; message?: string; caseId?: string; trackingId?: string }>(
     '/cases/report',
@@ -71,6 +76,27 @@ export async function submitPackageFollowUp(
   return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/package/follow-up`, data)
 }
 
+/** SW: Update a service item's execution status. */
+export async function updateServiceItemStatus(
+  requestId: string,
+  serviceItem: string,
+  status: string
+): Promise<HelpRequestDTO> {
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/service/status`, { serviceItem, status })
+}
+
+/** SW: Assign resource and scheduled date to a service item. */
+export async function assignServiceItemResource(
+  requestId: string,
+  serviceItem: string,
+  data: { assignedResource?: string; scheduledDate?: string; notes?: string }
+): Promise<HelpRequestDTO> {
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/service/resource`, {
+    serviceItem,
+    ...data,
+  })
+}
+
 /** Public user: Request adjustment for a specific service item. */
 export async function requestServiceAdjustment(
   requestId: string,
@@ -84,8 +110,27 @@ export async function createHelpRequest(data: {
   anonymous: boolean
   helpType: string
   description: string
+  approximateAge?: string
   location?: string
+  gender?: string
   documentUrls?: string[]
+  familyMembers?: number
+  monthlyIncomeRange?: string
+  employmentStatus?: string
+  schoolGrade?: string
+  requiredItems?: string[]
+  examYear?: string
+  conditionDescription?: string
+  urgencyLevel?: string
+  hospitalName?: string
+  estimatedCost?: string
+  medicalReportUrl?: string
+  currentHousingType?: string
+  riskOfEviction?: boolean
+  immediateDanger?: boolean
+  quantityNeeded?: string
+  counselingType?: string
+  preferredContactMethod?: string
 }) {
   return apiPost<{ success: boolean; message?: string; requestId?: string }>(
     '/help-requests/request',

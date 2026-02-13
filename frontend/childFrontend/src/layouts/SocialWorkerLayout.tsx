@@ -3,17 +3,20 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
 import { SocialWorkerHeader } from '../components/social-worker/SocialWorkerHeader'
-import { SocialWorkerNotificationDropdown } from '../components/social-worker/SocialWorkerNotificationDropdown'
 import SystemAnnouncementBanner from '../components/SystemAnnouncementBanner'
 
 const sidebarItems = [
   { path: '/social-worker', label: 'Dashboard', icon: '🏠', end: true },
-  { path: '/social-worker/analytics', label: 'Analytics', icon: '📈', end: false },
   { path: '/social-worker/requests', label: 'Assigned Requests', icon: '📋', end: false },
+  { path: '/social-worker/transfers', label: 'Transfers', icon: '🔄', end: false },
   { path: '/social-worker/packages', label: 'Service Packages', icon: '🧩', end: false },
   { path: '/social-worker/library', label: 'Resource Management', icon: '📚', end: false },
   { path: '/social-worker/messages', label: 'Messages', icon: '💬', end: false },
+  { path: '/social-worker/notifications', label: 'Notifications', icon: '🔔', end: false },
+  { path: '/social-worker/collaboration', label: 'Collaboration', icon: '🤝', end: false },
   { path: '/social-worker/follow-ups', label: 'Follow-ups', icon: '⏰', end: false },
+  { path: '/social-worker/reports', label: 'Reports', icon: '📊', end: false },
+  { path: '/social-worker/analytics', label: 'Analytics', icon: '📈', end: false },
   { path: '/social-worker/profile', label: 'Profile', icon: '👤', end: false },
 ]
 
@@ -34,9 +37,8 @@ export function SocialWorkerLayout() {
     <div className="sw-layout min-vh-100 d-flex sw-theme-bg">
       {/* Sidebar - desktop (collapsible) */}
       <aside
-        className={`d-none d-lg-flex flex-column sw-sidebar border-end position-fixed overflow-hidden ${
-          sidebarCollapsed ? 'sw-sidebar-collapsed' : ''
-        }`}
+        className={`d-none d-lg-flex flex-column sw-sidebar border-end position-fixed overflow-hidden ${sidebarCollapsed ? 'sw-sidebar-collapsed' : ''
+          }`}
         style={{
           width: sidebarCollapsed ? 72 : 260,
           minHeight: '100vh',
@@ -81,8 +83,7 @@ export function SocialWorkerLayout() {
               end={item.end ?? item.path === '/social-worker'}
               onClick={() => setMobileSidebarOpen(false)}
               className={({ isActive: active }) =>
-               `sw-sidebar-link d-flex align-items-center gap-3 text-decoration-none ${
-                  active ? 'sw-sidebar-active' : ''
+                `sw-sidebar-link d-flex align-items-center gap-3 text-decoration-none ${active ? 'sw-sidebar-active' : ''
                 }`
               }
               title={sidebarCollapsed ? item.label : undefined}
@@ -98,12 +99,6 @@ export function SocialWorkerLayout() {
         <div className="p-3 border-top mt-auto bg-light bg-opacity-50">
           {!sidebarCollapsed ? (
             <div className="d-flex flex-column gap-3">
-              <div className="d-flex justify-content-between align-items-center px-2">
-                <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>
-                  Notifications
-                </span>
-                <SocialWorkerNotificationDropdown />
-              </div>
               <div className="px-2 py-1 text-muted small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>
                 Signed in as
               </div>
@@ -126,12 +121,12 @@ export function SocialWorkerLayout() {
             </div>
           ) : (
             <button
-               type="button"
-               onClick={handleLogout}
-               className="btn btn-link p-0 text-danger w-100 d-flex justify-content-center"
-               title="Sign Out"
+              type="button"
+              onClick={handleLogout}
+              className="btn btn-link p-0 text-danger w-100 d-flex justify-content-center"
+              title="Sign Out"
             >
-               🚪
+              🚪
             </button>
           )}
         </div>
@@ -163,8 +158,7 @@ export function SocialWorkerLayout() {
                 end={item.end ?? item.path === '/social-worker'}
                 onClick={() => setMobileSidebarOpen(false)}
                 className={({ isActive: active }) =>
-                  `d-flex align-items-center gap-3 px-4 py-3 text-dark text-decoration-none ${
-                    active ? 'sw-sidebar-active mx-2' : ''
+                  `d-flex align-items-center gap-3 px-4 py-3 text-dark text-decoration-none ${active ? 'sw-sidebar-active mx-2' : ''
                   }`
                 }
               >

@@ -47,8 +47,23 @@ public class HelpController {
     }
 
     @GetMapping("/worker/{workerId}")
-    public ResponseEntity<List<HelpRequestDTO>> getHelpRequestsByWorker(@PathVariable String workerId) {
-        List<HelpRequestDTO> requests = helpRequestService.getHelpRequestsByWorker(workerId);
+    public ResponseEntity<List<HelpRequestDTO>> getHelpRequestsByWorker(
+            @PathVariable String workerId,
+            @AuthenticationPrincipal String userId) {
+        // Enforce data isolation: Always use the authenticated user's ID
+        // This prevents issues where a shared browser session might send a stale ID
+        // from the frontend
+        if (userId == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            userId = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+        }
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        List<HelpRequestDTO> requests = helpRequestService.getHelpRequestsByWorker(userId);
         return ResponseEntity.ok(requests);
     }
 
@@ -132,18 +147,18 @@ public class HelpController {
         return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
     }
 
-   @PostMapping("/{requestId}/apply-package")
-   public ResponseEntity<HelpRequestDTO> applyServicePackageToRequest(
-           @PathVariable String requestId,
-           @RequestBody java.util.Map<String, String> body,
-           @AuthenticationPrincipal String userId) {
-       String packageId = body.get("packageId");
-       if (packageId == null || packageId.trim().isEmpty()) {
-           return ResponseEntity.badRequest().build();
-       }
-       HelpRequestDTO updatedRequest = helpRequestService.applyServicePackageToRequest(requestId, packageId, userId);
-       return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
-   }
+    @PostMapping("/{requestId}/apply-package")
+    public ResponseEntity<HelpRequestDTO> applyServicePackageToRequest(
+            @PathVariable String requestId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String packageId = body.get("packageId");
+        if (packageId == null || packageId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        HelpRequestDTO updatedRequest = helpRequestService.applyServicePackageToRequest(requestId, packageId, userId);
+        return updatedRequest != null ? ResponseEntity.ok(updatedRequest) : ResponseEntity.notFound().build();
+    }
 
     @PutMapping("/{requestId}/package/accept")
     public ResponseEntity<HelpRequestDTO> acceptAppliedPackage(
@@ -184,17 +199,21 @@ public class HelpController {
             @PathVariable String requestId,
             @RequestBody java.util.Map<String, Object> body,
             @AuthenticationPrincipal String userId) {
-        String serviceItem = body != null && body.get("serviceItem") != null ? body.get("serviceItem").toString() : null;
+        String serviceItem = body != null && body.get("serviceItem") != null ? body.get("serviceItem").toString()
+                : null;
         String status = body != null && body.get("status") != null ? body.get("status").toString() : null;
         String notes = body != null && body.get("notes") != null ? body.get("notes").toString() : null;
         java.time.LocalDateTime startDate = null;
         if (body != null && body.get("startDate") != null) {
             try {
-                String s = body.get("startDate").toString().replace("Z", "").replace("z", "").substring(0, Math.min(19, body.get("startDate").toString().length()));
+                String s = body.get("startDate").toString().replace("Z", "").replace("z", "").substring(0,
+                        Math.min(19, body.get("startDate").toString().length()));
                 startDate = java.time.LocalDateTime.parse(s);
-            } catch (Exception e) { /* ignore */ }
+            } catch (Exception e) {
+                /* ignore */ }
         }
-        HelpRequestDTO updated = helpRequestService.updateServiceItemStatus(requestId, serviceItem, status, userId, startDate, notes);
+        HelpRequestDTO updated = helpRequestService.updateServiceItemStatus(requestId, serviceItem, status, userId,
+                startDate, notes);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
@@ -203,17 +222,22 @@ public class HelpController {
             @PathVariable String requestId,
             @RequestBody java.util.Map<String, Object> body,
             @AuthenticationPrincipal String userId) {
-        String serviceItem = body != null && body.get("serviceItem") != null ? body.get("serviceItem").toString() : null;
-        String assignedResource = body != null && body.get("assignedResource") != null ? body.get("assignedResource").toString() : null;
+        String serviceItem = body != null && body.get("serviceItem") != null ? body.get("serviceItem").toString()
+                : null;
+        String assignedResource = body != null && body.get("assignedResource") != null
+                ? body.get("assignedResource").toString()
+                : null;
         String notes = body != null && body.get("notes") != null ? body.get("notes").toString() : null;
         java.time.LocalDateTime scheduledDate = null;
         if (body != null && body.get("scheduledDate") != null) {
             try {
                 String s = body.get("scheduledDate").toString().replace("Z", "").substring(0, 19);
                 scheduledDate = java.time.LocalDateTime.parse(s);
-            } catch (Exception e) { /* ignore */ }
+            } catch (Exception e) {
+                /* ignore */ }
         }
-        HelpRequestDTO updated = helpRequestService.assignServiceItemResource(requestId, serviceItem, assignedResource, scheduledDate, notes, userId);
+        HelpRequestDTO updated = helpRequestService.assignServiceItemResource(requestId, serviceItem, assignedResource,
+                scheduledDate, notes, userId);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
@@ -226,11 +250,13 @@ public class HelpController {
             var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
             userId = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
         }
-        if (userId == null) return ResponseEntity.status(401).build();
+        if (userId == null)
+            return ResponseEntity.status(401).build();
         String followUpDate = body != null ? body.get("followUpDate") : null;
         String followUpType = body != null ? body.get("followUpType") : null;
         String notes = body != null ? body.get("notes") : null;
-        HelpRequestDTO updated = helpRequestService.submitPackageFollowUp(requestId, followUpDate, followUpType, notes, userId);
+        HelpRequestDTO updated = helpRequestService.submitPackageFollowUp(requestId, followUpDate, followUpType, notes,
+                userId);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 

@@ -63,6 +63,7 @@ export function ServicePackageListingPage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | ServicePackageStatus>('ALL')
   const [viewPackageId, setViewPackageId] = useState<string | null>(null)
   const [archiveModalId, setArchiveModalId] = useState<string | null>(null)
+  const [publishModalId, setPublishModalId] = useState<string | null>(null)
   const [applyModalPackageId, setApplyModalPackageId] = useState<string | null>(null)
   const [assignedRequests, setAssignedRequests] = useState<HelpRequestDTO[]>([])
 
@@ -128,6 +129,28 @@ export function ServicePackageListingPage() {
       if (viewPackageId === id) setViewPackageId(null)
     } catch (err) {
       console.error('Failed to archive package', err)
+    }
+  }
+
+  const handlePublish = async (id: string) => {
+    const pkg = packages.find((p) => p.id === id)
+    if (!pkg) return
+    try {
+      await updateServicePackage(id, {
+        title: pkg.title,
+        requestType: pkg.requestType,
+        description: pkg.description,
+        estimatedDuration: pkg.estimatedDuration,
+        items: pkg.items ?? [],
+        status: 'PUBLISHED',
+      })
+      setPackages((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: 'PUBLISHED' as ServicePackageStatus } : p))
+      )
+      setPublishModalId(null)
+      if (viewPackageId === id) setViewPackageId(null)
+    } catch (err) {
+      console.error('Failed to publish package', err)
     }
   }
 
@@ -278,10 +301,20 @@ export function ServicePackageListingPage() {
                                   ➕ Apply to Request
                                 </Button>
                               )}
+                              {pkg.status === 'DRAFT' && (
+                                <Button
+                                  variant="outline-success"
+                                  size="sm"
+                                  onClick={() => setPublishModalId(pkg.id)}
+                                >
+                                  🚀 Activate
+                                </Button>
+                              )}
                               <Button
                                 variant="outline-danger"
                                 size="sm"
                                 onClick={() => setArchiveModalId(pkg.id)}
+                                disabled={pkg.status === 'DRAFT'}
                               >
                                 🗄 Archive
                               </Button>
@@ -360,6 +393,15 @@ export function ServicePackageListingPage() {
                       Apply to Request
                     </Button>
                   )}
+                  {viewedPackage.status === 'DRAFT' && (
+                    <Button
+                      variant="success"
+                      size="sm"
+                      onClick={() => setPublishModalId(viewedPackage.id)}
+                    >
+                      Activate / Publish
+                    </Button>
+                  )}
                 </div>
               </Card.Body>
             </Card>
@@ -380,6 +422,23 @@ export function ServicePackageListingPage() {
           </Button>
           <Button variant="warning" onClick={() => archiveModalId && handleArchive(archiveModalId)}>
             Archive
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={!!publishModalId} onHide={() => setPublishModalId(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Activate Service Package</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to activate this package? It will become available for assignment to help requests.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setPublishModalId(null)}>
+            Cancel
+          </Button>
+          <Button variant="success" onClick={() => publishModalId && handlePublish(publishModalId)}>
+            Activate
           </Button>
         </Modal.Footer>
       </Modal>

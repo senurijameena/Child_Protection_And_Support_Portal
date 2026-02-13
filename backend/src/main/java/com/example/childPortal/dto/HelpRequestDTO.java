@@ -37,6 +37,27 @@ public class HelpRequestDTO {
     // Per-service execution status (populated when PU accepts)
     private List<ServiceItemExecutionDTO> appliedPackageItemExecutions;
 
+    // Service execution tracking fields
+    private Integer progress;
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    private LocalDateTime lastUpdated;
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    private LocalDateTime completionDate;
+    private String requestNotes;
+    
+    // Applied service package details
+    private String appliedServicePackageId;
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    private LocalDateTime appliedServicePackageAppliedAt;
+    private String appliedServicePackageStatus;
+    
+    // Service execution flags
+    private boolean serviceStarted;
+    private boolean resourcesAssigned;
+    private boolean allServicesCompleted;
+    private boolean finalAssessmentCompleted;
+    private boolean caseFinalized;
+
     public HelpRequestDTO() {
     }
 
@@ -244,5 +265,102 @@ public class HelpRequestDTO {
 
     public void setAppliedPackageItemExecutions(List<ServiceItemExecutionDTO> appliedPackageItemExecutions) {
         this.appliedPackageItemExecutions = appliedPackageItemExecutions;
+    }
+
+    // New getters and setters for service execution fields
+    public Integer getProgress() {
+        return progress;
+    }
+
+    public void setProgress(Integer progress) {
+        this.progress = progress;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public LocalDateTime getCompletionDate() {
+        return completionDate;
+    }
+
+    public void setCompletionDate(LocalDateTime completionDate) {
+        this.completionDate = completionDate;
+    }
+
+    public String getRequestNotes() {
+        return requestNotes;
+    }
+
+    public void setRequestNotes(String requestNotes) {
+        this.requestNotes = requestNotes;
+    }
+
+    public String getAppliedServicePackageId() {
+        return appliedServicePackageId;
+    }
+
+    public void setAppliedServicePackageId(String appliedServicePackageId) {
+        this.appliedServicePackageId = appliedServicePackageId;
+    }
+
+    public LocalDateTime getAppliedServicePackageAppliedAt() {
+        return appliedServicePackageAppliedAt;
+    }
+
+    public void setAppliedServicePackageAppliedAt(LocalDateTime appliedServicePackageAppliedAt) {
+        this.appliedServicePackageAppliedAt = appliedServicePackageAppliedAt;
+    }
+
+    public String getAppliedServicePackageStatus() {
+        return appliedServicePackageStatus;
+    }
+
+    public void setAppliedServicePackageStatus(String appliedServicePackageStatus) {
+        this.appliedServicePackageStatus = appliedServicePackageStatus;
+    }
+
+    public boolean isServiceStarted() {
+        return serviceStarted;
+    }
+
+    public void setServiceStarted(boolean serviceStarted) {
+        this.serviceStarted = serviceStarted;
+    }
+
+    public boolean isResourcesAssigned() {
+        return resourcesAssigned;
+    }
+
+    public void setResourcesAssigned(boolean resourcesAssigned) {
+        this.resourcesAssigned = resourcesAssigned;
+    }
+
+    public boolean isAllServicesCompleted() {
+        return allServicesCompleted;
+    }
+
+    public void setAllServicesCompleted(boolean allServicesCompleted) {
+        this.allServicesCompleted = allServicesCompleted;
+    }
+
+    public boolean isFinalAssessmentCompleted() {
+        return finalAssessmentCompleted;
+    }
+
+    public void setFinalAssessmentCompleted(boolean finalAssessmentCompleted) {
+        this.finalAssessmentCompleted = finalAssessmentCompleted;
+    }
+
+    public boolean isCaseFinalized() {
+        return caseFinalized;
+    }
+
+    public void setCaseFinalized(boolean caseFinalized) {
+        this.caseFinalized = caseFinalized;
     }
 }

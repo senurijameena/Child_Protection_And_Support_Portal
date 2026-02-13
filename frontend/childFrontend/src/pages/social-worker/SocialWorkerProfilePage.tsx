@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Card, Container, Row, Col, Button, Form, Alert } from 'react-bootstrap'
+import { useEffect, useState, useRef } from 'react'
+import { Card, Container, Row, Col, Button, Form, Alert, Spinner } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
 import { getUploadBaseUrl } from '../../services/api'
-import { getUserProfile, updateUserProfile, changePassword } from '../../services/socialWorkerApi'
+import { getUserProfile, updateUserProfile, changePassword, uploadProfilePhoto } from '../../services/socialWorkerApi'
 
 interface UserProfile {
   id: string
@@ -28,8 +28,20 @@ const getInitials = (fullName?: string) => {
     .toUpperCase()
 }
 
+// Helper to get full photo URL (handles relative paths from backend)
+const getPhotoUrl = (photoPath?: string | null): string | null => {
+  if (!photoPath) return null
+  // If it's already an absolute URL, return as-is
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://') || photoPath.startsWith('data:')) {
+    return photoPath
+  }
+  // Prepend backend base URL for relative paths
+  const baseUrl = getUploadBaseUrl()
+  return `${baseUrl}${photoPath}`
+}
+
 export function SocialWorkerProfilePage() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -42,6 +54,11 @@ export function SocialWorkerProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // Profile photo upload
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
   // Editable fields
   const [fullName, setFullName] = useState('')
@@ -183,6 +200,74 @@ export function SocialWorkerProfilePage() {
     }
   }
 
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user?.userId) return
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      setMessage({ type: 'error', text: 'Please select a valid image file (JPEG, PNG, GIF, or WebP)' })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Image size should be less than 5MB' })
+      return
+    }
+
+    // Show preview
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setPhotoPreview(event.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Upload photo
+    setUploadingPhoto(true)
+    setMessage(null)
+    try {
+      const photoUrl = await uploadProfilePhoto(user.userId, file)
+      
+      // Update profile state with new photo URL
+      setProfile((prev) => prev ? { ...prev, profilePhoto: photoUrl } : null)
+      
+      // Update localStorage user object with new photo
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser)
+          userData.profilePhoto = photoUrl
+          localStorage.setItem('user', JSON.stringify(userData))
+          refreshUser() // Refresh the auth context
+        } catch {
+          // Ignore JSON parse errors
+        }
+      }
+
+      setPhotoPreview(null) // Clear preview, use actual URL
+      setMessage({ type: 'success', text: 'Profile photo updated successfully!' })
+      setTimeout(() => setMessage(null), 3000)
+    } catch (err) {
+      setPhotoPreview(null)
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to upload photo',
+      })
+    } finally {
+      setUploadingPhoto(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   const displayName = profile?.fullName ?? user?.fullName ?? 'Social Worker'
   const displayEmail = profile?.email ?? user?.email ?? ''
   const displayPhone = profile?.phone ?? user?.phone ?? ''
@@ -227,25 +312,84 @@ export function SocialWorkerProfilePage() {
             <Card.Body>
               {/* Profile photo and basic info */}
               <div className="d-flex align-items-center gap-3 mb-4">
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoChange}
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  style={{ display: 'none' }}
+                />
+                
+                {/* Profile photo with upload overlay */}
                 <div
-                  className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
-                  style={{
-                    width: '72px',
-                    height: '72px',
-                    backgroundColor: '#3b82f6',
-                    overflow: 'hidden',
-                    fontSize: '1.4rem',
-                  }}
+                  className="position-relative"
+                  style={{ width: '90px', height: '90px' }}
                 >
-                  {(profile?.profilePhoto ?? user?.profilePhoto) ? (
-                    <img
-                      src={profile?.profilePhoto ?? user?.profilePhoto}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    getInitials(displayName)
-                  )}
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
+                    style={{
+                      width: '90px',
+                      height: '90px',
+                      backgroundColor: '#3b82f6',
+                      overflow: 'hidden',
+                      fontSize: '1.6rem',
+                      cursor: 'pointer',
+                    }}
+                    onClick={handlePhotoClick}
+                    title="Click to change profile photo"
+                  >
+                    {uploadingPhoto ? (
+                      <Spinner animation="border" size="sm" variant="light" />
+                    ) : photoPreview ? (
+                      <img
+                        src={photoPreview}
+                        alt="Preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : getPhotoUrl(profile?.profilePhoto ?? user?.profilePhoto) ? (
+                      <img
+                        src={getPhotoUrl(profile?.profilePhoto ?? user?.profilePhoto)!}
+                        alt="Profile"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      getInitials(displayName)
+                    )}
+                  </div>
+                  
+                  {/* Camera overlay icon */}
+                  <div
+                    className="position-absolute d-flex align-items-center justify-content-center rounded-circle"
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      backgroundColor: '#1d4ed8',
+                      border: '2px solid white',
+                      bottom: '0',
+                      right: '0',
+                      cursor: 'pointer',
+                    }}
+                    onClick={handlePhotoClick}
+                    title="Change photo"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </div>
                 </div>
+                
                 <div>
                   <div className="fw-700" style={{ fontSize: '1.1rem' }}>
                     {displayName}
@@ -254,6 +398,9 @@ export function SocialWorkerProfilePage() {
                     <div className="text-muted small">{displayEmail}</div>
                   )}
                   <div className="text-muted small">Role: Social Worker</div>
+                  <div className="text-primary small mt-1" style={{ cursor: 'pointer' }} onClick={handlePhotoClick}>
+                    {uploadingPhoto ? 'Uploading...' : 'Change photo'}
+                  </div>
                 </div>
               </div>
 
@@ -350,24 +497,6 @@ export function SocialWorkerProfilePage() {
                           disabled={!isEditing}
                           placeholder="e.g. 5 years"
                         />
-                      </Form.Group>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Certificate (PDF / Image)</Form.Label>
-                        {profile?.certificationDocumentUrl ? (
-                          <div>
-                            <a
-                              href={`${getUploadBaseUrl()}${profile.certificationDocumentUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              View uploaded certificate
-                            </a>
-                          </div>
-                        ) : (
-                          <Form.Control value="No certificate on file" disabled />
-                        )}
                       </Form.Group>
                     </Col>
                   </Row>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge, Button, Card, Col, Container, Form, InputGroup, Row } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getConversations, getMessages, sendMessage } from '../../services/socialWorkerApi'
 import type { ConversationDTO, MessageDTO } from '../../types/dashboard'
@@ -18,6 +18,7 @@ const FILTERS: Array<{ id: ConversationFilter; label: string }> = [
 
 export function SocialWorkerMessagesPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const [conversations, setConversations] = useState<ConversationDTO[]>([])
   const [loadingConvos, setLoadingConvos] = useState(true)
@@ -29,20 +30,52 @@ export function SocialWorkerMessagesPage() {
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [messageText, setMessageText] = useState('')
   const [isSending, setIsSending] = useState(false)
-  const [uploadName, setUploadName] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
   const messageListRef = useRef<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Get userId from URL query parameter (for deep-linking from request cards)
+  const userIdFromUrl = searchParams.get('userId')
 
   useEffect(() => {
     let mounted = true
     setLoadingConvos(true)
     getConversations()
-      .then((items) => mounted && setConversations(items))
+      .then((items) => {
+        if (!mounted) return
+        setConversations(items)
+        // Auto-select conversation if userId is provided in URL
+        if (userIdFromUrl) {
+          const existingConvo = items.find((c) => c.participantId === userIdFromUrl)
+          if (existingConvo) {
+            setSelectedId(userIdFromUrl)
+          } else {
+            // Create a placeholder conversation for this user so we can start messaging
+            setSelectedId(userIdFromUrl)
+            // Add a temporary conversation entry if not found
+            setConversations((prev) => {
+              if (prev.find((c) => c.participantId === userIdFromUrl)) return prev
+              return [
+                ...prev,
+                {
+                  participantId: userIdFromUrl,
+                  participantName: 'Public User',
+                  lastMessage: '',
+                  unreadCount: 0,
+                },
+              ]
+            })
+          }
+          // Clear the URL parameter after processing
+          setSearchParams({}, { replace: true })
+        }
+      })
       .catch(() => mounted && setConversations([]))
       .finally(() => mounted && setLoadingConvos(false))
     return () => {
       mounted = false
     }
-  }, [])
+  }, [userIdFromUrl, setSearchParams])
 
   useEffect(() => {
     if (!selectedId) {
@@ -112,13 +145,16 @@ export function SocialWorkerMessagesPage() {
     if (!selectedId || !messageText.trim() || isClosed) return
     setIsSending(true)
     try {
-      const payload = uploadName.trim()
-        ? `${messageText.trim()}\n[Attachment: ${uploadName.trim()}]`
+      const attachmentLabel = uploadFile
+        ? `[Attachment: ${uploadFile.name}${uploadFile.size ? ` • ${Math.ceil(uploadFile.size / 1024)} KB` : ''}]`
+        : ''
+      const payload = attachmentLabel
+        ? `${messageText.trim()}\n${attachmentLabel}`
         : messageText.trim()
       const sent = await sendMessage(selectedId, payload, selectedRequestId ?? undefined)
       setMessages((prev) => [...prev, sent])
       setMessageText('')
-      setUploadName('')
+      setUploadFile(null)
     } finally {
       setIsSending(false)
     }
@@ -260,20 +296,39 @@ export function SocialWorkerMessagesPage() {
                   placeholder={selectedConversation ? 'Type your message' : 'Select a conversation to start chatting'}
                   disabled={!selectedConversation || isClosed}
                 />
-                <Form.Control
-                  value={uploadName}
-                  onChange={(e) => setUploadName(e.target.value)}
-                  placeholder="Attachment filename"
-                  className="attach-field"
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="d-none"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
                   disabled={!selectedConversation || isClosed}
                 />
-                <Button variant="outline-secondary" size="sm" disabled={!selectedConversation || isClosed}>
-                  Attach
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  disabled={!selectedConversation || isClosed}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Attach file
                 </Button>
                 <Button variant="primary" size="sm" onClick={onSend} disabled={!selectedConversation || isClosed || isSending || !messageText.trim()}>
                   {isSending ? 'Sending...' : 'Send'}
                 </Button>
               </div>
+              {uploadFile && (
+                <div className="small text-muted mt-2">
+                  Selected: {uploadFile.name}
+                  {uploadFile.size ? ` • ${Math.ceil(uploadFile.size / 1024)} KB` : ''}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="ps-2"
+                    onClick={() => setUploadFile(null)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
             </Card.Footer>
           </Card>
         </Col>

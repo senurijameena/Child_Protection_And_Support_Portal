@@ -33,6 +33,19 @@ public class HelpRequest {
 
     private String requestNotes;
 
+    // Service Execution Progress Tracking
+    private Integer progress; // 0-100 percentage
+    private LocalDateTime serviceStartedAt;
+    private LocalDateTime serviceFinalizedAt;
+    private LocalDateTime finalAssessmentAt;
+    
+    // Service execution flags
+    private boolean serviceStarted;
+    private boolean resourcesAssigned;
+    private boolean allServicesCompleted;
+    private boolean finalAssessmentCompleted;
+    private boolean caseFinalized;
+
     // Service package proposed by social worker for this help request
     private String appliedServicePackageId;
     private LocalDateTime appliedServicePackageAppliedAt;
@@ -257,6 +270,79 @@ public class HelpRequest {
 
     public void setAppliedServicePackageStatus(String appliedServicePackageStatus) {
         this.appliedServicePackageStatus = appliedServicePackageStatus;
+    }
+
+    // Progress and Service Execution Getters/Setters
+    public Integer getProgress() {
+        return progress != null ? progress : 0;
+    }
+
+    public void setProgress(Integer progress) {
+        this.progress = progress;
+    }
+
+    public LocalDateTime getServiceStartedAt() {
+        return serviceStartedAt;
+    }
+
+    public void setServiceStartedAt(LocalDateTime serviceStartedAt) {
+        this.serviceStartedAt = serviceStartedAt;
+    }
+
+    public LocalDateTime getServiceFinalizedAt() {
+        return serviceFinalizedAt;
+    }
+
+    public void setServiceFinalizedAt(LocalDateTime serviceFinalizedAt) {
+        this.serviceFinalizedAt = serviceFinalizedAt;
+    }
+
+    public LocalDateTime getFinalAssessmentAt() {
+        return finalAssessmentAt;
+    }
+
+    public void setFinalAssessmentAt(LocalDateTime finalAssessmentAt) {
+        this.finalAssessmentAt = finalAssessmentAt;
+    }
+
+    public boolean isServiceStarted() {
+        return serviceStarted;
+    }
+
+    public void setServiceStarted(boolean serviceStarted) {
+        this.serviceStarted = serviceStarted;
+    }
+
+    public boolean isResourcesAssigned() {
+        return resourcesAssigned;
+    }
+
+    public void setResourcesAssigned(boolean resourcesAssigned) {
+        this.resourcesAssigned = resourcesAssigned;
+    }
+
+    public boolean isAllServicesCompleted() {
+        return allServicesCompleted;
+    }
+
+    public void setAllServicesCompleted(boolean allServicesCompleted) {
+        this.allServicesCompleted = allServicesCompleted;
+    }
+
+    public boolean isFinalAssessmentCompleted() {
+        return finalAssessmentCompleted;
+    }
+
+    public void setFinalAssessmentCompleted(boolean finalAssessmentCompleted) {
+        this.finalAssessmentCompleted = finalAssessmentCompleted;
+    }
+
+    public boolean isCaseFinalized() {
+        return caseFinalized;
+    }
+
+    public void setCaseFinalized(boolean caseFinalized) {
+        this.caseFinalized = caseFinalized;
     }
 
 }

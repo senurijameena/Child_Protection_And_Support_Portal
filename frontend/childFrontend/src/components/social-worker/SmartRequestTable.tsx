@@ -8,12 +8,14 @@ import './SmartRequestTable.css'
 interface SmartRequestTableProps {
     requests: HelpRequestDTO[]
     maskUserId: (id: string | undefined, anonymous: boolean) => string
+    hideControls?: boolean
+    onSelect?: (id: string) => void
 }
 
 type ViewMode = 'all' | 'active'
 
-export function SmartRequestTable({ requests, maskUserId }: SmartRequestTableProps) {
-    const [viewMode, setViewMode] = useState<ViewMode>('active')
+export function SmartRequestTable({ requests, maskUserId, hideControls = false, onSelect }: SmartRequestTableProps) {
+    const [viewMode, setViewMode] = useState<ViewMode>(hideControls ? 'all' : 'active')
     const [searchQuery, setSearchQuery] = useState('')
 
     // Smart ordering logic
@@ -142,40 +144,42 @@ export function SmartRequestTable({ requests, maskUserId }: SmartRequestTablePro
     return (
         <div className="smart-request-table-container">
             {/* Controls */}
-            <div className="table-controls">
-                <div className="view-mode-toggle">
-                    <button
-                        className={`toggle-btn ${viewMode === 'active' ? 'active' : ''}`}
-                        onClick={() => setViewMode('active')}
-                    >
-                        Show Active Only
-                    </button>
-                    <button
-                        className={`toggle-btn ${viewMode === 'all' ? 'active' : ''}`}
-                        onClick={() => setViewMode('all')}
-                    >
-                        Show All Requests
-                    </button>
-                </div>
-
-                <InputGroup className="search-input-group">
-                    <InputGroup.Text>
-                        <span className="search-icon">🔍</span>
-                    </InputGroup.Text>
-                    <Form.Control
-                        type="text"
-                        placeholder="Search by ID, type, or description..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="search-input"
-                    />
-                    {searchQuery && (
-                        <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
-                            ✕
+            {!hideControls && (
+                <div className="table-controls">
+                    <div className="view-mode-toggle">
+                        <button
+                            className={`toggle-btn ${viewMode === 'active' ? 'active' : ''}`}
+                            onClick={() => setViewMode('active')}
+                        >
+                            Show Active Only
                         </button>
-                    )}
-                </InputGroup>
-            </div>
+                        <button
+                            className={`toggle-btn ${viewMode === 'all' ? 'active' : ''}`}
+                            onClick={() => setViewMode('all')}
+                        >
+                            Show All Requests
+                        </button>
+                    </div>
+
+                    <InputGroup className="search-input-group">
+                        <InputGroup.Text>
+                            <span className="search-icon">🔍</span>
+                        </InputGroup.Text>
+                        <Form.Control
+                            type="text"
+                            placeholder="Search by ID, type, or description..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="search-input"
+                        />
+                        {searchQuery && (
+                            <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
+                                ✕
+                            </button>
+                        )}
+                    </InputGroup>
+                </div>
+            )}
 
             {/* Table */}
             {orderedRequests.length === 0 ? (
@@ -201,7 +205,12 @@ export function SmartRequestTable({ requests, maskUserId }: SmartRequestTablePro
                                 const rowClass = getRowClass(request)
 
                                 return (
-                                    <tr key={request.id} className={`table-row ${rowClass}`}>
+                                    <tr
+                                        key={request.id}
+                                        className={`table-row ${rowClass}`}
+                                        onClick={() => onSelect?.(request.id || '')}
+                                        style={{ cursor: onSelect ? 'pointer' : 'default' }}
+                                    >
                                         <td className="col-id">
                                             <Link
                                                 to={`/social-worker/requests/${request.id}`}
@@ -246,13 +255,26 @@ export function SmartRequestTable({ requests, maskUserId }: SmartRequestTablePro
                                         </td>
                                         <td className="col-actions">
                                             <div className="action-buttons">
-                                                <Link
-                                                    to={`/social-worker/requests/${request.id}`}
-                                                    className="action-btn view-btn"
-                                                    title="View Details"
-                                                >
-                                                    View
-                                                </Link>
+                                                {onSelect ? (
+                                                    <button
+                                                        className="action-btn view-btn border-0 bg-transparent p-0 text-primary text-decoration-underline"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onSelect(request.id)
+                                                        }}
+                                                        title="View Details"
+                                                    >
+                                                        View
+                                                    </button>
+                                                ) : (
+                                                    <Link
+                                                        to={`/social-worker/requests/${request.id}`}
+                                                        className="action-btn view-btn"
+                                                        title="View Details"
+                                                    >
+                                                        View
+                                                    </Link>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -264,7 +286,7 @@ export function SmartRequestTable({ requests, maskUserId }: SmartRequestTablePro
             )}
 
             {/* Results count */}
-            {orderedRequests.length > 0 && (
+            {!hideControls && orderedRequests.length > 0 && (
                 <div className="table-footer">
                     <span className="results-count">
                         Showing {orderedRequests.length} of {requests.length} request

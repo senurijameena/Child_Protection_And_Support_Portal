@@ -521,4 +521,75 @@ public class NotificationService {
 
         logNotification(toUserId, "NEW_MESSAGE", title, message, actionUrl);
     }
+
+    public void sendCompletedHelpReportToAdmin(
+            String requestId,
+            String trackingId,
+            String reportId,
+            String socialWorkerName,
+            String socialWorkerId) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String title = "Completed Help Request Report Submitted";
+        String message = "Report " + reportId + " for " + trackingId
+                + " was submitted by " + socialWorkerName + " (" + socialWorkerId + ").";
+        String actionUrl = "/admin/help-requests/" + requestId;
+        for (User admin : admins) {
+            logNotification(admin.getId(), "COMPLETED_HELP_REPORT_SUBMITTED", title, message, actionUrl);
+        }
+    }
+
+    public void sendCompletedHelpReportReviewToSocialWorker(
+            String socialWorkerUserId,
+            String requestId,
+            String trackingId,
+            String reportId,
+            String decision,
+            String note) {
+        String title = "Completed Report Review Update";
+        String message = "Admin decision for report " + reportId + " (" + trackingId + "): " + decision
+                + (note != null && !note.isBlank() ? ". Note: " + note : "");
+        String actionUrl = "/social-worker/requests/" + requestId + "/report";
+        logNotification(socialWorkerUserId, "COMPLETED_HELP_REPORT_REVIEW", title, message, actionUrl);
+    }
+
+    public void sendHelpRequestCollaborationRequested(
+            String collaboratorUserId,
+            String requestId,
+            String trackingId,
+            String ownerName,
+            String permission) {
+        String title = "Collaboration Request";
+        String message = ownerName + " invited you to collaborate on "
+                + (trackingId != null ? trackingId : requestId)
+                + " with " + permission + " access.";
+        // Direct to Collaboration Center where user can view and respond to all pending requests
+        String actionUrl = "/social-worker/collaboration";
+        logNotification(collaboratorUserId, "HELP_COLLAB_REQUESTED", title, message, actionUrl);
+    }
+
+    public void sendHelpRequestCollaborationDecision(
+            String ownerUserId,
+            String requestId,
+            String trackingId,
+            String collaboratorName,
+            boolean accepted) {
+        String title = "Collaboration Response";
+        String message = collaboratorName + (accepted ? " accepted " : " rejected ")
+                + "your collaboration request for "
+                + (trackingId != null ? trackingId : requestId) + ".";
+        String actionUrl = "/social-worker/requests/" + requestId;
+        logNotification(ownerUserId, "HELP_COLLAB_RESPONSE", title, message, actionUrl);
+    }
+
+    public void sendHelpRequestCollaboratorRemoved(
+            String collaboratorUserId,
+            String requestId,
+            String trackingId,
+            String ownerName) {
+        String title = "Removed From Collaboration";
+        String message = ownerName + " removed you from collaboration on "
+                + (trackingId != null ? trackingId : requestId) + ".";
+        String actionUrl = "/social-worker/requests/" + requestId;
+        logNotification(collaboratorUserId, "HELP_COLLAB_REMOVED", title, message, actionUrl);
+    }
 }

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, Container, Row, Col, ListGroup, Badge } from 'react-bootstrap'
 import { Calendar, type Event as RbcEvent, dateFnsLocalizer } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { format, parse, startOfWeek, getDay, addHours } from 'date-fns'
+import { format, parse, startOfWeek, getDay, addHours, startOfDay } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { getMyFollowUps, type FollowUpDTO } from '../../services/socialWorkerApi'
 
@@ -12,6 +12,16 @@ const locales = {
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales })
 
 import { useSearchParams } from 'react-router-dom'
+
+// Helper to check if a follow-up is overdue
+const isOverdue = (followUp: FollowUpDTO): boolean => {
+  if (!followUp.scheduledDate) return false
+  const scheduledDate = new Date(followUp.scheduledDate)
+  if (Number.isNaN(scheduledDate.getTime())) return false
+  const today = startOfDay(new Date())
+  const isCompleted = followUp.status === 'COMPLETED' || followUp.status === 'DONE'
+  return !isCompleted && scheduledDate < today
+}
 
 export function SocialWorkerFollowUpsPage() {
   const [searchParams, setSearchParams] = useSearchParams()

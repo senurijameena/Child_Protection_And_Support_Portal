@@ -60,7 +60,9 @@ import {
   SocialWorkerTransfersPage,
   SocialWorkerReportsPage,
   SocialWorkerProfilePage,
+  SocialWorkerCompletedReportPage,
 } from './pages/social-worker/SocialWorkerPages'
+import { SocialWorkerCollaborationPage } from './pages/social-worker/SocialWorkerCollaborationPage'
 import { ServicePackageListingPage } from './pages/social-worker/ServicePackageListingPage'
 import { ServicePackageFormPage } from './pages/social-worker/ServicePackageFormPage'
 
@@ -172,9 +174,12 @@ function App() {
         <Route path="analytics" element={<SocialWorkerAnalyticsPage />} />
         <Route path="requests" element={<SocialWorkerRequestsPage />} />
         <Route path="requests/:requestId" element={<SocialWorkerRequestDetailsPage />} />
+        <Route path="requests/:requestId/report" element={<SocialWorkerCompletedReportPage />} />
         <Route path="calendar" element={<SocialWorkerCalendarPage />} />
         <Route path="follow-ups" element={<SocialWorkerFollowUpsPage />} />
         <Route path="messages" element={<SocialWorkerMessagesPage />} />
+        <Route path="collaboration" element={<SocialWorkerCollaborationPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="library" element={<SocialWorkerLibraryPage />} />
         <Route path="transfers" element={<SocialWorkerTransfersPage />} />
         <Route path="packages" element={<ServicePackageListingPage />} />

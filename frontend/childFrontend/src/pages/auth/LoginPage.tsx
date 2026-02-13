@@ -15,6 +15,8 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  const goBack = () => navigate(-1)
+
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault()
     setError('')
@@ -63,18 +65,29 @@ export function LoginPage() {
   const roles: Role[] = ['PU', 'PO', 'SW', 'ADMIN']
 
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center py-5 auth-page">
-      <div className="position-absolute w-100 h-100 overflow-hidden auth-bg-shapes" aria-hidden="true" />
-      <div className="position-relative w-100" style={{ maxWidth: 440 }}>
-        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card">
+    <div className="login-split">
+      <button
+        type="button"
+        onClick={goBack}
+        className="btn btn-link login-back-btn"
+        aria-label="Go back"
+      >
+        ← Back
+      </button>
+
+      <div className="login-left" aria-hidden="true">
+        <div className="login-left-overlay" />
+        <div className="login-left-content">
+          <img src="/images/logo.jpeg" alt="Child Portal logo" className="login-left-logo" />
+          <h2>Child Protection Portal</h2>
+          <p>Secure access for social workers, police, administrators, and families.</p>
+        </div>
+      </div>
+
+      <div className="login-right">
+        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card w-100">
           <Card.Body className="p-4 p-md-5">
             <div className="text-center mb-4">
-              <img
-                src="/images/logo.jpeg"
-                alt="Logo"
-                className="logo-navbar mb-3"
-                style={{ height: 40, width: 'auto' }}
-              />
               <h1 className="h3 fw-bold text-dark mb-1">Welcome Back</h1>
               <p className="text-secondary small">Sign in to the Child Protection Portal</p>
             </div>

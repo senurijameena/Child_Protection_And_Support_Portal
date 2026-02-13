@@ -180,6 +180,105 @@ export interface ConversationDTO {
   unreadCount?: number
 }
 
+export type CompletedReportWorkflowStatus =
+  | 'DRAFT'
+  | 'SENT_TO_ADMIN'
+  | 'APPROVED'
+  | 'CLARIFICATION_REQUESTED'
+  | 'REOPEN_REQUESTED'
+
+export interface CompletedHelpRequestReportDTO {
+  reportHeader: {
+    organizationName: string
+    systemName: string
+    reportTitle: string
+    reportId: string
+    generatedDate?: string
+    generatedBy: string
+    generatedById: string
+    helpId: string
+  }
+  helpSummary: {
+    helpId: string
+    requestType: string
+    priorityLevel: string
+    dateSubmitted?: string
+    dateAssignedToSW?: string
+    dateServiceStarted?: string
+    dateCompleted?: string
+    totalDurationDays: number
+    status: string
+  }
+  publicUserInfo: {
+    name: string
+    contactNumber: string
+    districtOrLocation: string
+    vulnerabilityCategory: string
+  }
+  initialRequestDetails: {
+    problemDescription: string
+    supportingDocuments: string[]
+    initialAssessmentSummary: string
+  }
+  servicePackageDetails: {
+    packageName: string
+    servicesIncluded: string[]
+    dateApplied?: string
+    dateApprovedByPublicUser?: string
+    adjustments: string
+    finalApprovedServices: string[]
+  }
+  resourceAllocationDetails: Array<{
+    resourceName: string
+    resourceType: string
+    assignedDate?: string
+    serviceProvided: string
+    completionDate?: string
+    supportingDocuments: string[]
+  }>
+  serviceTimeline: Array<{
+    date?: string
+    title: string
+    detail: string
+  }>
+  followUpMonitoringSummary: {
+    numberOfFollowUpsConducted: number
+    followUpDates: string[]
+    observations: string
+    outcomeEvaluation: string
+  }
+  outcomeAssessment: {
+    objectiveAchieved: string
+    improvementLevel: string
+    childSafetyStatus: string
+    familyStabilityStatus: string
+    educationContinuityStatus: string
+  }
+  challengesFaced: string[]
+  recommendations: string[]
+  attachments: string[]
+  finalDeclaration: {
+    statement: string
+    swSignature: string
+    date?: string
+    swId: string
+  }
+  aiGeneratedSummary: string
+  workflowStatus: CompletedReportWorkflowStatus
+  adminReviewNote?: string
+}
+
+export interface CompletedHelpReportListItemDTO {
+  reportId: string
+  helpRequestId: string
+  helpTrackingId: string
+  requesterName: string
+  requestType: string
+  requestStatus: string
+  workflowStatus: string
+  generatedAt?: string
+}
+
 export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   REPORTED: 'Submitted',
   UNDER_REVIEW: 'Under Review',

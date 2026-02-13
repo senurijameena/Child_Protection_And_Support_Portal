@@ -1,4 +1,3 @@
-// Barrel file for Social Worker pages
 export { SocialWorkerRequestsPage } from './SocialWorkerRequestsPage'
 export { SocialWorkerRequestDetailsPage } from './SocialWorkerRequestDetailsPage'
 export { SocialWorkerCalendarPage } from './SocialWorkerCalendarPage'
@@ -9,3 +8,4 @@ export { SocialWorkerTransfersPage } from './SocialWorkerTransfersPage'
 export { ServicePackageListingPage as SocialWorkerPackagesPage } from './ServicePackageListingPage'
 export { SocialWorkerReportsPage } from './SocialWorkerReportsPage'
 export { SocialWorkerProfilePage } from './SocialWorkerProfilePage'
+export { SocialWorkerCompletedReportPage } from './SocialWorkerCompletedReportPage'

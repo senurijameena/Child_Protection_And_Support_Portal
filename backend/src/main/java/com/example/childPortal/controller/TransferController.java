@@ -205,6 +205,7 @@ public class TransferController {
                 map.put("userId", profile.getUserId());
                 map.put("specializations", profile.getSpecializations());
                 map.put("organization", profile.getOrganization());
+                map.put("serviceArea", profile.getServiceArea());
                 map.put("available", profile.isAvailable());
 
                 Optional<User> userOpt = userService.getUserById(profile.getUserId());
@@ -213,6 +214,8 @@ public class TransferController {
                     map.put("fullName", user.getFullName());
                     map.put("email", user.getEmail());
                     map.put("phone", user.getPhone());
+                    map.put("availabilityStatus",
+                            user.getAvailabilityStatus() != null ? user.getAvailabilityStatus().name() : "AVAILABLE");
                     processedUserIds.add(user.getId());
                 } else {
                     map.put("fullName", "Worker " + profile.getId().substring(0, 5));
@@ -235,8 +238,11 @@ public class TransferController {
                     map.put("email", user.getEmail());
                     map.put("phone", user.getPhone());
                     map.put("available", user.isActive());
+                    map.put("availabilityStatus",
+                            user.getAvailabilityStatus() != null ? user.getAvailabilityStatus().name() : "AVAILABLE");
                     map.put("specializations", Collections.singletonList("General Social Work"));
                     map.put("organization", "Platform Registration");
+                    map.put("serviceArea", user.getAddress());
                     result.add(map);
                 }
             }

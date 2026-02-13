@@ -33,6 +33,7 @@ const initialForm: RegisterRequest = {
   specializations: '',
   yearsOfExperience: '',
   certificationDocumentUrl: '',
+  idDocumentUrl: '',
 }
 
 export function SignupForm() {
@@ -88,9 +89,13 @@ export function SignupForm() {
       if (!form.officerIdProofUrl?.trim()) e.officerIdProofUrl = 'Officer in charge ID proof is required'
       if (!form.governmentApprovalLetterUrl?.trim()) e.governmentApprovalLetterUrl = 'Government approval letter is required'
     }
+    if (form.role === 'PU') {
+      if (!form.idDocumentUrl?.trim()) e.idDocumentUrl = 'ID proof is required'
+    }
     if (form.role === 'SW') {
       if (!form.licenseNumber?.trim()) e.licenseNumber = 'License number is required'
       if (!form.certificationDocumentUrl?.trim()) e.certificationDocumentUrl = 'Upload certification certificate file'
+      if (!form.idDocumentUrl?.trim()) e.idDocumentUrl = 'Identity card (ID) upload is required'
     }
 
     setErrors(e)
@@ -120,7 +125,15 @@ export function SignupForm() {
       if (res.approved && res.token) {
         localStorage.setItem('token', res.token)
         localStorage.setItem('user', JSON.stringify({ userId: res.userId, email: res.email, fullName: res.fullName, role: res.role }))
-        navigate('/')
+        const target =
+          res.role === 'SW'
+            ? '/social-worker'
+            : res.role === 'PO'
+              ? '/police'
+              : res.role === 'PU'
+                ? '/dashboard'
+                : '/'
+        navigate(target)
         window.location.reload()
       } else {
         setServerError(res.message || 'Registration failed')
@@ -192,6 +205,17 @@ export function SignupForm() {
           <Input name="email" label="Email" type="email" required placeholder="you@example.com" />
           <Input name="phone" label={form.role === 'PO' ? 'Station contact number' : 'Phone (optional)'} placeholder="+1 234 567 8900" />
           <Input name="address" label={form.role === 'PO' ? 'Station address' : 'Address (optional)'} placeholder="Full address" />
+
+          {form.role === 'PU' && (
+            <FileUploadField
+              label="Identity Proof (NIC / Passport / License) *"
+              value={form.idDocumentUrl ?? ''}
+              onChange={(v) => update('idDocumentUrl', v)}
+              onUpload={uploadRegistrationDocument}
+              required
+              error={errors.idDocumentUrl}
+            />
+          )}
 
           {form.role === 'PO' && (
             <>
@@ -270,12 +294,20 @@ export function SignupForm() {
               <Input name="specializations" label="Specializations" placeholder="e.g. Child Welfare, Family Services" />
               <Input name="yearsOfExperience" label="Years of Experience" placeholder="e.g. 5" />
               <FileUploadField
-                label="Certification certificate"
+                label="Certification certificate *"
                 value={form.certificationDocumentUrl ?? ''}
                 onChange={(v) => update('certificationDocumentUrl', v)}
                 onUpload={uploadRegistrationDocument}
                 required
                 error={errors.certificationDocumentUrl}
+              />
+              <FileUploadField
+                label="Identity Proof (NIC / Passport / License) *"
+                value={form.idDocumentUrl ?? ''}
+                onChange={(v) => update('idDocumentUrl', v)}
+                onUpload={uploadRegistrationDocument}
+                required
+                error={errors.idDocumentUrl}
               />
             </>
           )}

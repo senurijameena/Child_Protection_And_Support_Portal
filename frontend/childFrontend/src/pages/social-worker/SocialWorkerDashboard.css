@@ -245,33 +245,34 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.sw-dashboard > * {
+.sw-dashboard>* {
   animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.sw-dashboard > :nth-child(1) {
+.sw-dashboard> :nth-child(1) {
   animation-delay: 0.1s;
 }
 
-.sw-dashboard > :nth-child(2) {
+.sw-dashboard> :nth-child(2) {
   animation-delay: 0.2s;
 }
 
-.sw-dashboard > :nth-child(3) {
+.sw-dashboard> :nth-child(3) {
   animation-delay: 0.3s;
 }
 
-.sw-dashboard > :nth-child(4) {
+.sw-dashboard> :nth-child(4) {
   animation-delay: 0.4s;
 }
 
-.sw-dashboard > :nth-child(5) {
+.sw-dashboard> :nth-child(5) {
   animation-delay: 0.5s;
 }
 
@@ -347,6 +348,52 @@
   color: var(--sw-text-muted);
 }
 
+/* Vertical Timeline (Detailed Page) */
+.sw-timeline-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.5rem 0;
+}
+
+.sw-timeline-vertical .sw-timeline-step {
+  min-width: 100%;
+  max-width: 100%;
+  flex-direction: row;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.sw-timeline-vertical .sw-timeline-step:last-child {
+  padding-bottom: 0;
+}
+
+.sw-timeline-vertical .sw-timeline-dot-wrapper {
+  flex-direction: column;
+  margin-bottom: 0;
+  min-width: 12px;
+}
+
+.sw-timeline-vertical .sw-timeline-connector {
+  flex: 1;
+  width: 2px;
+  height: auto;
+  min-height: 20px;
+  margin-left: 0;
+  margin-top: 0.5rem;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.7), rgba(148, 163, 184, 0));
+}
+
+.sw-timeline-vertical .sw-timeline-content {
+  padding-top: 0;
+  font-size: 0.85rem;
+}
+
+.sw-timeline-vertical .sw-timeline-message {
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .sw-dashboard {
@@ -407,7 +454,7 @@
 }
 
 /* Ensure the following row (timeline row) does not show a top border when previous row had no border */
-.sw-card .table tr.no-border-bottom + tr td {
+.sw-card .table tr.no-border-bottom+tr td {
   border-top: none !important;
 }
 

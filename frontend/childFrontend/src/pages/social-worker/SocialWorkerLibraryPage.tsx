@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Card, Container, Row, Col, Button, Form, Badge, Modal } from 'react-bootstrap'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { getAssignedRequests } from '../../services/socialWorkerApi'
+import type { HelpRequestDTO } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
 
 type ResourceTypeId = 'HOSPITAL' | 'SHELTER' | 'NGO' | 'LEGAL' | 'OTHER'
@@ -18,6 +22,7 @@ interface Resource {
   emergencySupport: boolean
   status: ResourceStatus
   notes?: string
+  image?: string // Base64 string for the image
 }
 
 const RESOURCE_TYPE_LABELS: Record<ResourceTypeId, string> = {
@@ -58,11 +63,12 @@ const saveResourcesToStorage = (resources: Resource[]) => {
   try {
     localStorage.setItem(RESOURCE_STORAGE_KEY, JSON.stringify(resources))
   } catch {
-    // ignore storage errors
   }
 }
 
 export function SocialWorkerLibraryPage() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [resources, setResources] = useState<Resource[]>([])
 
   const [search, setSearch] = useState('')
@@ -72,17 +78,58 @@ export function SocialWorkerLibraryPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [selectedResourceForAssign, setSelectedResourceForAssign] = useState<Resource | null>(null)
+  const [assignedRequests, setAssignedRequests] = useState<HelpRequestDTO[]>([])
+  const [assignedRequestsLoading, setAssignedRequestsLoading] = useState(false)
+  const [assignedRequestsError, setAssignedRequestsError] = useState<string | null>(null)
+  const [requestSearch, setRequestSearch] = useState('')
+  const [selectedRequestId, setSelectedRequestId] = useState<string>('')
 
   const [formData, setFormData] = useState<Partial<Resource>>({
     type: 'HOSPITAL',
     availability: 'AVAILABLE',
     emergencySupport: false,
+    image: '',
   })
 
   useEffect(() => {
     const initial = loadResourcesFromStorage()
     setResources(initial)
   }, [])
+
+  useEffect(() => {
+    if (!showAssignModal || !user?.userId) return
+    let active = true
+    setAssignedRequestsLoading(true)
+    setAssignedRequestsError(null)
+    getAssignedRequests(user.userId)
+      .then((list) => {
+        if (!active) return
+        const normalized = Array.isArray(list) ? list : []
+        setAssignedRequests(normalized)
+        if (normalized.length > 0) {
+          setSelectedRequestId(normalized[0].id)
+        } else {
+          setSelectedRequestId('')
+        }
+      })
+      .catch((err) => {
+        if (!active) return
+        setAssignedRequests([])
+        setSelectedRequestId('')
+        setAssignedRequestsError(
+          err instanceof Error ? err.message : 'Failed to load assigned requests.'
+        )
+      })
+      .finally(() => {
+        if (!active) return
+        setAssignedRequestsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [showAssignModal, user?.userId])
 
   const updateResources = (updater: (prev: Resource[]) => Resource[]) => {
     setResources((prev) => {
@@ -113,6 +160,7 @@ export function SocialWorkerLibraryPage() {
       type: 'HOSPITAL',
       availability: 'AVAILABLE',
       emergencySupport: false,
+      image: '',
     })
     setShowForm(true)
   }
@@ -129,6 +177,32 @@ export function SocialWorkerLibraryPage() {
     )
   }
 
+  const handleUnarchive = (res: Resource) => {
+    updateResources((prev) =>
+      prev.map((r) =>
+        r.id === res.id
+          ? {
+              ...r,
+              status: 'ACTIVE',
+              // Default to available when bringing back; user can edit to adjust.
+              availability: r.availability === 'FULL' ? 'AVAILABLE' : r.availability,
+            }
+          : r
+      )
+    )
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, image: reader.result as string }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = () => {
     if (!formData.name || !formData.type || !formData.availability) {
       return
@@ -137,7 +211,9 @@ export function SocialWorkerLibraryPage() {
     if (editingId) {
       updateResources((prev) =>
         prev.map((r) =>
-          r.id === editingId ? { ...(r as Resource), ...(formData as Resource), status: r.status } : r
+          r.id === editingId
+            ? { ...(r as Resource), ...(formData as Resource), status: r.status }
+            : r
         )
       )
     } else {
@@ -153,6 +229,7 @@ export function SocialWorkerLibraryPage() {
         emergencySupport: !!formData.emergencySupport,
         status: 'ACTIVE',
         notes: formData.notes,
+        image: formData.image,
       }
       updateResources((prev) => [newResource, ...prev])
     }
@@ -166,6 +243,37 @@ export function SocialWorkerLibraryPage() {
     setAvailabilityFilter('ALL')
     setStatusFilter('ALL')
   }
+
+  const openAssignFlow = (resource: Resource) => {
+    setSelectedResourceForAssign(resource)
+    setRequestSearch('')
+    setShowAssignModal(true)
+  }
+
+  const filteredAssignedRequests = useMemo(() => {
+    // Filter to only show accepted requests that don't have a package proposed yet
+    const eligibleStatuses = ['ASSIGNED', 'IN_PROGRESS']
+    const excludedStatuses = ['PACKAGE_PROPOSED', 'PACKAGE_ACCEPTED', 'PACKAGE_REJECTED', 'COMPLETED', 'REJECTED', 'CANCELLED']
+    
+    const eligibleRequests = assignedRequests.filter((req) => {
+      const status = req.status?.toUpperCase() ?? ''
+      // Include if status is in eligible list OR not in excluded list (to catch edge cases)
+      return eligibleStatuses.includes(status) && !excludedStatuses.includes(status)
+    })
+
+    const q = requestSearch.trim().toLowerCase()
+    if (!q) return eligibleRequests
+    return eligibleRequests.filter((req) => {
+      const searchable = [
+        req.id ?? '',
+        req.trackingId ?? '',
+        req.requesterName ?? '',
+        req.helpType ?? '',
+        req.status ?? '',
+      ]
+      return searchable.join(' ').toLowerCase().includes(q)
+    })
+  }, [assignedRequests, requestSearch])
 
   return (
     <Container fluid className="py-4 sw-dashboard">
@@ -269,6 +377,13 @@ export function SocialWorkerLibraryPage() {
               className="sw-card h-100 hover-lift"
               style={res.status === 'ARCHIVED' ? { opacity: 0.7 } : undefined}
             >
+              {res.image && (
+                <Card.Img
+                  variant="top"
+                  src={res.image}
+                  style={{ height: '200px', objectFit: 'cover' }}
+                />
+              )}
               <Card.Body className="d-flex flex-column justify-content-between">
                 <div className="mb-3">
                   <div className="d-flex justify-content-between align-items-start mb-1">
@@ -318,7 +433,7 @@ export function SocialWorkerLibraryPage() {
                     variant="outline-primary"
                     size="sm"
                     disabled={res.status !== 'ACTIVE'}
-                    // TODO: Wire to assignment flow (Referral Panel)
+                    onClick={() => openAssignFlow(res)}
                   >
                     Assign to request
                   </Button>
@@ -329,7 +444,15 @@ export function SocialWorkerLibraryPage() {
                   >
                     Edit
                   </Button>
-                  {res.status !== 'ARCHIVED' && (
+                  {res.status === 'ARCHIVED' ? (
+                    <Button
+                      variant="outline-success"
+                      size="sm"
+                      onClick={() => handleUnarchive(res)}
+                    >
+                      Unarchive
+                    </Button>
+                  ) : (
                     <Button
                       variant="outline-danger"
                       size="sm"
@@ -354,6 +477,92 @@ export function SocialWorkerLibraryPage() {
         )}
       </Row>
 
+      <Modal show={showAssignModal} onHide={() => setShowAssignModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">
+            Assign Resource To Request
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedResourceForAssign && (
+            <div className="small mb-3">
+              <div className="text-muted">Selected resource</div>
+              <div className="fw-600">
+                {selectedResourceForAssign.name}
+                {selectedResourceForAssign.location
+                  ? ` (${selectedResourceForAssign.location})`
+                  : ''}
+              </div>
+            </div>
+          )}
+
+          <Form.Group className="mb-3">
+            <Form.Label className="small fw-600 text-muted">Search request</Form.Label>
+            <Form.Control
+              type="search"
+              placeholder="Search by request ID, user, type..."
+              value={requestSearch}
+              onChange={(e) => setRequestSearch(e.target.value)}
+              disabled={assignedRequestsLoading}
+            />
+          </Form.Group>
+
+          <Form.Group>
+            <Form.Label className="small fw-600 text-muted">Choose request</Form.Label>
+            <Form.Select
+              value={selectedRequestId}
+              onChange={(e) => setSelectedRequestId(e.target.value)}
+              disabled={assignedRequestsLoading || filteredAssignedRequests.length === 0}
+            >
+              {filteredAssignedRequests.length === 0 && (
+                <option value="">
+                  {assignedRequestsLoading ? 'Loading requests...' : 'No eligible requests found'}
+                </option>
+              )}
+              {filteredAssignedRequests.map((req) => (
+                <option key={req.id} value={req.id}>
+                  #{req.trackingId ?? req.id} - {req.requesterName ?? 'Anonymous'} ({req.status})
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          {assignedRequestsError && (
+            <div className="alert alert-danger py-2 small mt-3 mb-0">{assignedRequestsError}</div>
+          )}
+
+          {!assignedRequestsLoading && !assignedRequestsError && filteredAssignedRequests.length === 0 && (
+            <div className="alert alert-info py-2 small mt-3 mb-0">
+              <strong>No eligible requests:</strong> Only accepted requests without a proposed package are shown here. 
+              Requests with status "Package Proposed" or later stages are excluded.
+            </div>
+          )}
+
+          <div className="small text-muted mt-3 mb-0">
+            Next step: in request details, choose a service item and click Assign Resource. This
+            resource will be pre-selected.
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" size="sm" onClick={() => setShowAssignModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!selectedResourceForAssign || !selectedRequestId}
+            onClick={() => {
+              if (!selectedResourceForAssign || !selectedRequestId) return
+              const rid = encodeURIComponent(selectedResourceForAssign.id)
+              navigate(`/social-worker/requests/${selectedRequestId}?selectedResourceId=${rid}`)
+              setShowAssignModal(false)
+            }}
+          >
+            Open request
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Add / Edit Resource modal */}
       <Modal show={showForm} onHide={() => setShowForm(false)} size="lg" centered>
         <Modal.Header closeButton>
@@ -363,6 +572,28 @@ export function SocialWorkerLibraryPage() {
         </Modal.Header>
         <Modal.Body>
           <Row className="g-3">
+            <Col xs={12}>
+              <Form.Label className="small fw-600 text-muted">Resource Image</Form.Label>
+              <Form.Control type="file" accept="image/*" onChange={handleImageChange} />
+              {formData.image && (
+                <div className="mt-2">
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    style={{ maxHeight: '200px', maxWidth: '100%', borderRadius: '4px' }}
+                  />
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="text-danger p-0 ms-2"
+                    onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+            </Col>
+
             <Col xs={12} md={6}>
               <Form.Label className="small fw-600 text-muted">Resource name</Form.Label>
               <Form.Control

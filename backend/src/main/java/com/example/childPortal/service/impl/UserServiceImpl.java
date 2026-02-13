@@ -18,6 +18,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -130,6 +134,9 @@ public class UserServiceImpl implements UserService {
         user.setRegistrationDate(LocalDateTime.now());
         if (request.getProfilePhoto() != null && !request.getProfilePhoto().isEmpty()) {
             user.setProfilePhoto(request.getProfilePhoto());
+        }
+        if (request.getIdDocumentUrl() != null && !request.getIdDocumentUrl().isEmpty()) {
+            user.setOfficialIdFile(request.getIdDocumentUrl());
         }
 
         try {
@@ -797,11 +804,36 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userOpt.get();
-        String fileName = file.getOriginalFilename();
-        String photoUrl = "/uploads/profile/" + userId + "/" + fileName;
-        user.setProfilePhoto(photoUrl);
-        userRepository.save(user);
-        return photoUrl;
+
+        try {
+            // Get original filename and create a unique filename
+            String originalName = file.getOriginalFilename();
+            if (originalName == null || originalName.isBlank()) {
+                originalName = "profile.jpg";
+            }
+            String ext = originalName.contains(".") ? originalName.substring(originalName.lastIndexOf('.')) : ".jpg";
+            String uniqueFileName = UUID.randomUUID().toString() + ext;
+
+            // Create the upload directory for this user
+            String uploadDir = "uploads/profile/" + userId;
+            Path dirPath = Paths.get(uploadDir);
+            Files.createDirectories(dirPath);
+
+            // Save the file to disk
+            Path filePath = dirPath.resolve(uniqueFileName);
+            Files.write(filePath, file.getBytes());
+
+            // Create the URL path
+            String photoUrl = "/" + uploadDir + "/" + uniqueFileName;
+
+            // Update user profile photo URL in database
+            user.setProfilePhoto(photoUrl);
+            userRepository.save(user);
+
+            return photoUrl;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload profile photo: " + e.getMessage());
+        }
     }
 
     @Override

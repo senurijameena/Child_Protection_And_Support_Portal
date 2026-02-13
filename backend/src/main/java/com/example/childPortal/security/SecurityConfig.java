@@ -16,7 +16,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpMethod;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 @Configuration
@@ -123,6 +122,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/duplicates/**").authenticated()
                 .requestMatchers("/api/dashboard/**").authenticated()
                 .requestMatchers("/api/anonymity/**").authenticated()
+                .requestMatchers("/api/follow-ups/**").authenticated()
 
                 // Combined app: allow GET to non-API paths (static frontend, SPA routes)
                 .requestMatchers(request -> HttpMethod.GET.name().equals(request.getMethod())

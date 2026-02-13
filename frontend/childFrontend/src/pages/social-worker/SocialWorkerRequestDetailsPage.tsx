@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card, Container, Badge, Button, Row, Col, Form, Modal } from 'react-bootstrap'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getUploadBaseUrl } from '../../services/api'
+import { useAuth } from '../../hooks/useAuth'
 import {
   getHelpRequest,
   getMyFollowUps,
@@ -14,12 +15,22 @@ import {
   getHelpRequestTimeline,
   createHelpRequestTimelineNote,
   createFollowUp,
+  getAvailableSocialWorkers,
+  getHelpRequestCollaboration,
+  requestHelpRequestCollaborator,
+  acceptHelpRequestCollaborationRequest,
+  rejectHelpRequestCollaborationRequest,
+  removeHelpRequestCollaborator,
+  requestHelpRequestTransfer,
   type FollowUpDTO,
+  type HelpRequestCollaborationSummaryDTO,
+  type CollaborationPermission,
 } from '../../services/socialWorkerApi'
 import type { ServicePackageDTO } from '../../types/dashboard'
 import type { HelpRequestDTO, HelpType, AppliedPackageStatus } from '../../types/dashboard'
 import { HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
+import VerticalTimeline from '../../components/ui/VerticalTimeline'
 
 const formatDateTime = (iso?: string) => {
   if (!iso) return ''
@@ -92,8 +103,11 @@ const getStatusVariantAndLabel = (
 type TimelineItem = {
   id?: string
   message?: string
+  description?: string
   timestamp?: string
+  eventTime?: string
   actor?: string
+  eventType?: string
 }
 
 type AssignmentResourceType = 'HOSPITAL' | 'SHELTER' | 'NGO' | 'LEGAL' | 'OTHER'
@@ -108,6 +122,7 @@ interface AssignmentResource {
   verified: boolean
   contactPhone?: string
   contactEmail?: string
+  image?: string
 }
 
 const ASSIGNMENT_RESOURCE_TYPE_LABELS: Record<AssignmentResourceType, string> = {
@@ -126,9 +141,11 @@ const ASSIGNMENT_AVAILABILITY_LABELS: Record<AssignmentAvailability, string> = {
 
 export function SocialWorkerRequestDetailsPage() {
   const { requestId } = useParams<{ requestId: string }>()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const applyPackageId = searchParams.get('applyPackage')
+  const selectedResourceIdFromQuery = searchParams.get('selectedResourceId')
 
   const [request, setRequest] = useState<HelpRequestDTO | null>(null)
   const [followUps, setFollowUps] = useState<FollowUpDTO[]>([])
@@ -175,6 +192,45 @@ export function SocialWorkerRequestDetailsPage() {
   const [expectedCompletionDate, setExpectedCompletionDate] = useState('')
   const [resourcesAssigned, setResourcesAssigned] = useState(false)
   const [startServiceError, setStartServiceError] = useState<string | null>(null)
+  const [collaboration, setCollaboration] = useState<HelpRequestCollaborationSummaryDTO | null>(null)
+  const [showCollaborationModal, setShowCollaborationModal] = useState(false)
+  const [rejectModalOpen, setRejectModalOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [transferWorkerId, setTransferWorkerId] = useState<string | null>(null)
+  const [transferNote, setTransferNote] = useState<string>('')
+  const [rejectSubmitting, setRejectSubmitting] = useState(false)
+  const [swDirectory, setSwDirectory] = useState<Array<{
+    id: string
+    userId: string
+    fullName: string
+    email?: string
+    specializations?: string[]
+    organization?: string
+    serviceArea?: string
+    available?: boolean
+    availabilityStatus?: string
+  }>>([])
+  const [collabSearch, setCollabSearch] = useState('')
+  const [collabDistrictFilter, setCollabDistrictFilter] = useState('ALL')
+  const [collabSpecializationFilter, setCollabSpecializationFilter] = useState('ALL')
+  const [collabAvailabilityFilter, setCollabAvailabilityFilter] = useState<'ALL' | 'ACTIVE' | 'BUSY' | 'ON_LEAVE'>('ALL')
+  const [selectedCollaboratorUserId, setSelectedCollaboratorUserId] = useState('')
+  const [selectedCollabPermission, setSelectedCollabPermission] = useState<CollaborationPermission>('VIEW_ONLY')
+  const [collabReason, setCollabReason] = useState('')
+  const [collabSubmitting, setCollabSubmitting] = useState(false)
+  const [collabError, setCollabError] = useState<string | null>(null)
+  const [closeWarning, setCloseWarning] = useState<string | null>(null)
+  const [internalNotes, setInternalNotes] = useState<
+    Array<{
+      id: string
+      requestId: string
+      authorId?: string
+      authorName?: string
+      text: string
+      createdAt: string
+    }>
+  >([])
+  const [internalNoteText, setInternalNoteText] = useState('')
 
   useEffect(() => {
     if (applyPackageId) setShowApplyModal(true)
@@ -198,6 +254,48 @@ export function SocialWorkerRequestDetailsPage() {
     void load()
   }, [showApplyModal, applyPackageId])
 
+  const handleAcceptRequest = async () => {
+    if (!requestId) return
+    try {
+      const updated = await updateRequestStatus(requestId, 'IN_PROGRESS')
+      setRequest(updated)
+    } catch (err) {
+      console.error('Failed to accept request', err)
+    }
+  }
+
+  const handleRejectRequest = async () => {
+    if (!requestId || !rejectReason.trim()) {
+      setRejectReason((prev) => prev || 'Reason required')
+      return
+    }
+    setRejectSubmitting(true)
+    try {
+      if (transferWorkerId) {
+        await requestHelpRequestTransfer({
+          helpRequestId: requestId,
+          requestedAssigneeId: transferWorkerId,
+          reason: `${rejectReason.trim()} ${transferNote ? `| Note: ${transferNote.trim()}` : ''}`
+        })
+        const worker = swDirectory.find((sw) => sw.userId === transferWorkerId)
+        await createHelpRequestTimelineNote(requestId, `Transfer request initiated to ${worker?.fullName || transferWorkerId}`)
+      } else {
+        const updated = await updateRequestStatus(requestId, 'REJECTED')
+        setRequest(updated)
+        await createHelpRequestTimelineNote(requestId, `Rejected by social worker: ${rejectReason.trim()}`)
+      }
+
+      setRejectModalOpen(false)
+      setRejectReason('')
+      setTransferWorkerId(null)
+      setTransferNote('')
+    } catch (err) {
+      console.error('Failed to reject request', err)
+    } finally {
+      setRejectSubmitting(false)
+    }
+  }
+
   const handleApplyPackage = async () => {
     if (!selectedPackageId || !requestId) return
     setApplyPackageLoading(true)
@@ -219,10 +317,18 @@ export function SocialWorkerRequestDetailsPage() {
 
   const handleCloseRequest = async () => {
     if (!requestId) return
+    const hasOpenCollabs =
+      (collaboration?.pendingRequests?.length ?? 0) > 0 ||
+      (collaboration?.collaborators ?? []).some((c) => c.status !== 'ACCEPTED')
+    if (hasOpenCollabs) {
+      setCloseWarning('Cannot close: collaborators still have pending/active tasks. Resolve them first.')
+      return
+    }
     setCloseRequestLoading(true)
     try {
       const updated = await updateRequestStatus(requestId, 'CANCELLED')
       setRequest(updated)
+      setCloseWarning(null)
     } catch (err) {
       console.error('Failed to close request', err)
     } finally {
@@ -242,15 +348,17 @@ export function SocialWorkerRequestDetailsPage() {
     const load = async () => {
       try {
         setLoading(true)
-        const [req, allFollowUps, tl] = await Promise.all([
+        const [req, allFollowUps, tl, collab] = await Promise.all([
           getHelpRequest(requestId),
           getMyFollowUps(),
           getHelpRequestTimeline(requestId),
+          getHelpRequestCollaboration(requestId).catch(() => null),
         ])
         if (!isMounted) return
         setRequest(req)
         setFollowUps(allFollowUps.filter((fu) => fu.helpRequestId === req.id))
         setTimeline(Array.isArray(tl) ? tl : [])
+        setCollaboration(collab)
 
         // Fetch user profile if not anonymous
         if (req.requesterUserId && !req.anonymous) {
@@ -284,6 +392,85 @@ export function SocialWorkerRequestDetailsPage() {
       isMounted = false
     }
   }, [requestId])
+
+  // Internal notes (local-only, SW-visible)
+  useEffect(() => {
+    if (!requestId) return
+    try {
+      const raw = localStorage.getItem('sw_internal_notes_v1')
+      if (!raw) {
+        setInternalNotes([])
+        return
+      }
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) {
+        setInternalNotes([])
+        return
+      }
+      setInternalNotes(parsed.filter((n) => n.requestId === requestId))
+    } catch {
+      setInternalNotes([])
+    }
+  }, [requestId])
+
+  const persistInternalNotes = (allNotes: typeof internalNotes, requestIdValue: string) => {
+    try {
+      const raw = localStorage.getItem('sw_internal_notes_v1')
+      const parsed = raw && Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : []
+      const others = parsed.filter((n: any) => n.requestId !== requestIdValue)
+      const merged = [...others, ...allNotes]
+      localStorage.setItem('sw_internal_notes_v1', JSON.stringify(merged))
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  const addInternalNote = () => {
+    if (!internalNoteText.trim() || !requestId) return
+    const note = {
+      id: `note-${Date.now()}`,
+      requestId,
+      authorId: user?.userId,
+      authorName: user?.fullName || 'You',
+      text: internalNoteText.trim(),
+      createdAt: new Date().toISOString(),
+    }
+    const updated = [...internalNotes, note]
+    setInternalNotes(updated)
+    persistInternalNotes(updated, requestId)
+    setInternalNoteText('')
+  }
+
+  const deleteInternalNote = (id: string) => {
+    if (!requestId) return
+    const updated = internalNotes.filter((n) => n.id !== id)
+    setInternalNotes(updated)
+    persistInternalNotes(updated, requestId)
+  }
+
+  useEffect(() => {
+    if (!showCollaborationModal) return
+    let active = true
+    getAvailableSocialWorkers()
+      .then((list) => {
+        if (!active) return
+        setSwDirectory(Array.isArray(list) ? list : [])
+      })
+      .catch((err) => {
+        if (!active) return
+        setCollabError((err as Error).message ?? 'Failed to load social workers')
+      })
+    return () => {
+      active = false
+    }
+  }, [showCollaborationModal])
+
+  useEffect(() => {
+    if (!rejectModalOpen) return
+    getAvailableSocialWorkers()
+      .then((list) => setSwDirectory(Array.isArray(list) ? list : []))
+      .catch(() => { })
+  }, [rejectModalOpen])
 
   const earliestDueDate = useMemo(() => {
     if (!followUps.length) return undefined
@@ -328,6 +515,7 @@ export function SocialWorkerRequestDetailsPage() {
         verified: !!r.emergencySupport,
         contactPhone: r.contactPhone,
         contactEmail: r.contactEmail,
+        image: r.image,
       }))
       setAssignmentResources(mapped)
     } catch {
@@ -385,9 +573,19 @@ export function SocialWorkerRequestDetailsPage() {
   const packageStatusLabel = pkgStatus ? APPLIED_PACKAGE_STATUS_LABELS[pkgStatus] : 'Pending Approval'
   const packageStatusVariant =
     pkgStatus === 'ACCEPTED' ? 'success' : pkgStatus === 'REJECTED' ? 'danger' : 'warning'
+  const isAssigned = request.status === 'ASSIGNED'
+  const isAccepted = request.status === 'IN_PROGRESS'
 
   const helpIcon = getHelpTypeIcon(request.helpType)
   const helpLabel = request.helpType ? HELP_TYPE_LABELS[request.helpType] : 'Support request'
+  const evidenceUrls = request.documentUrls || []
+
+  const resolveUrl = (url: string) => {
+    if (!url) return '#'
+    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    const base = getUploadBaseUrl()
+    return `${base?.endsWith('/') ? base.slice(0, -1) : base}/${url.replace(/^[\\/]+/, '')}`
+  }
 
   return (
     <Container fluid className="py-4 sw-dashboard">
@@ -421,6 +619,15 @@ export function SocialWorkerRequestDetailsPage() {
               </Badge>
             </div>
             <div className="d-flex flex-wrap gap-2 justify-content-end">
+              {request.status === 'COMPLETED' && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => navigate(`/social-worker/requests/${request.id}/report`)}
+                >
+                  View Report
+                </Button>
+              )}
               <Button
                 variant="outline-secondary"
                 size="sm"
@@ -428,506 +635,727 @@ export function SocialWorkerRequestDetailsPage() {
               >
                 Print
               </Button>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-              // TODO: Wire to export handler
-              >
-                Export
-              </Button>
+
             </div>
           </div>
         </Col>
       </Row>
 
-      <Row className="g-4">
-        {/* Left: Request details and service package */}
-        <Col xs={12} lg={8}>
-          {/* Help Request Description / Details Panel */}
-          <Card className="sw-card border-0 mb-4">
-            <Card.Header className="bg-white border-0 pt-4 pb-3">
-              <h5 className="mb-0 fw-700">Help Request Details</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row className="mb-3">
-                <Col xs={12} md={6}>
-                  <div className="mb-2 small text-muted">Type of request</div>
-                  <div className="d-flex align-items-center gap-2 fw-600">
+      {isAssigned ? (
+        <Row className="g-4">
+          <Col xs={12} lg={8}>
+            <Card className="sw-card border-0 mb-4">
+              <Card.Header className="bg-white border-0 pt-4 pb-3">
+                <h5 className="mb-0 fw-700">Pending Acceptance</h5>
+              </Card.Header>
+              <Card.Body>
+                <div className="mb-3">
+                  <div className="small text-muted">Public user</div>
+                  <div className="fw-600">
+                    {request.anonymous ? 'Anonymous Public User' : (request.requesterName || 'Public user')}
+                  </div>
+                  <div className="small text-muted">Request ID: #{request.trackingId || request.id}</div>
+                  {!request.anonymous && (
+                    <div className="small text-muted mt-1">
+                      {(userProfile?.email || userProfile?.phone) && (
+                        <>
+                          {userProfile?.email && <span>Email: {userProfile.email} </span>}
+                          {userProfile?.phone && <span>· Phone: {userProfile.phone}</span>}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-3">
+                  <div className="small text-muted">Request details</div>
+                  <div className="fw-600 mb-1 d-flex align-items-center gap-2">
                     <span>{helpIcon}</span>
                     <span>{helpLabel}</span>
                   </div>
-                </Col>
-                <Col xs={12} md={6}>
-                  <div className="mb-2 small text-muted">Submitted on</div>
-                  <div className="fw-500">
-                    {formatDateTime(request.requestDate) || 'Not specified'}
+                  <div className="small text-muted mb-1">
+                    Submitted: {formatDateTime(request.requestDate) || 'Not specified'}
                   </div>
-                </Col>
-              </Row>
-              <div className="mb-3">
-                <div className="mb-2 small text-muted">Description</div>
-                <div
-                  className="p-3 rounded-3 bg-light bg-opacity-50 small"
-                  style={{ maxHeight: '200px', overflowY: 'auto' }}
-                >
-                  {request.description || 'No detailed description provided.'}
+                  <div className="small text-muted mb-2">Location: {request.location || 'No location provided'}</div>
+                  <div className="p-3 rounded-3 bg-light bg-opacity-50 small mb-2">
+                    {request.description || 'No detailed description provided.'}
+                  </div>
+                  <div className="small text-muted">
+                    Gender: {request.gender || '—'} · Approx. Age: {request.approximateAge || '—'}
+                  </div>
                 </div>
-              </div>
-              <Row className="mb-3">
-                <Col xs={12} md={6}>
-                  <div className="mb-2 small text-muted">Gender</div>
-                  <div className="fw-500">
-                    {request.gender || 'Not specified'}
+
+                {evidenceUrls.length > 0 && (
+                  <div className="mb-3">
+                    <div className="small text-muted mb-2">Evidence / Attachments</div>
+                    <ul className="small mb-0">
+                      {evidenceUrls.map((url, idx) => (
+                        <li key={idx}>
+                          <a href={resolveUrl(url)} target="_blank" rel="noreferrer">
+                            {url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </Col>
-                <Col xs={12} md={6}>
-                  <div className="mb-2 small text-muted">Approximate Age</div>
-                  <div className="fw-500">
-                    {request.approximateAge || 'Not specified'}
-                  </div>
-                </Col>
-              </Row>
-              <Row className="mb-3">
-                <Col xs={12} md={6}>
-                  <div className="mb-2 small text-muted">Location</div>
-                  <div className="fw-500">
-                    {request.location || 'Not specified'}
-                  </div>
-                </Col>
-                <Col xs={12} md={6}>
-                  <div className="mb-2 small text-muted">Follow-up due</div>
-                  <div className="fw-500">
-                    {earliestDueDate ? formatDateTime(earliestDueDate) : 'No follow-up scheduled'}
-                  </div>
-                </Col>
-              </Row>
-
-              {/* 🥘 Food Assistance Conditional Fields */}
-              {request.helpType === 'FOOD_ASSISTANCE' && (
-                <Card className="bg-light border-0 mt-3 mb-3">
-                  <Card.Body className="py-3">
-                    <h6 className="mb-2 fw-700">🥘 Food Assistance Details</h6>
-                    <Row className="g-2 small">
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Family Members:</span> <span className="fw-600">{request.familyMembers || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Monthly Income:</span> <span className="fw-600">{request.monthlyIncomeRange || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Employment Status:</span> <span className="fw-600">{request.employmentStatus || '-'}</span>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-              )}
-
-              {/* 🎓 Education Conditional Fields */}
-              {request.helpType === 'EDUCATION_SUPPORT' && (
-                <Card className="bg-light border-0 mt-3 mb-3">
-                  <Card.Body className="py-3">
-                    <h6 className="mb-2 fw-700">🎓 Education Support Details</h6>
-                    <Row className="g-2 small">
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">School Grade:</span> <span className="fw-600">{request.schoolGrade || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Exam Year:</span> <span className="fw-600">{request.examYear || '-'}</span>
-                      </Col>
-                      <Col xs={12}>
-                        <span className="text-muted">Required Items:</span> <span className="fw-600">{request.requiredItems?.length ? request.requiredItems.join(', ') : '-'}</span>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-              )}
-
-              {/* 🏥 Medical Conditional Fields */}
-              {request.helpType === 'MEDICAL_HELP' && (
-                <Card className="bg-light border-0 mt-3 mb-3">
-                  <Card.Body className="py-3">
-                    <h6 className="mb-2 fw-700">🏥 Medical Help Details</h6>
-                    <Row className="g-2 small">
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Urgency Level:</span> <span className="fw-600">{request.urgencyLevel || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Hospital/Clinic:</span> <span className="fw-600">{request.hospitalName || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Estimated Cost:</span> <span className="fw-600">{request.estimatedCost || '-'}</span>
-                      </Col>
-                    </Row>
-                    <div className="text-muted small mt-2">{request.conditionDescription || 'No condition description provided'}</div>
-                    {request.medicalReportUrl && (
-                      <a href={`${getUploadBaseUrl()}${request.medicalReportUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary mt-2">
-                        View Medical Report
-                      </a>
-                    )}
-                  </Card.Body>
-                </Card>
-              )}
-
-              {/* 🏠 Shelter Conditional Fields */}
-              {request.helpType === 'SHELTER' && (
-                <Card className="bg-light border-0 mt-3 mb-3">
-                  <Card.Body className="py-3">
-                    <h6 className="mb-2 fw-700">🏠 Shelter Details</h6>
-                    <Row className="g-2 small">
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Housing Type:</span> <span className="fw-600">{request.currentHousingType || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Risk of Eviction:</span> <span className="fw-600">{request.riskOfEviction ? 'Yes' : 'No'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Immediate Danger:</span> <span className="fw-600 text-danger">{request.immediateDanger ? 'Yes - URGENT' : 'No'}</span>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-              )}
-
-              {/* 👕 Clothing Conditional Fields */}
-              {request.helpType === 'CLOTHING' && (
-                <Card className="bg-light border-0 mt-3 mb-3">
-                  <Card.Body className="py-3">
-                    <h6 className="mb-2 fw-700">👕 Clothing Details</h6>
-                    <div className="small"><span className="text-muted">Quantity Needed:</span> <span className="fw-600">{request.quantityNeeded || '-'}</span></div>
-                  </Card.Body>
-                </Card>
-              )}
-
-              {/* 🧠 Counseling Conditional Fields */}
-              {request.helpType === 'COUNSELING' && (
-                <Card className="bg-light border-0 mt-3 mb-3">
-                  <Card.Body className="py-3">
-                    <h6 className="mb-2 fw-700">🧠 Counseling Details</h6>
-                    <Row className="g-2 small">
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Counseling Type:</span> <span className="fw-600">{request.counselingType || '-'}</span>
-                      </Col>
-                      <Col xs={12} md={6}>
-                        <span className="text-muted">Preferred Contact:</span> <span className="fw-600">{request.preferredContactMethod || '-'}</span>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-              )}
-
-              <div className="mb-3">
-                <div className="mb-2 small text-muted">Attachments</div>
-                {request.documentUrls && request.documentUrls.length > 0 ? (
-                  <ul className="mb-0 small">
-                    {request.documentUrls.map((url, idx) => (
-                      <li key={url} className="mb-1">
-                        <a
-                          href={`${getUploadBaseUrl()}${url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-decoration-none"
-                        >
-                          Attachment {idx + 1}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="small text-muted">No attachments uploaded.</div>
                 )}
-              </div>
-            </Card.Body>
-          </Card>
 
-          {timeline.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-muted mb-2 small fw-600">Recent Timeline</div>
+                  <VerticalTimeline
+                    steps={buildTimelineSteps(request).slice(0, 4)}
+                    compact={true}
+                  />
+                </div>
+
+                <div className="d-flex flex-column flex-sm-row gap-2">
+                  <Button variant="success" className="fw-600" onClick={handleAcceptRequest}>
+                    Accept & Start
+                  </Button>
+                  <Button variant="outline-danger" className="fw-600" onClick={() => setRejectModalOpen(true)}>
+                    Reject / Transfer
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      ) : (
+        <Row className="g-4">
+          {/* Left: Request details and service package */}
+          <Col xs={12} lg={8}>
+            {/* Help Request Description / Details Panel */}
             <Card className="sw-card border-0 mb-4">
               <Card.Header className="bg-white border-0 pt-4 pb-3">
-                <h5 className="mb-0 fw-700">Request Timeline</h5>
+                <h5 className="mb-0 fw-700">Help Request Details</h5>
               </Card.Header>
               <Card.Body>
-                <div className="sw-timeline-horizontal">
-                  {timeline.map((item, index) => {
-                    const dateLabel = item.timestamp ? formatDateTime(item.timestamp) : ''
-                    return (
-                      <div key={item.id || index} className="sw-timeline-step">
-                        <div className="sw-timeline-dot-wrapper">
-                          <div className="sw-timeline-dot" />
-                          {index < timeline.length - 1 && <div className="sw-timeline-connector" />}
-                        </div>
-                        <div className="sw-timeline-content">
-                          <div className="sw-timeline-message">
-                            {item.message || '—'}
-                          </div>
-                          {dateLabel && (
-                            <div className="sw-timeline-time small">
-                              {dateLabel}
-                            </div>
-                          )}
-                          {item.actor && (
-                            <div className="sw-timeline-actor small">
-                              {item.actor}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                <Row className="mb-3">
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Type of request</div>
+                    <div className="d-flex align-items-center gap-2 fw-600">
+                      <span>{helpIcon}</span>
+                      <span>{helpLabel}</span>
+                    </div>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Submitted on</div>
+                    <div className="fw-500">
+                      {formatDateTime(request.requestDate) || 'Not specified'}
+                    </div>
+                  </Col>
+                </Row>
+                <div className="mb-3">
+                  <div className="mb-2 small text-muted">Description</div>
+                  <div
+                    className="p-3 rounded-3 bg-light bg-opacity-50 small"
+                    style={{ maxHeight: '200px', overflowY: 'auto' }}
+                  >
+                    {request.description || 'No detailed description provided.'}
+                  </div>
                 </div>
-              </Card.Body>
-            </Card>
-          )}
-
-          {/* 📦 Applied Service Package Panel – appears after package is applied */}
-          {request.appliedPackage && (
-            <Card className="sw-card border-0 mb-4 border-primary border-2">
-              <Card.Header className="bg-white border-0 pt-4 pb-3">
-                <h5 className="mb-0 fw-700">📦 Applied Service Package</h5>
-              </Card.Header>
-              <Card.Body>
-                {/* A. Package Overview Card (Top Summary) */}
-                <Card className="border-0 bg-light bg-opacity-50 mb-3">
-                  <Card.Body className="py-3">
-                    <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-                      <h6 className="mb-0 fw-700">{request.appliedPackage.title}</h6>
-                      <Badge bg={packageStatusVariant}>{packageStatusLabel}</Badge>
-                    </div>
-                    {request.appliedPackage.description && (
-                      <p className="small text-muted mb-2">{request.appliedPackage.description}</p>
-                    )}
-                    <Row className="g-2 small">
-                      <Col xs={6} md={3}>
-                        <span className="text-muted">Total services:</span>{' '}
-                        <span className="fw-600">{request.appliedPackage.items?.length ?? 0}</span>
-                      </Col>
-                      <Col xs={6} md={3}>
-                        <span className="text-muted">Duration:</span>{' '}
-                        <span className="fw-600">{request.appliedPackage.estimatedDuration ?? '—'}</span>
-                      </Col>
-                      <Col xs={6} md={3}>
-                        <span className="text-muted">Applied date:</span>{' '}
-                        <span className="fw-600">
-                          {request.appliedPackageAppliedAt
-                            ? formatDateTime(request.appliedPackageAppliedAt)
-                            : '—'}
-                        </span>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-                {/* Scenario A: User Accepted – Service Execution Controls (Start, Assign, Follow-Up) */}
-                {pkgStatus === 'ACCEPTED' && (
-                  <div className="mt-3">
-                    <h6 className="fw-600 mb-2">🚀 Service Execution Controls</h6>
-                    <p className="small text-muted mb-3">Request status: In Progress. Each service is pending execution. Use the actions below.</p>
-                    <ul className="list-unstyled mb-0">
-                      {(request.appliedPackageItemExecutions ?? request.appliedPackage?.items ?? []).map((itemOrExec) => {
-                        const item = typeof itemOrExec === 'string' ? itemOrExec : itemOrExec.serviceItem
-                        const exec = typeof itemOrExec === 'object' ? itemOrExec : null
-                        const status = exec?.status ?? 'PENDING'
-                        const canStart = status === 'PENDING' || status === 'SCHEDULED'
-                        const isActionLoading = serviceActionLoading === item
-
-                        const openStartModal = () => {
-                          // default start date to now in input-local format
-                          const d = new Date()
-                          const pad = (n: number) => n.toString().padStart(2, '0')
-                          const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-                            d.getHours()
-                          )}:${pad(d.getMinutes())}`
-                          setStartServiceModal({ item })
-                          setStartServiceDate(local)
-                          setStartServiceNotes('')
-                          setExpectedCompletionDate('')
-                          setResourcesAssigned(false)
-                          setStartServiceError(null)
-                        }
-
-                        const openAssignResourceModal = () => {
-                          setAssignResourceModal({ item })
-                          setResourceSearch('')
-                          setResourceTypeFilter('ALL')
-                          setResourceAvailabilityFilter('ALL')
-                          setResourceVerifiedOnly(false)
-                          setSelectedResourceId(null)
-                          setAssignExpectedDate('')
-                          setAssignNotes('')
-                          setAssignSendNotification(true)
-                          setAssignError(null)
-                        }
-
-                        const handleAddFollowUp = () => {
-                          const d = new Date()
-                          const pad = (n: number) => n.toString().padStart(2, '0')
-                          const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-                            d.getHours()
-                          )}:${pad(d.getMinutes())}`
-                          setFollowUpModal({ item })
-                          setFollowUpDate(local)
-                          setFollowUpMode('PHONE')
-                          setFollowUpResolved(null)
-                          setFollowUpNotes('')
-                          setFollowUpError(null)
-                        }
-
-                        return (
-                          <li key={item} className="d-flex flex-column py-2 border-bottom border-light gap-1">
-                            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                              <span className="fw-500">{item}</span>
-                              <Badge
-                                bg={status === 'COMPLETED' ? 'success' : status === 'IN_PROGRESS' ? 'primary' : 'secondary'}
-                                className="me-2"
-                              >
-                                {status === 'IN_PROGRESS' ? 'In Progress' : status}
-                              </Badge>
-                              <div className="d-flex flex-wrap gap-1">
-                                {canStart && (
-                                  <Button variant="success" size="sm" onClick={openStartModal} disabled={!!isActionLoading}>
-                                    {isActionLoading ? 'Updating…' : '🟢 Start Service'}
-                                  </Button>
-                                )}
-                                <Button variant="warning" size="sm" onClick={openAssignResourceModal}>
-                                  🟡 Assign Resource
-                                </Button>
-                                <Button variant="info" size="sm" onClick={handleAddFollowUp}>
-                                  🔵 Follow-Up
-                                </Button>
-                              </div>
-                            </div>
-                            {exec?.assignedResource && (
-                              <div className="small text-muted ms-1">
-                                Assigned resource: <strong>{exec.assignedResource}</strong>
-                              </div>
-                            )}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                    {Array.isArray(request.appliedPackageItemExecutions) &&
-                      request.appliedPackageItemExecutions.some((ex) => ex.assignedResource) && (
-                        <div className="mt-3 pt-3 border-top">
-                          <h6 className="fw-600 mb-2">🏢 Assigned Resources</h6>
-                          <ul className="list-unstyled mb-0 small">
-                            {request.appliedPackageItemExecutions
-                              .filter((ex) => ex.assignedResource)
-                              .map((ex) => (
-                                <li key={`${ex.serviceItem}-${ex.assignedResource}`}>
-                                  <strong>{ex.assignedResource}</strong>
-                                  <span className="text-muted"> • {ex.serviceItem}</span>
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                      )}
-                  </div>
-                )}
-
-                {/* Scenario B: Pending (adjustment need) – can Revise or Apply different package */}
-                {(!pkgStatus || pkgStatus === 'PENDING') && (
-                  <div className="mt-3">
-                    <p className="small text-muted mb-2">Waiting for public user to accept or reject this package.</p>
-                    <p className="small text-muted mb-2">If the user requested <strong>adjustments</strong>, you can:</p>
-                    <div className="d-flex flex-wrap gap-2">
-                      <Button variant="outline-primary" size="sm" onClick={() => setShowApplyModal(true)}>
-                        Revise package
-                      </Button>
-                      <Button variant="outline-secondary" size="sm" onClick={() => setShowApplyModal(true)}>
-                        Apply different package
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Scenario C: Fully Rejected – Request status Package Rejected, SW can Revise / Apply different / Close */}
-                {pkgStatus === 'REJECTED' && (
-                  <div className="mt-3">
-                    <p className="small text-muted mb-2">The public user rejected this package. Request status: <strong>Package Rejected</strong>.</p>
-                    <p className="small fw-600 mb-2">You can:</p>
-                    <div className="d-flex flex-wrap gap-2">
-                      <Button variant="outline-primary" size="sm" onClick={() => setShowApplyModal(true)}>
-                        Revise package
-                      </Button>
-                      <Button variant="outline-secondary" size="sm" onClick={() => setShowApplyModal(true)}>
-                        Apply different package
-                      </Button>
-                      <Button variant="outline-danger" size="sm" onClick={handleCloseRequest} disabled={closeRequestLoading}>
-                        {closeRequestLoading ? 'Closing…' : 'Close request'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          )}
-
-          {/* Apply Service Package – when no package applied yet */}
-          {!request.appliedPackage && (
-            <div className="mb-3">
-              <Button
-                variant="outline-success"
-                size="sm"
-                onClick={() => setShowApplyModal(true)}
-              >
-                ➕ Apply Service Package
-              </Button>
-            </div>
-          )}
-        </Col>
-
-        {/* Right: Public User / Requester Info */}
-        <Col xs={12} lg={4}>
-          <Card className="sw-card border-0 mb-4">
-            <Card.Header className="bg-white border-0 pt-4 pb-3">
-              <h5 className="mb-0 fw-700">Public User Details</h5>
-            </Card.Header>
-            <Card.Body>
-              {request.anonymous ? (
-                <div className="text-center py-4">
-                  <div className="mb-3">
-                    <span style={{ fontSize: '3rem' }}>🔒</span>
-                  </div>
-                  <h6 className="fw-600 mb-2">Anonymous Request</h6>
-                  <p className="small text-muted mb-0">
-                    This user has chosen to remain anonymous. Personal details are not available.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-3">
-                    <div className="mb-1 small text-muted">Full Name</div>
+                <Row className="mb-3">
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Gender</div>
                     <div className="fw-500">
-                      {userProfile?.fullName || request.requesterName || 'Not provided'}
+                      {request.gender || 'Not specified'}
                     </div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="mb-1 small text-muted">Email</div>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Approximate Age</div>
                     <div className="fw-500">
-                      {userProfile?.email || 'Not provided'}
+                      {request.approximateAge || 'Not specified'}
                     </div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="mb-1 small text-muted">Phone</div>
-                    <div className="fw-500">
-                      {userProfile?.phone || 'Not provided'}
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="mb-1 small text-muted">Address</div>
-                    <div className="fw-500">
-                      {userProfile?.address || request.location || 'Not provided'}
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="mb-1 small text-muted">Request Location</div>
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Location</div>
                     <div className="fw-500">
                       {request.location || 'Not specified'}
                     </div>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Follow-up due</div>
+                    <div className="fw-500">
+                      {earliestDueDate ? formatDateTime(earliestDueDate) : 'No follow-up scheduled'}
+                    </div>
+                  </Col>
+                </Row>
+
+                {/* 🥘 Food Assistance Conditional Fields */}
+                {request.helpType === 'FOOD_ASSISTANCE' && (
+                  <Card className="bg-light border-0 mt-3 mb-3">
+                    <Card.Body className="py-3">
+                      <h6 className="mb-2 fw-700">🥘 Food Assistance Details</h6>
+                      <Row className="g-2 small">
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Family Members:</span> <span className="fw-600">{request.familyMembers || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Monthly Income:</span> <span className="fw-600">{request.monthlyIncomeRange || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Employment Status:</span> <span className="fw-600">{request.employmentStatus || '-'}</span>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                )}
+
+                {/* 🎓 Education Conditional Fields */}
+                {request.helpType === 'EDUCATION_SUPPORT' && (
+                  <Card className="bg-light border-0 mt-3 mb-3">
+                    <Card.Body className="py-3">
+                      <h6 className="mb-2 fw-700">🎓 Education Support Details</h6>
+                      <Row className="g-2 small">
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">School Grade:</span> <span className="fw-600">{request.schoolGrade || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Exam Year:</span> <span className="fw-600">{request.examYear || '-'}</span>
+                        </Col>
+                        <Col xs={12}>
+                          <span className="text-muted">Required Items:</span> <span className="fw-600">{request.requiredItems?.length ? request.requiredItems.join(', ') : '-'}</span>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                )}
+
+                {/* 🏥 Medical Conditional Fields */}
+                {request.helpType === 'MEDICAL_HELP' && (
+                  <Card className="bg-light border-0 mt-3 mb-3">
+                    <Card.Body className="py-3">
+                      <h6 className="mb-2 fw-700">🏥 Medical Help Details</h6>
+                      <Row className="g-2 small">
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Urgency Level:</span> <span className="fw-600">{request.urgencyLevel || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Hospital/Clinic:</span> <span className="fw-600">{request.hospitalName || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Estimated Cost:</span> <span className="fw-600">{request.estimatedCost || '-'}</span>
+                        </Col>
+                      </Row>
+                      <div className="text-muted small mt-2">{request.conditionDescription || 'No condition description provided'}</div>
+                      {request.medicalReportUrl && (
+                        <a href={`${getUploadBaseUrl()}${request.medicalReportUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary mt-2">
+                          View Medical Report
+                        </a>
+                      )}
+                    </Card.Body>
+                  </Card>
+                )}
+
+                {/* 🏠 Shelter Conditional Fields */}
+                {request.helpType === 'SHELTER' && (
+                  <Card className="bg-light border-0 mt-3 mb-3">
+                    <Card.Body className="py-3">
+                      <h6 className="mb-2 fw-700">🏠 Shelter Details</h6>
+                      <Row className="g-2 small">
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Housing Type:</span> <span className="fw-600">{request.currentHousingType || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Risk of Eviction:</span> <span className="fw-600">{request.riskOfEviction ? 'Yes' : 'No'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Immediate Danger:</span> <span className="fw-600 text-danger">{request.immediateDanger ? 'Yes - URGENT' : 'No'}</span>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                )}
+
+                {/* 👕 Clothing Conditional Fields */}
+                {request.helpType === 'CLOTHING' && (
+                  <Card className="bg-light border-0 mt-3 mb-3">
+                    <Card.Body className="py-3">
+                      <h6 className="mb-2 fw-700">👕 Clothing Details</h6>
+                      <div className="small"><span className="text-muted">Quantity Needed:</span> <span className="fw-600">{request.quantityNeeded || '-'}</span></div>
+                    </Card.Body>
+                  </Card>
+                )}
+
+                {/* 🧠 Counseling Conditional Fields */}
+                {request.helpType === 'COUNSELING' && (
+                  <Card className="bg-light border-0 mt-3 mb-3">
+                    <Card.Body className="py-3">
+                      <h6 className="mb-2 fw-700">🧠 Counseling Details</h6>
+                      <Row className="g-2 small">
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Counseling Type:</span> <span className="fw-600">{request.counselingType || '-'}</span>
+                        </Col>
+                        <Col xs={12} md={6}>
+                          <span className="text-muted">Preferred Contact:</span> <span className="fw-600">{request.preferredContactMethod || '-'}</span>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                )}
+
+                <div className="mb-3">
+                  <div className="mb-2 small text-muted">Attachments</div>
+                  {request.documentUrls && request.documentUrls.length > 0 ? (
+                    <ul className="mb-0 small">
+                      {request.documentUrls.map((url, idx) => (
+                        <li key={url} className="mb-1">
+                          <a
+                            href={`${getUploadBaseUrl()}${url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-decoration-none"
+                          >
+                            Attachment {idx + 1}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="small text-muted">No attachments uploaded.</div>
+                  )}
+                </div>
+
+                <Card className="sw-card border-0 mb-4">
+                  <Card.Header className="bg-white border-0 pt-4 pb-3">
+                    <h5 className="mb-0 fw-700">📝 Internal Notes (SW only)</h5>
+                    <div className="small text-muted">Not visible to public users.</div>
+                  </Card.Header>
+                  <Card.Body>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="small fw-600 text-muted">Add note</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        value={internalNoteText}
+                        onChange={(e) => setInternalNoteText(e.target.value)}
+                        placeholder="Discuss strategy, observations, action plan..."
+                      />
+                    </Form.Group>
+                    <div className="d-flex justify-content-end mb-3">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={addInternalNote}
+                        disabled={!internalNoteText.trim()}
+                      >
+                        Save note
+                      </Button>
+                    </div>
+                    {internalNotes.length === 0 ? (
+                      <div className="small text-muted">No internal notes yet.</div>
+                    ) : (
+                      <ul className="list-unstyled mb-0">
+                        {[...internalNotes]
+                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .map((n) => (
+                            <li key={n.id} className="mb-3 p-3 bg-light rounded">
+                              <div className="d-flex justify-content-between align-items-start">
+                                <div>
+                                  <div className="fw-600 small">{n.authorName || 'SW'}</div>
+                                  <div className="text-muted small">
+                                    {new Date(n.createdAt).toLocaleString()}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="text-danger p-0"
+                                  onClick={() => deleteInternalNote(n.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                              <div className="small mt-2">{n.text}</div>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </Card.Body>
+                </Card>
+
+                <Card className="sw-card border-0 mb-4">
+                  <Card.Header className="bg-white border-0 pt-4 pb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                      <h5 className="mb-0 fw-700">👥 Collaboration</h5>
+                      <div className="small text-muted">Case owner and collaborators.</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => {
+                        setShowCollaborationModal(true)
+                        setCollabSearch('')
+                        setCollabDistrictFilter('ALL')
+                        setCollabSpecializationFilter('ALL')
+                        setCollabAvailabilityFilter('ALL')
+                        setSelectedCollaboratorUserId('')
+                        setSelectedCollabPermission('VIEW_ONLY')
+                        setCollabReason('')
+                        setCollabError(null)
+                      }}
+                      disabled={!collaboration}
+                    >
+                      Add Collaborator
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="mb-3">
+                      <div className="small text-muted">Case Owner</div>
+                      <div className="fw-600">
+                        {collaboration?.ownerName || 'You'}
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="small text-muted mb-1">Collaborators</div>
+                      {collaboration?.collaborators?.length ? (
+                        <ul className="mb-0 small">
+                          {collaboration.collaborators.map((c) => (
+                            <li key={c.collaborationId} className="mb-1">
+                              <span className="fw-600">{c.name || c.userId}</span>
+                              {` • ${c.permission.replace('_', ' ').toLowerCase()}`}
+                              {` • ${c.status}`}
+                              <Button
+                                size="sm"
+                                variant="link"
+                                className="ps-2 text-danger"
+                                onClick={async () => {
+                                  if (!requestId) return
+                                  try {
+                                    await removeHelpRequestCollaborator(requestId, c.userId)
+                                    setCollaboration((prev) =>
+                                      prev
+                                        ? {
+                                          ...prev,
+                                          collaborators: prev.collaborators.filter(
+                                            (col) => col.collaborationId !== c.collaborationId
+                                          ),
+                                        }
+                                        : prev
+                                    )
+                                  } catch (err) {
+                                    setCollabError(
+                                      err instanceof Error ? err.message : 'Failed to remove collaborator.'
+                                    )
+                                  }
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="small text-muted">No collaborators yet.</div>
+                      )}
+                    </div>
+                    {collaboration?.pendingRequests?.length ? (
+                      <div>
+                        <div className="small text-muted mb-1">Pending requests</div>
+                        <ul className="mb-0 small">
+                          {collaboration.pendingRequests.map((p) => (
+                            <li key={p.collaborationId} className="mb-1">
+                              <span className="fw-600">{p.name || p.userId}</span>
+                              {` • ${p.permission.replace('_', ' ').toLowerCase()}`}
+                              {p.reason ? ` • ${p.reason}` : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </Card.Body>
+                </Card>
+              </Card.Body>
+            </Card>
+
+            {timeline.length > 0 && (
+              <Card className="sw-card border-0 mb-4">
+                <Card.Header className="bg-white border-0 pt-4 pb-3">
+                  <h5 className="mb-0 fw-700">Request Timeline</h5>
+                </Card.Header>
+                <Card.Body>
+                  <VerticalTimeline
+                    steps={timeline.map((item, idx) => {
+                      // Normalize labels based on common stages
+                      let label = item.message || item.description || 'Timeline Event'
+                      const type = item.eventType?.toUpperCase()
+
+                      if (type === 'REQUEST_SUBMITTED' || type === 'SUBMITTED') label = 'Request Submitted'
+                      else if (type === 'PACKAGE_APPLIED' || type === 'PROPOSED') label = 'Service Package Proposed'
+                      else if (type === 'PACKAGE_ACCEPTED' || type === 'ACCEPTED') label = 'Package Approved by User'
+                      else if (type === 'SERVICE_STARTED' || type === 'IN_PROGRESS') label = 'In Progress'
+                      else if (type === 'COMPLETED' || type === 'RESOLVED') label = 'Completed'
+                      else if (type === 'STATUS_CHANGE') label = `Status Updated: ${item.message || item.description}`
+
+                      return {
+                        id: item.id || idx,
+                        label,
+                        date: item.eventTime || item.timestamp,
+                        description: (item.message && item.description && item.message !== item.description)
+                          ? item.description
+                          : (item.actor ? `By ${item.actor}` : undefined),
+                        status: idx === 0 ? 'active' : 'completed',
+                      }
+                    })}
+                  />
+                </Card.Body>
+              </Card>
+            )}
+
+            {/* 📦 Applied Service Package Panel – appears after package is applied */}
+            {request.appliedPackage && (
+              <Card className="sw-card border-0 mb-4 border-primary border-2">
+                <Card.Header className="bg-white border-0 pt-4 pb-3">
+                  <h5 className="mb-0 fw-700">📦 Applied Service Package</h5>
+                </Card.Header>
+                <Card.Body>
+                  {/* A. Package Overview Card (Top Summary) */}
+                  <Card className="border-0 bg-light bg-opacity-50 mb-3">
+                    <Card.Body className="py-3">
+                      <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                        <h6 className="mb-0 fw-700">{request.appliedPackage.title}</h6>
+                        <Badge bg={packageStatusVariant}>{packageStatusLabel}</Badge>
+                      </div>
+                      {request.appliedPackage.description && (
+                        <p className="small text-muted mb-2">{request.appliedPackage.description}</p>
+                      )}
+                      <Row className="g-2 small">
+                        <Col xs={6} md={3}>
+                          <span className="text-muted">Total services:</span>{' '}
+                          <span className="fw-600">{request.appliedPackage.items?.length ?? 0}</span>
+                        </Col>
+                        <Col xs={6} md={3}>
+                          <span className="text-muted">Duration:</span>{' '}
+                          <span className="fw-600">{request.appliedPackage.estimatedDuration ?? '—'}</span>
+                        </Col>
+                        <Col xs={6} md={3}>
+                          <span className="text-muted">Applied date:</span>{' '}
+                          <span className="fw-600">
+                            {request.appliedPackageAppliedAt
+                              ? formatDateTime(request.appliedPackageAppliedAt)
+                              : '—'}
+                          </span>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                  {/* Scenario A: User Accepted – Service Execution Controls (Start, Assign, Follow-Up) */}
+                  {pkgStatus === 'ACCEPTED' && (
+                    <div className="mt-3">
+                      <h6 className="fw-600 mb-2">🚀 Service Execution Controls</h6>
+                      <p className="small text-muted mb-3">Request status: In Progress. Each service is pending execution. Use the actions below.</p>
+                      <ul className="list-unstyled mb-0">
+                        {(request.appliedPackageItemExecutions ?? request.appliedPackage?.items ?? []).map((itemOrExec) => {
+                          const item = typeof itemOrExec === 'string' ? itemOrExec : itemOrExec.serviceItem
+                          const exec = typeof itemOrExec === 'object' ? itemOrExec : null
+                          const status = exec?.status ?? 'PENDING'
+                          const canStart = status === 'PENDING' || status === 'SCHEDULED'
+                          const isActionLoading = serviceActionLoading === item
+
+                          const openStartModal = () => {
+                            // default start date to now in input-local format
+                            const d = new Date()
+                            const pad = (n: number) => n.toString().padStart(2, '0')
+                            const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+                              d.getHours()
+                            )}:${pad(d.getMinutes())}`
+                            setStartServiceModal({ item })
+                            setStartServiceDate(local)
+                            setStartServiceNotes('')
+                            setExpectedCompletionDate('')
+                            setResourcesAssigned(false)
+                            setStartServiceError(null)
+                          }
+
+                          const openAssignResourceModal = () => {
+                            setAssignResourceModal({ item })
+                            setResourceSearch('')
+                            setResourceTypeFilter('ALL')
+                            setResourceAvailabilityFilter('ALL')
+                            setResourceVerifiedOnly(false)
+                            const preselected = selectedResourceIdFromQuery
+                            const exists = preselected
+                              ? assignmentResources.some((r) => r.id === preselected)
+                              : false
+                            setSelectedResourceId(exists ? preselected : null)
+                            setAssignExpectedDate('')
+                            setAssignNotes('')
+                            setAssignSendNotification(true)
+                            setAssignError(null)
+                          }
+
+                          const handleAddFollowUp = () => {
+                            const d = new Date()
+                            const pad = (n: number) => n.toString().padStart(2, '0')
+                            const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+                              d.getHours()
+                            )}:${pad(d.getMinutes())}`
+                            setFollowUpModal({ item })
+                            setFollowUpDate(local)
+                            setFollowUpMode('PHONE')
+                            setFollowUpResolved(null)
+                            setFollowUpNotes('')
+                            setFollowUpError(null)
+                          }
+
+                          return (
+                            <li key={item} className="d-flex flex-column py-2 border-bottom border-light gap-1">
+                              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <span className="fw-500">{item}</span>
+                                <Badge
+                                  bg={status === 'COMPLETED' ? 'success' : status === 'IN_PROGRESS' ? 'primary' : 'secondary'}
+                                  className="me-2"
+                                >
+                                  {status === 'IN_PROGRESS' ? 'In Progress' : status}
+                                </Badge>
+                                <div className="d-flex flex-wrap gap-1">
+                                  {canStart && (
+                                    <Button variant="success" size="sm" onClick={openStartModal} disabled={!!isActionLoading}>
+                                      {isActionLoading ? 'Updating…' : '🟢 Start Service'}
+                                    </Button>
+                                  )}
+                                  <Button variant="warning" size="sm" onClick={openAssignResourceModal}>
+                                    🟡 Assign Resource
+                                  </Button>
+                                  <Button variant="info" size="sm" onClick={handleAddFollowUp}>
+                                    🔵 Follow-Up
+                                  </Button>
+                                </div>
+                              </div>
+                              {exec?.assignedResource && (
+                                <div className="small text-muted ms-1">
+                                  Assigned resource: <strong>{exec.assignedResource}</strong>
+                                </div>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                      {Array.isArray(request.appliedPackageItemExecutions) &&
+                        request.appliedPackageItemExecutions.some((ex) => ex.assignedResource) && (
+                          <div className="mt-3 pt-3 border-top">
+                            <h6 className="fw-600 mb-2">🏢 Assigned Resources</h6>
+                            <ul className="list-unstyled mb-0 small">
+                              {request.appliedPackageItemExecutions
+                                .filter((ex) => ex.assignedResource)
+                                .map((ex) => (
+                                  <li key={`${ex.serviceItem}-${ex.assignedResource}`}>
+                                    <strong>{ex.assignedResource}</strong>
+                                    <span className="text-muted"> • {ex.serviceItem}</span>
+                                  </li>
+                                ))}
+                            </ul>
+                          </div>
+                        )}
+                    </div>
+                  )}
+
+                  {/* Scenario B: Pending (adjustment need) – can Revise or Apply different package */}
+                  {(!pkgStatus || pkgStatus === 'PENDING') && (
+                    <div className="mt-3">
+                      <p className="small text-muted mb-2">Waiting for public user to accept or reject this package.</p>
+                      <p className="small text-muted mb-2">If the user requested <strong>adjustments</strong>, you can:</p>
+                      <div className="d-flex flex-wrap gap-2">
+
+                        <Button variant="outline-secondary" size="sm" onClick={() => setShowApplyModal(true)}>
+                          Apply different package
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scenario C: Fully Rejected – Request status Package Rejected, SW can Revise / Apply different / Close */}
+                  {pkgStatus === 'REJECTED' && (
+                    <div className="mt-3">
+                      <p className="small text-muted mb-2">The public user rejected this package. Request status: <strong>Package Rejected</strong>.</p>
+                      <p className="small fw-600 mb-2">You can:</p>
+                      <div className="d-flex flex-wrap gap-2">
+
+                        <Button variant="outline-secondary" size="sm" onClick={() => setShowApplyModal(true)}>
+                          Apply different package
+                        </Button>
+                        <Button variant="outline-danger" size="sm" onClick={handleCloseRequest} disabled={closeRequestLoading}>
+                          {closeRequestLoading ? 'Closing…' : 'Close request'}
+                        </Button>
+                      </div>
+                      {closeWarning && (
+                        <div className="alert alert-warning small mt-3 mb-0">
+                          {closeWarning}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            )}
+
+            {/* Apply Service Package – when no package applied yet */}
+            {!request.appliedPackage && (
+              <div className="mb-3">
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  onClick={() => setShowApplyModal(true)}
+                >
+                  ➕ Apply Service Package
+                </Button>
+              </div>
+            )}
+          </Col>
+
+          {/* Right: Public User / Requester Info */}
+          <Col xs={12} lg={4}>
+            <Card className="sw-card border-0 mb-4">
+              <Card.Header className="bg-white border-0 pt-4 pb-3">
+                <h5 className="mb-0 fw-700">Public User Details</h5>
+              </Card.Header>
+              <Card.Body>
+                {request.anonymous ? (
+                  <div className="text-center py-4">
+                    <div className="mb-3">
+                      <span style={{ fontSize: '3rem' }}>🔒</span>
+                    </div>
+                    <h6 className="fw-600 mb-2">Anonymous Request</h6>
+                    <p className="small text-muted mb-0">
+                      This user has chosen to remain anonymous. Personal details are not available.
+                    </p>
                   </div>
-                </>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                ) : (
+                  <>
+                    <div className="mb-3">
+                      <div className="mb-1 small text-muted">Full Name</div>
+                      <div className="fw-500">
+                        {userProfile?.fullName || request.requesterName || 'Not provided'}
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="mb-1 small text-muted">Email</div>
+                      <div className="fw-500">
+                        {userProfile?.email || 'Not provided'}
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="mb-1 small text-muted">Phone</div>
+                      <div className="fw-500">
+                        {userProfile?.phone || 'Not provided'}
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="mb-1 small text-muted">Address</div>
+                      <div className="fw-500">
+                        {userProfile?.address || request.location || 'Not provided'}
+                      </div>
+                    </div>
+
+                  </>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
 
       {/* Start Service confirmation modal */}
       <Modal show={!!startServiceModal} onHide={() => setStartServiceModal(null)} centered>
@@ -935,7 +1363,7 @@ export function SocialWorkerRequestDetailsPage() {
           <Modal.Title>🟢 Start Service</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-              {startServiceModal && (
+          {startServiceModal && (
             <>
               <p className="mb-3">Start execution of <strong>{startServiceModal.item}</strong>? The service status will change to <strong>In Progress</strong> and the public user will see the update.</p>
               <Form.Group className="mb-2">
@@ -1170,10 +1598,21 @@ export function SocialWorkerRequestDetailsPage() {
                       return (
                         <tr key={res.id} className={selected ? 'table-primary' : undefined}>
                           <td>
-                            <div className="fw-600 small">{res.name}</div>
-                            {res.verified && (
-                              <div className="small text-success">Verified</div>
-                            )}
+                            <div className="d-flex align-items-center gap-2">
+                              {res.image && (
+                                <img
+                                  src={res.image}
+                                  alt=""
+                                  style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+                                />
+                              )}
+                              <div>
+                                <div className="fw-600 small">{res.name}</div>
+                                {res.verified && (
+                                  <div className="small text-success">Verified</div>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className="small">
                             {ASSIGNMENT_RESOURCE_TYPE_LABELS[res.type]}
@@ -1216,46 +1655,46 @@ export function SocialWorkerRequestDetailsPage() {
                   Select a resource from the list to continue.
                 </p>
               )}
-                {selectedResourceId && (() => {
-                  const res = assignmentResources.find((r) => r.id === selectedResourceId)
-                  if (!res) return null
-                  return (
-                <>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="small fw-600 text-muted">
-                      Expected service date
-                    </Form.Label>
-                    <Form.Control
-                      type="datetime-local"
-                      value={assignExpectedDate}
-                      onChange={(e) => setAssignExpectedDate(e.target.value)}
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="small fw-600 text-muted">
-                      Notes to resource
-                    </Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      value={assignNotes}
-                      onChange={(e) => setAssignNotes(e.target.value)}
-                      placeholder="Include key context or instructions…"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Check
-                      type="switch"
-                      id="sendNotification"
-                      label="Send notification to resource (recorded in notes)"
-                      checked={assignSendNotification}
-                      onChange={(e) => setAssignSendNotification(e.target.checked)}
-                      className="small"
-                    />
-                  </Form.Group>
-                </>
-                  )
-                })()}
+              {selectedResourceId && (() => {
+                const res = assignmentResources.find((r) => r.id === selectedResourceId)
+                if (!res) return null
+                return (
+                  <>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="small fw-600 text-muted">
+                        Expected service date
+                      </Form.Label>
+                      <Form.Control
+                        type="datetime-local"
+                        value={assignExpectedDate}
+                        onChange={(e) => setAssignExpectedDate(e.target.value)}
+                      />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="small fw-600 text-muted">
+                        Notes to resource
+                      </Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        value={assignNotes}
+                        onChange={(e) => setAssignNotes(e.target.value)}
+                        placeholder="Include key context or instructions…"
+                      />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                      <Form.Check
+                        type="switch"
+                        id="sendNotification"
+                        label="Send notification to resource (recorded in notes)"
+                        checked={assignSendNotification}
+                        onChange={(e) => setAssignSendNotification(e.target.checked)}
+                        className="small"
+                      />
+                    </Form.Group>
+                  </>
+                )
+              })()}
             </Col>
           </Row>
         </Modal.Body>
@@ -1311,6 +1750,217 @@ export function SocialWorkerRequestDetailsPage() {
             }}
           >
             {assignLoading ? 'Assigning…' : 'Confirm assignment'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Collaboration modal */}
+      <Modal show={showCollaborationModal} onHide={() => setShowCollaborationModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">Add Collaborator</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Row className="g-3 mb-3">
+            <Col xs={12} md={4}>
+              <Form.Label className="small fw-600 text-muted">Search by name</Form.Label>
+              <Form.Control
+                value={collabSearch}
+                onChange={(e) => setCollabSearch(e.target.value)}
+                placeholder="Type a name or email..."
+              />
+            </Col>
+            <Col xs={6} md={3}>
+              <Form.Label className="small fw-600 text-muted">District</Form.Label>
+              <Form.Select
+                value={collabDistrictFilter}
+                onChange={(e) => setCollabDistrictFilter(e.target.value)}
+              >
+                <option value="ALL">All</option>
+                {[...new Set(swDirectory.map((s) => s.serviceArea).filter(Boolean))].map((d) => (
+                  <option key={d as string} value={d as string}>
+                    {d}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col xs={6} md={3}>
+              <Form.Label className="small fw-600 text-muted">Specialization</Form.Label>
+              <Form.Select
+                value={collabSpecializationFilter}
+                onChange={(e) => setCollabSpecializationFilter(e.target.value)}
+              >
+                <option value="ALL">All</option>
+                {[...new Set(swDirectory.flatMap((s) => s.specializations || []))].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col xs={6} md={2}>
+              <Form.Label className="small fw-600 text-muted">Availability</Form.Label>
+              <Form.Select
+                value={collabAvailabilityFilter}
+                onChange={(e) =>
+                  setCollabAvailabilityFilter(e.target.value as 'ALL' | 'ACTIVE' | 'BUSY' | 'ON_LEAVE')
+                }
+              >
+                <option value="ALL">All</option>
+                <option value="ACTIVE">Active</option>
+                <option value="BUSY">Busy</option>
+                <option value="ON_LEAVE">On Leave</option>
+              </Form.Select>
+            </Col>
+          </Row>
+
+          <Row className="g-3">
+            <Col xs={12} md={7}>
+              <div className="table-responsive" style={{ maxHeight: 360, overflowY: 'auto' }}>
+                <table className="table table-sm align-middle">
+                  <thead className="table-light">
+                    <tr className="small text-muted">
+                      <th>Social Worker</th>
+                      <th>District</th>
+                      <th>Availability</th>
+                      <th className="text-end">Select</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {swDirectory
+                      .filter((sw) => {
+                        const q = collabSearch.trim().toLowerCase()
+                        if (q) {
+                          const label = `${sw.fullName ?? ''} ${sw.email ?? ''}`.toLowerCase()
+                          if (!label.includes(q)) return false
+                        }
+                        if (collabDistrictFilter !== 'ALL' && sw.serviceArea !== collabDistrictFilter) return false
+                        if (
+                          collabSpecializationFilter !== 'ALL' &&
+                          !(sw.specializations || []).includes(collabSpecializationFilter)
+                        )
+                          return false
+                        if (collabAvailabilityFilter !== 'ALL') {
+                          const avail = (sw.availabilityStatus || '').toUpperCase()
+                          if (avail !== collabAvailabilityFilter) return false
+                        }
+                        return true
+                      })
+                      .map((sw) => {
+                        const avail = sw.availabilityStatus ?? (sw.available ? 'ACTIVE' : 'BUSY')
+                        const selected = selectedCollaboratorUserId === sw.userId
+                        return (
+                          <tr key={sw.userId} className={selected ? 'table-primary' : undefined}>
+                            <td className="small">
+                              <div className="fw-600">{sw.fullName || sw.userId}</div>
+                              {sw.specializations?.length ? (
+                                <div className="text-muted">{sw.specializations.join(', ')}</div>
+                              ) : null}
+                            </td>
+                            <td className="small">{sw.serviceArea || '-'}</td>
+                            <td className="small">{avail}</td>
+                            <td className="text-end">
+                              <Button
+                                size="sm"
+                                variant={selected ? 'secondary' : 'outline-primary'}
+                                onClick={() => setSelectedCollaboratorUserId(selected ? '' : sw.userId)}
+                              >
+                                {selected ? 'Selected' : 'Select'}
+                              </Button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                  </tbody>
+                </table>
+              </div>
+              {swDirectory.length === 0 && (
+                <div className="small text-muted">No social workers available right now.</div>
+              )}
+            </Col>
+            <Col xs={12} md={5}>
+              <h6 className="fw-600 mb-2">Permissions</h6>
+              <div className="d-flex flex-column gap-2 mb-3">
+                <Form.Check
+                  type="radio"
+                  id="perm-full"
+                  label="Full Access"
+                  value="FULL_ACCESS"
+                  checked={selectedCollabPermission === 'FULL_ACCESS'}
+                  onChange={(e) => setSelectedCollabPermission(e.target.value as CollaborationPermission)}
+                />
+                <Form.Check
+                  type="radio"
+                  id="perm-view"
+                  label="View Only"
+                  value="VIEW_ONLY"
+                  checked={selectedCollabPermission === 'VIEW_ONLY'}
+                  onChange={(e) => setSelectedCollabPermission(e.target.value as CollaborationPermission)}
+                />
+                <Form.Check
+                  type="radio"
+                  id="perm-service"
+                  label="Service Only (manage service items)"
+                  value="SERVICE_ONLY"
+                  checked={selectedCollabPermission === 'SERVICE_ONLY'}
+                  onChange={(e) => setSelectedCollabPermission(e.target.value as CollaborationPermission)}
+                />
+              </div>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">Reason (optional)</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={collabReason}
+                  onChange={(e) => setCollabReason(e.target.value)}
+                  placeholder="Need counselling specialist for trauma support."
+                />
+              </Form.Group>
+              {collabError && (
+                <div className="alert alert-danger py-2 small">{collabError}</div>
+              )}
+              <div className="small text-muted">
+                The selected SW will receive a notification: "Collaboration request for HELP#{request.trackingId ?? request.id}".
+              </div>
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" size="sm" onClick={() => setShowCollaborationModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!selectedCollaboratorUserId || collabSubmitting || !requestId}
+            onClick={async () => {
+              if (!requestId || !selectedCollaboratorUserId) return
+              setCollabSubmitting(true)
+              setCollabError(null)
+              try {
+                const created = await requestHelpRequestCollaborator(requestId, {
+                  collaboratorUserId: selectedCollaboratorUserId,
+                  permission: selectedCollabPermission,
+                  reason: collabReason.trim() || undefined,
+                })
+                setCollaboration((prev) =>
+                  prev
+                    ? {
+                      ...prev,
+                      pendingRequests: [...(prev.pendingRequests || []), created],
+                    }
+                    : prev
+                )
+                setShowCollaborationModal(false)
+                setSelectedCollaboratorUserId('')
+                setCollabReason('')
+              } catch (err) {
+                setCollabError(err instanceof Error ? err.message : 'Failed to send request.')
+              } finally {
+                setCollabSubmitting(false)
+              }
+            }}
+          >
+            {collabSubmitting ? 'Sending…' : 'Send Request'}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -1510,6 +2160,61 @@ export function SocialWorkerRequestDetailsPage() {
             }}
           >
             {followUpSubmitting ? 'Saving…' : 'Submit follow-up'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Reject / Transfer modal */}
+      <Modal show={rejectModalOpen} onHide={() => setRejectModalOpen(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Reject or Transfer Request</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Reason for rejection</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Provide a brief reason (required)"
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Suggest transfer to another social worker (optional)</Form.Label>
+            <Form.Select
+              value={transferWorkerId || ''}
+              onChange={(e) => setTransferWorkerId(e.target.value || null)}
+            >
+              <option value="">No transfer suggestion</option>
+              {swDirectory.map((sw) => (
+                <option key={sw.userId} value={sw.userId}>
+                  {sw.fullName} {sw.availabilityStatus ? `· ${sw.availabilityStatus}` : ''}{' '}
+                  {sw.specializations?.length ? `· ${sw.specializations.join(', ')}` : ''}
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Text className="text-muted">
+              Admin will review the transfer suggestion based on availability and specialization.
+            </Form.Text>
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label>Transfer note (optional)</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={2}
+              value={transferNote}
+              onChange={(e) => setTransferNote(e.target.value)}
+              placeholder="Any context for admin when reviewing the transfer"
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setRejectModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" disabled={rejectSubmitting} onClick={handleRejectRequest}>
+            {rejectSubmitting ? 'Submitting…' : 'Reject request'}
           </Button>
         </Modal.Footer>
       </Modal>

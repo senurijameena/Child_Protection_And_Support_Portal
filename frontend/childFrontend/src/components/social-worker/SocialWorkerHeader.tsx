@@ -1,21 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Dropdown } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
-
-import './SocialWorkerHeader.css'
+import { getUploadBaseUrl } from '../../services/api'
+import { getAssignedRequests, getUserProfile } from '../../services/socialWorkerApi'
+import type { HelpRequestDTO } from '../../types/dashboard'
 import { SocialWorkerNotificationDropdown } from './SocialWorkerNotificationDropdown'
+import './SocialWorkerHeader.css'
+
+// Helper to get full photo URL (handles relative paths from backend)
+const getPhotoUrl = (photoPath?: string | null): string | null => {
+  if (!photoPath) return null
+  // If it's already an absolute URL, return as-is
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://') || photoPath.startsWith('data:')) {
+    return photoPath
+  }
+  // Prepend backend base URL for relative paths
+  const baseUrl = getUploadBaseUrl()
+  return `${baseUrl}${photoPath}`
+}
 
 type AvailabilityStatus = 'active' | 'busy' | 'offline'
 
-type SearchResultType = 'request' | 'user' | 'caseType'
-
 interface SearchResult {
   id: string
-  type: SearchResultType
   label: string
   subtitle?: string
-  href?: string
+  href: string
 }
 
 type StatusConfig = Record<
@@ -34,46 +45,6 @@ const STATUS_CONFIG: StatusConfig = {
   offline: { color: '#ef4444', bgColor: '#fee2e2', label: 'On Leave', icon: '🔴' },
 }
 
-// NOTE: These are placeholder search results for UI only.
-// Wire this up to a real search endpoint when available.
-const SEARCH_SAMPLE_DATA: SearchResult[] = [
-  {
-    id: 'REQ-001',
-    type: 'request',
-    label: 'Request REQ-001',
-    subtitle: 'Food Assistance • Anonymous',
-    href: '/social-worker/requests/REQ-001',
-  },
-  {
-    id: 'REQ-102',
-    type: 'request',
-    label: 'Request REQ-102',
-    subtitle: 'Counseling • Child Abuse',
-    href: '/social-worker/requests/REQ-102',
-  },
-  {
-    id: 'USER-CHANDRA',
-    type: 'user',
-    label: 'Chandra Perera',
-    subtitle: 'Public User • 2 open cases',
-    href: '/social-worker/users/USER-CHANDRA',
-  },
-  {
-    id: 'TYPE-COUNSELING',
-    type: 'caseType',
-    label: 'Counseling Sessions',
-    subtitle: 'All counseling-related follow-ups',
-    href: '/social-worker/follow-ups?type=counseling',
-  },
-  {
-    id: 'TYPE-ABUSE',
-    type: 'caseType',
-    label: 'Child Abuse Cases',
-    subtitle: 'High-priority protection cases',
-    href: '/social-worker/cases?type=CHILD_ABUSE',
-  },
-]
-
 export function SocialWorkerHeader() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -81,38 +52,75 @@ export function SocialWorkerHeader() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [assignedRequests, setAssignedRequests] = useState<HelpRequestDTO[]>([])
+  const [organization, setOrganization] = useState('')
+  const [profilePhoto, setProfilePhoto] = useState('')
 
+  useEffect(() => {
+    let mounted = true
+    if (!user?.userId) return
+    setSearchLoading(true)
+    Promise.all([
+      getAssignedRequests(user.userId),
+      getUserProfile(user.userId).catch(() => null),
+    ])
+      .then(([items, profile]) => {
+        if (!mounted) return
+        setAssignedRequests(items)
+        setOrganization(profile?.organization || user.organization || '')
+        setProfilePhoto(profile?.profilePhoto || user.profilePhoto || '')
+      })
+      .catch(() => {
+        if (!mounted) return
+        setAssignedRequests([])
+        setOrganization(user.organization || '')
+        setProfilePhoto(user.profilePhoto || '')
+      })
+      .finally(() => {
+        if (mounted) setSearchLoading(false)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [user?.userId, user?.organization, user?.profilePhoto])
 
   const handleStatusChange = (newStatus: AvailabilityStatus) => {
     setStatus(newStatus)
-    // TODO: Send status update to backend
     console.log(`Status changed to: ${newStatus}`)
   }
 
   const handleSearchResultClick = (result: SearchResult) => {
     setSearchQuery('')
     setSearchFocused(false)
-    if (result.href) {
-      navigate(result.href)
-    }
+    navigate(result.href)
   }
 
   const trimmedQuery = searchQuery.trim().toLowerCase()
-  const searchResults =
-    trimmedQuery.length === 0
-      ? []
-      : SEARCH_SAMPLE_DATA.filter((item) =>
-          `${item.label} ${item.subtitle ?? ''}`.toLowerCase().includes(trimmedQuery)
-        ).slice(0, 6)
+  const searchResults = useMemo<SearchResult[]>(() => {
+    if (!trimmedQuery) return []
+    return assignedRequests
+      .filter((req) =>
+        [req.id ?? '', req.trackingId ?? '', req.requesterName ?? '', req.helpType ?? '', req.status ?? '']
+          .join(' ')
+          .toLowerCase()
+          .includes(trimmedQuery)
+      )
+      .slice(0, 6)
+      .map((req) => ({
+        id: req.id,
+        label: `Request ${req.trackingId ?? req.id}`,
+        subtitle: `${req.helpType ?? 'Support Request'} • ${req.requesterName ?? 'Anonymous Requester'}`,
+        href: `/social-worker/requests/${req.id}`,
+      }))
+  }, [assignedRequests, trimmedQuery])
 
-  const showSearchDropdown = searchFocused && trimmedQuery.length > 0 && searchResults.length > 0
+  const showSearchDropdown = searchFocused && trimmedQuery.length > 0
 
   const handleLogout = () => {
     logout()
     navigate('/')
   }
-
-
 
   const getInitials = (fullName?: string) => {
     if (!fullName) return 'SW'
@@ -124,12 +132,13 @@ export function SocialWorkerHeader() {
   }
 
   const currentStatus = STATUS_CONFIG[status]
+  const displayName = user?.fullName || 'Social Worker'
+  const firstName = displayName.split(' ')[0] || 'User'
 
   return (
     <header className="sw-header sticky-top border-0 shadow-sm">
       <nav className="navbar navbar-expand-lg navbar-light px-3 px-lg-4 py-3 py-lg-3 h-auto">
         <div className="container-fluid px-0">
-          {/* Left: Logo and Brand */}
           <Link
             to="/social-worker"
             className="navbar-brand d-flex align-items-center gap-2 text-decoration-none me-4"
@@ -151,7 +160,6 @@ export function SocialWorkerHeader() {
             </div>
           </Link>
 
-          {/* Toggle Button for Mobile */}
           <button
             className="navbar-toggler border-0 float-end"
             type="button"
@@ -162,7 +170,6 @@ export function SocialWorkerHeader() {
             <span className="navbar-toggler-icon"></span>
           </button>
 
-          {/* Center: Global Search (desktop and tablet) */}
           <div className="d-none d-md-flex grow justify-content-center px-3">
             <div className="sw-search-wrapper position-relative w-100" style={{ maxWidth: '520px' }}>
               <span className="sw-search-icon position-absolute top-50 translate-middle-y ms-3">
@@ -171,12 +178,11 @@ export function SocialWorkerHeader() {
               <input
                 type="search"
                 className="form-control sw-search-input ps-5 pe-4 py-2"
-                placeholder="Search by request ID, user name, or type…"
+                placeholder="Search by request ID, user name, or type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => {
-                  // Small timeout so click events on dropdown can fire
                   setTimeout(() => setSearchFocused(false), 120)
                 }}
                 aria-label="Search by request ID, user name, or type"
@@ -184,42 +190,44 @@ export function SocialWorkerHeader() {
               />
               {showSearchDropdown && (
                 <div className="sw-search-dropdown shadow-lg rounded-3 mt-1">
-                  <div className="px-3 py-2 border-bottom small text-muted">
-                    Showing {searchResults.length} result
-                    {searchResults.length !== 1 ? 's' : ''} for "<strong>{searchQuery}</strong>"
-                  </div>
-                  <div className="sw-search-results">
-                    {searchResults.map((result) => (
-                      <button
-                        key={result.id}
-                        type="button"
-                        className="sw-search-result-item w-100 text-start border-0 bg-transparent px-3 py-2"
-                        onClick={() => handleSearchResultClick(result)}
-                      >
-                        <div className="d-flex align-items-start gap-2">
-                          <span className="sw-search-result-icon mt-1">
-                            {result.type === 'request' && '📄'}
-                            {result.type === 'user' && '👤'}
-                            {result.type === 'caseType' && '📂'}
-                          </span>
-                          <div className="grow">
-                            <div className="fw-600 small text-dark">{result.label}</div>
-                            {result.subtitle && (
-                              <div className="text-muted small">{result.subtitle}</div>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  {searchLoading ? (
+                    <div className="px-3 py-3 small text-muted">Loading assigned requests...</div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      <div className="px-3 py-2 border-bottom small text-muted">
+                        Showing {searchResults.length} result
+                        {searchResults.length !== 1 ? 's' : ''} for "<strong>{searchQuery}</strong>"
+                      </div>
+                      <div className="sw-search-results">
+                        {searchResults.map((result) => (
+                          <button
+                            key={result.id}
+                            type="button"
+                            className="sw-search-result-item w-100 text-start border-0 bg-transparent px-3 py-2"
+                            onClick={() => handleSearchResultClick(result)}
+                          >
+                            <div className="d-flex align-items-start gap-2">
+                              <span className="sw-search-result-icon mt-1">📄</span>
+                              <div className="grow">
+                                <div className="fw-600 small text-dark">{result.label}</div>
+                                {result.subtitle && (
+                                  <div className="text-muted small">{result.subtitle}</div>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="px-3 py-3 small text-muted">No matching assigned requests</div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right: Status Toggle, Notifications, Profile */}
           <div className="d-flex align-items-center gap-3 ms-auto">
-            {/* Status Toggle - Hidden on mobile */}
             <Dropdown className="d-none d-md-flex">
               <Dropdown.Toggle
                 as="button"
@@ -257,7 +265,6 @@ export function SocialWorkerHeader() {
 
             <SocialWorkerNotificationDropdown />
 
-            {/* Profile Dropdown */}
             <Dropdown>
               <Dropdown.Toggle
                 as="button"
@@ -271,13 +278,23 @@ export function SocialWorkerHeader() {
                     height: '36px',
                     backgroundColor: '#3b82f6',
                     fontSize: '0.85rem',
+                    overflow: 'hidden',
                   }}
                 >
-                  {getInitials(user?.fullName)}
+                  {getPhotoUrl(profilePhoto) ? (
+                    <img
+                      src={getPhotoUrl(profilePhoto)!}
+                      alt={`${displayName} profile`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    getInitials(user?.fullName)
+                  )}
                 </div>
-                <span className="d-none d-lg-inline text-dark fw-500" style={{ fontSize: '0.9rem' }}>
-                  {user?.fullName?.split(' ')[0] || 'User'}
-                </span>
+                <div className="d-none d-lg-flex flex-column align-items-start" style={{ lineHeight: 1.1 }}>
+                  <span className="text-dark fw-500" style={{ fontSize: '0.9rem' }}>{firstName}</span>
+                  <span className="text-muted" style={{ fontSize: '0.72rem' }}>{organization || 'Organization'}</span>
+                </div>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="mt-2 border-0 shadow-lg rounded-3">
                 <Dropdown.Item disabled className="px-3 py-2 small text-muted">
@@ -306,6 +323,8 @@ export function SocialWorkerHeader() {
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
+
+
           </div>
         </div>
       </nav>

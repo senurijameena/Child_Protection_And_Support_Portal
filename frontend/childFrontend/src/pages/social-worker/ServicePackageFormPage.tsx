@@ -109,7 +109,6 @@ export function ServicePackageFormPage() {
   const [priority, setPriority] = useState<PriorityLevel>('MEDIUM')
   const [addedItems, setAddedItems] = useState<string[]>([])
   const [itemNotes, setItemNotes] = useState<Record<string, string>>({})
-  const [resourceLinks, setResourceLinks] = useState<Record<string, string>>({})
   const [addSelectValue, setAddSelectValue] = useState('')
   const [customServiceInput, setCustomServiceInput] = useState('')
 
@@ -401,20 +400,7 @@ export function ServicePackageFormPage() {
                           setItemNotes((prev) => ({ ...prev, [item]: e.target.value }))
                         }
                       />
-                      <Form.Select
-                        size="sm"
-                        value={resourceLinks[item] ?? ''}
-                        onChange={(e) =>
-                          setResourceLinks((prev) => ({ ...prev, [item]: e.target.value }))
-                        }
-                      >
-                        <option value="">Link to resource (optional)</option>
-                        <option value="local-unit">Local child protection unit</option>
-                        <option value="hospital">Nearest hospital / clinic</option>
-                        <option value="ngo">Registered NGO partner</option>
-                        <option value="shelter">Emergency shelter</option>
-                        <option value="other">Other</option>
-                      </Form.Select>
+
                     </div>
                   ))}
                 </div>

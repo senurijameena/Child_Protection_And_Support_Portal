@@ -17,6 +17,8 @@ import com.example.childPortal.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -192,6 +194,20 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             String updatedBy) {
         return helpRequestRepository.findById(requestId)
                 .map(helpRequest -> {
+                    // Before allowing a request to be marked as COMPLETED (case closed),
+                    // ensure every collaborator-delivered service item is finished.
+                    if (status == HelpRequest.RequestStatus.COMPLETED
+                            && helpRequest.getAppliedPackageItemExecutions() != null
+                            && !helpRequest.getAppliedPackageItemExecutions().isEmpty()) {
+                        boolean allDone = helpRequest.getAppliedPackageItemExecutions().stream()
+                                .allMatch(ex -> "COMPLETED".equalsIgnoreCase(ex.getStatus()));
+                        if (!allDone) {
+                            throw new ResponseStatusException(
+                                    HttpStatus.CONFLICT,
+                                    "Case cannot be closed: one or more collaborator tasks are still in progress.");
+                        }
+                    }
+
                     HelpRequest.RequestStatus oldStatus = helpRequest.getStatus();
                     helpRequest.setStatus(status);
                     helpRequest.setLastUpdated(LocalDateTime.now());

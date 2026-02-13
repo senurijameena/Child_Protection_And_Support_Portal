@@ -27,7 +27,6 @@ export interface RegisterRequest {
   termsAccepted: boolean
   profilePhoto?: string
 
-  // Police Station
   stationName?: string
   district?: string
   city?: string
@@ -38,12 +37,12 @@ export interface RegisterRequest {
   allocatedResources?: string
   staffDetails?: string
 
-  // Social Worker
   licenseNumber?: string
   organization?: string
   specializations?: string
   yearsOfExperience?: string
   certificationDocumentUrl?: string
+  idDocumentUrl?: string
 }
 
 export const ROLE_LABELS: Record<Role, string> = {

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Card, Container, Row, Col, Badge, Button, Form } from 'react-bootstrap'
+import { Card, Container, Row, Col, Badge, Button, Form, Table } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getAssignedRequests,
   getMyFollowUps,
   updateRequestStatus,
+  getAvailableSocialWorkers,
+  requestHelpRequestTransfer,
   type FollowUpDTO,
 } from '../../services/socialWorkerApi'
 import type { HelpRequestDTO, HelpType } from '../../types/dashboard'
@@ -20,7 +22,7 @@ type CaseTypeFilter = 'ALL' | 'COUNSELING' | 'FINANCIAL' | 'MEDICAL' | 'SHELTER'
 type StatusFilter = 'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING' | 'OVERDUE'
 type ConsentFilter = 'ALL' | 'FULL' | 'PARTIAL' | 'ANONYMOUS'
 type ViewMode = 'CARD' | 'LIST'
-type RequestActionState = 'initial' | 'viewed' | 'accepted' | 'rejected'
+type RequestActionState = 'initial' | 'viewed' | 'accepted' | 'rejecting' | 'transfer_sent'
 
 const CASE_TYPE_MAP: Record<Exclude<CaseTypeFilter, 'ALL'>, HelpType[]> = {
   COUNSELING: ['COUNSELING'],
@@ -46,6 +48,9 @@ const getPriorityVariant = (priority?: string) => {
 
 const getStatusVariant = (status?: string) => {
   switch (status) {
+    case 'TRANSFERRED':
+    case 'TRANSFER_REQUESTED':
+      return 'info'
     case 'ASSIGNED':
       return 'info'
     case 'IN_PROGRESS':
@@ -87,6 +92,21 @@ const getHelpTypeIcon = (type?: HelpType) => {
   }
 }
 
+const getAvailabilityVariant = (status?: string) => {
+  const s = (status || '').toUpperCase()
+  if (s === 'AVAILABLE' || s === 'OPEN') return 'success'
+  if (s === 'LIMITED' || s === 'BUSY') return 'warning'
+  return 'secondary'
+}
+
+const getAvailabilityLabel = (status?: string) => {
+  const s = (status || '').toUpperCase()
+  if (s === 'AVAILABLE' || s === 'OPEN') return 'Available'
+  if (s === 'LIMITED' || s === 'BUSY') return 'Limited'
+  if (s === 'UNAVAILABLE') return 'Unavailable'
+  return 'Unknown'
+}
+
 export function SocialWorkerRequestsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -107,6 +127,14 @@ export function SocialWorkerRequestsPage() {
   const [requestActionStates, setRequestActionStates] = useState<Record<string, RequestActionState>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const [showApplyPackageModal, setShowApplyPackageModal] = useState<string | null>(null)
+  const [availableSW, setAvailableSW] = useState<
+    Array<{ userId: string; fullName: string; availabilityStatus?: string; specializations?: string[]; serviceArea?: string }>
+  >([])
+  const [swLoading, setSwLoading] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejectTargetSw, setRejectTargetSw] = useState('')
+  const [rejectSubmittingId, setRejectSubmittingId] = useState<string | null>(null)
+  const [rejectError, setRejectError] = useState<string | null>(null)
 
   const itemsPerPage = viewMode === 'CARD' ? 6 : 10
 
@@ -177,6 +205,14 @@ export function SocialWorkerRequestsPage() {
 
     return { overdueRequestIds: overdue, requestDueMap: dueMap }
   }, [followUps, todayStart])
+
+  const availableAndRelevantSW = useMemo(
+    () =>
+      availableSW.filter(
+        (sw) => (sw.availabilityStatus || '').toUpperCase() !== 'UNAVAILABLE'
+      ),
+    [availableSW]
+  )
 
   const resetFilters = () => {
     setSearch('')
@@ -369,10 +405,22 @@ export function SocialWorkerRequestsPage() {
     return requestActionStates[reqId] || 'initial'
   }
 
+  const ensureAvailableSW = async () => {
+    if (availableSW.length > 0 || swLoading) return
+    setSwLoading(true)
+    try {
+      const list = await getAvailableSocialWorkers()
+      setAvailableSW(Array.isArray(list) ? list : [])
+    } catch {
+      setAvailableSW([])
+    } finally {
+      setSwLoading(false)
+    }
+  }
+
   const maskUserIdForTable = (id: string | undefined, anonymous: boolean): string => {
     if (anonymous || !id) return 'Anonymous'
-    if (id.length <= 8) return id
-    return `${id.slice(0, 4)}…${id.slice(-4)}`
+    return id // non-anonymous: show user id (e.g. PU-0001)
   }
 
 
@@ -400,26 +448,41 @@ export function SocialWorkerRequestsPage() {
   }
 
   const handleDecline = async (req: HelpRequestDTO) => {
-    // Set state to 'rejected' to show only user and request details
+    // Move into rejection flow (reason + transfer)
     setRequestActionStates((prev) => ({
       ...prev,
-      [req.id]: 'rejected',
+      [req.id]: 'rejecting',
     }))
-    setUpdatingId(req.id)
+    setSelectedRequestId(req.id)
+    setRejectReason('')
+    setRejectTargetSw('')
+    setRejectError(null)
+    void ensureAvailableSW()
+  }
+
+  const handleSubmitTransferForRequest = async (req: HelpRequestDTO) => {
+    if (!rejectReason.trim() || !rejectTargetSw) {
+      setRejectError('Please provide a reason and select a social worker.')
+      return
+    }
+    setRejectSubmittingId(req.id)
+    setRejectError(null)
     try {
-      // Optimistically mark as rejected
-      setRequests((prev) =>
-        prev.map((r) =>
-          r.id === req.id
-            ? {
-              ...r,
-              status: 'REJECTED',
-            }
-            : r
-        )
-      )
+      await requestHelpRequestTransfer({
+        helpRequestId: req.id,
+        requestedAssigneeId: rejectTargetSw,
+        reason: rejectReason.trim(),
+      })
+      setRequestActionStates((prev) => ({
+        ...prev,
+        [req.id]: 'transfer_sent',
+      }))
+      setRejectReason('')
+      setRejectTargetSw('')
+    } catch (err) {
+      setRejectError(err instanceof Error ? err.message : 'Failed to send transfer request')
     } finally {
-      setUpdatingId(null)
+      setRejectSubmittingId(null)
     }
   }
 
@@ -555,9 +618,9 @@ export function SocialWorkerRequestsPage() {
         </Col>
       </Row>
 
-      {/* List + Optional Right Panel */}
+      {/* List + Full-width Request Overview (below) */}
       <Row className="g-4">
-        <Col xs={12} lg={selectedRequest ? 8 : 12}>
+        <Col xs={12}>
           {loading && filteredAndSortedRequests.length === 0 ? (
             <Card className="sw-card border-0">
               <Card.Body className="p-5 text-center text-muted">
@@ -581,7 +644,8 @@ export function SocialWorkerRequestsPage() {
                     const helpLabel = req.helpType ? HELP_TYPE_LABELS[req.helpType] : 'Support request'
                     const consent = getConsentLabel(req)
                     const actionState = getRequestActionState(req.id)
-                    const isRejectedState = actionState === 'rejected'
+                    const isRejectingState = actionState === 'rejecting'
+                    const isTransferSent = actionState === 'transfer_sent'
                     const isAcceptedState = actionState === 'accepted'
                     const isViewedState = actionState === 'viewed'
                     const isInitialState = actionState === 'initial'
@@ -589,13 +653,15 @@ export function SocialWorkerRequestsPage() {
                     return (
                       <Col xs={12} md={6} xl={4} key={req.id}>
                         <Card
-                          className={`sw-card h-100 hover-lift cursor-pointer ${isSelected ? 'border-primary' : ''
-                            } ${isRejectedState ? 'border-danger' : ''} ${isAcceptedState ? 'border-success' : ''}`}
+                            className={`sw-card h-100 hover-lift cursor-pointer ${isSelected ? 'border-primary' : ''
+                            } ${isRejectingState ? 'border-warning' : ''} ${isTransferSent ? 'border-success' : ''} ${isAcceptedState ? 'border-success' : ''}`}
                           style={
                             isOverdue
                               ? { backgroundColor: 'rgba(248, 113, 113, 0.04)', borderColor: '#fecaca' }
-                              : isRejectedState
-                                ? { backgroundColor: 'rgba(248, 113, 113, 0.08)' }
+                              : isRejectingState
+                                ? { backgroundColor: 'rgba(234, 179, 8, 0.08)' }
+                                : isTransferSent
+                                  ? { backgroundColor: 'rgba(34, 197, 94, 0.08)' }
                                 : isAcceptedState
                                   ? { backgroundColor: 'rgba(34, 197, 94, 0.08)' }
                                   : undefined
@@ -639,8 +705,12 @@ export function SocialWorkerRequestsPage() {
                               </div>
                               <div className="d-flex justify-content-between align-items-center">
                                 <span className="text-muted">Status</span>
-                                <Badge bg={getStatusVariant(req.status)}>
-                                  {req.status ?? 'ASSIGNED'}
+                                <Badge
+                                  bg={getStatusVariant(
+                                    isTransferSent ? 'TRANSFERRED' : req.status
+                                  )}
+                                >
+                                  {isTransferSent ? 'Transferred' : (req.status ?? 'ASSIGNED')}
                                 </Badge>
                               </div>
                               <div className="d-flex justify-content-between align-items-center mt-1">
@@ -651,15 +721,15 @@ export function SocialWorkerRequestsPage() {
                               </div>
                             </div>
 
-                            {/* REJECTED STATE - Show only status message, hide all buttons */}
-                            {isRejectedState && (
+                            {/* TRANSFER SENT STATE */}
+                            {isTransferSent && (
                               <div className="text-center py-3">
                                 <div className="mb-2">
-                                  <span style={{ fontSize: '2rem' }}>❌</span>
+                                  <span style={{ fontSize: '2rem' }}>📤</span>
                                 </div>
-                                <div className="fw-600 text-danger mb-1">Request Rejected</div>
+                                <div className="fw-600 text-success mb-1">Transfer requested</div>
                                 <div className="small text-muted">
-                                  This request has been declined.
+                                  Sent to admin with your notes.
                                 </div>
                               </div>
                             )}
@@ -681,7 +751,7 @@ export function SocialWorkerRequestsPage() {
                               </div>
                             )}
 
-                            {/* VIEWED STATE - Show large Accept and Reject buttons */}
+                            {/* VIEWED STATE - Show large Accept and Transfer buttons */}
                             {isViewedState && (
                               <div className="d-flex flex-column gap-2 mt-2">
                                 <div className="d-flex gap-2 justify-content-center">
@@ -709,7 +779,7 @@ export function SocialWorkerRequestsPage() {
                                       void handleDecline(req)
                                     }}
                                   >
-                                    ✗ Reject
+                                    ⇄ Transfer
                                   </Button>
                                 </div>
                                 <Button
@@ -722,6 +792,96 @@ export function SocialWorkerRequestsPage() {
                                 >
                                   Open full case details
                                 </Button>
+                              </div>
+                            )}
+
+                            {/* REJECTING STATE - reason + transfer target (table view) */}
+                            {isRejectingState && (
+                              <div className="d-flex flex-column gap-2 mt-2">
+                                <Form.Group className="mb-1">
+                                  <Form.Label className="small text-muted fw-600">Reason</Form.Label>
+                                  <Form.Control
+                                    as="textarea"
+                                    rows={2}
+                                    value={rejectReason}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Explain why you cannot take this case"
+                                  />
+                                </Form.Group>
+                                <div className="small text-muted fw-600">Choose a social worker</div>
+                                {availableAndRelevantSW.length === 0 ? (
+                                  <div className="small text-muted">No available social workers.</div>
+                                ) : (
+                                  <div className="table-responsive">
+                                    <Table hover size="sm" className="mb-2 align-middle">
+                                      <thead className="small text-muted">
+                                        <tr>
+                                          <th>Social worker</th>
+                                          <th>Availability</th>
+                                          <th>Specializations</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {availableAndRelevantSW.map((sw) => {
+                                          const selected = sw.userId === rejectTargetSw
+                                          return (
+                                            <tr
+                                              key={sw.userId}
+                                              className={selected ? 'table-active' : undefined}
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                setRejectTargetSw(sw.userId)
+                                              }}
+                                              style={{ cursor: 'pointer' }}
+                                            >
+                                              <td className="small fw-600">{sw.fullName}</td>
+                                              <td>
+                                                <Badge bg={getAvailabilityVariant(sw.availabilityStatus)}>
+                                                  {getAvailabilityLabel(sw.availabilityStatus)}
+                                                </Badge>
+                                              </td>
+                                              <td className="small">
+                                                {sw.specializations && sw.specializations.length > 0
+                                                  ? sw.specializations.slice(0, 2).join(', ')
+                                                  : '—'}
+                                              </td>
+                                            </tr>
+                                          )
+                                        })}
+                                      </tbody>
+                                    </Table>
+                                  </div>
+                                )}
+                                {rejectError && (
+                                  <div className="alert alert-danger py-2 mb-0">{rejectError}</div>
+                                )}
+                                <div className="d-flex gap-2">
+                                  <Button
+                                    variant="outline-secondary"
+                                    className="flex-fill"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setRequestActionStates((prev) => ({ ...prev, [req.id]: 'viewed' }))
+                                      setRejectReason('')
+                                      setRejectTargetSw('')
+                                      setRejectError(null)
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    variant="primary"
+                                    className="flex-fill"
+                                    disabled={rejectSubmittingId === req.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      void handleSubmitTransferForRequest(req)
+                                    }}
+                                  >
+                                    {rejectSubmittingId === req.id ? 'Sending…' : 'Transfer Request'}
+                                  </Button>
+                                </div>
                               </div>
                             )}
 
@@ -821,10 +981,10 @@ export function SocialWorkerRequestsPage() {
           )}
         </Col>
 
-        {/* Right sidebar / quick info */}
+        {/* Full-width Request overview under list */}
         {selectedRequest && (
-          <Col xs={12} lg={4}>
-            <Card className="sw-card border-0 h-100">
+          <Col xs={12}>
+            <Card className="sw-card border-0">
               <Card.Header className="bg-white border-0 pt-4 pb-3">
                 <h5 className="mb-0 fw-700">Request overview</h5>
               </Card.Header>
@@ -874,22 +1034,113 @@ export function SocialWorkerRequestsPage() {
                 </div>
 
                 {selectedRequest.status === 'ASSIGNED' && (
-                  <div className="d-flex flex-column gap-2">
-                    <Button
-                      variant="success"
-                      className="fw-600 py-2"
-                      onClick={() => handleAccept(selectedRequest)}
-                    >
-                      Accept & Start
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      className="fw-600 py-2"
-                      onClick={() => handleDecline(selectedRequest)}
-                    >
-                      Reject
-                    </Button>
-                  </div>
+                  <>
+                    {getRequestActionState(selectedRequest.id) === 'transfer_sent' && (
+                      <div className="alert alert-success small">
+                        Transfer request sent to admin with your reason.
+                      </div>
+                    )}
+
+                    {getRequestActionState(selectedRequest.id) === 'rejecting' ? (
+                      <div className="d-flex flex-column gap-3">
+                        <Form.Group>
+                          <Form.Label className="small text-muted fw-600">Reason</Form.Label>
+                          <Form.Control
+                            as="textarea"
+                            rows={3}
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            placeholder="Explain why you cannot take this case"
+                          />
+                        </Form.Group>
+                        <div>
+                          <div className="small text-muted fw-600 mb-2">Choose a social worker</div>
+                          {swLoading && <div className="small text-muted">Loading...</div>}
+                          {!swLoading && availableAndRelevantSW.length === 0 && (
+                            <div className="small text-muted">No available social workers found.</div>
+                          )}
+                          {!swLoading && availableAndRelevantSW.length > 0 && (
+                            <div className="table-responsive">
+                              <Table hover size="sm" className="mb-2 align-middle">
+                                <thead className="small text-muted">
+                                  <tr>
+                                    <th>Social worker</th>
+                                    <th>Availability</th>
+                                    <th>Specializations</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {availableAndRelevantSW.map((sw) => {
+                                    const selected = sw.userId === rejectTargetSw
+                                    return (
+                                      <tr
+                                        key={sw.userId}
+                                        className={selected ? 'table-active' : undefined}
+                                        onClick={() => setRejectTargetSw(sw.userId)}
+                                        style={{ cursor: 'pointer' }}
+                                      >
+                                        <td className="small fw-600">{sw.fullName}</td>
+                                        <td>
+                                          <Badge bg={getAvailabilityVariant(sw.availabilityStatus)}>
+                                            {getAvailabilityLabel(sw.availabilityStatus)}
+                                          </Badge>
+                                        </td>
+                                        <td className="small">
+                                          {sw.specializations && sw.specializations.length > 0
+                                            ? sw.specializations.slice(0, 3).join(', ')
+                                            : '—'}
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </Table>
+                            </div>
+                          )}
+                        </div>
+                        {rejectError && <div className="alert alert-danger py-2 mb-0">{rejectError}</div>}
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="outline-secondary"
+                            className="flex-fill"
+                            onClick={() => {
+                              setRequestActionStates((prev) => ({ ...prev, [selectedRequest.id]: 'viewed' }))
+                              setRejectReason('')
+                              setRejectTargetSw('')
+                              setRejectError(null)
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="primary"
+                            className="flex-fill"
+                            disabled={rejectSubmittingId === selectedRequest.id}
+                            onClick={() => void handleSubmitTransferForRequest(selectedRequest)}
+                          >
+                            {rejectSubmittingId === selectedRequest.id ? 'Sending…' : 'Transfer Request'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : getRequestActionState(selectedRequest.id) === 'transfer_sent' ? null : (
+                      <div className="d-flex flex-column gap-2">
+                        <Button
+                          variant="success"
+                          className="fw-600 py-2"
+                          onClick={() => handleAccept(selectedRequest)}
+                        >
+                          Accept & Start
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          className="fw-600 py-2"
+                          onClick={() => handleDecline(selectedRequest)}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {selectedRequest.status === 'IN_PROGRESS' && (

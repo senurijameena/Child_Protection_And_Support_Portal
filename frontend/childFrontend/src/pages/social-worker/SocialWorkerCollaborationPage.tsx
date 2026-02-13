@@ -71,6 +71,8 @@ interface ActiveCollaboration {
   id: string
   helpRequestId: string
   requestId: string
+  trackingId?: string
+  ownerUserId?: string
   role: 'FULL_ACCESS' | 'VIEW_ONLY' | 'SERVICE_ONLY'
   ownerName: string
   category: CollaborationRequest['requestCategory']
@@ -90,6 +92,12 @@ const STATUS_VARIANTS: Record<ActiveCollaboration['status'], string> = {
   ACTIVE: 'success',
   ON_HOLD: 'warning',
   PENDING_REVIEW: 'info',
+}
+
+const getCollaborationPriority = (pendingTasks: number) => {
+  if (pendingTasks >= 5) return 'HIGH'
+  if (pendingTasks >= 1) return 'MEDIUM'
+  return 'LOW'
 }
 
 // Types for past collaborations
@@ -134,7 +142,8 @@ const OUTCOME_VARIANTS: Record<PastCollaboration['outcome'], string> = {
 export function SocialWorkerCollaborationPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('all')
+  const currentUserId = user?.userId
+  const [activeTab, setActiveTab] = useState<'new' | 'participating' | 'past'>('new')
   const [newRequests, setNewRequests] = useState<PendingCollaborationRequestDTO[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
   const [requestsError, setRequestsError] = useState<string | null>(null)
@@ -158,6 +167,11 @@ export function SocialWorkerCollaborationPage() {
   const [createSubmitting, setCreateSubmitting] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejectReasonPreset, setRejectReasonPreset] = useState<'WORKLOAD' | 'SPECIALIZATION' | 'DISTRICT' | 'OTHER' | ''>('')
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null)
+  const [rejectError, setRejectError] = useState<string | null>(null)
   const [myRequests, setMyRequests] = useState<HelpRequestDTO[]>([])
   const [loadingMyRequests, setLoadingMyRequests] = useState(false)
   const [myRequestsError, setMyRequestsError] = useState<string | null>(null)
@@ -208,7 +222,13 @@ export function SocialWorkerCollaborationPage() {
     navigate(`/social-worker/requests/${helpRequestId}?mode=collaborator`)
   }
 
+  const handleMessageWorker = (targetUserId?: string | null) => {
+    if (!targetUserId || !currentUserId || targetUserId === currentUserId) return
+    navigate(`/social-worker/messages?userId=${encodeURIComponent(targetUserId)}`)
+  }
+
   const handleViewSummary = (request: PendingCollaborationRequestDTO) => {
+    // For new collaboration invitations, show a privacy-safe preview in a modal (no PII)
     setSelectedRequest(request)
     setShowSummaryModal(true)
   }
@@ -231,7 +251,10 @@ export function SocialWorkerCollaborationPage() {
             {
               id: collaborationId,
               helpRequestId: acceptedReq.helpRequestId || acceptedReq.requestId || '',
-              requestId: acceptedReq.requestId || acceptedReq.helpRequestId || acceptedReq.requestTrackingId || '',
+              // Prefer human-friendly tracking ID (e.g. HELP-0001) when available
+              requestId: acceptedReq.requestTrackingId || acceptedReq.requestId || acceptedReq.helpRequestId || '',
+              trackingId: acceptedReq.requestTrackingId,
+              ownerUserId: acceptedReq.ownerUserId,
               role: (acceptedReq.permission?.toUpperCase() || 'VIEW_ONLY') as ActiveCollaboration['role'],
               ownerName: acceptedReq.ownerName || 'Social Worker',
               category,
@@ -252,12 +275,19 @@ export function SocialWorkerCollaborationPage() {
     }
   }
 
-  const handleReject = async (collaborationId: string) => {
+  const handleReject = async (collaborationId: string, reason: string) => {
+    if (!reason.trim()) {
+      setRejectError('Reason is required.')
+      return
+    }
     setProcessingId(collaborationId)
     try {
-      await rejectHelpRequestCollaborationRequest(collaborationId)
+      await rejectHelpRequestCollaborationRequest(collaborationId, reason.trim())
       setNewRequests((prev) => prev.filter((r) => r.collaborationId !== collaborationId))
-      setShowSummaryModal(false)
+      setShowRejectModal(false)
+      setRejectTargetId(null)
+      setRejectReason('')
+      setRejectError(null)
     } catch (err) {
       console.error('Failed to reject collaboration:', err)
       alert(err instanceof Error ? err.message : 'Failed to reject collaboration')
@@ -357,98 +387,144 @@ export function SocialWorkerCollaborationPage() {
           <p className="mt-3 mb-0">No new collaboration requests at the moment.</p>
         </div>
       ) : (
-        <Row className="g-3">
-          {newRequests.map((request) => {
-            const category = (request.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
-            const role = (request.permission?.toUpperCase() || 'VIEW_ONLY') as CollaborationRequest['requestedRole']
-            const isProcessing = processingId === request.collaborationId
-            
-            return (
-              <Col xs={12} lg={6} xl={4} key={request.collaborationId}>
-                <Card className="h-100 border shadow-sm hover-lift">
-                  <Card.Body className="p-3">
-                    {/* Header */}
-                    <div className="d-flex justify-content-between align-items-start mb-3">
+        <>
+          <p className="text-muted small mb-3">
+            Another social worker invited you to collaborate on these requests. You have not accepted or rejected them yet.
+          </p>
+          <Row className="g-3">
+            {newRequests.map((request) => {
+              const category = (request.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
+              const role = (request.permission?.toUpperCase() || 'VIEW_ONLY') as CollaborationRequest['requestedRole']
+              const isProcessing = processingId === request.collaborationId
+              const requestId =
+                request.requestTrackingId || request.requestId || request.helpRequestId || '-'
+
+              return (
+                <Col xs={12} md={6} key={request.collaborationId}>
+                  <Card className="h-100 border-0 shadow-sm">
+                    <Card.Body className="d-flex flex-column justify-content-between">
                       <div>
-                        <span className="text-muted small">Request ID</span>
-                        <h6 className="fw-700 mb-0">{request.requestId || request.helpRequestId}</h6>
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div>
+                            <div className="small text-muted">Request ID</div>
+                            <div className="fw-600">{requestId}</div>
+                          </div>
+                          <Badge bg={CATEGORY_VARIANTS[category] || 'secondary'}>
+                            {CATEGORY_LABELS[category] || request.requestCategory || 'Other'}
+                          </Badge>
+                        </div>
+                        <div className="small text-muted mb-1">
+                          Category:{' '}
+                          <span className="fw-500">
+                            {CATEGORY_LABELS[category] || request.requestCategory || 'Other'}
+                          </span>
+                        </div>
+                        <div className="small text-muted mb-1">
+                          Request owner:{' '}
+                          <span className="fw-500">
+                            {request.ownerName || 'Social Worker'}
+                          </span>
+                        </div>
+                        <div className="small text-muted mb-1">
+                          Requested role:{' '}
+                          <Badge bg={ROLE_VARIANTS[role] || 'secondary'} className="fw-normal ms-1">
+                            {ROLE_LABELS[role] || request.permission || 'View Only'}
+                          </Badge>
+                        </div>
+                        <div className="small text-muted mb-1">
+                          Requested date:{' '}
+                          <span className="fw-500">
+                            {request.requestedAt ? formatDate(request.requestedAt) : '-'}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="small text-muted mb-1">Reason for collaboration</div>
+                          <div className="bg-light rounded-3 p-2 small" style={{ minHeight: 48 }}>
+                            {request.reason || 'No reason provided'}
+                          </div>
+                        </div>
                       </div>
-                      <Badge bg={CATEGORY_VARIANTS[category] || 'secondary'}>
-                        {CATEGORY_LABELS[category] || request.requestCategory || 'Other'}
-                      </Badge>
-                    </div>
+                      <div className="d-flex flex-wrap gap-2 mt-3">
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          className="flex-grow-1"
+                          onClick={() => handleViewSummary(request)}
+                          disabled={isProcessing}
+                        >
+                          View Summary
+                        </Button>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          className="flex-grow-1"
+                          onClick={() => handleAccept(request.collaborationId)}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? <Spinner size="sm" animation="border" /> : 'Accept'}
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          className="flex-grow-1"
+                          onClick={() => {
+                            setSelectedRequest(request)
+                            setRejectTargetId(request.collaborationId)
+                            setRejectReason('');
+                            setRejectError(null)
+                            setShowRejectModal(true)
+                          }}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? <Spinner size="sm" animation="border" /> : 'Reject'}
+                        </Button>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              )
+            })}
+          </Row>
 
-                    {/* Details */}
-                    <div className="mb-3">
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <span className="text-muted small" style={{ minWidth: 100 }}>Owner:</span>
-                        <span className="fw-600 small">{request.ownerName || 'Social Worker'}</span>
-                      </div>
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <span className="text-muted small" style={{ minWidth: 100 }}>District:</span>
-                        <span className="small">{request.district || 'N/A'}</span>
-                      </div>
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <span className="text-muted small" style={{ minWidth: 100 }}>Role:</span>
-                        <Badge bg={ROLE_VARIANTS[role] || 'secondary'} className="fw-normal">
-                          {ROLE_LABELS[role] || request.permission || 'View Only'}
-                        </Badge>
-                      </div>
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <span className="text-muted small" style={{ minWidth: 100 }}>Requested:</span>
-                        <span className="small">{request.requestedAt ? formatDate(request.requestedAt) : 'N/A'}</span>
-                      </div>
-                    </div>
+          {selectedRequest && (
+            <Card className="mt-4 border-0 shadow-sm">
+              <Card.Header className="bg-light border-0 pb-2">
+                <h6 className="mb-0 fw-700">
+                  Collaboration preview
+                  <span className="text-muted fw-normal ms-2 small">(read-only)</span>
+                </h6>
+              </Card.Header>
+              <Card.Body>
+                <div className="mb-3">
+                  <div className="text-muted small mb-1">Short problem summary</div>
+                  <div className="bg-light rounded-3 p-3">
+                    <p className="mb-0 text-dark">
+                      {selectedRequest.problemSummary || 'No summary available'}
+                    </p>
+                  </div>
+                </div>
 
-                    {/* Reason */}
-                    <div className="mb-3">
-                      <span className="text-muted small d-block mb-1">Reason for collaboration:</span>
-                      <p className="small mb-0 text-dark" style={{ 
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}>
-                        {request.reason || 'No reason provided'}
-                      </p>
-                    </div>
+                <div className="mb-3">
+                  <div className="text-muted small mb-1">Current status</div>
+                  <div className="bg-light rounded-3 p-3">
+                    <p className="mb-0 text-dark">
+                      {selectedRequest.currentProgress || 'No status information available'}
+                    </p>
+                  </div>
+                </div>
 
-                    {/* Actions */}
-                    <div className="d-flex flex-wrap gap-2 pt-2 border-top">
-                      <Button
-                        variant="success"
-                        size="sm"
-                        className="rounded-pill px-3"
-                        onClick={() => handleAccept(request.collaborationId)}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? <Spinner size="sm" animation="border" /> : '✓ Accept'}
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        className="rounded-pill px-3"
-                        onClick={() => handleReject(request.collaborationId)}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? <Spinner size="sm" animation="border" /> : '✗ Reject'}
-                      </Button>
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        className="rounded-pill px-3 ms-auto"
-                        onClick={() => handleViewSummary(request)}
-                        disabled={isProcessing}
-                      >
-                        View Summary
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            )
-          })}
-        </Row>
+                <div>
+                  <div className="text-muted small mb-1">Why collaboration is needed</div>
+                  <div className="bg-light rounded-3 p-3">
+                    <p className="mb-0 text-dark">
+                      {selectedRequest.reason || 'No reason provided'}
+                    </p>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+          )}
+        </>
       )}
     </div>
   )
@@ -469,21 +545,24 @@ export function SocialWorkerCollaborationPage() {
                 <th className="fw-600 text-muted small py-3">Role</th>
                 <th className="fw-600 text-muted small py-3">Owner</th>
                 <th className="fw-600 text-muted small py-3">Category</th>
-                <th className="fw-600 text-muted small py-3 text-center">Pending Tasks</th>
+                <th className="fw-600 text-muted small py-3 text-center">Your Pending Tasks</th>
                 <th className="fw-600 text-muted small py-3">Last Update</th>
-                <th className="fw-600 text-muted small py-3 pe-3">Status</th>
+                <th className="fw-600 text-muted small py-3">Priority</th>
+                <th className="fw-600 text-muted small py-3">Status</th>
               </tr>
             </thead>
             <tbody>
               {activeCollaborations.map((collab) => (
                 <tr
                   key={collab.id}
+                  className="border-bottom"
                   onClick={() => handleRowClick(collab.helpRequestId)}
                   style={{ cursor: 'pointer' }}
-                  className="border-bottom"
                 >
                   <td className="py-3 ps-3">
-                    <span className="fw-600 text-primary">{collab.requestId}</span>
+                    <span className="fw-600 text-primary">
+                      {collab.trackingId || collab.requestId}
+                    </span>
                   </td>
                   <td className="py-3">
                     <Badge bg={ROLE_VARIANTS[collab.role]} className="fw-normal">
@@ -508,9 +587,22 @@ export function SocialWorkerCollaborationPage() {
                     )}
                   </td>
                   <td className="py-3">
-                    <span className="small text-muted">{formatRelativeTime(collab.lastUpdate)}</span>
+                    <span className="small text-muted">
+                      {formatRelativeTime(collab.lastUpdate)}
+                    </span>
                   </td>
-                  <td className="py-3 pe-3">
+                  <td className="py-3">
+                    {(() => {
+                      const p = getCollaborationPriority(collab.pendingTasks)
+                      const variant = p === 'HIGH' ? 'danger' : p === 'MEDIUM' ? 'warning' : 'secondary'
+                      return (
+                        <Badge bg={variant} className="fw-normal">
+                          {p.charAt(0) + p.slice(1).toLowerCase()}
+                        </Badge>
+                      )
+                    })()}
+                  </td>
+                  <td className="py-3">
                     <Badge bg={STATUS_VARIANTS[collab.status]} className="fw-normal">
                       {STATUS_LABELS[collab.status]}
                     </Badge>
@@ -561,13 +653,16 @@ export function SocialWorkerCollaborationPage() {
                   <th className="fw-600 text-muted small py-3">Category</th>
                   <th className="fw-600 text-muted small py-3">Role</th>
                   <th className="fw-600 text-muted small py-3">Status</th>
+                  <th className="fw-600 text-muted small py-3 pe-3 text-end">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {activeCollaborations.map((collab) => (
                   <tr key={collab.id} className="border-bottom">
                     <td className="py-3 ps-3">
-                      <span className="fw-600 text-primary">{collab.requestId}</span>
+                      <span className="fw-600 text-primary">
+                        {collab.trackingId || collab.requestId}
+                      </span>
                     </td>
                     <td className="py-3 small">{collab.ownerName}</td>
                     <td className="py-3">
@@ -584,6 +679,30 @@ export function SocialWorkerCollaborationPage() {
                       <Badge bg={STATUS_VARIANTS['ACTIVE']} className="fw-normal">
                         Active
                       </Badge>
+                    </td>
+                    <td className="py-3 pe-3 text-end">
+                      <div className="d-flex justify-content-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline-primary"
+                          className="rounded-pill"
+                          onClick={() => handleRowClick(collab.helpRequestId)}
+                        >
+                          View
+                        </Button>
+                        {collab.ownerUserId &&
+                          currentUserId &&
+                          collab.ownerUserId !== currentUserId && (
+                            <Button
+                              size="sm"
+                              variant="outline-secondary"
+                              className="rounded-pill"
+                              onClick={() => handleMessageWorker(collab.ownerUserId)}
+                            >
+                              Message
+                            </Button>
+                          )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -726,17 +845,6 @@ export function SocialWorkerCollaborationPage() {
               <div className="d-flex border-bottom">
                 <button
                   type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-600 ${
-                    activeTab === 'all'
-                      ? 'text-primary border-bottom border-primary border-2'
-                      : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('all')}
-                >
-                  All Collaborations
-                </button>
-                <button
-                  type="button"
                   className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-600 position-relative ${
                     activeTab === 'new'
                       ? 'text-primary border-bottom border-primary border-2'
@@ -746,9 +854,9 @@ export function SocialWorkerCollaborationPage() {
                 >
                   New Requests
                   {newRequests.length > 0 && (
-                    <Badge 
-                      bg="danger" 
-                      pill 
+                    <Badge
+                      bg="danger"
+                      pill
                       className="ms-2"
                       style={{ fontSize: '0.65rem' }}
                     >
@@ -765,15 +873,26 @@ export function SocialWorkerCollaborationPage() {
                   }`}
                   onClick={() => setActiveTab('participating')}
                 >
-                  Participating
+                  Active Collaborations
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-600 ${
+                    activeTab === 'past'
+                      ? 'text-primary border-bottom border-primary border-2'
+                      : 'text-muted'
+                  }`}
+                  onClick={() => setActiveTab('past')}
+                >
+                  Past Collaborations
                 </button>
               </div>
 
               {/* Tab Content */}
               <div className="p-4">
-                {activeTab === 'all' && renderAllCollaborationsTab()}
                 {activeTab === 'new' && renderNewRequestsTab()}
                 {activeTab === 'participating' && renderParticipatingTab()}
+                {activeTab === 'past' && renderAllCollaborationsTab()}
               </div>
             </Card.Body>
           </Card>
@@ -1051,7 +1170,12 @@ export function SocialWorkerCollaborationPage() {
                   <Button
                     variant="outline-danger"
                     className="rounded-pill px-4"
-                    onClick={() => handleReject(selectedRequest.collaborationId)}
+                    onClick={() => {
+                      setRejectTargetId(selectedRequest.collaborationId)
+                      setRejectReason('')
+                      setRejectError(null)
+                      setShowRejectModal(true)
+                    }}
                     disabled={isProcessing}
                   >
                     {isProcessing ? <Spinner size="sm" animation="border" /> : 'Reject'}
@@ -1069,6 +1193,123 @@ export function SocialWorkerCollaborationPage() {
             )
           })()}
         </Modal.Body>
+      </Modal>
+
+      {/* Reject reason modal */}
+      <Modal
+        show={showRejectModal}
+        onHide={() => {
+          if (processingId) return
+          setShowRejectModal(false)
+          setRejectError(null)
+          setRejectReason('')
+          setRejectReasonPreset('')
+        }}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="fw-700">Reject collaboration request</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="small text-muted mb-3">
+            Please select a reason for rejecting this collaboration. The owner social worker may see this message.
+          </p>
+          <div className="mb-3">
+            <label className="small fw-600 text-muted d-block mb-1">Reason (required)</label>
+            <div className="d-flex flex-column gap-1 small">
+              <Form.Check
+                type="radio"
+                id="reject-workload"
+                label="Workload high"
+                checked={rejectReasonPreset === 'WORKLOAD'}
+                disabled={!!processingId}
+                onChange={() => {
+                  setRejectReasonPreset('WORKLOAD')
+                  setRejectReason('Workload high / not able to take more cases at the moment.')
+                  setRejectError(null)
+                }}
+              />
+              <Form.Check
+                type="radio"
+                id="reject-specialization"
+                label="Not my specialization"
+                checked={rejectReasonPreset === 'SPECIALIZATION'}
+                disabled={!!processingId}
+                onChange={() => {
+                  setRejectReasonPreset('SPECIALIZATION')
+                  setRejectReason('Not my specialization / another worker may be better suited.')
+                  setRejectError(null)
+                }}
+              />
+              <Form.Check
+                type="radio"
+                id="reject-district"
+                label="Not my district"
+                checked={rejectReasonPreset === 'DISTRICT'}
+                disabled={!!processingId}
+                onChange={() => {
+                  setRejectReasonPreset('DISTRICT')
+                  setRejectReason('Not my district / outside my service area.')
+                  setRejectError(null)
+                }}
+              />
+              <Form.Check
+                type="radio"
+                id="reject-other"
+                label="Other"
+                checked={rejectReasonPreset === 'OTHER'}
+                disabled={!!processingId}
+                onChange={() => {
+                  setRejectReasonPreset('OTHER')
+                  setRejectError(null)
+                }}
+              />
+            </div>
+          </div>
+
+          {rejectReasonPreset === 'OTHER' && (
+            <div className="mb-3">
+              <label className="small fw-600 text-muted">Details (optional)</label>
+              <textarea
+                className="form-control"
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => {
+                  setRejectReason(e.target.value)
+                  if (rejectError) setRejectError(null)
+                }}
+                disabled={!!processingId}
+              />
+            </div>
+          )}
+
+          {rejectError && <div className="text-danger small mt-1">{rejectError}</div>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            onClick={() => {
+              if (processingId) return
+              setShowRejectModal(false)
+              setRejectError(null)
+              setRejectReason('')
+              setRejectReasonPreset('')
+            }}
+            disabled={!!processingId}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (!rejectTargetId) return
+              void handleReject(rejectTargetId, rejectReason)
+            }}
+            disabled={!!processingId}
+          >
+            {processingId ? 'Rejecting…' : 'Reject request'}
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       {/* Past Collaboration Summary Modal (Read-Only) */}

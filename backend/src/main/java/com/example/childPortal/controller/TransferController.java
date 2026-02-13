@@ -106,6 +106,24 @@ public class TransferController {
         return cancelledTransfer != null ? ResponseEntity.ok(cancelledTransfer) : ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/{transferId}/accept")
+    public ResponseEntity<TransferRequestDTO> acceptTransferByRecipient(
+            @PathVariable String transferId,
+            @AuthenticationPrincipal String userId) {
+        TransferRequestDTO acceptedTransfer = transferService.acceptTransferByRecipient(transferId, userId);
+        return acceptedTransfer != null ? ResponseEntity.ok(acceptedTransfer) : ResponseEntity.badRequest().build();
+    }
+
+    @PostMapping("/{transferId}/reject-by-recipient")
+    public ResponseEntity<TransferRequestDTO> rejectTransferByRecipient(
+            @PathVariable String transferId,
+            @RequestBody RejectRequest request,
+            @AuthenticationPrincipal String userId) {
+        String reason = request != null ? request.getReason() : null;
+        TransferRequestDTO rejectedTransfer = transferService.rejectTransferByRecipient(transferId, userId, reason);
+        return rejectedTransfer != null ? ResponseEntity.ok(rejectedTransfer) : ResponseEntity.badRequest().build();
+    }
+
     @GetMapping("/user/{userId}/history")
     public ResponseEntity<List<TransferRequestDTO>> getTransferHistory(@PathVariable String userId) {
         List<TransferRequestDTO> history = transferService.getTransferHistory(userId);

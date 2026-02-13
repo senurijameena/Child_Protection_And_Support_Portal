@@ -375,13 +375,11 @@ export function SocialWorkerDashboard() {
       </Row>
 
       {/* System Announcements */}
-      {announcements.length > 0 && (
-        <Row className="mb-4">
-          <Col xs={12}>
-            <SystemAnnouncementCard announcements={announcements} />
-          </Col>
-        </Row>
-      )}
+      <Row className="mb-4">
+        <Col xs={12}>
+          <SystemAnnouncementCard announcements={announcements} />
+        </Col>
+      </Row>
 
       {/* Statistics Cards */}
       <Row className="mb-5 g-3">
@@ -498,7 +496,7 @@ export function SocialWorkerDashboard() {
                   <table className="table table-hover mb-0">
                     <thead className="border-top">
                       <tr className="text-muted small">
-                        <th className="px-4 py-3">Requester / ID</th>
+                        <th className="px-4 py-3">Requester</th>
                         <th className="py-3">Type</th>
                         <th className="py-3">Due Date</th>
                         <th className="py-3 text-center">Status</th>
@@ -506,19 +504,19 @@ export function SocialWorkerDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {overdueFollowUps.map((task) => (
+                      {overdueFollowUps.map((task) => {
+                        const linkedRequest = assignedRequestsState.find((r) => r.id === task.helpRequestId)
+                        const requesterDisplay = linkedRequest?.anonymous || !linkedRequest?.requesterUserId
+                          ? 'Anonymous'
+                          : linkedRequest.requesterUserId
+                        return (
                         <tr
                           key={task.id}
                           className="border-bottom"
                           style={{ backgroundColor: 'rgba(248, 113, 113, 0.04)' }}
                         >
                           <td className="px-4 py-3 small">
-                            <div className="fw-600">
-                              {task.childName ||
-                                assignedRequestsState.find((r) => r.id === task.helpRequestId)
-                                  ?.requesterName ||
-                                'Anonymous'}
-                            </div>
+                            <div className="fw-600">{requesterDisplay}</div>
                             <div className="text-muted small">
                               #{getRequestDisplayId(task.helpRequestId)}
 
@@ -551,7 +549,7 @@ export function SocialWorkerDashboard() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>
@@ -682,7 +680,7 @@ export function SocialWorkerDashboard() {
                   <table className="table table-hover mb-0">
                     <thead className="border-top">
                       <tr className="text-muted small">
-                        <th className="px-4 py-3">Requester / ID</th>
+                        <th className="px-4 py-3">Requester</th>
                         <th className="py-3">Type</th>
                         <th className="py-3">Status</th>
                         <th className="py-3">Action</th>
@@ -693,7 +691,9 @@ export function SocialWorkerDashboard() {
                       {filteredRecentRequests.map((req) => (
                         <tr key={req.id} className="border-bottom align-middle">
                           <td className="px-4 py-3">
-                            <div className="fw-600">{req.requesterName || 'Anonymous Requester'}</div>
+                            <div className="fw-600">
+                              {req.anonymous || !req.requesterUserId ? 'Anonymous' : req.requesterUserId}
+                            </div>
                             <div className="text-muted small">#{req.trackingId ?? req.id}</div>
                           </td>
                           <td className="py-3 small">{req.helpType ?? 'Support Request'}</td>

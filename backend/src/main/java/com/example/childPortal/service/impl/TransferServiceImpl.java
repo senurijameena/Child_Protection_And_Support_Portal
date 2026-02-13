@@ -3,6 +3,8 @@ package com.example.childPortal.service.impl;
 import com.example.childPortal.dto.TransferRequestDTO;
 import com.example.childPortal.model.TransferRequest;
 import com.example.childPortal.repository.TransferRequestRepository;
+import com.example.childPortal.service.HelpRequestService;
+import com.example.childPortal.service.NotificationService;
 import com.example.childPortal.service.TransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.util.stream.Stream;
 public class TransferServiceImpl implements TransferService {
 
     @Autowired private TransferRequestRepository transferRequestRepository;
+    @Autowired private HelpRequestService helpRequestService;
+    @Autowired(required = false) private NotificationService notificationService;
 
     @Override
     public TransferRequestDTO createCaseTransfer(String caseId, String fromUserId, String toUserId, String reason) {
@@ -110,7 +114,9 @@ public class TransferServiceImpl implements TransferService {
     public TransferRequestDTO cancelTransfer(String transferId, String userId) {
         return transferRequestRepository.findById(transferId)
                 .map(transfer -> {
-                    if (transfer.getFromUserId().equals(userId)) {
+                    boolean canCancel = transfer.getFromUserId().equals(userId)
+                            && transfer.getStatus() == TransferRequest.TransferStatus.PENDING;
+                    if (canCancel) {
                         transfer.setStatus(TransferRequest.TransferStatus.CANCELLED);
                         transfer.setProcessedAt(LocalDateTime.now());
                         transfer.setProcessedBy(userId);
@@ -118,6 +124,79 @@ public class TransferServiceImpl implements TransferService {
                         return convertToDTO(transfer);
                     }
                     return null;
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public TransferRequestDTO acceptTransferByRecipient(String transferId, String recipientUserId) {
+        return transferRequestRepository.findById(transferId)
+                .map(transfer -> {
+                    boolean validRecipient = transfer.getToUserId() != null
+                            && transfer.getToUserId().equals(recipientUserId);
+                    boolean isPending = transfer.getStatus() == TransferRequest.TransferStatus.PENDING;
+                    if (!validRecipient || !isPending) {
+                        return null;
+                    }
+
+                    if ("HELP_REQUEST".equalsIgnoreCase(transfer.getEntityType()) && transfer.getEntityId() != null) {
+                        helpRequestService.assignHelpRequestToWorker(
+                                transfer.getEntityId(),
+                                recipientUserId,
+                                recipientUserId);
+                    }
+
+                    transfer.setStatus(TransferRequest.TransferStatus.ACTIVE);
+                    transfer.setProcessedAt(LocalDateTime.now());
+                    transfer.setProcessedBy(recipientUserId);
+                    transferRequestRepository.save(transfer);
+
+                    if (notificationService != null && transfer.getFromUserId() != null) {
+                        String actionUrl = "HELP_REQUEST".equalsIgnoreCase(transfer.getEntityType())
+                                ? "/social-worker/requests/" + transfer.getEntityId()
+                                : null;
+                        notificationService.createNotification(
+                                transfer.getFromUserId(),
+                                "TRANSFER_ACCEPTED",
+                                "Transfer Accepted",
+                                "Your transfer request " + transfer.getId() + " was accepted by " + recipientUserId + ".",
+                                actionUrl);
+                    }
+
+                    return convertToDTO(transfer);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public TransferRequestDTO rejectTransferByRecipient(String transferId, String recipientUserId, String reason) {
+        return transferRequestRepository.findById(transferId)
+                .map(transfer -> {
+                    boolean validRecipient = transfer.getToUserId() != null
+                            && transfer.getToUserId().equals(recipientUserId);
+                    boolean isPending = transfer.getStatus() == TransferRequest.TransferStatus.PENDING;
+                    if (!validRecipient || !isPending) {
+                        return null;
+                    }
+
+                    transfer.setStatus(TransferRequest.TransferStatus.REJECTED);
+                    String rejectReason = reason != null && !reason.trim().isEmpty() ? reason.trim() : "No reason provided";
+                    transfer.setReason((transfer.getReason() != null ? transfer.getReason() : "")
+                            + " | Rejection Reason: " + rejectReason);
+                    transfer.setProcessedAt(LocalDateTime.now());
+                    transfer.setProcessedBy(recipientUserId);
+                    transferRequestRepository.save(transfer);
+
+                    if (notificationService != null && transfer.getFromUserId() != null) {
+                        notificationService.createNotification(
+                                transfer.getFromUserId(),
+                                "TRANSFER_REJECTED",
+                                "Transfer Rejected",
+                                "Your transfer request " + transfer.getId() + " was rejected. Reason: " + rejectReason,
+                                null);
+                    }
+
+                    return convertToDTO(transfer);
                 })
                 .orElse(null);
     }

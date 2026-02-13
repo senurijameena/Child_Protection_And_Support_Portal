@@ -223,6 +223,14 @@ export async function cancelTransfer(transferId: string): Promise<TransferReques
   return apiPost<TransferRequestDTO>(`/transfers/${transferId}/cancel`, {})
 }
 
+export async function acceptIncomingTransfer(transferId: string): Promise<TransferRequestDTO> {
+  return apiPost<TransferRequestDTO>(`/transfers/${transferId}/accept`, {})
+}
+
+export async function rejectIncomingTransfer(transferId: string, reason: string): Promise<TransferRequestDTO> {
+  return apiPost<TransferRequestDTO>(`/transfers/${transferId}/reject-by-recipient`, { reason })
+}
+
 export async function getHelpRequestCollaboration(
   requestId: string
 ): Promise<HelpRequestCollaborationSummaryDTO> {
@@ -247,9 +255,10 @@ export async function acceptHelpRequestCollaborationRequest(
 }
 
 export async function rejectHelpRequestCollaborationRequest(
-  collaborationId: string
+  collaborationId: string,
+  reason?: string
 ): Promise<HelpRequestCollaboratorDTO> {
-  return apiPost<HelpRequestCollaboratorDTO>(`/help-requests/collaboration/${collaborationId}/reject`, {})
+  return apiPost<HelpRequestCollaboratorDTO>(`/help-requests/collaboration/${collaborationId}/reject`, reason ? { reason } : {})
 }
 
 export async function removeHelpRequestCollaborator(

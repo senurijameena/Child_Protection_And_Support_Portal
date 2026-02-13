@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Card, Container, Badge, Button, Row, Col, Form, Modal } from 'react-bootstrap'
+import { Card, Container, Badge, Button, Row, Col, Form, Modal, Table } from 'react-bootstrap'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getUploadBaseUrl } from '../../services/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -150,6 +150,7 @@ export function SocialWorkerRequestDetailsPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const applyPackageId = searchParams.get('applyPackage')
+  const isCollaboratorView = searchParams.get('mode') === 'collaborator'
   const selectedResourceIdFromQuery = searchParams.get('selectedResourceId')
 
   const [request, setRequest] = useState<HelpRequestDTO | null>(null)
@@ -188,18 +189,21 @@ export function SocialWorkerRequestDetailsPage() {
   const [assignError, setAssignError] = useState<string | null>(null)
   const [assignmentResources, setAssignmentResources] = useState<AssignmentResource[]>([])
   const [followUpModal, setFollowUpModal] = useState<{ item?: string } | null>(null)
-  const [followUpDate, setFollowUpDate] = useState('')
-  const [followUpMode, setFollowUpMode] = useState<'PHONE' | 'VISIT' | 'ONLINE' | 'FIELD'>('PHONE')
-  const [followUpResolved, setFollowUpResolved] = useState<boolean | null>(null)
+  const [followUpVisitDate, setFollowUpVisitDate] = useState('')
+  const [followUpNextVisitDate, setFollowUpNextVisitDate] = useState('')
+  const [followUpMode, setFollowUpMode] = useState<'HOME_VISIT' | 'PAYMENT_TRANSFER' | 'PHONE_CALL' | 'OTHER'>('HOME_VISIT')
+  const [followUpCondition, setFollowUpCondition] = useState('')
   const [followUpNotes, setFollowUpNotes] = useState('')
   const [followUpSubmitting, setFollowUpSubmitting] = useState(false)
   const [followUpError, setFollowUpError] = useState<string | null>(null)
   const [expectedCompletionDate, setExpectedCompletionDate] = useState('')
   const [resourcesAssigned, setResourcesAssigned] = useState(false)
   const [startServiceError, setStartServiceError] = useState<string | null>(null)
+  const [selectedRequirementItem, setSelectedRequirementItem] = useState<string | null>(null)
   const [collaboration, setCollaboration] = useState<HelpRequestCollaborationSummaryDTO | null>(null)
   const [showCollaborationModal, setShowCollaborationModal] = useState(false)
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
+  const [rejectMode, setRejectMode] = useState<'REJECT' | 'TRANSFER' | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [transferWorkerId, setTransferWorkerId] = useState<string | null>(null)
   const [transferNote, setTransferNote] = useState<string>('')
@@ -258,7 +262,30 @@ export function SocialWorkerRequestDetailsPage() {
 
   const [finalizeSubmitting, setFinalizeSubmitting] = useState(false)
   const [finalizeError, setFinalizeError] = useState<string | null>(null)
-
+  // --- Collaboration permissions ---
+  // When opened from Collaboration Center, ?mode=collaborator is set
+  const mode = searchParams.get('mode') === 'collaborator' ? 'collaborator' : 'owner'
+  const currentUserId = user?.userId
+  const activeCollaboration = useMemo(
+    () =>
+      currentUserId && collaboration
+        ? (collaboration.collaborators || []).find(
+            (c) => c.userId === currentUserId && c.status === 'ACCEPTED'
+          ) ?? null
+        : null,
+    [collaboration, currentUserId]
+  )
+  const isOwner =
+    !!currentUserId &&
+    (collaboration?.ownerUserId
+      ? collaboration.ownerUserId === currentUserId
+      : request?.assignedWorkerId === currentUserId)
+  const hasFullAccess =
+    isOwner || (activeCollaboration?.permission === 'FULL_ACCESS' && mode === 'collaborator')
+  const hasServiceAccess =
+    hasFullAccess || (activeCollaboration?.permission === 'SERVICE_ONLY' && mode === 'collaborator')
+  const isViewOnlyCollaborator =
+    !isOwner && activeCollaboration?.permission === 'VIEW_ONLY' && mode === 'collaborator'
 
   useEffect(() => {
     if (applyPackageId) setShowApplyModal(true)
@@ -604,6 +631,9 @@ export function SocialWorkerRequestDetailsPage() {
   const isAssigned = request.status === 'ASSIGNED'
   const isAccepted = request.status === 'IN_PROGRESS'
 
+  const isPackageApprovedNotStarted = pkgStatus === 'ACCEPTED' && !request.serviceStarted
+  const topStatusLabel = isPackageApprovedNotStarted ? 'Approved – Waiting to Start' : statusLabel
+
   const helpIcon = getHelpTypeIcon(request.helpType)
   const helpLabel = request.helpType ? HELP_TYPE_LABELS[request.helpType] : 'Support request'
   const evidenceUrls = request.documentUrls || []
@@ -640,7 +670,7 @@ export function SocialWorkerRequestDetailsPage() {
           <div className="d-flex flex-column align-items-end gap-2">
             <div className="d-flex flex-wrap gap-2 justify-content-end">
               <Badge bg={statusVariant} className="px-3 py-2">
-                {statusLabel}
+                {topStatusLabel}
               </Badge>
               <Badge bg={getPriorityVariant(request.priority)} className="px-3 py-2">
                 Priority: {request.priority?.toUpperCase() ?? 'MEDIUM'}
@@ -669,80 +699,173 @@ export function SocialWorkerRequestDetailsPage() {
         </Col>
       </Row>
 
+      {isCollaboratorView && (
+        <Row className="mb-3">
+          <Col xs={12}>
+            <Card className="sw-card border-0 bg-info bg-opacity-10">
+              <Card.Body className="py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <Badge bg="info" className="fw-normal">
+                      Collaborator
+                    </Badge>
+                    <span className="small text-muted">
+                      You are a collaborator on this case. The primary social worker keeps ownership.
+                    </span>
+                  </div>
+                  <div className="small text-muted">
+                    Quick actions: <strong>Add internal note</strong>, <strong>Assign resource</strong>,{' '}
+                    <strong>Send message</strong>, <strong>Add follow-up</strong>, <strong>Upload document</strong>. You
+                    cannot close this case.
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
+
       {isAssigned ? (
-        <Row className="g-4">
+      <Row className="g-4">
           <Col xs={12} lg={8}>
             <Card className="sw-card border-0 mb-4">
               <Card.Header className="bg-white border-0 pt-4 pb-3">
-                <h5 className="mb-0 fw-700">Pending Acceptance</h5>
+                <h5 className="mb-0 fw-700">Pending Acceptance – Review Evidence First</h5>
               </Card.Header>
               <Card.Body>
-                <div className="mb-3">
-                  <div className="small text-muted">Public user</div>
-                  <div className="fw-600">
-                    {request.anonymous ? 'Anonymous Public User' : (request.requesterName || 'Public user')}
+                {/* 1️⃣ Request Evidence - original report from public user (read-only) */}
+                <div className="mb-4">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <div className="small text-muted fw-600 text-uppercase">Request Evidence</div>
+                      <div className="small text-muted">
+                        Read-only snapshot of the original report as submitted.
+                      </div>
+                    </div>
+                    <Badge bg={getPriorityVariant(request.priority)} className="px-3 py-2">
+                      Priority: {request.priority?.toUpperCase() ?? 'MEDIUM'}
+                    </Badge>
                   </div>
-                  <div className="small text-muted">Request ID: #{request.trackingId || request.id}</div>
-                  {!request.anonymous && (
-                    <div className="small text-muted mt-1">
-                      {(userProfile?.email || userProfile?.phone) && (
-                        <>
-                          {userProfile?.email && <span>Email: {userProfile.email} </span>}
-                          {userProfile?.phone && <span>· Phone: {userProfile.phone}</span>}
-                        </>
-                      )}
+                  <div className="small text-muted mb-1">
+                    Date of incident / report:{' '}
+                    <span className="fw-500">
+                      {formatDateTime(request.requestDate) || 'Not specified'}
+                    </span>
+                  </div>
+                  <div className="small text-muted mb-1">
+                    Incident location:{' '}
+                    <span className="fw-500">{request.location || 'No location provided'}</span>
+                  </div>
+                  <div className="small text-muted mb-2">
+                    Report category:{' '}
+                    <span className="fw-500 d-inline-flex align-items-center gap-1">
+                      <span>{helpIcon}</span>
+                      <span>{helpLabel}</span>
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-3 bg-light bg-opacity-50 small mb-2">
+                    {request.description || 'No detailed description provided.'}
+                  </div>
+                  {evidenceUrls.length > 0 && (
+                    <div>
+                      <div className="small text-muted mb-1">Uploaded photos / documents</div>
+                      <ul className="small mb-0">
+                        {evidenceUrls.map((url, idx) => (
+                          <li key={idx}>
+                            <a href={resolveUrl(url)} target="_blank" rel="noreferrer">
+                              {url}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
 
-                <div className="mb-3">
-                  <div className="small text-muted">Request details</div>
-                  <div className="fw-600 mb-1 d-flex align-items-center gap-2">
-                    <span>{helpIcon}</span>
-                    <span>{helpLabel}</span>
+                {/* 2️⃣ Public User Details Panel */}
+                <div className="mb-4">
+                  <div className="small text-muted fw-600 text-uppercase mb-1">
+                    Public user details
                   </div>
-                  <div className="small text-muted mb-1">
-                    Submitted: {formatDateTime(request.requestDate) || 'Not specified'}
-                  </div>
-                  <div className="small text-muted mb-2">Location: {request.location || 'No location provided'}</div>
-                  <div className="p-3 rounded-3 bg-light bg-opacity-50 small mb-2">
-                    {request.description || 'No detailed description provided.'}
-                  </div>
-                  <div className="small text-muted">
-                    Gender: {request.gender || '—'} · Approx. Age: {request.approximateAge || '—'}
+                  {request.anonymous ? (
+                    <>
+                      <div className="fw-600">Anonymous Request</div>
+                      <div className="small text-muted">
+                        Identity hidden for safety. No contact information is available.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="fw-600">
+                        {request.requesterName || 'Public user'}
+                      </div>
+                      <div className="small text-muted mb-1">
+                        Age: {request.approximateAge || 'Not provided'}
+                        {' · '}
+                        Location: {request.location || 'Not provided'}
+                      </div>
+                      {(userProfile?.email || userProfile?.phone) && (
+                        <div className="small text-muted">
+                          {userProfile?.email && <span>Email: {userProfile.email}</span>}
+                          {userProfile?.email && userProfile?.phone && <span> · </span>}
+                          {userProfile?.phone && <span>Phone: {userProfile.phone}</span>}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="small text-muted mt-1">
+                    Request ID: #{request.trackingId || request.id}
                   </div>
                 </div>
 
-                {evidenceUrls.length > 0 && (
-                  <div className="mb-3">
-                    <div className="small text-muted mb-2">Evidence / Attachments</div>
-                    <ul className="small mb-0">
-                      {evidenceUrls.map((url, idx) => (
-                        <li key={idx}>
-                          <a href={resolveUrl(url)} target="_blank" rel="noreferrer">
-                            {url}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
+                {/* 3️⃣ Timeline (Read Only) */}
+                <div className="mb-4">
+                  <div className="text-muted mb-2 small fw-600">Timeline (read only)</div>
+                  <div className="small text-muted mb-2">
+                    System history so far: request submitted, admin review, and assignment.
                   </div>
-                )}
-
-                <div className="mb-3">
-                  <div className="text-muted mb-2 small fw-600">Recent Timeline</div>
                   <VerticalTimeline
                     steps={buildTimelineSteps(request).slice(0, 4)}
                     compact={true}
                   />
                 </div>
 
-                <div className="d-flex flex-column flex-sm-row gap-2">
-                  <Button variant="success" className="fw-600" onClick={handleAcceptRequest}>
-                    Accept & Start
-                  </Button>
-                  <Button variant="outline-danger" className="fw-600" onClick={() => setRejectModalOpen(true)}>
-                    Reject / Transfer
-                  </Button>
+                {/* ⚖️ Decision section */}
+                <div className="border-top pt-3">
+                  <div className="small text-muted fw-600 mb-2">Decision</div>
+                  <p className="small text-muted mb-3">
+                    Read the evidence above, then choose how to proceed. Until you accept,
+                    service packages, resources, collaboration, and follow-ups stay hidden.
+                  </p>
+                  <div className="d-flex flex-column flex-sm-row flex-wrap gap-2">
+                    <Button variant="success" className="fw-600" onClick={handleAcceptRequest}>
+                      Accept
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      className="fw-600"
+                      onClick={() => {
+                        setRejectMode('REJECT')
+                        setTransferWorkerId(null)
+                        setTransferNote('')
+                        setRejectModalOpen(true)
+                      }}
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      variant="outline-secondary"
+                      className="fw-600"
+                      onClick={() => {
+                        setRejectMode('TRANSFER')
+                        setTransferWorkerId(null)
+                        setTransferNote('')
+                        setRejectModalOpen(true)
+                      }}
+                    >
+                      Transfer
+                    </Button>
+                  </div>
                 </div>
               </Card.Body>
             </Card>
@@ -1010,24 +1133,25 @@ export function SocialWorkerRequestDetailsPage() {
                       <h5 className="mb-0 fw-700">👥 Collaboration</h5>
                       <div className="small text-muted">Case owner and collaborators.</div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => {
-                        setShowCollaborationModal(true)
-                        setCollabSearch('')
-                        setCollabDistrictFilter('ALL')
-                        setCollabSpecializationFilter('ALL')
-                        setCollabAvailabilityFilter('ALL')
-                        setSelectedCollaboratorUserId('')
-                        setSelectedCollabPermission('VIEW_ONLY')
-                        setCollabReason('')
-                        setCollabError(null)
-                      }}
-                      disabled={!collaboration}
-                    >
-                      Add Collaborator
-                    </Button>
+                    {hasFullAccess && collaboration && (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => {
+                          setShowCollaborationModal(true)
+                          setCollabSearch('')
+                          setCollabDistrictFilter('ALL')
+                          setCollabSpecializationFilter('ALL')
+                          setCollabAvailabilityFilter('ALL')
+                          setSelectedCollaboratorUserId('')
+                          setSelectedCollabPermission('VIEW_ONLY')
+                          setCollabReason('')
+                          setCollabError(null)
+                        }}
+                      >
+                        Add Collaborator
+                      </Button>
+                    )}
                   </Card.Header>
                   <Card.Body>
                     <div className="mb-3">
@@ -1045,33 +1169,35 @@ export function SocialWorkerRequestDetailsPage() {
                               <span className="fw-600">{c.name || c.userId}</span>
                               {` • ${c.permission.replace('_', ' ').toLowerCase()}`}
                               {` • ${c.status}`}
-                              <Button
-                                size="sm"
-                                variant="link"
-                                className="ps-2 text-danger"
-                                onClick={async () => {
-                                  if (!requestId) return
-                                  try {
-                                    await removeHelpRequestCollaborator(requestId, c.userId)
-                                    setCollaboration((prev) =>
-                                      prev
-                                        ? {
-                                          ...prev,
-                                          collaborators: prev.collaborators.filter(
-                                            (col) => col.collaborationId !== c.collaborationId
-                                          ),
-                                        }
-                                        : prev
-                                    )
-                                  } catch (err) {
-                                    setCollabError(
-                                      err instanceof Error ? err.message : 'Failed to remove collaborator.'
-                                    )
-                                  }
-                                }}
-                              >
-                                Remove
-                              </Button>
+                              {hasFullAccess && (
+                                <Button
+                                  size="sm"
+                                  variant="link"
+                                  className="ps-2 text-danger"
+                                  onClick={async () => {
+                                    if (!requestId) return
+                                    try {
+                                      await removeHelpRequestCollaborator(requestId, c.userId)
+                                      setCollaboration((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              collaborators: prev.collaborators.filter(
+                                                (col) => col.collaborationId !== c.collaborationId
+                                              ),
+                                            }
+                                          : prev
+                                      )
+                                    } catch (err) {
+                                      setCollabError(
+                                        err instanceof Error ? err.message : 'Failed to remove collaborator.'
+                                      )
+                                    }
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -1169,194 +1295,376 @@ export function SocialWorkerRequestDetailsPage() {
                       </Row>
 
                       <div className="d-flex flex-wrap gap-2">
-                        {pkgStatus === 'ACCEPTED' && !request.serviceStarted && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="fw-600"
-                            onClick={async () => {
-                              if (!requestId) return
-                              try {
-                                const updated = await startServiceExecution(requestId)
-                                setRequest(updated)
-                              } catch (err) {
-                                console.error('Failed to start service execution', err)
-                              }
-                            }}
-                          >
-                            🚀 Start Service Execution
-                          </Button>
+                        {hasServiceAccess && isPackageApprovedNotStarted && (
+                          <>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="fw-600"
+                              onClick={async () => {
+                                if (!requestId) return
+                                try {
+                                  const updated = await startServiceExecution(requestId)
+                                  setRequest(updated)
+                                } catch (err) {
+                                  console.error('Failed to start service execution', err)
+                                }
+                              }}
+                            >
+                              🚀 Start Service
+                            </Button>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="fw-600"
+                              onClick={() => {
+                                const el = document.getElementById('sw-package-details')
+                                if (el) {
+                                  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                }
+                              }}
+                            >
+                              View Package Details
+                            </Button>
+                            {request.requesterUserId && !request.anonymous && (
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                className="fw-600"
+                                onClick={() =>
+                                  navigate(
+                                    `/social-worker/messages?userId=${encodeURIComponent(
+                                      request.requesterUserId!
+                                    )}`
+                                  )
+                                }
+                              >
+                                Message User
+                              </Button>
+                            )}
+                          </>
                         )}
 
-                        {request.allServicesCompleted && !request.finalAssessmentCompleted && (
-                          <Button
-                            variant="warning"
-                            size="sm"
-                            className="fw-600"
-                            onClick={() => {
-                              setAssessmentData({
-                                objectivesAchieved: true,
-                                childSafe: true,
-                                needsContinuedMonitoring: false,
-                                recommendClosure: true,
-                                remarks: '',
-                              })
-                              setShowAssessmentModal(true)
-                            }}
-                          >
-                            📝 Fill Final Assessment
-                          </Button>
-                        )}
+                        {hasServiceAccess &&
+                          request.serviceStarted &&
+                          request.allServicesCompleted &&
+                          !request.finalAssessmentCompleted && (
+                            <Button
+                              variant="warning"
+                              size="sm"
+                              className="fw-600"
+                              onClick={() => {
+                                setAssessmentData({
+                                  objectivesAchieved: true,
+                                  childSafe: true,
+                                  needsContinuedMonitoring: false,
+                                  recommendClosure: true,
+                                  remarks: '',
+                                })
+                                setShowAssessmentModal(true)
+                              }}
+                            >
+                              📝 Fill Final Assessment
+                            </Button>
+                          )}
 
-                        {request.finalAssessmentCompleted && !request.caseFinalized && (
-                          <Button
-                            variant="success"
-                            size="sm"
-                            className="fw-600"
-                            disabled={finalizeSubmitting}
-                            onClick={async () => {
-                              if (!requestId) return
-                              setFinalizeSubmitting(true)
-                              try {
-                                const updated = await finalizeCase(requestId)
-                                setRequest(updated)
-                              } catch (err) {
-                                setFinalizeError(err instanceof Error ? err.message : 'Failed to finalize case')
-                              } finally {
-                                setFinalizeSubmitting(false)
-                              }
-                            }}
-                          >
-                            🏁 Finalize Case
-                          </Button>
-                        )}
+                        {hasFullAccess &&
+                          request.serviceStarted &&
+                          request.finalAssessmentCompleted &&
+                          !request.caseFinalized && (
+                            <Button
+                              variant="success"
+                              size="sm"
+                              className="fw-600"
+                              disabled={finalizeSubmitting}
+                              onClick={async () => {
+                                if (!requestId) return
+                                setFinalizeSubmitting(true)
+                                try {
+                                  const updated = await finalizeCase(requestId)
+                                  setRequest(updated)
+                                } catch (err) {
+                                  setFinalizeError(
+                                    err instanceof Error ? err.message : 'Failed to finalize case'
+                                  )
+                                } finally {
+                                  setFinalizeSubmitting(false)
+                                }
+                              }}
+                            >
+                              🏁 Finalize Case
+                            </Button>
+                          )}
                       </div>
-                      {finalizeError && <div className="alert alert-danger small mt-2 py-1">{finalizeError}</div>}
+                      {isPackageApprovedNotStarted && (
+                        <div className="small text-muted mt-2">No resource assignment yet.</div>
+                      )}
+                      {finalizeError && (
+                        <div className="alert alert-danger small mt-2 py-1">{finalizeError}</div>
+                      )}
                     </Card.Body>
                   </Card>
-                  {/* Scenario A: User Accepted – Service Execution Controls (Start, Assign, Follow-Up) */}
-                  {pkgStatus === 'ACCEPTED' && (
-                    <div className="mt-3">
-                      <h6 className="fw-600 mb-2">🚀 Service Execution Controls</h6>
-                      <p className="small text-muted mb-3">Request status: In Progress. Each service is pending execution. Use the actions below.</p>
-                      <ul className="list-unstyled mb-0">
-                        {(request.appliedPackageItemExecutions ?? request.appliedPackage?.items ?? []).map((itemOrExec) => {
-                          const item = typeof itemOrExec === 'string' ? itemOrExec : itemOrExec.serviceItem
-                          const exec = typeof itemOrExec === 'object' ? itemOrExec : null
-                          const status = exec?.status ?? 'PENDING'
-                          const canStart = status === 'PENDING' || status === 'SCHEDULED'
-                          const isActionLoading = serviceActionLoading === item
+                  {/* Scenario A: User Accepted – Service Execution Workspace (Requirements, Resources, Summary) */}
+                  {hasServiceAccess && pkgStatus === 'ACCEPTED' && request.serviceStarted && (
+                    <div className="mt-3" id="sw-package-details">
+                      <h6 className="fw-600 mb-2">🚀 Service Execution Workspace</h6>
+                      <p className="small text-muted mb-3">
+                        Request status: In Progress. Track requirements, assign resources, and monitor overall progress.
+                      </p>
 
-                          const openStartModal = () => {
-                            // default start date to now in input-local format
-                            const d = new Date()
-                            const pad = (n: number) => n.toString().padStart(2, '0')
-                            const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-                              d.getHours()
-                            )}:${pad(d.getMinutes())}`
-                            setStartServiceModal({ item })
-                            setStartServiceDate(local)
-                            setStartServiceNotes('')
-                            setExpectedCompletionDate('')
-                            setResourcesAssigned(false)
-                            setStartServiceError(null)
-                          }
+                      <Row className="g-3">
+                        {/* LEFT – Requirements Checklist */}
+                        <Col xs={12} lg={4}>
+                          <Card className="border-0 shadow-sm h-100">
+                            <Card.Header className="bg-white border-0 py-3">
+                              <h6 className="mb-0 fw-700">Requirements Checklist</h6>
+                              <div className="small text-muted">Click a requirement to select it.</div>
+                            </Card.Header>
+                            <Card.Body className="py-2">
+                              <ul className="list-unstyled mb-0 small">
+                                {(request.appliedPackageItemExecutions ?? request.appliedPackage?.items ?? []).map(
+                                  (itemOrExec) => {
+                                    const item =
+                                      typeof itemOrExec === 'string' ? itemOrExec : itemOrExec.serviceItem
+                                    const exec =
+                                      typeof itemOrExec === 'object' ? itemOrExec : null
+                                    const status = exec?.status ?? 'NOT_STARTED'
+                                    const completed = status === 'COMPLETED'
+                                    const inProgress = status === 'IN_PROGRESS'
+                                    const isSelected = selectedRequirementItem === item
 
-                          const openAssignResourceModal = () => {
-                            setAssignResourceModal({ item })
-                            setResourceSearch('')
-                            setResourceTypeFilter('ALL')
-                            setResourceAvailabilityFilter('ALL')
-                            setResourceVerifiedOnly(false)
-                            const preselected = selectedResourceIdFromQuery
-                            const exists = preselected
-                              ? assignmentResources.some((r) => r.id === preselected)
-                              : false
-                            setSelectedResourceId(exists ? preselected : null)
-                            setAssignExpectedDate('')
-                            setAssignNotes('')
-                            setAssignSendNotification(true)
-                            setAssignError(null)
-                          }
+                                    return (
+                                      <li
+                                        key={item}
+                                        className={`py-2 px-2 rounded-3 mb-1 cursor-pointer ${
+                                          isSelected ? 'bg-primary bg-opacity-10' : 'bg-light bg-opacity-25'
+                                        }`}
+                                        onClick={() => setSelectedRequirementItem(item)}
+                                      >
+                                        <div className="d-flex justify-content-between align-items-center gap-2">
+                                          <div className="d-flex align-items-center gap-2">
+                                            <Form.Check
+                                              type="checkbox"
+                                              checked={completed}
+                                              readOnly
+                                            />
+                                            <span className="fw-500">{item}</span>
+                                          </div>
+                                          <Badge
+                                            bg={completed ? 'success' : inProgress ? 'primary' : 'secondary'}
+                                          >
+                                            {completed
+                                              ? 'Completed'
+                                              : inProgress
+                                              ? 'In Progress'
+                                              : 'Not Started'}
+                                          </Badge>
+                                        </div>
+                                      </li>
+                                    )
+                                  }
+                                )}
+                              </ul>
+                            </Card.Body>
+                          </Card>
+                        </Col>
 
-                          const handleAddFollowUp = () => {
-                            const d = new Date()
-                            const pad = (n: number) => n.toString().padStart(2, '0')
-                            const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-                              d.getHours()
-                            )}:${pad(d.getMinutes())}`
-                            setFollowUpModal({ item })
-                            setFollowUpDate(local)
-                            setFollowUpMode('PHONE')
-                            setFollowUpResolved(null)
-                            setFollowUpNotes('')
-                            setFollowUpError(null)
-                          }
-
-                          return (
-                            <li key={item} className="d-flex flex-column py-2 border-bottom border-light gap-1">
-                              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                                <span className="fw-500">{item}</span>
-                                <Badge
-                                  bg={status === 'COMPLETED' ? 'success' : status === 'IN_PROGRESS' ? 'primary' : 'secondary'}
-                                  className="me-2"
-                                >
-                                  {status === 'IN_PROGRESS' ? 'In Progress' : status}
-                                </Badge>
-                                <div className="d-flex flex-wrap gap-1">
-                                  {canStart && (
-                                    <Button variant="success" size="sm" onClick={openStartModal} disabled={!!isActionLoading}>
-                                      {isActionLoading ? 'Updating…' : '🟢 Start Service'}
-                                    </Button>
-                                  )}
-                                  {status === 'IN_PROGRESS' && (
-                                    <Button
-                                      variant="danger"
-                                      size="sm"
-                                      onClick={() => {
-                                        setOutcomeModal({ item })
-                                        setOutcomeType('COMPLETED_SUCCESSFULLY')
-                                        setOutcomeReason('')
-                                        setOutcomeNotes('')
-                                        setOutcomeError(null)
-                                      }}
-                                    >
-                                      🔴 Record Outcome
-                                    </Button>
-                                  )}
-                                  <Button variant="warning" size="sm" onClick={openAssignResourceModal}>
-                                    🟡 Assign Resource
-                                  </Button>
-                                  <Button variant="info" size="sm" onClick={handleAddFollowUp}>
-                                    🔵 Follow-Up
-                                  </Button>
+                        {/* CENTER – Resource Assignment Panel */}
+                        <Col xs={12} lg={4}>
+                          <Card className="border-0 shadow-sm h-100">
+                            <Card.Header className="bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                              <div>
+                                <h6 className="mb-0 fw-700">Resource Assignment</h6>
+                                <div className="small text-muted">
+                                  Assign one or more resources to each requirement.
                                 </div>
                               </div>
-                              {exec?.assignedResource && (
-                                <div className="small text-muted ms-1">
-                                  Assigned resource: <strong>{exec.assignedResource}</strong>
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                className="fw-600"
+                                disabled={!selectedRequirementItem}
+                                onClick={() => {
+                                  const item = selectedRequirementItem
+                                  if (!item) return
+                                  setAssignResourceModal({ item })
+                                  setResourceSearch('')
+                                  setResourceTypeFilter('ALL')
+                                  setResourceAvailabilityFilter('ALL')
+                                  setResourceVerifiedOnly(false)
+                                  setSelectedResourceId(null)
+                                  setAssignExpectedDate('')
+                                  setAssignNotes('')
+                                  setAssignSendNotification(true)
+                                  setAssignError(null)
+                                }}
+                              >
+                                Assign Resource
+                              </Button>
+                            </Card.Header>
+                            <Card.Body className="py-2 small">
+                              {Array.isArray(request.appliedPackageItemExecutions) &&
+                              request.appliedPackageItemExecutions.some((ex) => ex.assignedResource) ? (
+                                <ul className="list-unstyled mb-0">
+                                  {request.appliedPackageItemExecutions
+                                    .filter((ex) => ex.assignedResource)
+                                    .map((ex) => (
+                                      <li
+                                        key={`${ex.serviceItem}-${ex.assignedResource}`}
+                                        className="py-1 border-bottom border-light"
+                                      >
+                                        <div className="fw-500">{ex.serviceItem}</div>
+                                        <div className="text-muted">
+                                          Resource: <strong>{ex.assignedResource}</strong>
+                                        </div>
+                                      </li>
+                                    ))}
+                                </ul>
+                              ) : (
+                                <div className="text-muted">
+                                  No resources assigned yet. Select a requirement and click
+                                  &nbsp;
+                                  <span className="fw-600">Assign Resource</span> to begin.
                                 </div>
                               )}
-                            </li>
-                          )
-                        })}
-                      </ul>
-                      {Array.isArray(request.appliedPackageItemExecutions) &&
-                        request.appliedPackageItemExecutions.some((ex) => ex.assignedResource) && (
-                          <div className="mt-3 pt-3 border-top">
-                            <h6 className="fw-600 mb-2">🏢 Assigned Resources</h6>
-                            <ul className="list-unstyled mb-0 small">
-                              {request.appliedPackageItemExecutions
-                                .filter((ex) => ex.assignedResource)
-                                .map((ex) => (
-                                  <li key={`${ex.serviceItem}-${ex.assignedResource}`}>
-                                    <strong>{ex.assignedResource}</strong>
-                                    <span className="text-muted"> • {ex.serviceItem}</span>
-                                  </li>
-                                ))}
-                            </ul>
-                          </div>
-                        )}
+                            </Card.Body>
+                          </Card>
+                        </Col>
+
+                        {/* RIGHT – Case Status Panel */}
+                        <Col xs={12} lg={4}>
+                          <Card className="border-0 shadow-sm h-100">
+                            <Card.Header className="bg-white border-0 py-3">
+                              <h6 className="mb-0 fw-700">Execution Summary</h6>
+                            </Card.Header>
+                            <Card.Body className="py-2 small">
+                              {(() => {
+                                const allItems =
+                                  request.appliedPackageItemExecutions ?? request.appliedPackage?.items ?? []
+                                const totalRequirements = allItems.length
+                                const completedRequirements = (request.appliedPackageItemExecutions ?? []).filter(
+                                  (ex) => ex.status === 'COMPLETED'
+                                ).length
+                                const activeResources = (request.appliedPackageItemExecutions ?? []).filter(
+                                  (ex) => !!ex.assignedResource
+                                ).length
+                                const doneFollowUps = followUps.filter(
+                                  (fu) => fu.status === 'COMPLETED' || fu.status === 'DONE'
+                                ).length
+                                const percent =
+                                  totalRequirements > 0
+                                    ? Math.round((completedRequirements / totalRequirements) * 100)
+                                    : 0
+
+                                return (
+                                  <>
+                                    <div className="mb-2">
+                                      <div className="d-flex justify-content-between align-items-center mb-1">
+                                        <span className="text-muted">Overall progress</span>
+                                        <span className="fw-600">{percent}%</span>
+                                      </div>
+                                      <div className="progress" style={{ height: 6 }}>
+                                        <div
+                                          className="progress-bar bg-success"
+                                          role="progressbar"
+                                          style={{ width: `${percent}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <ul className="list-unstyled mb-3">
+                                      <li>
+                                        Requirements completed:{' '}
+                                        <strong>
+                                          {completedRequirements} / {totalRequirements}
+                                        </strong>
+                                      </li>
+                                      <li>
+                                        Resources active: <strong>{activeResources}</strong>
+                                      </li>
+                                      <li>
+                                        Follow-ups done: <strong>{doneFollowUps}</strong>
+                                      </li>
+                                    </ul>
+                                    <div className="d-flex flex-column gap-2">
+                                      <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        className="fw-600"
+                                        onClick={() => {
+                                          const d = new Date()
+                                          const pad = (n: number) => n.toString().padStart(2, '0')
+                                          const local = `${d.getFullYear()}-${pad(
+                                            d.getMonth() + 1
+                                          )}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(
+                                            d.getMinutes()
+                                          )}`
+                                          setFollowUpModal(
+                                            selectedRequirementItem ? { item: selectedRequirementItem } : { item: undefined }
+                                          )
+                                          setFollowUpVisitDate(local)
+                                          setFollowUpNextVisitDate('')
+                                          setFollowUpMode('HOME_VISIT')
+                                          setFollowUpCondition('')
+                                          setFollowUpNotes('')
+                                          setFollowUpError(null)
+                                        }}
+                                      >
+                                        Add Follow-up
+                                      </Button>
+                                      <Button
+                                        variant="outline-secondary"
+                                        size="sm"
+                                        className="fw-600"
+                                        onClick={() => setShowCollaborationModal(true)}
+                                      >
+                                        Collaborate
+                                      </Button>
+                                      <Button
+                                        variant="outline-secondary"
+                                        size="sm"
+                                        className="fw-600"
+                                        onClick={() => {
+                                          setRejectMode('TRANSFER')
+                                          setTransferWorkerId(null)
+                                          setTransferNote('')
+                                          setRejectModalOpen(true)
+                                        }}
+                                      >
+                                        Transfer
+                                      </Button>
+                                      <Button
+                                        variant="outline-success"
+                                        size="sm"
+                                        className="fw-600"
+                                        disabled={!selectedRequirementItem}
+                                        onClick={async () => {
+                                          const item = selectedRequirementItem
+                                          if (!item || !requestId) return
+                                          try {
+                                            setServiceActionLoading(item)
+                                            const updated = await updateServiceItemStatus(
+                                              requestId,
+                                              item,
+                                              'COMPLETED'
+                                            )
+                                            setRequest(updated)
+                                          } catch (err) {
+                                            console.error('Failed to mark requirement complete', err)
+                                          } finally {
+                                            setServiceActionLoading(null)
+                                          }
+                                        }}
+                                      >
+                                        Mark Requirement Complete
+                                      </Button>
+                                    </div>
+                                  </>
+                                )
+                              })()}
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                      </Row>
                     </div>
                   )}
 
@@ -1754,55 +2062,15 @@ export function SocialWorkerRequestDetailsPage() {
               </div>
             </Col>
             <Col xs={12} lg={5}>
-              <h6 className="fw-600 mb-2">Assignment details</h6>
               {assignError && (
                 <div className="alert alert-danger py-2 small">{assignError}</div>
               )}
               {!selectedResourceId && (
-                <p className="small text-muted">
-                  Select a resource from the list to continue.
+                <p className="small text-muted mb-0">
+                  Select a resource from the list on the left, then click <strong>Confirm assignment</strong> to link it
+                  to the chosen requirement.
                 </p>
               )}
-              {selectedResourceId && (() => {
-                const res = assignmentResources.find((r) => r.id === selectedResourceId)
-                if (!res) return null
-                return (
-                  <>
-                    <Form.Group className="mb-3">
-                      <Form.Label className="small fw-600 text-muted">
-                        Expected service date
-                      </Form.Label>
-                      <Form.Control
-                        type="datetime-local"
-                        value={assignExpectedDate}
-                        onChange={(e) => setAssignExpectedDate(e.target.value)}
-                      />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                      <Form.Label className="small fw-600 text-muted">
-                        Notes to resource
-                      </Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        value={assignNotes}
-                        onChange={(e) => setAssignNotes(e.target.value)}
-                        placeholder="Include key context or instructions…"
-                      />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                      <Form.Check
-                        type="switch"
-                        id="sendNotification"
-                        label="Send notification to resource (recorded in notes)"
-                        checked={assignSendNotification}
-                        onChange={(e) => setAssignSendNotification(e.target.checked)}
-                        className="small"
-                      />
-                    </Form.Group>
-                  </>
-                )
-              })()}
             </Col>
           </Row>
         </Modal.Body>
@@ -1822,24 +2090,11 @@ export function SocialWorkerRequestDetailsPage() {
               if (!assignResourceModal || !requestId || !selectedResourceId) return
               const res = assignmentResources.find((r: AssignmentResource) => r.id === selectedResourceId)
               if (!res) return
-              if (!assignExpectedDate) {
-                setAssignError('Please choose expected service date.')
-                return
-              }
               setAssignError(null)
               setAssignLoading(true)
               try {
-                const scheduledDate = new Date(assignExpectedDate).toISOString()
-                const noteParts = [
-                  assignNotes.trim(),
-                  `Notify resource: ${assignSendNotification ? 'Yes' : 'No'}`,
-                  `Assigned resource: ${res.name} (${ASSIGNMENT_RESOURCE_TYPE_LABELS[res.type as AssignmentResourceType]} - ${res.location})`,
-                ].filter(Boolean)
-                const notesCombined = noteParts.join(' | ')
                 const updated = await assignServiceItemResource(requestId, assignResourceModal.item, {
                   assignedResource: `${res.name} (${res.location})`,
-                  scheduledDate,
-                  notes: notesCombined,
                 })
                 if (updated) {
                   setRequest(updated)
@@ -2098,49 +2353,12 @@ export function SocialWorkerRequestDetailsPage() {
                 <div className="alert alert-danger py-2 small">{followUpError}</div>
               )}
               <Form.Group className="mb-3">
-                <Form.Label className="small fw-600 text-muted">📅 Follow-up date</Form.Label>
+                <Form.Label className="small fw-600 text-muted">📅 Visit date</Form.Label>
                 <Form.Control
                   type="datetime-local"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
+                  value={followUpVisitDate}
+                  onChange={(e) => setFollowUpVisitDate(e.target.value)}
                 />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label className="small fw-600 text-muted">📍 Mode</Form.Label>
-                <Form.Select
-                  value={followUpMode}
-                  onChange={(e) =>
-                    setFollowUpMode(
-                      e.target.value as 'PHONE' | 'VISIT' | 'ONLINE' | 'FIELD'
-                    )
-                  }
-                >
-                  <option value="PHONE">Phone</option>
-                  <option value="VISIT">Visit</option>
-                  <option value="ONLINE">Online</option>
-                  <option value="FIELD">Field</option>
-                </Form.Select>
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label className="small fw-600 text-muted">
-                  🔘 Is issue resolved?
-                </Form.Label>
-                <div className="d-flex gap-3 small">
-                  <Form.Check
-                    type="radio"
-                    id="fu-resolved-yes"
-                    label="Yes"
-                    checked={followUpResolved === true}
-                    onChange={() => setFollowUpResolved(true)}
-                  />
-                  <Form.Check
-                    type="radio"
-                    id="fu-resolved-no"
-                    label="No"
-                    checked={followUpResolved === false}
-                    onChange={() => setFollowUpResolved(false)}
-                  />
-                </div>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label className="small fw-600 text-muted">📝 Notes</Form.Label>
@@ -2151,6 +2369,27 @@ export function SocialWorkerRequestDetailsPage() {
                   onChange={(e) => setFollowUpNotes(e.target.value)}
                   placeholder="What was checked, any risks, next steps…"
                 />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">📈 Condition improvement</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  value={followUpCondition}
+                  onChange={(e) => setFollowUpCondition(e.target.value)}
+                  placeholder="Describe any improvement or deterioration in the child's situation…"
+                />
+              </Form.Group>
+              <Form.Group className="mb-0">
+                <Form.Label className="small fw-600 text-muted">🔁 Next visit date</Form.Label>
+                <Form.Control
+                  type="datetime-local"
+                  value={followUpNextVisitDate}
+                  onChange={(e) => setFollowUpNextVisitDate(e.target.value)}
+                />
+                <Form.Text className="small text-muted">
+                  This will be used to plan calendar reminders and dashboard alerts for your schedule.
+                </Form.Text>
               </Form.Group>
             </Col>
 
@@ -2224,40 +2463,34 @@ export function SocialWorkerRequestDetailsPage() {
             size="sm"
             disabled={followUpSubmitting}
             onClick={async () => {
-              if (!requestId || !followUpDate) {
-                setFollowUpError('Please select a follow-up date.')
+              if (!requestId || !followUpVisitDate) {
+                setFollowUpError('Please select a visit date.')
                 return
               }
               setFollowUpError(null)
               setFollowUpSubmitting(true)
               try {
-                const scheduledDateIso = new Date(followUpDate).toISOString()
-                const outcomeText =
-                  followUpResolved === null
-                    ? 'Outcome: Not specified'
-                    : `Outcome: ${followUpResolved ? 'Resolved' : 'Not resolved'}`
-                const notesCombined = [followUpNotes.trim(), outcomeText]
+                const visitDateIso = new Date(followUpVisitDate).toISOString()
+                const nextVisitIso = followUpNextVisitDate
+                  ? new Date(followUpNextVisitDate).toISOString()
+                  : undefined
+                const notesCombined = [followUpNotes.trim(), followUpCondition.trim()]
                   .filter(Boolean)
                   .join(' | ')
                 const created = await createFollowUp({
                   helpRequestId: requestId,
-                  type:
-                    followUpMode === 'PHONE'
-                      ? 'Phone'
-                      : followUpMode === 'VISIT'
-                        ? 'Visit'
-                        : followUpMode === 'ONLINE'
-                          ? 'Online'
-                          : 'Field',
-                  scheduledDate: scheduledDateIso,
+                  type: followUpMode,
+                  scheduledDate: visitDateIso,
+                  nextScheduledDate: nextVisitIso,
                   notes: notesCombined,
-                  status: followUpResolved ? 'COMPLETED' : 'SCHEDULED',
+                  status: 'SCHEDULED',
                 })
                 setFollowUps((prev) => [...prev, created])
                 setFollowUpModal(null)
-                setFollowUpDate('')
+                setFollowUpVisitDate('')
+                setFollowUpNextVisitDate('')
                 setFollowUpNotes('')
-                setFollowUpResolved(null)
+                setFollowUpCondition('')
               } catch (err) {
                 setFollowUpError(
                   err instanceof Error ? err.message : 'Failed to create follow-up.'
@@ -2273,13 +2506,27 @@ export function SocialWorkerRequestDetailsPage() {
       </Modal>
 
       {/* Reject / Transfer modal */}
-      <Modal show={rejectModalOpen} onHide={() => setRejectModalOpen(false)} centered>
+      <Modal
+        show={rejectModalOpen}
+        onHide={() => {
+          setRejectModalOpen(false)
+          setRejectMode(null)
+          setRejectReason('')
+          setTransferWorkerId(null)
+          setTransferNote('')
+        }}
+        centered
+      >
         <Modal.Header closeButton>
-          <Modal.Title>Reject or Transfer Request</Modal.Title>
+          <Modal.Title>
+            {rejectMode === 'TRANSFER' ? 'Transfer Request' : 'Reject Request'}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form.Group className="mb-3">
-            <Form.Label>Reason for rejection</Form.Label>
+            <Form.Label>
+              {rejectMode === 'TRANSFER' ? 'Reason for transfer' : 'Reason for rejection'}
+            </Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
@@ -2288,41 +2535,86 @@ export function SocialWorkerRequestDetailsPage() {
               placeholder="Provide a brief reason (required)"
             />
           </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Suggest transfer to another social worker (optional)</Form.Label>
-            <Form.Select
-              value={transferWorkerId || ''}
-              onChange={(e) => setTransferWorkerId(e.target.value || null)}
-            >
-              <option value="">No transfer suggestion</option>
-              {swDirectory.map((sw) => (
-                <option key={sw.userId} value={sw.userId}>
-                  {sw.fullName} {sw.availabilityStatus ? `· ${sw.availabilityStatus}` : ''}{' '}
-                  {sw.specializations?.length ? `· ${sw.specializations.join(', ')}` : ''}
-                </option>
-              ))}
-            </Form.Select>
-            <Form.Text className="text-muted">
-              Admin will review the transfer suggestion based on availability and specialization.
-            </Form.Text>
-          </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label>Transfer note (optional)</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={2}
-              value={transferNote}
-              onChange={(e) => setTransferNote(e.target.value)}
-              placeholder="Any context for admin when reviewing the transfer"
-            />
-          </Form.Group>
+          {rejectMode === 'TRANSFER' && (
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label>Transfer to another social worker</Form.Label>
+                {swDirectory.length === 0 ? (
+                  <div className="small text-muted">No available social workers found.</div>
+                ) : (
+                  <div className="table-responsive">
+                    <Table hover size="sm" className="mb-2 align-middle">
+                      <thead className="small text-muted">
+                        <tr>
+                          <th>Social worker</th>
+                          <th>Availability</th>
+                          <th>Specializations</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {swDirectory.map((sw) => {
+                          const selected = sw.userId === transferWorkerId
+                          return (
+                            <tr
+                              key={sw.userId}
+                              className={selected ? 'table-active' : undefined}
+                              onClick={() => setTransferWorkerId(sw.userId)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <td className="small fw-600">{sw.fullName}</td>
+                              <td>
+                                <Badge bg={getAvailabilityVariant(sw.availabilityStatus)}>
+                                  {getAvailabilityLabel(sw.availabilityStatus)}
+                                </Badge>
+                              </td>
+                              <td className="small">
+                                {sw.specializations && sw.specializations.length > 0
+                                  ? sw.specializations.slice(0, 3).join(', ')
+                                  : '—'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </Table>
+                  </div>
+                )}
+                <Form.Text className="text-muted">
+                  Admin will review the transfer suggestion based on availability and specialization.
+                </Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-2">
+                <Form.Label>Transfer note (optional)</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  value={transferNote}
+                  onChange={(e) => setTransferNote(e.target.value)}
+                  placeholder="Any context for admin when reviewing the transfer"
+                />
+              </Form.Group>
+            </>
+          )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setRejectModalOpen(false)}>
+          <Button
+            variant="outline-secondary"
+            onClick={() => {
+              setRejectModalOpen(false)
+              setRejectMode(null)
+              setRejectReason('')
+              setTransferWorkerId(null)
+              setTransferNote('')
+            }}
+          >
             Cancel
           </Button>
           <Button variant="danger" disabled={rejectSubmitting} onClick={handleRejectRequest}>
-            {rejectSubmitting ? 'Submitting…' : 'Reject request'}
+            {rejectSubmitting
+              ? 'Submitting…'
+              : rejectMode === 'TRANSFER'
+                ? 'Submit transfer'
+                : 'Reject request'}
           </Button>
         </Modal.Footer>
       </Modal>

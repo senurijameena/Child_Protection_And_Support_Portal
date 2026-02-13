@@ -331,7 +331,7 @@ export function AdminReportsPage() {
       const data = await loadData()
       setRows(data)
     } catch (e) {
-      // eslint-disable-next-line no-alert
+       
       alert(e instanceof Error ? e.message : 'Failed to generate report')
     } finally {
       setLoading(false)
@@ -371,7 +371,7 @@ export function AdminReportsPage() {
       }
     } catch (e) {
       console.error('Export error:', e)
-      // eslint-disable-next-line no-alert
+       
       alert(e instanceof Error ? e.message : 'Export failed. Please check the console for details.')
       setLoading(false)
     }

@@ -15,7 +15,6 @@ type PackageHelpType = Extract<
 >
 
 type TargetGroup = 'CHILD' | 'FAMILY' | 'INDIVIDUAL' | 'EMERGENCY'
-type Duration = '1_WEEK' | '1_MONTH' | 'CUSTOM'
 type PriorityLevel = 'LOW' | 'MEDIUM' | 'HIGH'
 
 const TARGET_GROUP_LABELS: Record<TargetGroup, string> = {
@@ -23,12 +22,6 @@ const TARGET_GROUP_LABELS: Record<TargetGroup, string> = {
   FAMILY: 'Family',
   INDIVIDUAL: 'Individual',
   EMERGENCY: 'Emergency',
-}
-
-const DURATION_LABELS: Record<Duration, string> = {
-  '1_WEEK': '1 week',
-  '1_MONTH': '1 month',
-  CUSTOM: 'Custom',
 }
 
 const PRIORITY_LABELS: Record<PriorityLevel, string> = {
@@ -104,8 +97,7 @@ export function ServicePackageFormPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [targetGroup, setTargetGroup] = useState<TargetGroup | ''>('')
-  const [duration, setDuration] = useState<Duration>('1_MONTH')
-  const [customDuration, setCustomDuration] = useState('')
+  const [estimatedDuration, setEstimatedDuration] = useState('')
   const [priority, setPriority] = useState<PriorityLevel>('MEDIUM')
   const [addedItems, setAddedItems] = useState<string[]>([])
   const [itemNotes, setItemNotes] = useState<Record<string, string>>({})
@@ -130,20 +122,7 @@ export function ServicePackageFormPage() {
         const pkg = await getServicePackage(packageId)
         setName(pkg.title)
         setDescription(pkg.description ?? '')
-        const dur = (pkg.estimatedDuration ?? '').toLowerCase()
-        if (dur === '1 week') {
-          setDuration('1_WEEK')
-          setCustomDuration('')
-        } else if (dur === '1 month') {
-          setDuration('1_MONTH')
-          setCustomDuration('')
-        } else if (pkg.estimatedDuration?.trim()) {
-          setDuration('CUSTOM')
-          setCustomDuration(pkg.estimatedDuration.trim())
-        } else {
-          setDuration('1_MONTH')
-          setCustomDuration('')
-        }
+        setEstimatedDuration(pkg.estimatedDuration ?? '')
         const formItems = SERVICE_CATEGORIES.flatMap((c) => c.items)
         const normalize = (s: string) => s.toLowerCase().replace(/counseling/g, 'counselling')
         const list: string[] = []
@@ -161,7 +140,6 @@ export function ServicePackageFormPage() {
     void load()
   }, [packageId, isEdit])
 
-  const estimatedDurationStr = duration === 'CUSTOM' ? customDuration : DURATION_LABELS[duration]
   const selectedCount = addedItems.length
 
   const handleAddService = (item: string) => {
@@ -197,7 +175,7 @@ export function ServicePackageFormPage() {
       title: name.trim(),
       requestType: primaryType as PackageHelpType,
       description: description.trim() || undefined,
-      estimatedDuration: estimatedDurationStr || undefined,
+      estimatedDuration: estimatedDuration.trim() || undefined,
       items,
       status,
     }
@@ -318,23 +296,15 @@ export function ServicePackageFormPage() {
               </Col>
               <Col xs={12} md={4}>
                 <Form.Label className="small fw-600 text-muted">Estimated Duration</Form.Label>
-                <Form.Select
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value as Duration)}
-                >
-                  {(Object.keys(DURATION_LABELS) as Duration[]).map((d) => (
-                    <option key={d} value={d}>{DURATION_LABELS[d]}</option>
-                  ))}
-                </Form.Select>
-                {duration === 'CUSTOM' && (
-                  <Form.Control
-                    className="mt-2"
-                    type="text"
-                    placeholder="e.g. 2 weeks"
-                    value={customDuration}
-                    onChange={(e) => setCustomDuration(e.target.value)}
-                  />
-                )}
+                <Form.Control
+                  type="text"
+                  placeholder="e.g. 2 weeks, 3 months, 10 days"
+                  value={estimatedDuration}
+                  onChange={(e) => setEstimatedDuration(e.target.value)}
+                />
+                <Form.Text className="text-muted">
+                  Add any time frame that makes sense for this package (for example, &quot;6 weeks of support&quot;).
+                </Form.Text>
               </Col>
               <Col xs={12} md={4}>
                 <Form.Label className="small fw-600 text-muted">Priority Level</Form.Label>

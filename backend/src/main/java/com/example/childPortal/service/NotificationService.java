@@ -100,6 +100,22 @@ public class NotificationService {
                         "</div>");
     }
 
+    /**
+     * Lightweight notification creator used across services.
+     * Persists to MongoDB and returns the saved entity.
+     */
+    public Notification createNotification(String userId, String type, String title, String message, String actionUrl) {
+        Notification notification = new Notification();
+        notification.setUserId(userId);
+        notification.setType(type);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setActionUrl(actionUrl);
+        notification.setRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        return notificationRepository.save(notification);
+    }
+
     public void sendUserApprovalNotification(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

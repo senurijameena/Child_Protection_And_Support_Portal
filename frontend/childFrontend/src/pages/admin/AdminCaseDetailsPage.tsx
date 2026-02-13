@@ -52,7 +52,7 @@ export function AdminCaseDetailsPage() {
       await refreshCase()
       setSuccessMessage('Case accepted. You can now assign a police station.')
     } catch (e) {
-      // eslint-disable-next-line no-alert
+       
       alert(e instanceof Error ? e.message : 'Failed to accept case')
     } finally {
       setActionLoading(false)
@@ -68,7 +68,7 @@ export function AdminCaseDetailsPage() {
       await refreshCase()
       setSuccessMessage('Case rejected. The case is now read-only.')
     } catch (e) {
-      // eslint-disable-next-line no-alert
+       
       alert(e instanceof Error ? e.message : 'Failed to reject case')
     } finally {
       setActionLoading(false)
@@ -87,7 +87,7 @@ export function AdminCaseDetailsPage() {
       await refreshCase()
       setSuccessMessage('Case assigned to the selected police station and marked as Assigned.')
     } catch (e) {
-      // eslint-disable-next-line no-alert
+       
       alert(e instanceof Error ? e.message : 'Failed to assign case')
     } finally {
       setAssignLoading(false)

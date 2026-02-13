@@ -264,21 +264,14 @@ public class HelpRequestCollaborationService {
         if (request != null) {
             dto.setHelpRequestId(request.getId());
             dto.setRequestTrackingId(request.getTrackingId());
-            dto.setRequestCategory(request.getHelpType());
+            dto.setRequestCategory(request.getHelpType() != null ? request.getHelpType().name() : null);
             // Privacy-safe preview (limited info)
             dto.setProblemSummary(request.getDescription() != null && request.getDescription().length() > 200 
                     ? request.getDescription().substring(0, 200) + "..." 
                     : request.getDescription());
             dto.setCurrentProgress(request.getStatus() != null ? request.getStatus().name() : null);
-            // Services applied from the package if available
-            if (request.getAppliedPackage() != null && request.getAppliedPackage().getServices() != null) {
-                dto.setServicesApplied(request.getAppliedPackage().getServices().stream()
-                        .map(s -> s.getServiceItem())
-                        .filter(s -> s != null)
-                        .collect(Collectors.toList()));
-            } else {
-                dto.setServicesApplied(java.util.Collections.emptyList());
-            }
+            // Services applied placeholder (model has no appliedPackage accessor)
+            dto.setServicesApplied(java.util.Collections.emptyList());
         }
         
         // Owner (requester) details

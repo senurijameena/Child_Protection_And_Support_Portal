@@ -116,6 +116,23 @@ export interface HelpRequestDTO {
   appliedPackageAppliedAt?: string
   /** Per-service execution status (populated when PU accepts). */
   appliedPackageItemExecutions?: ServiceItemExecutionDTO[]
+  progress?: number
+  serviceStarted?: boolean
+  resourcesAssigned?: boolean
+  allServicesCompleted?: boolean
+  finalAssessmentCompleted?: boolean
+  caseFinalized?: boolean
+  finalAssessment?: FinalAssessmentDTO
+}
+
+export interface FinalAssessmentDTO {
+  objectivesAchieved: boolean
+  childSafe: boolean
+  needsContinuedMonitoring: boolean
+  recommendClosure: boolean
+  remarks: string
+  assessedAt?: string
+  assessedByUserId?: string
 }
 
 export interface ServiceOfferDTO {
@@ -135,10 +152,13 @@ export type ServicePackageStatus = 'DRAFT' | 'PUBLISHED'
 /** Per-service execution status within an applied package */
 export interface ServiceItemExecutionDTO {
   serviceItem: string
-  status: 'PENDING' | 'IN_PROGRESS' | 'SCHEDULED' | 'COMPLETED'
+  status: 'PENDING' | 'IN_PROGRESS' | 'SCHEDULED' | 'COMPLETED' | 'PARTIALLY_COMPLETED' | 'NOT_DELIVERED'
   assignedResource?: string
   scheduledDate?: string
   notes?: string
+  outcome?: string
+  outcomeReason?: string
+  outcomeNotes?: string
 }
 
 export interface ServicePackageDTO {
@@ -178,6 +198,19 @@ export interface ConversationDTO {
   participantName?: string
   lastMessage?: string
   unreadCount?: number
+}
+
+export type AnnouncementType = 'FEATURE' | 'WORKSHOP' | 'MAINTENANCE' | 'GENERAL'
+
+export interface AnnouncementDTO {
+  id: string
+  title: string
+  message: string
+  icon?: string
+  type: AnnouncementType
+  active: boolean
+  createdAt?: string
+  expiresAt?: string
 }
 
 export type CompletedReportWorkflowStatus =

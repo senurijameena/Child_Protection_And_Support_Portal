@@ -7,14 +7,17 @@ import {
   getMyFollowUps,
   getAvailableSocialWorkers,
   requestHelpRequestTransfer,
+  getActiveAnnouncements,
   type FollowUpDTO,
 } from '../../services/socialWorkerApi'
 import {
   type HelpRequestDTO,
+  type AnnouncementDTO,
   REQUEST_STATUS_BADGE_VARIANTS,
   REQUEST_STATUS_LABELS,
 } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
+import { SystemAnnouncementCard } from '../../components/social-worker/SystemAnnouncementCard'
 
 interface CaseStats {
   active: number
@@ -30,6 +33,7 @@ export function SocialWorkerDashboard() {
   const [caseStats, setCaseStats] = useState<CaseStats | null>(null)
   const [recentRequests, setRecentRequests] = useState<HelpRequestDTO[]>([])
   const [assignedRequestsState, setAssignedRequestsState] = useState<HelpRequestDTO[]>([])
+  const [announcements, setAnnouncements] = useState<AnnouncementDTO[]>([])
   const [followUps, setFollowUps] = useState<FollowUpDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,9 +60,10 @@ export function SocialWorkerDashboard() {
 
       try {
         setLoading(true)
-        const [assignedRequests, followUps] = await Promise.all([
+        const [assignedRequests, followUps, activeAnnouncements] = await Promise.all([
           getAssignedRequests(user.userId),
           getMyFollowUps(),
+          getActiveAnnouncements(),
         ])
 
         if (!isMounted) return
@@ -79,6 +84,7 @@ export function SocialWorkerDashboard() {
         })
 
         setAssignedRequestsState(assignedRequests)
+        setAnnouncements(activeAnnouncements)
 
         // Show latest assigned requests (sorted by status priority then date)
         const STATUS_PRIORITY: Record<string, number> = {
@@ -367,6 +373,15 @@ export function SocialWorkerDashboard() {
           </div>
         </Col>
       </Row>
+
+      {/* System Announcements */}
+      {announcements.length > 0 && (
+        <Row className="mb-4">
+          <Col xs={12}>
+            <SystemAnnouncementCard announcements={announcements} />
+          </Col>
+        </Row>
+      )}
 
       {/* Statistics Cards */}
       <Row className="mb-5 g-3">

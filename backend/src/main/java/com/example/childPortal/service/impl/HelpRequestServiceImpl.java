@@ -635,7 +635,8 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     helpRequest.setStatus(HelpRequest.RequestStatus.IN_PROGRESS);
                     helpRequest.setLastUpdated(LocalDateTime.now());
                     // Initialize per-service executions as PENDING
-                    ServicePackage pkg = servicePackageRepository.findById(helpRequest.getAppliedServicePackageId()).orElse(null);
+                    ServicePackage pkg = servicePackageRepository.findById(helpRequest.getAppliedServicePackageId())
+                            .orElse(null);
                     if (pkg != null && pkg.getItems() != null && !pkg.getItems().isEmpty()) {
                         List<ServiceItemExecution> executions = new java.util.ArrayList<>();
                         for (String item : pkg.getItems()) {
@@ -647,7 +648,8 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 
                     if (timelineService != null) {
                         try {
-                            String userName = userRepository.findById(acceptedByUserId).map(User::getFullName).orElse("User");
+                            String userName = userRepository.findById(acceptedByUserId).map(User::getFullName)
+                                    .orElse("User");
                             timelineService.createHelpRequestStatusChangeEvent(
                                     requestId, acceptedByUserId, userName,
                                     HelpRequest.RequestStatus.PACKAGE_PROPOSED,
@@ -704,12 +706,14 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     String currentNotes = helpRequest.getRequestNotes();
                     String rejectNote = "Public user rejected the service package." + note;
                     helpRequest.setRequestNotes(currentNotes != null && !currentNotes.isEmpty()
-                            ? currentNotes + "\n" + rejectNote : rejectNote);
+                            ? currentNotes + "\n" + rejectNote
+                            : rejectNote);
                     helpRequestRepository.save(helpRequest);
 
                     if (timelineService != null) {
                         try {
-                            String userName = userRepository.findById(rejectedByUserId).map(User::getFullName).orElse("User");
+                            String userName = userRepository.findById(rejectedByUserId).map(User::getFullName)
+                                    .orElse("User");
                             timelineService.createHelpRequestStatusChangeEvent(
                                     requestId, rejectedByUserId, userName,
                                     HelpRequest.RequestStatus.PACKAGE_PROPOSED,
@@ -747,18 +751,21 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     }
 
     @Override
-    public HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status, String updatedByUserId) {
+    public HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status,
+            String updatedByUserId) {
         return updateServiceItemStatus(requestId, serviceItem, status, updatedByUserId, null, null);
     }
 
     @Override
-    public HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status, String updatedByUserId,
+    public HelpRequestDTO updateServiceItemStatus(String requestId, String serviceItem, String status,
+            String updatedByUserId,
             LocalDateTime startDate, String notes) {
         return helpRequestRepository.findById(requestId)
                 .map(hr -> {
                     // If there is an applied package but executions were never initialized
                     // (older records), bootstrap executions from the current package items.
-                    if (hr.getAppliedPackageItemExecutions() == null || hr.getAppliedPackageItemExecutions().isEmpty()) {
+                    if (hr.getAppliedPackageItemExecutions() == null
+                            || hr.getAppliedPackageItemExecutions().isEmpty()) {
                         if (hr.getAppliedServicePackageId() != null) {
                             servicePackageRepository.findById(hr.getAppliedServicePackageId()).ifPresent(pkg -> {
                                 if (pkg.getItems() != null && !pkg.getItems().isEmpty()) {
@@ -772,7 +779,8 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                         }
                     }
 
-                    if (hr.getAppliedPackageItemExecutions() == null || hr.getAppliedPackageItemExecutions().isEmpty()) {
+                    if (hr.getAppliedPackageItemExecutions() == null
+                            || hr.getAppliedPackageItemExecutions().isEmpty()) {
                         return null;
                     }
 
@@ -784,14 +792,19 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                         if (serviceItem != null && serviceItem.equals(ex.getServiceItem())) {
                             ex.setStatus(status != null ? status : "PENDING");
                             if ("IN_PROGRESS".equals(status)) {
-                                if (startDate != null) ex.setScheduledDate(startDate);
-                                if (notes != null) ex.setNotes(notes);
+                                if (startDate != null)
+                                    ex.setScheduledDate(startDate);
+                                if (notes != null)
+                                    ex.setNotes(notes);
                                 if (timelineService != null) {
                                     try {
-                                        String userName = userRepository.findById(updatedByUserId).map(User::getFullName).orElse("Social Worker");
+                                        String userName = userRepository.findById(updatedByUserId)
+                                                .map(User::getFullName).orElse("Social Worker");
                                         String desc = "Service \"" + serviceItem + "\" started by " + userName;
-                                        if (notes != null && !notes.isBlank()) desc += ". Notes: " + notes;
-                                        timelineService.createHelpRequestNoteAddedEvent(requestId, updatedByUserId, userName, desc);
+                                        if (notes != null && !notes.isBlank())
+                                            desc += ". Notes: " + notes;
+                                        timelineService.createHelpRequestNoteAddedEvent(requestId, updatedByUserId,
+                                                userName, desc);
                                     } catch (Exception e) {
                                         // ignore
                                     }
@@ -812,12 +825,16 @@ public class HelpRequestServiceImpl implements HelpRequestService {
             LocalDateTime scheduledDate, String notes, String updatedByUserId) {
         return helpRequestRepository.findById(requestId)
                 .map(hr -> {
-                    if (hr.getAppliedPackageItemExecutions() == null) return null;
+                    if (hr.getAppliedPackageItemExecutions() == null)
+                        return null;
                     for (ServiceItemExecution ex : hr.getAppliedPackageItemExecutions()) {
                         if (serviceItem != null && serviceItem.equals(ex.getServiceItem())) {
-                            if (assignedResource != null) ex.setAssignedResource(assignedResource);
-                            if (scheduledDate != null) ex.setScheduledDate(scheduledDate);
-                            if (notes != null) ex.setNotes(notes);
+                            if (assignedResource != null)
+                                ex.setAssignedResource(assignedResource);
+                            if (scheduledDate != null)
+                                ex.setScheduledDate(scheduledDate);
+                            if (notes != null)
+                                ex.setNotes(notes);
                             if (scheduledDate != null && ex.getStatus() != null && "PENDING".equals(ex.getStatus())) {
                                 ex.setStatus("SCHEDULED");
                             }
@@ -857,14 +874,17 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     }
 
     @Override
-    public HelpRequestDTO submitPackageFollowUp(String requestId, String followUpDate, String followUpType, String notes,
+    public HelpRequestDTO submitPackageFollowUp(String requestId, String followUpDate, String followUpType,
+            String notes,
             String submittedByUserId) {
         return helpRequestRepository.findById(requestId)
                 .map(hr -> {
-                    if (followUpService == null) return convertToFilteredDTO(hr);
+                    if (followUpService == null)
+                        return convertToFilteredDTO(hr);
                     com.example.childPortal.model.FollowUp fu = new com.example.childPortal.model.FollowUp();
                     fu.setHelpRequestId(requestId);
-                    fu.setSocialWorkerId(hr.getAssignedWorkerId() != null ? hr.getAssignedWorkerId() : submittedByUserId);
+                    fu.setSocialWorkerId(
+                            hr.getAssignedWorkerId() != null ? hr.getAssignedWorkerId() : submittedByUserId);
                     fu.setType(followUpType != null ? followUpType : "VISIT");
                     fu.setNotes(notes);
                     fu.setStatus("SCHEDULED");
@@ -885,6 +905,218 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                 .orElse(null);
     }
 
+    @Override
+    public HelpRequestDTO requestServiceAdjustment(String requestId, String serviceItem, String message,
+            String requestedByUserId) {
+        return helpRequestRepository.findById(requestId)
+                .map(helpRequest -> {
+                    if (helpRequest.getAppliedServicePackageId() == null) {
+                        return null;
+                    }
+                    if (!requestedByUserId.equals(helpRequest.getRequesterUserId())) {
+                        return null;
+                    }
+                    if (!"PENDING".equals(helpRequest.getAppliedServicePackageStatus())) {
+                        return convertToFilteredDTO(helpRequest);
+                    }
+
+                    // Treat as a rejection but with specific adjustment context
+                    helpRequest.setAppliedServicePackageStatus("REJECTED");
+                    helpRequest.setStatus(HelpRequest.RequestStatus.PACKAGE_REJECTED);
+                    helpRequest.setLastUpdated(LocalDateTime.now());
+
+                    String note = "Adjustment requested for service '" + serviceItem + "': " + message;
+                    String currentNotes = helpRequest.getRequestNotes();
+                    helpRequest.setRequestNotes(currentNotes != null && !currentNotes.isEmpty()
+                            ? currentNotes + "\n" + note
+                            : note);
+
+                    helpRequestRepository.save(helpRequest);
+
+                    if (timelineService != null) {
+                        try {
+                            String userName = userRepository.findById(requestedByUserId).map(User::getFullName)
+                                    .orElse("User");
+                            timelineService.createHelpRequestStatusChangeEvent(
+                                    requestId, requestedByUserId, userName,
+                                    HelpRequest.RequestStatus.PACKAGE_PROPOSED,
+                                    HelpRequest.RequestStatus.PACKAGE_REJECTED,
+                                    note);
+                        } catch (Exception e) {
+                            System.err.println("Error adding timeline event: " + e.getMessage());
+                        }
+                    }
+
+                    if (notificationService != null && helpRequest.getAssignedWorkerId() != null) {
+                        try {
+                            notificationService.sendHelpRequestUpdate(
+                                    helpRequest.getAssignedWorkerId(),
+                                    helpRequest.getId(),
+                                    "PACKAGE_ADJUSTMENT_REQUESTED",
+                                    false);
+                        } catch (Exception e) {
+                            System.err.println("Error notifying worker: " + e.getMessage());
+                        }
+                    }
+
+                    return convertToFilteredDTO(helpRequest);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO startServiceExecution(String requestId, String userId) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    hr.setServiceStarted(true);
+                    hr.setServiceStartedAt(LocalDateTime.now());
+                    hr.setStatus(HelpRequest.RequestStatus.IN_PROGRESS);
+                    hr.setProgress(10);
+                    hr.setLastUpdated(LocalDateTime.now());
+
+                    // Automatically create initial follow-up for next day
+                    if (followUpService != null) {
+                        com.example.childPortal.model.FollowUp fu = new com.example.childPortal.model.FollowUp();
+                        fu.setHelpRequestId(requestId);
+                        fu.setSocialWorkerId(hr.getAssignedWorkerId());
+                        fu.setType("SERVICE_START_FOLLOWUP");
+                        fu.setNotes("Initial monitoring after service start.");
+                        fu.setStatus("SCHEDULED");
+                        fu.setScheduledDate(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0));
+                        followUpService.createFollowUp(fu);
+                    }
+
+                    helpRequestRepository.save(hr);
+
+                    if (timelineService != null) {
+                        String name = userRepository.findById(userId).map(User::getFullName).orElse("Social Worker");
+                        timelineService.createHelpRequestNoteAddedEvent(requestId, userId, name,
+                                "Service execution started. Initial monitoring scheduled.");
+                    }
+
+                    return convertToFilteredDTO(hr);
+                }).orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO updateServiceOutcome(String requestId, String serviceItem, String outcome, String reason,
+            String notes, String userId) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    if (hr.getAppliedPackageItemExecutions() == null)
+                        return null;
+
+                    for (ServiceItemExecution ex : hr.getAppliedPackageItemExecutions()) {
+                        if (ex.getServiceItem().equals(serviceItem)) {
+                            ex.setOutcome(outcome);
+                            ex.setOutcomeReason(reason);
+                            ex.setOutcomeNotes(notes);
+                            ex.setOutcomeRecordedBy(userId);
+                            ex.setOutcomeRecordedAt(LocalDateTime.now());
+
+                            int currentProgress = hr.getProgress();
+                            if ("COMPLETED_SUCCESSFULLY".equals(outcome)) {
+                                ex.setStatus("COMPLETED");
+                                hr.setProgress(Math.min(90, currentProgress + 15));
+                                // Schedule next follow-up 3 days later
+                                if (followUpService != null) {
+                                    com.example.childPortal.model.FollowUp fu = new com.example.childPortal.model.FollowUp();
+                                    fu.setHelpRequestId(requestId);
+                                    fu.setSocialWorkerId(hr.getAssignedWorkerId());
+                                    fu.setType("PERIODIC_FOLLOWUP");
+                                    fu.setNotes("Follow-up after successful delivery of " + serviceItem);
+                                    fu.setStatus("SCHEDULED");
+                                    fu.setScheduledDate(LocalDateTime.now().plusDays(3).withHour(10).withMinute(0));
+                                    followUpService.createFollowUp(fu);
+                                }
+                            } else if ("PARTIALLY_COMPLETED".equals(outcome)) {
+                                ex.setStatus("PARTIALLY_COMPLETED");
+                                hr.setProgress(Math.min(90, currentProgress + 5));
+                                // Schedule next day
+                                if (followUpService != null) {
+                                    com.example.childPortal.model.FollowUp fu = new com.example.childPortal.model.FollowUp();
+                                    fu.setHelpRequestId(requestId);
+                                    fu.setSocialWorkerId(hr.getAssignedWorkerId());
+                                    fu.setType("ADJUSTMENT_FOLLOWUP");
+                                    fu.setNotes("Follow-up for partial delivery of " + serviceItem
+                                            + ". Needs adjustment plan.");
+                                    fu.setStatus("SCHEDULED");
+                                    fu.setScheduledDate(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0));
+                                    followUpService.createFollowUp(fu);
+                                }
+                            } else {
+                                ex.setStatus("NOT_DELIVERED");
+                                // No progress change, must reschedule
+                            }
+                            break;
+                        }
+                    }
+
+                    // Check if all are done
+                    boolean allDone = hr.getAppliedPackageItemExecutions().stream()
+                            .allMatch(ex -> "COMPLETED".equals(ex.getStatus()));
+                    if (allDone) {
+                        hr.setAllServicesCompleted(true);
+                        hr.setProgress(90);
+                    }
+
+                    hr.setLastUpdated(LocalDateTime.now());
+                    helpRequestRepository.save(hr);
+                    return convertToFilteredDTO(hr);
+                }).orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO submitFinalAssessment(String requestId, HelpRequest.FinalAssessment assessment,
+            String userId) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    assessment.setAssessedAt(LocalDateTime.now());
+                    assessment.setAssessedByUserId(userId);
+                    hr.setFinalAssessment(assessment);
+                    hr.setFinalAssessmentCompleted(true);
+                    hr.setFinalAssessmentAt(LocalDateTime.now());
+                    hr.setProgress(100);
+                    hr.setLastUpdated(LocalDateTime.now());
+                    helpRequestRepository.save(hr);
+
+                    if (timelineService != null) {
+                        String name = userRepository.findById(userId).map(User::getFullName).orElse("Social Worker");
+                        timelineService.createHelpRequestNoteAddedEvent(requestId, userId, name,
+                                "Final assessment completed. Recommend closure: " + assessment.isRecommendClosure());
+                    }
+
+                    return convertToFilteredDTO(hr);
+                }).orElse(null);
+    }
+
+    @Override
+    public HelpRequestDTO finalizeCase(String requestId, String userId) {
+        return helpRequestRepository.findById(requestId)
+                .map(hr -> {
+                    hr.setStatus(HelpRequest.RequestStatus.COMPLETED);
+                    hr.setCaseFinalized(true);
+                    hr.setCompletionDate(LocalDateTime.now());
+                    hr.setLastUpdated(LocalDateTime.now());
+                    helpRequestRepository.save(hr);
+
+                    if (timelineService != null) {
+                        String name = userRepository.findById(userId).map(User::getFullName).orElse("Social Worker");
+                        timelineService.createHelpRequestStatusChangeEvent(requestId, userId, name,
+                                HelpRequest.RequestStatus.IN_PROGRESS, HelpRequest.RequestStatus.COMPLETED,
+                                "Case marked as COMPLETED.");
+                    }
+
+                    // Notify Admin
+                    if (notificationService != null) {
+                        notificationService.sendHelpRequestUpdateToAdmin(requestId, "COMPLETED", userId,
+                                hr.getTrackingId());
+                    }
+
+                    return convertToFilteredDTO(hr);
+                }).orElse(null);
+    }
+
     private HelpRequestDTO convertToFilteredDTO(HelpRequest helpRequest) {
         HelpRequestDTO dto = new HelpRequestDTO();
         dto.setId(helpRequest.getId());
@@ -902,6 +1134,16 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         dto.setAssignedWorkerId(helpRequest.getAssignedWorkerId());
         dto.setRequestDate(helpRequest.getRequestDate());
         dto.setPriority(helpRequest.getPriority());
+        dto.setProgress(helpRequest.getProgress());
+        dto.setFinalAssessment(helpRequest.getFinalAssessment());
+        dto.setServiceStarted(helpRequest.isServiceStarted());
+        dto.setResourcesAssigned(helpRequest.isResourcesAssigned());
+        dto.setAllServicesCompleted(helpRequest.isAllServicesCompleted());
+        dto.setFinalAssessmentCompleted(helpRequest.isFinalAssessmentCompleted());
+        dto.setCaseFinalized(helpRequest.isCaseFinalized());
+        dto.setLastUpdated(helpRequest.getLastUpdated());
+        dto.setCompletionDate(helpRequest.getCompletionDate());
+        dto.setRequestNotes(helpRequest.getRequestNotes());
 
         // Map applied service package, if any
         if (helpRequest.getAppliedServicePackageId() != null) {

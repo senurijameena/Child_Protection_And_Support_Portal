@@ -2,6 +2,7 @@ package com.example.childPortal.controller;
 
 import com.example.childPortal.dto.HelpRequestDTO;
 import com.example.childPortal.dto.HelpResponse;
+import com.example.childPortal.model.HelpRequest;
 import com.example.childPortal.model.HelpRequest.RequestStatus;
 import com.example.childPortal.model.HelpType;
 import com.example.childPortal.service.HelpRequestService;
@@ -33,7 +34,6 @@ public class HelpController {
 
     @GetMapping("/my-requests")
     public ResponseEntity<List<HelpRequestDTO>> getMyHelpRequests(@AuthenticationPrincipal String userId) {
-        // Fallback for userId if @AuthenticationPrincipal is failing to resolve
         if (userId == null) {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                     .getContext().getAuthentication();
@@ -275,6 +275,56 @@ public class HelpController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @PostMapping("/{requestId}/package/adjustment")
+    public ResponseEntity<HelpRequestDTO> requestPackageAdjustment(
+            @PathVariable String requestId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String serviceItem = body.get("serviceItem");
+        String message = body.get("message");
+        HelpRequestDTO updated = helpRequestService.requestServiceAdjustment(requestId, serviceItem, message, userId);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{requestId}/service/start")
+    public ResponseEntity<HelpRequestDTO> startServiceExecution(
+            @PathVariable String requestId,
+            @AuthenticationPrincipal String userId) {
+        HelpRequestDTO updated = helpRequestService.startServiceExecution(requestId, userId);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{requestId}/service/outcome")
+    public ResponseEntity<HelpRequestDTO> updateServiceOutcome(
+            @PathVariable String requestId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String serviceItem = body.get("serviceItem");
+        String outcome = body.get("outcome");
+        String reason = body.get("reason");
+        String notes = body.get("notes");
+        HelpRequestDTO updated = helpRequestService.updateServiceOutcome(requestId, serviceItem, outcome, reason, notes,
+                userId);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{requestId}/service/assessment")
+    public ResponseEntity<HelpRequestDTO> submitFinalAssessment(
+            @PathVariable String requestId,
+            @RequestBody HelpRequest.FinalAssessment assessment,
+            @AuthenticationPrincipal String userId) {
+        HelpRequestDTO updated = helpRequestService.submitFinalAssessment(requestId, assessment, userId);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{requestId}/finalize")
+    public ResponseEntity<HelpRequestDTO> finalizeCase(
+            @PathVariable String requestId,
+            @AuthenticationPrincipal String userId) {
+        HelpRequestDTO updated = helpRequestService.finalizeCase(requestId, userId);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{requestId}")

@@ -138,7 +138,7 @@ export function SocialWorkerCollaborationPage() {
   const [newRequests, setNewRequests] = useState<PendingCollaborationRequestDTO[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
   const [requestsError, setRequestsError] = useState<string | null>(null)
-  const [activeCollaborations] = useState<ActiveCollaboration[]>([])
+  const [activeCollaborations, setActiveCollaborations] = useState<ActiveCollaboration[]>([])
   const [pastCollaborations] = useState<PastCollaboration[]>([])
   const [selectedRequest, setSelectedRequest] = useState<PendingCollaborationRequestDTO | null>(null)
   const [selectedPastCollab, setSelectedPastCollab] = useState<PastCollaboration | null>(null)
@@ -216,8 +216,33 @@ export function SocialWorkerCollaborationPage() {
   const handleAccept = async (collaborationId: string) => {
     setProcessingId(collaborationId)
     try {
-      await acceptHelpRequestCollaborationRequest(collaborationId)
+      const accepted = await acceptHelpRequestCollaborationRequest(collaborationId)
       setNewRequests((prev) => prev.filter((r) => r.collaborationId !== collaborationId))
+
+      // Move accepted request into Participating tab immediately
+      const acceptedReq = newRequests.find((r) => r.collaborationId === collaborationId)
+      if (acceptedReq) {
+        const category = (acceptedReq.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
+        setActiveCollaborations((prev) => {
+          const exists = prev.some((c) => c.id === collaborationId)
+          if (exists) return prev
+          return [
+            ...prev,
+            {
+              id: collaborationId,
+              helpRequestId: acceptedReq.helpRequestId || acceptedReq.requestId || '',
+              requestId: acceptedReq.requestId || acceptedReq.helpRequestId || acceptedReq.requestTrackingId || '',
+              role: (acceptedReq.permission?.toUpperCase() || 'VIEW_ONLY') as ActiveCollaboration['role'],
+              ownerName: acceptedReq.ownerName || 'Social Worker',
+              category,
+              pendingTasks: 0,
+              lastUpdate: new Date().toISOString(),
+              status: 'ACTIVE',
+            },
+          ]
+        })
+        setActiveTab('participating')
+      }
       setShowSummaryModal(false)
     } catch (err) {
       console.error('Failed to accept collaboration:', err)
@@ -524,6 +549,50 @@ export function SocialWorkerCollaborationPage() {
 
   const renderAllCollaborationsTab = () => (
     <div>
+      {activeCollaborations.length > 0 && (
+        <div className="mb-4">
+          <h6 className="fw-700 mb-3">Active Collaborations</h6>
+          <div className="table-responsive">
+            <Table hover size="sm" className="align-middle mb-0">
+              <thead className="bg-light">
+                <tr>
+                  <th className="fw-600 text-muted small py-3 ps-3">Request ID</th>
+                  <th className="fw-600 text-muted small py-3">Owner</th>
+                  <th className="fw-600 text-muted small py-3">Category</th>
+                  <th className="fw-600 text-muted small py-3">Role</th>
+                  <th className="fw-600 text-muted small py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeCollaborations.map((collab) => (
+                  <tr key={collab.id} className="border-bottom">
+                    <td className="py-3 ps-3">
+                      <span className="fw-600 text-primary">{collab.requestId}</span>
+                    </td>
+                    <td className="py-3 small">{collab.ownerName}</td>
+                    <td className="py-3">
+                      <Badge bg={CATEGORY_VARIANTS[collab.category]} className="fw-normal">
+                        {CATEGORY_LABELS[collab.category]}
+                      </Badge>
+                    </td>
+                    <td className="py-3">
+                      <Badge bg={ROLE_VARIANTS[collab.role]} className="fw-normal">
+                        {ROLE_LABELS[collab.role]}
+                      </Badge>
+                    </td>
+                    <td className="py-3">
+                      <Badge bg={STATUS_VARIANTS['ACTIVE']} className="fw-normal">
+                        Active
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </div>
+      )}
+
       {pastCollaborations.length === 0 ? (
         <div className="text-center text-muted py-5">
           <span style={{ fontSize: '3rem' }}>📜</span>

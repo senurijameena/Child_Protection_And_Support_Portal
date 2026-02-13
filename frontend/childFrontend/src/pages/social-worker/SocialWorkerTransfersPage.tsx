@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap'
 import { useAuth } from '../../hooks/useAuth'
@@ -172,6 +172,54 @@ export function SocialWorkerTransfersPage() {
   const handleOpenRequest = (helpRequestId: string) => {
     navigate(`/social-worker/requests/${helpRequestId}`)
   }
+
+  const resetCreateForm = () => {
+    setSelectedRequestId('')
+    setSelectedSwUserId('')
+    setTransferReason('')
+    setTransferError(null)
+  }
+
+  const handleOpenCreateModal = () => {
+    resetCreateForm()
+    setShowCreateModal(true)
+    if (availableSW.length === 0) {
+      loadAvailableSW()
+    }
+  }
+
+  const handleSubmitTransfer = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    if (!selectedRequestId || !selectedSwUserId) {
+      setTransferError('Please select a request and a social worker.')
+      return
+    }
+
+    setTransferSubmitting(true)
+    setTransferError(null)
+    try {
+      await requestHelpRequestTransfer({
+        helpRequestId: selectedRequestId,
+        requestedAssigneeId: selectedSwUserId,
+        reason: transferReason || 'Transfer requested',
+      })
+      if (user?.userId) {
+        fetchTransfers(user.userId)
+      }
+      resetCreateForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      setTransferError(err instanceof Error ? err.message : 'Failed to submit transfer request')
+    } finally {
+      setTransferSubmitting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (showCreateModal && availableSW.length === 0) {
+      loadAvailableSW()
+    }
+  }, [showCreateModal, availableSW.length])
 
   // Count incoming pending transfers for badge
   const incomingPendingCount = filteredPendingTransfers.filter((t: any) => t.direction === 'INCOMING').length
@@ -525,13 +573,27 @@ export function SocialWorkerTransfersPage() {
       {/* Header */}
       <Row className="mb-4">
         <Col xs={12}>
-          <div className="d-flex align-items-center gap-2 mb-2">
-            <span style={{ fontSize: '1.75rem' }}>🔄</span>
-            <h1 className="h3 fw-700 mb-0">Transfer Requests</h1>
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <span style={{ fontSize: '1.75rem' }}>🔄</span>
+                <h1 className="h3 fw-700 mb-0">Transfer Requests</h1>
+              </div>
+              <p className="text-muted mb-0">
+                Manage case transfers between social workers.
+              </p>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              {loadingSW && <Spinner animation="border" size="sm" />}
+              <Button
+                variant="primary"
+                className="rounded-pill px-3"
+                onClick={handleOpenCreateModal}
+              >
+                Create new transfer request
+              </Button>
+            </div>
           </div>
-          <p className="text-muted mb-0">
-            Manage case transfers between social workers.
-          </p>
         </Col>
       </Row>
 
@@ -606,6 +668,100 @@ export function SocialWorkerTransfersPage() {
           </Card>
         </Col>
       </Row>
+
+      {/* Create Transfer Modal */}
+      <Modal
+        show={showCreateModal}
+        onHide={() => {
+          resetCreateForm()
+          setShowCreateModal(false)
+        }}
+        centered
+        size="lg"
+      >
+        <Form onSubmit={handleSubmitTransfer}>
+          <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fw-700">
+              <span className="me-2">🆕</span>
+              Create Transfer Request
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="pt-2">
+            <Row className="g-3">
+              <Col md={6}>
+                <Form.Label className="fw-600 small text-muted">Select Your Case</Form.Label>
+                <Form.Select
+                  value={selectedRequestId}
+                  onChange={(e) => setSelectedRequestId(e.target.value)}
+                  required
+                >
+                  <option value="">Choose a request</option>
+                  {assignedRequests.map((req) => (
+                    <option key={req.id} value={req.id}>
+                      {req.trackingId || req.id} • {req.helpType || req.status || 'Assigned'}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Col>
+              <Col md={6}>
+                <Form.Label className="fw-600 small text-muted">New Social Worker</Form.Label>
+                <Form.Select
+                  value={selectedSwUserId}
+                  onChange={(e) => setSelectedSwUserId(e.target.value)}
+                  required
+                >
+                  <option value="">Select a social worker</option>
+                  {availableSW.map((sw) => (
+                    <option key={sw.userId} value={sw.userId}>
+                      {sw.fullName} {sw.serviceArea ? `• ${sw.serviceArea}` : ''}
+                    </option>
+                  ))}
+                </Form.Select>
+                <div className="small text-muted mt-1">
+                  Showing currently available social workers.
+                </div>
+              </Col>
+            </Row>
+
+            <div className="mt-3">
+              <Form.Label className="fw-600 small text-muted">Reason for transfer</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Explain why this case needs to be transferred..."
+                value={transferReason}
+                onChange={(e) => setTransferReason(e.target.value)}
+              />
+            </div>
+
+            {transferError && (
+              <div className="alert alert-danger rounded-3 mt-3 mb-0" role="alert">
+                {transferError}
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer className="border-0 pt-0">
+            <Button
+              variant="outline-secondary"
+              className="rounded-pill px-4"
+              onClick={() => {
+                resetCreateForm()
+                setShowCreateModal(false)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="rounded-pill px-4"
+              disabled={transferSubmitting}
+            >
+              {transferSubmitting ? 'Submitting...' : 'Send Transfer Request'}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
 
       {/* Pending Transfer View Modal */}
       <Modal

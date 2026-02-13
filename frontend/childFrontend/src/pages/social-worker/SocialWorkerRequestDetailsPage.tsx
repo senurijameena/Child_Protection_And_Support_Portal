@@ -12,6 +12,11 @@ import {
   applyServicePackageToRequest,
   updateServiceItemStatus,
   assignServiceItemResource,
+  startServiceExecution,
+  updateServiceOutcome,
+  submitFinalAssessment,
+  finalizeCase,
+  requestPackageAdjustment,
   getHelpRequestTimeline,
   createHelpRequestTimelineNote,
   createFollowUp,
@@ -26,7 +31,7 @@ import {
   type HelpRequestCollaborationSummaryDTO,
   type CollaborationPermission,
 } from '../../services/socialWorkerApi'
-import type { ServicePackageDTO } from '../../types/dashboard'
+import type { ServicePackageDTO, FinalAssessmentDTO } from '../../types/dashboard'
 import type { HelpRequestDTO, HelpType, AppliedPackageStatus } from '../../types/dashboard'
 import { HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
@@ -231,6 +236,29 @@ export function SocialWorkerRequestDetailsPage() {
     }>
   >([])
   const [internalNoteText, setInternalNoteText] = useState('')
+
+  // New Service Workflow States
+  const [outcomeModal, setOutcomeModal] = useState<{ item: string } | null>(null)
+  const [outcomeType, setOutcomeType] = useState('COMPLETED_SUCCESSFULLY')
+  const [outcomeReason, setOutcomeReason] = useState('')
+  const [outcomeNotes, setOutcomeNotes] = useState('')
+  const [outcomeSubmitting, setOutcomeSubmitting] = useState(false)
+  const [outcomeError, setOutcomeError] = useState<string | null>(null)
+
+  const [showAssessmentModal, setShowAssessmentModal] = useState(false)
+  const [assessmentData, setAssessmentData] = useState<FinalAssessmentDTO>({
+    objectivesAchieved: true,
+    childSafe: true,
+    needsContinuedMonitoring: false,
+    recommendClosure: true,
+    remarks: '',
+  })
+  const [assessmentSubmitting, setAssessmentSubmitting] = useState(false)
+  const [assessmentError, setAssessmentError] = useState<string | null>(null)
+
+  const [finalizeSubmitting, setFinalizeSubmitting] = useState(false)
+  const [finalizeError, setFinalizeError] = useState<string | null>(null)
+
 
   useEffect(() => {
     if (applyPackageId) setShowApplyModal(true)
@@ -1121,7 +1149,7 @@ export function SocialWorkerRequestDetailsPage() {
                       {request.appliedPackage.description && (
                         <p className="small text-muted mb-2">{request.appliedPackage.description}</p>
                       )}
-                      <Row className="g-2 small">
+                      <Row className="g-2 small mb-3">
                         <Col xs={6} md={3}>
                           <span className="text-muted">Total services:</span>{' '}
                           <span className="fw-600">{request.appliedPackage.items?.length ?? 0}</span>
@@ -1139,6 +1167,71 @@ export function SocialWorkerRequestDetailsPage() {
                           </span>
                         </Col>
                       </Row>
+
+                      <div className="d-flex flex-wrap gap-2">
+                        {pkgStatus === 'ACCEPTED' && !request.serviceStarted && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="fw-600"
+                            onClick={async () => {
+                              if (!requestId) return
+                              try {
+                                const updated = await startServiceExecution(requestId)
+                                setRequest(updated)
+                              } catch (err) {
+                                console.error('Failed to start service execution', err)
+                              }
+                            }}
+                          >
+                            🚀 Start Service Execution
+                          </Button>
+                        )}
+
+                        {request.allServicesCompleted && !request.finalAssessmentCompleted && (
+                          <Button
+                            variant="warning"
+                            size="sm"
+                            className="fw-600"
+                            onClick={() => {
+                              setAssessmentData({
+                                objectivesAchieved: true,
+                                childSafe: true,
+                                needsContinuedMonitoring: false,
+                                recommendClosure: true,
+                                remarks: '',
+                              })
+                              setShowAssessmentModal(true)
+                            }}
+                          >
+                            📝 Fill Final Assessment
+                          </Button>
+                        )}
+
+                        {request.finalAssessmentCompleted && !request.caseFinalized && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="fw-600"
+                            disabled={finalizeSubmitting}
+                            onClick={async () => {
+                              if (!requestId) return
+                              setFinalizeSubmitting(true)
+                              try {
+                                const updated = await finalizeCase(requestId)
+                                setRequest(updated)
+                              } catch (err) {
+                                setFinalizeError(err instanceof Error ? err.message : 'Failed to finalize case')
+                              } finally {
+                                setFinalizeSubmitting(false)
+                              }
+                            }}
+                          >
+                            🏁 Finalize Case
+                          </Button>
+                        )}
+                      </div>
+                      {finalizeError && <div className="alert alert-danger small mt-2 py-1">{finalizeError}</div>}
                     </Card.Body>
                   </Card>
                   {/* Scenario A: User Accepted – Service Execution Controls (Start, Assign, Follow-Up) */}
@@ -1214,6 +1307,21 @@ export function SocialWorkerRequestDetailsPage() {
                                   {canStart && (
                                     <Button variant="success" size="sm" onClick={openStartModal} disabled={!!isActionLoading}>
                                       {isActionLoading ? 'Updating…' : '🟢 Start Service'}
+                                    </Button>
+                                  )}
+                                  {status === 'IN_PROGRESS' && (
+                                    <Button
+                                      variant="danger"
+                                      size="sm"
+                                      onClick={() => {
+                                        setOutcomeModal({ item })
+                                        setOutcomeType('COMPLETED_SUCCESSFULLY')
+                                        setOutcomeReason('')
+                                        setOutcomeNotes('')
+                                        setOutcomeError(null)
+                                      }}
+                                    >
+                                      🔴 Record Outcome
                                     </Button>
                                   )}
                                   <Button variant="warning" size="sm" onClick={openAssignResourceModal}>
@@ -2277,6 +2385,181 @@ export function SocialWorkerRequestDetailsPage() {
           </Button>
         </Modal.Footer>
       </Modal>
+      {/* Outcome Tracking Modal */}
+      <Modal show={!!outcomeModal} onHide={() => setOutcomeModal(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">🔴 Record Service Outcome</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {outcomeModal && (
+            <>
+              <p className="small mb-3">Record the final result for <strong>{outcomeModal.item}</strong>.</p>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">Final Outcome</Form.Label>
+                <Form.Select
+                  value={outcomeType}
+                  onChange={(e) => setOutcomeType(e.target.value)}
+                >
+                  <option value="COMPLETED_SUCCESSFULLY">Completed Successfully</option>
+                  <option value="PARTIALLY_COMPLETED">Partially Completed</option>
+                  <option value="NOT_DELIVERED">Not Delivered / Failed</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </Form.Select>
+              </Form.Group>
+
+              {(outcomeType === 'PARTIALLY_COMPLETED' || outcomeType === 'NOT_DELIVERED') && (
+                <Form.Group className="mb-3">
+                  <Form.Label className="small fw-600 text-muted">Reason for partial/non-delivery (required)</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    value={outcomeReason}
+                    onChange={(e) => setOutcomeReason(e.target.value)}
+                    placeholder="e.g. Budget exhausted, user moved, resource unavailable..."
+                  />
+                </Form.Group>
+              )}
+
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">Outcome Notes</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={outcomeNotes}
+                  onChange={(e) => setOutcomeNotes(e.target.value)}
+                  placeholder="Summary of what was achieved, impact, and observations..."
+                />
+              </Form.Group>
+              {outcomeError && <div className="alert alert-danger py-2 small">{outcomeError}</div>}
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" size="sm" onClick={() => setOutcomeModal(null)}>Cancel</Button>
+          <Button
+            variant="danger"
+            size="sm"
+            disabled={outcomeSubmitting}
+            onClick={async () => {
+              if (!requestId || !outcomeModal) return
+              if ((outcomeType === 'PARTIALLY_COMPLETED' || outcomeType === 'NOT_DELIVERED') && !outcomeReason.trim()) {
+                setOutcomeError('Please provide a reason for the partial or non-delivery.')
+                return
+              }
+              setOutcomeSubmitting(true)
+              setOutcomeError(null)
+              try {
+                const updated = await updateServiceOutcome(requestId, {
+                  serviceItem: outcomeModal.item,
+                  outcome: outcomeType,
+                  reason: outcomeReason.trim(),
+                  notes: outcomeNotes.trim(),
+                })
+                setRequest(updated)
+                setOutcomeModal(null)
+              } catch (err) {
+                setOutcomeError(err instanceof Error ? err.message : 'Failed to record outcome')
+              } finally {
+                setOutcomeSubmitting(false)
+              }
+            }}
+          >
+            {outcomeSubmitting ? 'Recording…' : 'Record Outcome'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Final Assessment Modal */}
+      <Modal show={showAssessmentModal} onHide={() => setShowAssessmentModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">📝 Final Case Assessment</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="small text-muted mb-4">Complete this assessment after all service package items are delivered. This is required before finalizing the case.</p>
+          <Row className="g-4">
+            <Col xs={12} md={6}>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  id="objAchieved"
+                  label="All service objectives achieved?"
+                  checked={assessmentData.objectivesAchieved}
+                  onChange={(e) => setAssessmentData({ ...assessmentData, objectivesAchieved: e.target.checked })}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  id="childSafe"
+                  label="Is the child currently safe?"
+                  checked={assessmentData.childSafe}
+                  onChange={(e) => setAssessmentData({ ...assessmentData, childSafe: e.target.checked })}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  id="monitoring"
+                  label="Needs continued monitoring?"
+                  checked={assessmentData.needsContinuedMonitoring}
+                  onChange={(e) => setAssessmentData({ ...assessmentData, needsContinuedMonitoring: e.target.checked })}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  id="recommendClosure"
+                  label="Recommend case closure?"
+                  checked={assessmentData.recommendClosure}
+                  onChange={(e) => setAssessmentData({ ...assessmentData, recommendClosure: e.target.checked })}
+                />
+              </Form.Group>
+            </Col>
+            <Col xs={12} md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">Final Remarks & Observation Summary</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={6}
+                  value={assessmentData.remarks}
+                  onChange={(e) => setAssessmentData({ ...assessmentData, remarks: e.target.value })}
+                  placeholder="Provide a comprehensive summary of the case outcome, challenges, and current status..."
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          {assessmentError && <div className="alert alert-danger py-2 small">{assessmentError}</div>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" size="sm" onClick={() => setShowAssessmentModal(false)}>Cancel</Button>
+          <Button
+            variant="warning"
+            size="sm"
+            disabled={assessmentSubmitting}
+            onClick={async () => {
+              if (!requestId) return
+              if (!assessmentData.remarks.trim()) {
+                setAssessmentError('Please provide final remarks summary.')
+                return
+              }
+              setAssessmentSubmitting(true)
+              setAssessmentError(null)
+              try {
+                const updated = await submitFinalAssessment(requestId, assessmentData)
+                setRequest(updated)
+                setShowAssessmentModal(false)
+              } catch (err) {
+                setAssessmentError(err instanceof Error ? err.message : 'Failed to submit assessment')
+              } finally {
+                setAssessmentSubmitting(false)
+              }
+            }}
+          >
+            {assessmentSubmitting ? 'Submitting…' : 'Submit Final Assessment'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   )
 }
+

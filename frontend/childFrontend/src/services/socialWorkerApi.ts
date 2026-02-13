@@ -8,6 +8,7 @@ import type {
   ServicePackageDTO,
   CompletedHelpRequestReportDTO,
   CompletedHelpReportListItemDTO,
+  AnnouncementDTO,
 } from '../types/dashboard'
 
 export interface FollowUpDTO {
@@ -268,18 +269,18 @@ export interface PendingCollaborationRequestDTO {
   requestedAt?: string
   respondedAt?: string
   district?: string
-  
+
   // Help request details (populated for pending requests)
   helpRequestId?: string
   requestId?: string // tracking ID (alias)
   requestTrackingId?: string // tracking ID from backend
   requestCategory?: string
-  
+
   // Owner details (the SW who sent the invitation)
   ownerUserId?: string
   ownerName?: string
   ownerProfilePhoto?: string
-  
+
   // Privacy-safe preview data
   problemSummary?: string
   currentProgress?: string
@@ -340,6 +341,11 @@ export async function markNotificationRead(id: string) {
 
 export async function markAllNotificationsRead() {
   return apiPut('/notifications/read-all', {})
+}
+
+// Announcements
+export async function getActiveAnnouncements(): Promise<AnnouncementDTO[]> {
+  return apiGet<AnnouncementDTO[]>('/announcements/active')
 }
 
 // User profile (shared across roles)
@@ -490,4 +496,48 @@ export async function updateServicePackage(
 
 export async function deleteServicePackage(id: string): Promise<void> {
   await apiDelete(`/service-packages/${id}`)
+}
+// Help Request Service Workflow
+export async function startServiceExecution(requestId: string): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/service/start`, {})
+}
+
+export async function updateServiceOutcome(
+  requestId: string,
+  data: {
+    serviceItem: string
+    outcome: string
+    reason?: string
+    notes?: string
+  }
+): Promise<HelpRequestDTO> {
+  return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/service/outcome`, data)
+}
+
+export async function submitFinalAssessment(
+  requestId: string,
+  assessment: {
+    objectivesAchieved: boolean
+    childSafe: boolean
+    needsContinuedMonitoring: boolean
+    recommendClosure: boolean
+    remarks: string
+  }
+): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/service/assessment`, assessment)
+}
+
+export async function finalizeCase(requestId: string): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/finalize`, {})
+}
+
+export async function requestPackageAdjustment(
+  requestId: string,
+  serviceItem: string,
+  message: string
+): Promise<HelpRequestDTO> {
+  return apiPost<HelpRequestDTO>(`/help-requests/${requestId}/package/adjustment`, {
+    serviceItem,
+    message,
+  })
 }

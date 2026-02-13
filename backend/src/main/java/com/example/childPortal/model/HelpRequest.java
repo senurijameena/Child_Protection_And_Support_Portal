@@ -38,7 +38,7 @@ public class HelpRequest {
     private LocalDateTime serviceStartedAt;
     private LocalDateTime serviceFinalizedAt;
     private LocalDateTime finalAssessmentAt;
-    
+
     // Service execution flags
     private boolean serviceStarted;
     private boolean resourcesAssigned;
@@ -46,11 +46,22 @@ public class HelpRequest {
     private boolean finalAssessmentCompleted;
     private boolean caseFinalized;
 
+    private FinalAssessment finalAssessment;
+
+    public FinalAssessment getFinalAssessment() {
+        return finalAssessment;
+    }
+
+    public void setFinalAssessment(FinalAssessment finalAssessment) {
+        this.finalAssessment = finalAssessment;
+    }
+
     // Service package proposed by social worker for this help request
     private String appliedServicePackageId;
     private LocalDateTime appliedServicePackageAppliedAt;
     /**
-     * Simple string status for the applied package: PENDING, ACCEPTED, REJECTED, etc.
+     * Simple string status for the applied package: PENDING, ACCEPTED, REJECTED,
+     * etc.
      */
     private String appliedServicePackageStatus;
 
@@ -345,4 +356,34 @@ public class HelpRequest {
         this.caseFinalized = caseFinalized;
     }
 
+    public static class FinalAssessment {
+        private boolean objectivesAchieved;
+        private boolean childSafe;
+        private boolean needsContinuedMonitoring;
+        private boolean recommendClosure;
+        private String remarks;
+        private LocalDateTime assessedAt;
+        private String assessedByUserId;
+
+        public boolean isObjectivesAchieved() { return objectivesAchieved; }
+        public void setObjectivesAchieved(boolean objectivesAchieved) { this.objectivesAchieved = objectivesAchieved; }
+
+        public boolean isChildSafe() { return childSafe; }
+        public void setChildSafe(boolean childSafe) { this.childSafe = childSafe; }
+        
+        public boolean isNeedsContinuedMonitoring() { return needsContinuedMonitoring; }
+        public void setNeedsContinuedMonitoring(boolean needsContinuedMonitoring) { this.needsContinuedMonitoring = needsContinuedMonitoring; }
+        
+        public boolean isRecommendClosure() { return recommendClosure; }
+        public void setRecommendClosure(boolean recommendClosure) { this.recommendClosure = recommendClosure; }
+        
+        public String getRemarks() { return remarks; }
+        public void setRemarks(String remarks) { this.remarks = remarks; }
+        
+        public LocalDateTime getAssessedAt() { return assessedAt; }
+        public void setAssessedAt(LocalDateTime assessedAt) { this.assessedAt = assessedAt; }
+        
+        public String getAssessedByUserId() { return assessedByUserId; }
+        public void setAssessedByUserId(String assessedByUserId) { this.assessedByUserId = assessedByUserId; }
+    }
 }

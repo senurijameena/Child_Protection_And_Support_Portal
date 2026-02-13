@@ -29,7 +29,8 @@ public class HelpRequestDTO {
 
     // Applied service package (when a social worker has proposed one)
     private ServicePackageDTO appliedPackage;
-    // Public user acceptance status of the applied package (PENDING / ACCEPTED / REJECTED / etc.)
+    // Public user acceptance status of the applied package (PENDING / ACCEPTED /
+    // REJECTED / etc.)
     private String appliedPackageStatus;
     // When the service package was applied to this request
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
@@ -44,13 +45,13 @@ public class HelpRequestDTO {
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime completionDate;
     private String requestNotes;
-    
+
     // Applied service package details
     private String appliedServicePackageId;
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime appliedServicePackageAppliedAt;
     private String appliedServicePackageStatus;
-    
+
     // Service execution flags
     private boolean serviceStarted;
     private boolean resourcesAssigned;
@@ -362,5 +363,15 @@ public class HelpRequestDTO {
 
     public void setCaseFinalized(boolean caseFinalized) {
         this.caseFinalized = caseFinalized;
+    }
+
+    private com.example.childPortal.model.HelpRequest.FinalAssessment finalAssessment;
+
+    public com.example.childPortal.model.HelpRequest.FinalAssessment getFinalAssessment() {
+        return finalAssessment;
+    }
+
+    public void setFinalAssessment(com.example.childPortal.model.HelpRequest.FinalAssessment finalAssessment) {
+        this.finalAssessment = finalAssessment;
     }
 }

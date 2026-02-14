@@ -47,6 +47,9 @@ const STATUS_VARIANTS: Record<ResourceStatus, string> = {
 
 const RESOURCE_STORAGE_KEY = 'sw_resources'
 
+const CERTIFICATES_MAX_FILES = 5
+const CERTIFICATES_MAX_SIZE_MB = 5
+
 const loadResourcesFromStorage = (): Resource[] => {
   try {
     const raw = localStorage.getItem(RESOURCE_STORAGE_KEY)
@@ -92,6 +95,7 @@ export function SocialWorkerLibraryPage() {
     emergencySupport: false,
     image: '',
   })
+  const [certificatesError, setCertificatesError] = useState<string | null>(null)
 
   useEffect(() => {
     const initial = loadResourcesFromStorage()
@@ -564,7 +568,7 @@ export function SocialWorkerLibraryPage() {
       </Modal>
 
       {/* Add / Edit Resource modal */}
-      <Modal show={showForm} onHide={() => setShowForm(false)} size="lg" centered>
+      <Modal show={showForm} onHide={() => { setShowForm(false); setCertificatesError(null) }} size="lg" centered>
         <Modal.Header closeButton>
           <Modal.Title className="h6 fw-700">
             {editingId ? 'Edit Resource' : 'Add New Resource'}
@@ -705,17 +709,43 @@ export function SocialWorkerLibraryPage() {
             </Col>
             <Col xs={12}>
               <Form.Label className="small fw-600 text-muted">
-                Documents (certificate, approval, license)
+                Certificates (attach)
               </Form.Label>
-              <Form.Control type="file" multiple />
+              <Form.Control
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => {
+                  setCertificatesError(null)
+                  const input = e.target as HTMLInputElement
+                  const files = input.files
+                  if (!files?.length) return
+                  const maxBytes = CERTIFICATES_MAX_SIZE_MB * 1024 * 1024
+                  if (files.length > CERTIFICATES_MAX_FILES) {
+                    input.value = ''
+                    setCertificatesError(`Maximum ${CERTIFICATES_MAX_FILES} files allowed.`)
+                    return
+                  }
+                  for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > maxBytes) {
+                      input.value = ''
+                      setCertificatesError(`Each file must be under ${CERTIFICATES_MAX_SIZE_MB} MB.`)
+                      return
+                    }
+                  }
+                }}
+              />
               <div className="small text-muted mt-1">
-                File upload is for future backend integration; currently not stored.
+                Maximum capacity: <strong>{CERTIFICATES_MAX_FILES} files</strong>, <strong>{CERTIFICATES_MAX_SIZE_MB} MB</strong> per file. Accepted: PDF, JPG, PNG.
               </div>
+              {certificatesError && (
+                <div className="small text-danger mt-1">{certificatesError}</div>
+              )}
             </Col>
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" size="sm" onClick={() => setShowForm(false)}>
+          <Button variant="outline-secondary" size="sm" onClick={() => { setShowForm(false); setCertificatesError(null) }}>
             Cancel
           </Button>
           <Button variant="primary" size="sm" onClick={handleSubmit}>

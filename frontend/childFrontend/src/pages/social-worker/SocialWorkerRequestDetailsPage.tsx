@@ -228,6 +228,14 @@ export function SocialWorkerRequestDetailsPage() {
   const [collabReason, setCollabReason] = useState('')
   const [collabSubmitting, setCollabSubmitting] = useState(false)
   const [collabError, setCollabError] = useState<string | null>(null)
+  const [showRequestDutiesModal, setShowRequestDutiesModal] = useState(false)
+  const [requestDutiesMessage, setRequestDutiesMessage] = useState('')
+  const [requestDutiesSubmitting, setRequestDutiesSubmitting] = useState(false)
+  const [requestDutiesError, setRequestDutiesError] = useState<string | null>(null)
+  const [showAssignDutiesModal, setShowAssignDutiesModal] = useState(false)
+  const [assignDutiesMessage, setAssignDutiesMessage] = useState('')
+  const [assignDutiesSubmitting, setAssignDutiesSubmitting] = useState(false)
+  const [assignDutiesError, setAssignDutiesError] = useState<string | null>(null)
   const [closeWarning, setCloseWarning] = useState<string | null>(null)
   const [internalNotes, setInternalNotes] = useState<
     Array<{
@@ -677,6 +685,20 @@ export function SocialWorkerRequestDetailsPage() {
               </Badge>
             </div>
             <div className="d-flex flex-wrap gap-2 justify-content-end">
+              {request.requesterUserId && !request.anonymous && (
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="fw-600"
+                  onClick={() =>
+                    navigate(
+                      `/social-worker/messages?userId=${encodeURIComponent(request.requesterUserId!)}`
+                    )
+                  }
+                >
+                  Message User
+                </Button>
+              )}
               {request.status === 'COMPLETED' && (
                 <Button
                   variant="primary"
@@ -693,7 +715,6 @@ export function SocialWorkerRequestDetailsPage() {
               >
                 Print
               </Button>
-
             </div>
           </div>
         </Col>
@@ -1586,77 +1607,80 @@ export function SocialWorkerRequestDetailsPage() {
                                       </li>
                                     </ul>
                                     <div className="d-flex flex-column gap-2">
-                                      <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        className="fw-600"
-                                        onClick={() => {
-                                          const d = new Date()
-                                          const pad = (n: number) => n.toString().padStart(2, '0')
-                                          const local = `${d.getFullYear()}-${pad(
-                                            d.getMonth() + 1
-                                          )}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(
-                                            d.getMinutes()
-                                          )}`
-                                          setFollowUpModal(
-                                            selectedRequirementItem ? { item: selectedRequirementItem } : { item: undefined }
-                                          )
-                                          setFollowUpVisitDate(local)
-                                          setFollowUpNextVisitDate('')
-                                          setFollowUpMode('HOME_VISIT')
-                                          setFollowUpCondition('')
-                                          setFollowUpNotes('')
-                                          setFollowUpError(null)
-                                        }}
-                                      >
-                                        Add Follow-up
-                                      </Button>
-                                      <Button
-                                        variant="outline-secondary"
-                                        size="sm"
-                                        className="fw-600"
-                                        onClick={() => setShowCollaborationModal(true)}
-                                      >
-                                        Collaborate
-                                      </Button>
-                                      <Button
-                                        variant="outline-secondary"
-                                        size="sm"
-                                        className="fw-600"
-                                        onClick={() => {
-                                          setRejectMode('TRANSFER')
-                                          setTransferWorkerId(null)
-                                          setTransferNote('')
-                                          setRejectModalOpen(true)
-                                        }}
-                                      >
-                                        Transfer
-                                      </Button>
-                                      <Button
-                                        variant="outline-success"
-                                        size="sm"
-                                        className="fw-600"
-                                        disabled={!selectedRequirementItem}
-                                        onClick={async () => {
-                                          const item = selectedRequirementItem
-                                          if (!item || !requestId) return
-                                          try {
-                                            setServiceActionLoading(item)
-                                            const updated = await updateServiceItemStatus(
-                                              requestId,
-                                              item,
-                                              'COMPLETED'
+                                      {!isCollaboratorView && (
+                                        <Button
+                                          variant="outline-primary"
+                                          size="sm"
+                                          className="fw-600"
+                                          onClick={() => {
+                                            const d = new Date()
+                                            const pad = (n: number) => n.toString().padStart(2, '0')
+                                            const local = `${d.getFullYear()}-${pad(
+                                              d.getMonth() + 1
+                                            )}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(
+                                              d.getMinutes()
+                                            )}`
+                                            setFollowUpModal(
+                                              selectedRequirementItem ? { item: selectedRequirementItem } : { item: undefined }
                                             )
-                                            setRequest(updated)
-                                          } catch (err) {
-                                            console.error('Failed to mark requirement complete', err)
-                                          } finally {
-                                            setServiceActionLoading(null)
-                                          }
-                                        }}
-                                      >
-                                        Mark Requirement Complete
-                                      </Button>
+                                            setFollowUpVisitDate(local)
+                                            setFollowUpNextVisitDate('')
+                                            setFollowUpMode('HOME_VISIT')
+                                            setFollowUpCondition('')
+                                            setFollowUpNotes('')
+                                            setFollowUpError(null)
+                                          }}
+                                        >
+                                          Add Follow-up
+                                        </Button>
+                                      )}
+                                      {(collaboration?.collaborators?.length ?? 0) > 0 && (
+                                        <Button
+                                          variant="outline-secondary"
+                                          size="sm"
+                                          className="fw-600"
+                                          onClick={() => {
+                                            if (isCollaboratorView) {
+                                              setShowRequestDutiesModal(true)
+                                              setRequestDutiesMessage('')
+                                              setRequestDutiesError(null)
+                                            } else {
+                                              setShowAssignDutiesModal(true)
+                                              setAssignDutiesMessage('')
+                                              setAssignDutiesError(null)
+                                            }
+                                          }}
+                                        >
+                                          Collaborate
+                                        </Button>
+                                      )}
+                                      {!isCollaboratorView && (
+                                        <Button
+                                          variant="outline-success"
+                                          size="sm"
+                                          className="fw-600"
+                                          disabled={!selectedRequirementItem}
+                                          onClick={async () => {
+                                            const item = selectedRequirementItem
+                                            if (!item || !requestId) return
+                                            try {
+                                              setServiceActionLoading(item)
+                                              const updated = await updateServiceItemStatus(
+                                                requestId,
+                                                item,
+                                                'COMPLETED'
+                                              )
+                                              setRequest(updated)
+                                            } catch (err) {
+                                              console.error('Failed to mark requirement complete', err)
+                                            } finally {
+                                              setServiceActionLoading(null)
+                                            }
+                                          }}
+                                        >
+                                          Mark Requirement Complete
+                                        </Button>
+                                      )}
                                     </div>
                                   </>
                                 )
@@ -2324,6 +2348,153 @@ export function SocialWorkerRequestDetailsPage() {
             }}
           >
             {collabSubmitting ? 'Sending…' : 'Send Request'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Collaborator: Request owner to assign duties */}
+      <Modal
+        show={showRequestDutiesModal}
+        onHide={() => {
+          setShowRequestDutiesModal(false)
+          setRequestDutiesMessage('')
+          setRequestDutiesError(null)
+        }}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">Request owner to assign duties</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="small text-muted mb-3">
+            Send a request to the case owner so they can assign you specific duties for this case.
+          </p>
+          <Form.Group>
+            <Form.Label className="small fw-600 text-muted">Message to case owner (optional)</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={requestDutiesMessage}
+              onChange={(e) => setRequestDutiesMessage(e.target.value)}
+              placeholder="e.g. I can take on the home visits and counselling follow-ups."
+            />
+          </Form.Group>
+          {requestDutiesError && (
+            <div className="alert alert-danger py-2 small mt-2 mb-0">{requestDutiesError}</div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={() => {
+              setShowRequestDutiesModal(false)
+              setRequestDutiesMessage('')
+              setRequestDutiesError(null)
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={requestDutiesSubmitting || !requestId}
+            onClick={async () => {
+              if (!requestId) return
+              setRequestDutiesSubmitting(true)
+              setRequestDutiesError(null)
+              try {
+                const collaboratorName = user?.fullName || 'Collaborator'
+                const note = requestDutiesMessage.trim()
+                  ? `Collaborator ${collaboratorName} requests duties from owner: ${requestDutiesMessage.trim()}`
+                  : `Collaborator ${collaboratorName} requests the case owner to assign duties.`
+                await createHelpRequestTimelineNote(requestId, note)
+                setShowRequestDutiesModal(false)
+                setRequestDutiesMessage('')
+              } catch (err) {
+                setRequestDutiesError(err instanceof Error ? err.message : 'Failed to send request.')
+              } finally {
+                setRequestDutiesSubmitting(false)
+              }
+            }}
+          >
+            {requestDutiesSubmitting ? 'Sending…' : 'Send request'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Owner: Assign duties to (already added) collaborators */}
+      <Modal
+        show={showAssignDutiesModal}
+        onHide={() => {
+          setShowAssignDutiesModal(false)
+          setAssignDutiesMessage('')
+          setAssignDutiesError(null)
+        }}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">Assign duties to collaborators</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="small text-muted mb-3">
+            Send duties or instructions to the collaborators already on this case.
+          </p>
+          {collaboration?.collaborators?.length ? (
+            <div className="small mb-3">
+              <span className="text-muted">Collaborators: </span>
+              <span className="fw-600">
+                {collaboration.collaborators.map((c) => c.name || c.userId).join(', ')}
+              </span>
+            </div>
+          ) : null}
+          <Form.Group>
+            <Form.Label className="small fw-600 text-muted">Duties / instructions</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              value={assignDutiesMessage}
+              onChange={(e) => setAssignDutiesMessage(e.target.value)}
+              placeholder="e.g. Please take on the home visits for the next 2 weeks and update follow-ups."
+            />
+          </Form.Group>
+          {assignDutiesError && (
+            <div className="alert alert-danger py-2 small mt-2 mb-0">{assignDutiesError}</div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={() => {
+              setShowAssignDutiesModal(false)
+              setAssignDutiesMessage('')
+              setAssignDutiesError(null)
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={assignDutiesSubmitting || !requestId || !assignDutiesMessage.trim()}
+            onClick={async () => {
+              if (!requestId || !assignDutiesMessage.trim()) return
+              setAssignDutiesSubmitting(true)
+              setAssignDutiesError(null)
+              try {
+                const note = `Owner assigned duties to collaborators: ${assignDutiesMessage.trim()}`
+                await createHelpRequestTimelineNote(requestId, note)
+                setShowAssignDutiesModal(false)
+                setAssignDutiesMessage('')
+              } catch (err) {
+                setAssignDutiesError(err instanceof Error ? err.message : 'Failed to send.')
+              } finally {
+                setAssignDutiesSubmitting(false)
+              }
+            }}
+          >
+            {assignDutiesSubmitting ? 'Sending…' : 'Send to collaborators'}
           </Button>
         </Modal.Footer>
       </Modal>

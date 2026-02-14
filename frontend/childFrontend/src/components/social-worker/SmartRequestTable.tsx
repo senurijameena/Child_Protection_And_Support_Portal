@@ -23,8 +23,9 @@ export function SmartRequestTable({ requests, maskUserId, hideControls = false, 
         // Filter based on view mode
         let filtered = requests
         if (viewMode === 'active') {
+            const doneStatuses = ['COMPLETED', 'REJECTED', 'CANCELLED', 'TRANSFERRED', 'TRANSFER_REQUESTED']
             filtered = requests.filter(
-                (r) => r.status !== 'COMPLETED' && r.status !== 'REJECTED' && r.status !== 'CANCELLED'
+                (r) => !doneStatuses.includes(r.status as string)
             )
         }
 
@@ -40,44 +41,8 @@ export function SmartRequestTable({ requests, maskUserId, hideControls = false, 
             )
         }
 
-        // Sort by priority and status
+        // Sort by assigned/request date - newest first
         return filtered.sort((a, b) => {
-            const getStatusRank = (status: string | undefined) => {
-                if (status === 'ASSIGNED') return 1
-                if (status === 'IN_PROGRESS') return 2
-                if (['COMPLETED', 'REJECTED', 'CANCELLED'].includes(status || '')) return 4
-                return 3 // Other statuses
-            }
-
-            const rankA = getStatusRank(a.status)
-            const rankB = getStatusRank(b.status)
-
-            if (rankA !== rankB) return rankA - rankB
-
-            // Within same rank sorting
-
-            // Rank 1: ASSIGNED - Newest first (Newly assigned at top)
-            if (rankA === 1) {
-                const dateA = new Date(a.requestDate || 0).getTime()
-                const dateB = new Date(b.requestDate || 0).getTime()
-                return dateB - dateA
-            }
-
-            // Rank 2: IN_PROGRESS - Priority then Date
-            if (rankA === 2) {
-                const priorityOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 }
-                const pA = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1
-                const pB = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1
-
-                if (pA !== pB) return pA - pB
-
-                // Secondary sort: Date
-                const dateA = new Date(a.requestDate || 0).getTime()
-                const dateB = new Date(b.requestDate || 0).getTime()
-                return dateA - dateB // Earliest first (Oldest active request)
-            }
-
-            // Default (Rank 3 & 4): Newest first
             const dateA = new Date(a.requestDate || 0).getTime()
             const dateB = new Date(b.requestDate || 0).getTime()
             return dateB - dateA
@@ -91,6 +56,9 @@ export function SmartRequestTable({ requests, maskUserId, hideControls = false, 
                 return { bg: 'warning', text: 'Pending Acceptance', className: 'status-pending' }
             case 'IN_PROGRESS':
                 return { bg: 'info', text: 'In Progress', className: 'status-active' }
+            case 'TRANSFERRED':
+            case 'TRANSFER_REQUESTED':
+                return { bg: 'info', text: 'Transferred', className: 'status-transferred' }
             case 'COMPLETED':
                 return { bg: 'secondary', text: 'Completed', className: 'status-completed' }
             case 'REJECTED':

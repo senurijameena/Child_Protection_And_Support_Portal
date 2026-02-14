@@ -1,5 +1,7 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from 'react-bootstrap'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   acceptIncomingTransfer,
@@ -12,6 +14,8 @@ import {
   requestHelpRequestTransfer,
   type TransferRequestDTO,
 } from '../../services/socialWorkerApi'
+import { HELP_TYPE_LABELS } from '../../types/dashboard'
+import type { HelpType } from '../../types/dashboard'
 
 type PageTab = 'pending' | 'active' | 'completed'
 type PendingDirection = 'INCOMING' | 'OUTGOING'
@@ -33,6 +37,7 @@ const REJECT_REASONS: RejectReason[] = ['Workload high', 'Not my district', 'Not
 
 export function SocialWorkerTransfersPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState<PageTab>('pending')
   const [transfers, setTransfers] = useState<TransferRequestDTO[]>([])
@@ -60,8 +65,18 @@ export function SocialWorkerTransfersPage() {
   const [rejectReason, setRejectReason] = useState<RejectReason>('Workload high')
   const [otherRejectReason, setOtherRejectReason] = useState('')
   const [helpPreviewCache, setHelpPreviewCache] = useState<Record<string, HelpPreview>>({})
+  const [trackingIdByRequestId, setTrackingIdByRequestId] = useState<Record<string, string>>({})
 
   const userId = user?.userId || ''
+
+  /** Format help request ID for display: prefer HELP-0001 style, never show raw long UUID. */
+  const formatHelpRequestDisplay = (id: string | undefined): string => {
+    if (!id) return '—'
+    if (/^HELP-\d+$/i.test(id)) return id
+    if (id.length >= 32 && id.includes('-')) return `HELP-${id.slice(-4).toUpperCase()}`
+    if (id.length > 12) return `HELP-${id.slice(-4).toUpperCase()}`
+    return id
+  }
 
   const swNameMap = useMemo(() => {
     const map: Record<string, string> = {}
@@ -150,7 +165,49 @@ export function SocialWorkerTransfersPage() {
     [transfers]
   )
 
-  const getTransferLabel = (transfer: TransferRequestDTO) => transfer.entityId || transfer.id
+  const assignedRequestTrackingMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    assignedRequests.forEach((r) => {
+      m[r.id] = r.trackingId || r.id
+    })
+    return m
+  }, [assignedRequests])
+
+  const getTransferLabel = (transfer: TransferRequestDTO): string => {
+    const requestId = transfer.entityId || transfer.id
+    const fromAssigned = assignedRequestTrackingMap[requestId]
+    const fromCache = trackingIdByRequestId[requestId]
+    const trackingId = fromAssigned || fromCache
+    if (trackingId) return trackingId
+    return formatHelpRequestDisplay(requestId)
+  }
+
+  useEffect(() => {
+    if (!transfers.length) return
+    const entityIds = [...new Set(transfers.map((t) => t.entityId).filter(Boolean) as string[])]
+    const toFetch = entityIds.filter((eid) => !assignedRequestTrackingMap[eid])
+    if (toFetch.length === 0) return
+    let cancelled = false
+    Promise.all(
+      toFetch.map((eid) =>
+        getHelpRequest(eid).then((req) => ({ eid, trackingId: req.trackingId || req.id }))
+      )
+    )
+      .then((results) => {
+        if (cancelled) return
+        setTrackingIdByRequestId((prev) => {
+          const next = { ...prev }
+          results.forEach(({ eid, trackingId }) => {
+            next[eid] = trackingId
+          })
+          return next
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [transfers, assignedRequestTrackingMap])
 
   const getPreview = async (transfer: TransferRequestDTO): Promise<HelpPreview> => {
     const key = transfer.entityId || ''
@@ -467,40 +524,65 @@ export function SocialWorkerTransfersPage() {
                     )}
 
                     {activeTab === 'active' && (
-                      <div className="table-responsive">
-                        <Table hover className="align-middle mb-0">
-                          <thead className="bg-light">
-                            <tr>
-                              <th>Request ID</th>
-                              <th>From SW</th>
-                              <th>To SW</th>
-                              <th>Status</th>
-                              <th>Requested Date</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {activeTransfers.length === 0 ? (
+                      <>
+                        <div className="alert alert-info border-0 mb-4 small">
+                          <strong>Already accepted.</strong> These transfer requests are active. You can now:
+                          <ul className="mb-0 mt-2 ps-3">
+                            <li>Message Public User (if not anonymous)</li>
+                            <li>Apply Service Packages</li>
+                            <li>Assign Resources</li>
+                            <li>Add Follow-ups</li>
+                            <li>Collaborate with other SWs</li>
+                            <li>Upload Documents</li>
+                            <li>Case timeline updated live</li>
+                          </ul>
+                        </div>
+                        <div className="table-responsive">
+                          <Table hover className="align-middle mb-0">
+                            <thead className="bg-light">
                               <tr>
-                                <td colSpan={5} className="text-center text-muted py-4">
-                                  No active transfers.
-                                </td>
+                                <th>Request ID</th>
+                                <th>From SW</th>
+                                <th>To SW</th>
+                                <th>Status</th>
+                                <th>Requested Date</th>
+                                <th className="text-end">Actions</th>
                               </tr>
-                            ) : (
-                              activeTransfers.map((t) => (
-                                <tr key={t.id}>
-                                  <td>{getTransferLabel(t)}</td>
-                                  <td>{swNameMap[t.fromUserId || ''] || t.fromUserId || '-'}</td>
-                                  <td>{swNameMap[t.toUserId || ''] || t.toUserId || '-'}</td>
-                                  <td>
-                                    <Badge bg="primary">{(t.status || 'ACTIVE').toUpperCase()}</Badge>
+                            </thead>
+                            <tbody>
+                              {activeTransfers.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6} className="text-center text-muted py-4">
+                                    No active transfers.
                                   </td>
-                                  <td>{formatDate(t.requestedAt)}</td>
                                 </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </Table>
-                      </div>
+                              ) : (
+                                activeTransfers.map((t) => (
+                                  <tr key={t.id}>
+                                    <td>{getTransferLabel(t)}</td>
+                                    <td>{swNameMap[t.fromUserId || ''] || t.fromUserId || '-'}</td>
+                                    <td>{swNameMap[t.toUserId || ''] || t.toUserId || '-'}</td>
+                                    <td>
+                                      <Badge bg="primary">{(t.status || 'ACTIVE').toUpperCase()}</Badge>
+                                    </td>
+                                    <td>{formatDate(t.requestedAt)}</td>
+                                    <td className="text-end">
+                                      <Button
+                                        size="sm"
+                                        variant="primary"
+                                        onClick={() => t.entityId && navigate(`/social-worker/requests/${t.entityId}`)}
+                                        disabled={!t.entityId}
+                                      >
+                                        View
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </Table>
+                        </div>
+                      </>
                     )}
 
                     {activeTab === 'completed' && (
@@ -556,27 +638,119 @@ export function SocialWorkerTransfersPage() {
           </Modal.Header>
           <Modal.Body>
             <Row className="g-3">
-              <Col md={6}>
-                <Form.Label>Select Assigned Request</Form.Label>
-                <Form.Select value={selectedRequestId} onChange={(e) => setSelectedRequestId(e.target.value)}>
-                  <option value="">Choose request</option>
-                  {filteredAssignedRequests.map((req) => (
-                    <option key={req.id} value={req.id}>
-                      {req.trackingId || req.id}
-                    </option>
-                  ))}
-                </Form.Select>
+              <Col xs={12}>
+                <Form.Label className="fw-600 d-flex align-items-center gap-2">
+                  <span className="rounded px-2 py-1 small text-white" style={{ backgroundColor: 'var(--bs-primary)' }}>1</span>
+                  Select Assigned Request
+                </Form.Label>
+                {filteredAssignedRequests.length === 0 ? (
+                  <p className="text-muted small mb-0">No assignable requests. Complete or transfer existing ones first.</p>
+                ) : (
+                  <div className="rounded border border-primary border-2 overflow-hidden" style={{ maxHeight: 220 }}>
+                    <div className="table-responsive" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                      <Table hover size="sm" className="align-middle mb-0 table-request-transfer">
+                        <thead className="table-primary sticky-top">
+                          <tr>
+                            <th>Request ID</th>
+                            <th>Category</th>
+                            <th className="text-end">Select</th>
+                          </tr>
+                        </thead>
+                      <tbody>
+                        {filteredAssignedRequests.map((req) => {
+                          const isSelected = selectedRequestId === req.id
+                          const requestIdDisplay = req.trackingId ? req.trackingId : formatHelpRequestDisplay(req.id)
+                          const categoryLabel = req.helpType ? (HELP_TYPE_LABELS[req.helpType as HelpType] ?? req.helpType) : 'Other'
+                          return (
+                            <tr
+                              key={req.id}
+                              className={isSelected ? 'table-primary' : undefined}
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => setSelectedRequestId(isSelected ? '' : req.id)}
+                            >
+                              <td className="fw-600">{requestIdDisplay}</td>
+                              <td>{categoryLabel}</td>
+                              <td className="text-end">
+                                <Button
+                                  size="sm"
+                                  variant={isSelected ? 'primary' : 'outline-primary'}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedRequestId(isSelected ? '' : req.id)
+                                  }}
+                                >
+                                  {isSelected ? 'Selected' : 'Select'}
+                                </Button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
               </Col>
-              <Col md={6}>
-                <Form.Label>Transfer To</Form.Label>
-                <Form.Select value={selectedSwUserId} onChange={(e) => setSelectedSwUserId(e.target.value)}>
-                  <option value="">Choose social worker</option>
-                  {availableAndRelevantSW.map((sw) => (
-                    <option key={sw.userId} value={sw.userId}>
-                      {sw.fullName} ({sw.serviceArea || 'Unknown area'})
-                    </option>
-                  ))}
-                </Form.Select>
+              <Col xs={12}>
+                <Form.Label className="fw-600 d-flex align-items-center gap-2">
+                  <span className="rounded px-2 py-1 small text-white bg-success">2</span>
+                  Transfer To
+                </Form.Label>
+                {availableAndRelevantSW.length === 0 ? (
+                  <p className="text-muted small mb-0">No available social workers to transfer to.</p>
+                ) : (
+                  <div className="rounded border border-success border-2 overflow-hidden" style={{ maxHeight: 220 }}>
+                    <div className="table-responsive" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                      <Table hover size="sm" className="align-middle mb-0 table-sw-transfer">
+                        <thead className="table-success sticky-top">
+                          <tr>
+                            <th>Name</th>
+                            <th>Availability</th>
+                            <th>Specialization</th>
+                            <th className="text-end">Select</th>
+                          </tr>
+                        </thead>
+                      <tbody>
+                        {availableAndRelevantSW.map((sw) => {
+                          const isSelected = selectedSwUserId === sw.userId
+                          const avail = (sw.availabilityStatus || '').toUpperCase()
+                          const availabilityLabel =
+                            avail === 'ACTIVE' || avail === 'AVAILABLE' ? 'Available' :
+                            avail === 'BUSY' || avail === 'LIMITED' ? 'Busy' :
+                            avail === 'ON_LEAVE' || avail === 'UNAVAILABLE' ? 'On Leave' : avail || '—'
+                          const specs = sw.specializations?.length
+                            ? sw.specializations.join(', ')
+                            : '—'
+                          return (
+                            <tr
+                              key={sw.userId}
+                              className={isSelected ? 'table-primary' : undefined}
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => setSelectedSwUserId(isSelected ? '' : sw.userId)}
+                            >
+                              <td className="fw-600">{sw.fullName || sw.userId}</td>
+                              <td>{availabilityLabel}</td>
+                              <td className="small">{specs}</td>
+                              <td className="text-end">
+                                <Button
+                                  size="sm"
+                                  variant={isSelected ? 'primary' : 'outline-primary'}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedSwUserId(isSelected ? '' : sw.userId)
+                                  }}
+                                >
+                                  {isSelected ? 'Selected' : 'Select'}
+                                </Button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </Table>
+                    </div>
+                  </div>
+                )}
               </Col>
             </Row>
             <Form.Group className="mt-3">

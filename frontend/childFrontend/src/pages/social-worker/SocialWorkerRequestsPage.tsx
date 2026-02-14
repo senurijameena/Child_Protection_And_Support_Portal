@@ -10,7 +10,7 @@ import {
   requestHelpRequestTransfer,
   type FollowUpDTO,
 } from '../../services/socialWorkerApi'
-import type { HelpRequestDTO, HelpType } from '../../types/dashboard'
+import type { HelpRequestDTO, HelpType, RequestStatus } from '../../types/dashboard'
 import { HELP_TYPE_LABELS } from '../../types/dashboard'
 import { SmartRequestTable } from '../../components/social-worker/SmartRequestTable'
 import VerticalTimeline from '../../components/ui/VerticalTimeline'
@@ -21,7 +21,6 @@ type PriorityFilter = 'ALL' | 'LOW' | 'MEDIUM' | 'HIGH'
 type CaseTypeFilter = 'ALL' | 'COUNSELING' | 'FINANCIAL' | 'MEDICAL' | 'SHELTER'
 type StatusFilter = 'ALL' | 'ASSIGNED' | 'IN_PROGRESS' | 'WAITING' | 'OVERDUE'
 type ConsentFilter = 'ALL' | 'FULL' | 'PARTIAL' | 'ANONYMOUS'
-type ViewMode = 'CARD' | 'LIST'
 type RequestActionState = 'initial' | 'viewed' | 'accepted' | 'rejecting' | 'transfer_sent'
 
 const CASE_TYPE_MAP: Record<Exclude<CaseTypeFilter, 'ALL'>, HelpType[]> = {
@@ -123,7 +122,6 @@ export function SocialWorkerRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [consentFilter, setConsentFilter] = useState<ConsentFilter>('ALL')
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>('LIST')
   const [requestActionStates, setRequestActionStates] = useState<Record<string, RequestActionState>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const [showApplyPackageModal, setShowApplyPackageModal] = useState<string | null>(null)
@@ -136,7 +134,7 @@ export function SocialWorkerRequestsPage() {
   const [rejectSubmittingId, setRejectSubmittingId] = useState<string | null>(null)
   const [rejectError, setRejectError] = useState<string | null>(null)
 
-  const itemsPerPage = viewMode === 'CARD' ? 6 : 10
+  const itemsPerPage = 10
 
   useEffect(() => {
     if (!user?.userId) {
@@ -477,6 +475,11 @@ export function SocialWorkerRequestsPage() {
         ...prev,
         [req.id]: 'transfer_sent',
       }))
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === req.id ? { ...r, status: 'TRANSFERRED' as RequestStatus } : r
+        )
+      )
       setRejectReason('')
       setRejectTargetSw('')
     } catch (err) {
@@ -505,24 +508,6 @@ export function SocialWorkerRequestsPage() {
               <p className="text-muted mb-0">
                 Review, filter, and act on all requests currently assigned to you.
               </p>
-            </div>
-            <div className="d-flex gap-2 bg-white rounded-pill p-1 border shadow-sm">
-              <Button
-                variant={viewMode === 'LIST' ? 'primary' : 'light'}
-                size="sm"
-                className="rounded-pill px-3 fw-600"
-                onClick={() => setViewMode('LIST')}
-              >
-                📋 List
-              </Button>
-              <Button
-                variant={viewMode === 'CARD' ? 'primary' : 'light'}
-                size="sm"
-                className="rounded-pill px-3 fw-600"
-                onClick={() => setViewMode('CARD')}
-              >
-                🆔 Cards
-              </Button>
             </div>
           </div>
         </Col>
@@ -635,316 +620,14 @@ export function SocialWorkerRequestsPage() {
             </Card>
           ) : (
             <>
-              {viewMode === 'CARD' ? (
-                <Row className="g-3 mb-4">
-                  {paginatedRequests.map((req) => {
-                    const isOverdue = overdueRequestIds.has(req.id)
-                    const isSelected = selectedRequestId === req.id
-                    const helpIcon = getHelpTypeIcon(req.helpType)
-                    const helpLabel = req.helpType ? HELP_TYPE_LABELS[req.helpType] : 'Support request'
-                    const consent = getConsentLabel(req)
-                    const actionState = getRequestActionState(req.id)
-                    const isRejectingState = actionState === 'rejecting'
-                    const isTransferSent = actionState === 'transfer_sent'
-                    const isAcceptedState = actionState === 'accepted'
-                    const isViewedState = actionState === 'viewed'
-                    const isInitialState = actionState === 'initial'
-
-                    return (
-                      <Col xs={12} md={6} xl={4} key={req.id}>
-                        <Card
-                            className={`sw-card h-100 hover-lift cursor-pointer ${isSelected ? 'border-primary' : ''
-                            } ${isRejectingState ? 'border-warning' : ''} ${isTransferSent ? 'border-success' : ''} ${isAcceptedState ? 'border-success' : ''}`}
-                          style={
-                            isOverdue
-                              ? { backgroundColor: 'rgba(248, 113, 113, 0.04)', borderColor: '#fecaca' }
-                              : isRejectingState
-                                ? { backgroundColor: 'rgba(234, 179, 8, 0.08)' }
-                                : isTransferSent
-                                  ? { backgroundColor: 'rgba(34, 197, 94, 0.08)' }
-                                : isAcceptedState
-                                  ? { backgroundColor: 'rgba(34, 197, 94, 0.08)' }
-                                  : undefined
-                          }
-                          onClick={() => handleCardClick(req)}
-                        >
-                          <Card.Body className="d-flex flex-column justify-content-between">
-                            {/* Public User Details - Always visible */}
-                            <div className="mb-3">
-                              <div className="d-flex justify-content-between align-items-start mb-1">
-                                <div>
-                                  <div className="small text-muted">Request ID</div>
-                                  <div className="fw-600">
-                                    #{req.trackingId ?? req.id}
-                                  </div>
-                                </div>
-                                <Badge bg={getPriorityVariant(req.priority)}>
-                                  {req.priority?.toUpperCase() ?? 'MEDIUM'}
-                                </Badge>
-                              </div>
-                              <div className="small text-muted mb-1">
-                                {req.requesterName && !req.anonymous
-                                  ? req.requesterName
-                                  : 'Public user'}
-                                {' • '}
-                                {consent}
-                              </div>
-                              <div className="d-flex align-items-center gap-2 small text-muted">
-                                <span>{helpIcon}</span>
-                                <span>{helpLabel}</span>
-                              </div>
-                            </div>
-
-                            {/* Request Details - Always visible */}
-                            <div className="small mb-3">
-                              <div className="d-flex justify-content-between mb-1">
-                                <span className="text-muted">Assigned</span>
-                                <span className="fw-500">
-                                  {formatDateTime(req.requestDate) || 'Not set'}
-                                </span>
-                              </div>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="text-muted">Status</span>
-                                <Badge
-                                  bg={getStatusVariant(
-                                    isTransferSent ? 'TRANSFERRED' : req.status
-                                  )}
-                                >
-                                  {isTransferSent ? 'Transferred' : (req.status ?? 'ASSIGNED')}
-                                </Badge>
-                              </div>
-                              <div className="d-flex justify-content-between align-items-center mt-1">
-                                <span className="text-muted">Follow-up due</span>
-                                <span className="small fw-500">
-                                  {getDueDateLabel(req)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* TRANSFER SENT STATE */}
-                            {isTransferSent && (
-                              <div className="text-center py-3">
-                                <div className="mb-2">
-                                  <span style={{ fontSize: '2rem' }}>📤</span>
-                                </div>
-                                <div className="fw-600 text-success mb-1">Transfer requested</div>
-                                <div className="small text-muted">
-                                  Sent to admin with your notes.
-                                </div>
-                              </div>
-                            )}
-
-                            {/* INITIAL STATE - Show only View Details button */}
-                            {isInitialState && (
-                              <div className="d-flex justify-content-center mt-2">
-                                <Button
-                                  variant="primary"
-                                  size="lg"
-                                  className="px-4 py-2 fw-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleViewDetails(req)
-                                  }}
-                                >
-                                  View Details
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* VIEWED STATE - Show large Accept and Transfer buttons */}
-                            {isViewedState && (
-                              <div className="d-flex flex-column gap-2 mt-2">
-                                <div className="d-flex gap-2 justify-content-center">
-                                  <Button
-                                    variant="success"
-                                    size="lg"
-                                    className="flex-fill py-3 fw-bold"
-                                    style={{ fontSize: '1.1rem' }}
-                                    disabled={updatingId === req.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      void handleAccept(req)
-                                    }}
-                                  >
-                                    ✓ Accept
-                                  </Button>
-                                  <Button
-                                    variant="danger"
-                                    size="lg"
-                                    className="flex-fill py-3 fw-bold"
-                                    style={{ fontSize: '1.1rem' }}
-                                    disabled={updatingId === req.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      void handleDecline(req)
-                                    }}
-                                  >
-                                    ⇄ Transfer
-                                  </Button>
-                                </div>
-                                <Button
-                                  variant="outline-secondary"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleGoToFullDetails(req)
-                                  }}
-                                >
-                                  Open full case details
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* REJECTING STATE - reason + transfer target (table view) */}
-                            {isRejectingState && (
-                              <div className="d-flex flex-column gap-2 mt-2">
-                                <Form.Group className="mb-1">
-                                  <Form.Label className="small text-muted fw-600">Reason</Form.Label>
-                                  <Form.Control
-                                    as="textarea"
-                                    rows={2}
-                                    value={rejectReason}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => setRejectReason(e.target.value)}
-                                    placeholder="Explain why you cannot take this case"
-                                  />
-                                </Form.Group>
-                                <div className="small text-muted fw-600">Choose a social worker</div>
-                                {availableAndRelevantSW.length === 0 ? (
-                                  <div className="small text-muted">No available social workers.</div>
-                                ) : (
-                                  <div className="table-responsive">
-                                    <Table hover size="sm" className="mb-2 align-middle">
-                                      <thead className="small text-muted">
-                                        <tr>
-                                          <th>Social worker</th>
-                                          <th>Availability</th>
-                                          <th>Specializations</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {availableAndRelevantSW.map((sw) => {
-                                          const selected = sw.userId === rejectTargetSw
-                                          return (
-                                            <tr
-                                              key={sw.userId}
-                                              className={selected ? 'table-active' : undefined}
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                setRejectTargetSw(sw.userId)
-                                              }}
-                                              style={{ cursor: 'pointer' }}
-                                            >
-                                              <td className="small fw-600">{sw.fullName}</td>
-                                              <td>
-                                                <Badge bg={getAvailabilityVariant(sw.availabilityStatus)}>
-                                                  {getAvailabilityLabel(sw.availabilityStatus)}
-                                                </Badge>
-                                              </td>
-                                              <td className="small">
-                                                {sw.specializations && sw.specializations.length > 0
-                                                  ? sw.specializations.slice(0, 2).join(', ')
-                                                  : '—'}
-                                              </td>
-                                            </tr>
-                                          )
-                                        })}
-                                      </tbody>
-                                    </Table>
-                                  </div>
-                                )}
-                                {rejectError && (
-                                  <div className="alert alert-danger py-2 mb-0">{rejectError}</div>
-                                )}
-                                <div className="d-flex gap-2">
-                                  <Button
-                                    variant="outline-secondary"
-                                    className="flex-fill"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setRequestActionStates((prev) => ({ ...prev, [req.id]: 'viewed' }))
-                                      setRejectReason('')
-                                      setRejectTargetSw('')
-                                      setRejectError(null)
-                                    }}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    variant="primary"
-                                    className="flex-fill"
-                                    disabled={rejectSubmittingId === req.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      void handleSubmitTransferForRequest(req)
-                                    }}
-                                  >
-                                    {rejectSubmittingId === req.id ? 'Sending…' : 'Transfer Request'}
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* ACCEPTED STATE - Show Apply Package and Message buttons */}
-                            {isAcceptedState && (
-                              <div className="d-flex flex-column gap-2 mt-2">
-                                <div className="text-center mb-2">
-                                  <span style={{ fontSize: '1.5rem' }}>✅</span>
-                                  <div className="fw-600 text-success small">Request Accepted</div>
-                                </div>
-                                <Button
-                                  variant="primary"
-                                  size="lg"
-                                  className="py-2 fw-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    navigate(`/social-worker/requests/${req.id}?applyPackage=true`)
-                                  }}
-                                >
-                                  📦 Apply Package
-                                </Button>
-                                {/* Hide Message button for anonymous requests to protect user identity */}
-                                {req.requesterUserId && !req.anonymous && (
-                                  <Button
-                                    variant="outline-primary"
-                                    size="lg"
-                                    className="py-2 fw-600"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      navigate(`/social-worker/messages?userId=${encodeURIComponent(req.requesterUserId!)}`)
-                                    }}
-                                  >
-                                    💬 Message User
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="outline-secondary"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleGoToFullDetails(req)
-                                  }}
-                                >
-                                  Open full case details
-                                </Button>
-                              </div>
-                            )}
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    )
-                  })}
-                </Row>
-              ) : (
-                <div className="mb-4">
-                  <SmartRequestTable
-                    requests={paginatedRequests}
-                    maskUserId={maskUserIdForTable}
-                    hideControls={true}
-                    onSelect={(id) => setSelectedRequestId(id)}
-                  />
-                </div>
-              )}
+              <div className="mb-4">
+                <SmartRequestTable
+                  requests={paginatedRequests}
+                  maskUserId={maskUserIdForTable}
+                  hideControls={true}
+                  onSelect={(id) => setSelectedRequestId(id)}
+                />
+              </div>
 
               {/* Combined Pagination */}
               {totalPages > 1 && (

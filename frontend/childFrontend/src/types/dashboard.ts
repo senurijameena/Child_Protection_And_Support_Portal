@@ -18,6 +18,8 @@ export type RequestStatus =
   | 'REJECTED'
   | 'PACKAGE_REJECTED'
   | 'CANCELLED'
+  | 'TRANSFER_REQUESTED'
+  | 'TRANSFERRED'
 
 export type CaseType =
   | 'MISSING_CHILD'
@@ -348,6 +350,8 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   REJECTED: 'Rejected',
   PACKAGE_REJECTED: 'Package Rejected',
   CANCELLED: 'Cancelled',
+  TRANSFER_REQUESTED: 'Transferred',
+  TRANSFERRED: 'Transferred',
 }
 
 export const REQUEST_STATUS_BADGE_VARIANTS: Record<
@@ -363,6 +367,8 @@ export const REQUEST_STATUS_BADGE_VARIANTS: Record<
   REJECTED: 'danger',
   PACKAGE_REJECTED: 'danger',
   CANCELLED: 'danger',
+  TRANSFER_REQUESTED: 'info',
+  TRANSFERRED: 'info',
 }
 
 /** Labels for applied package acceptance (shown in Help Details). */

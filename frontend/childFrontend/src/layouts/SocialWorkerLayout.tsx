@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
 import { SocialWorkerHeader } from '../components/social-worker/SocialWorkerHeader'
@@ -25,6 +25,7 @@ const SYSTEM_VERSION = '1.0.0'
 export function SocialWorkerLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
@@ -76,24 +77,46 @@ export function SocialWorkerLayout() {
         </div>
 
         <nav className="flex-grow-1 py-4 overflow-auto sw-sidebar-nav">
-          {sidebarItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.end ?? item.path === '/social-worker'}
-              onClick={() => setMobileSidebarOpen(false)}
-              className={({ isActive: active }) =>
-                `sw-sidebar-link d-flex align-items-center gap-3 text-decoration-none ${active ? 'sw-sidebar-active' : ''
-                }`
-              }
-              title={sidebarCollapsed ? item.label : undefined}
-            >
-              <span className="sw-sidebar-icon fs-5" style={{ width: 24 }}>
-                {item.icon}
-              </span>
-              {!sidebarCollapsed && <span className="small fw-medium">{item.label}</span>}
-            </NavLink>
-          ))}
+          {sidebarItems.map((item) => {
+            const isCollaboration = item.path === '/social-worker/collaboration'
+            const isActive = isCollaboration
+              ? location.pathname === '/social-worker/collaboration'
+              : (item.end ? location.pathname === item.path : location.pathname.startsWith(item.path))
+            return isCollaboration ? (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => {
+                  setMobileSidebarOpen(false)
+                  navigate('/social-worker/collaboration')
+                }}
+                className={`sw-sidebar-link d-flex align-items-center gap-3 text-decoration-none border-0 bg-transparent w-100 text-start ${isActive ? 'sw-sidebar-active' : ''}`}
+                title={sidebarCollapsed ? item.label : undefined}
+                style={{ cursor: 'pointer' }}
+              >
+                <span className="sw-sidebar-icon fs-5" style={{ width: 24 }}>
+                  {item.icon}
+                </span>
+                {!sidebarCollapsed && <span className="small fw-medium">{item.label}</span>}
+              </button>
+            ) : (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.end ?? item.path === '/social-worker'}
+                onClick={() => setMobileSidebarOpen(false)}
+                className={({ isActive: active }) =>
+                  `sw-sidebar-link d-flex align-items-center gap-3 text-decoration-none ${active ? 'sw-sidebar-active' : ''}`
+                }
+                title={sidebarCollapsed ? item.label : undefined}
+              >
+                <span className="sw-sidebar-icon fs-5" style={{ width: 24 }}>
+                  {item.icon}
+                </span>
+                {!sidebarCollapsed && <span className="small fw-medium">{item.label}</span>}
+              </NavLink>
+            )
+          })}
         </nav>
 
         <div className="p-3 border-top mt-auto bg-light bg-opacity-50">
@@ -151,21 +174,40 @@ export function SocialWorkerLayout() {
         </Offcanvas.Header>
         <Offcanvas.Body className="p-0">
           <div className="py-3">
-            {sidebarItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.end ?? item.path === '/social-worker'}
-                onClick={() => setMobileSidebarOpen(false)}
-                className={({ isActive: active }) =>
-                  `d-flex align-items-center gap-3 px-4 py-3 text-dark text-decoration-none ${active ? 'sw-sidebar-active mx-2' : ''
-                  }`
-                }
-              >
-                <span className="fs-5">{item.icon}</span>
-                <span className="fw-medium">{item.label}</span>
-              </NavLink>
-            ))}
+            {sidebarItems.map((item) => {
+              const isCollaboration = item.path === '/social-worker/collaboration'
+              const isActive = isCollaboration
+                ? location.pathname === '/social-worker/collaboration'
+                : (item.end ? location.pathname === item.path : location.pathname.startsWith(item.path))
+              return isCollaboration ? (
+                <button
+                  key={item.path}
+                  type="button"
+                  onClick={() => {
+                    setMobileSidebarOpen(false)
+                    navigate('/social-worker/collaboration')
+                  }}
+                  className={`d-flex align-items-center gap-3 px-4 py-3 w-100 border-0 bg-transparent text-dark text-decoration-none text-start ${isActive ? 'sw-sidebar-active mx-2' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <span className="fs-5">{item.icon}</span>
+                  <span className="fw-medium">{item.label}</span>
+                </button>
+              ) : (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.end ?? item.path === '/social-worker'}
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className={({ isActive: active }) =>
+                    `d-flex align-items-center gap-3 px-4 py-3 text-dark text-decoration-none ${active ? 'sw-sidebar-active mx-2' : ''}`
+                  }
+                >
+                  <span className="fs-5">{item.icon}</span>
+                  <span className="fw-medium">{item.label}</span>
+                </NavLink>
+              )
+            })}
           </div>
         </Offcanvas.Body>
       </Offcanvas>

@@ -30,6 +30,7 @@ import { MessagesPage } from './pages/dashboard/MessagesPage'
 import { NotificationsPage } from './pages/dashboard/NotificationsPage'
 import { ServiceOffersPage } from './pages/dashboard/ServiceOffersPage'
 import { ProfilePage } from './pages/dashboard/ProfilePage'
+import { FeedbackPage } from './pages/dashboard/FeedbackPage'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AllCasesPage } from './pages/admin/AllCasesPage'
 import { AdminCaseDetailsPage } from './pages/admin/AdminCaseDetailsPage'
@@ -124,6 +125,7 @@ function App() {
         <Route path="messages" element={<MessagesPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="service-offers" element={<ServiceOffersPage />} />
+        <Route path="feedback" element={<FeedbackPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
       <Route

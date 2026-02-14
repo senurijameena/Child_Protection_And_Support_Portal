@@ -296,8 +296,43 @@ export interface PendingCollaborationRequestDTO {
   servicesApplied?: string[]
 }
 
+/** Normalize a raw item from API (handles snake_case or wrapped dates) into PendingCollaborationRequestDTO */
+function normalizePendingCollaborationItem(raw: Record<string, unknown>): PendingCollaborationRequestDTO {
+  const getStr = (key: string, snake?: string) =>
+    (raw[key] ?? raw[snake ?? ''] ?? '') as string
+  const getArr = (key: string) => (raw[key] as string[] | undefined) ?? []
+  let requestedAt = raw.requestedAt ?? raw.requested_at
+  if (Array.isArray(requestedAt)) requestedAt = requestedAt.length >= 6 ? `${requestedAt[0]}-${String(requestedAt[1]).padStart(2, '0')}-${String(requestedAt[2]).padStart(2, '0')}T${String(requestedAt[3]).padStart(2, '0')}:${String(requestedAt[4]).padStart(2, '0')}:00` : ''
+  if (requestedAt && typeof requestedAt !== 'string') requestedAt = String(requestedAt)
+
+  return {
+    collaborationId: getStr('collaborationId', 'collaboration_id') || (raw.id as string) || '',
+    userId: getStr('userId', 'user_id') || undefined,
+    permission: (getStr('permission') || 'VIEW_ONLY') as CollaborationPermission,
+    status: (getStr('status') as CollaborationStatus | undefined) || undefined,
+    reason: getStr('reason') || undefined,
+    requestedAt: (requestedAt as string) || undefined,
+    respondedAt: getStr('respondedAt', 'responded_at') || undefined,
+    district: getStr('district') || undefined,
+    helpRequestId: getStr('helpRequestId', 'help_request_id') || undefined,
+    requestTrackingId: getStr('requestTrackingId', 'request_tracking_id') || undefined,
+    requestCategory: getStr('requestCategory', 'request_category') || undefined,
+    ownerUserId: getStr('ownerUserId', 'owner_user_id') || undefined,
+    ownerName: getStr('ownerName', 'owner_name') || undefined,
+    ownerProfilePhoto: getStr('ownerProfilePhoto', 'owner_profile_photo') || undefined,
+    problemSummary: getStr('problemSummary', 'problem_summary') || undefined,
+    currentProgress: getStr('currentProgress', 'current_progress') || undefined,
+    servicesApplied: getArr('servicesApplied')?.length ? getArr('servicesApplied') : getArr('services_applied') || [],
+  }
+}
+
 export async function getMyPendingCollaborationRequests(): Promise<PendingCollaborationRequestDTO[]> {
-  return apiGet<PendingCollaborationRequestDTO[]>('/help-requests/collaboration/my-pending')
+  const res = await apiGet<PendingCollaborationRequestDTO[] | { data?: unknown[]; content?: unknown[] }>('/help-requests/collaboration/my-pending')
+  let list: unknown[] = []
+  if (Array.isArray(res)) list = res
+  else if (res && typeof res === 'object' && Array.isArray((res as { data?: unknown[] }).data)) list = (res as { data: unknown[] }).data
+  else if (res && typeof res === 'object' && Array.isArray((res as { content?: unknown[] }).content)) list = (res as { content: unknown[] }).content
+  return list.map((item) => normalizePendingCollaborationItem((item as Record<string, unknown>) || {}))
 }
 
 // Messages

@@ -6,6 +6,7 @@ import {
   getAssignedRequests,
   requestHelpRequestCollaborator,
   getMyPendingCollaborationRequests,
+  getMyActiveCollaborationRequests,
   acceptHelpRequestCollaborationRequest,
   rejectHelpRequestCollaborationRequest,
   type CollaborationPermission,
@@ -148,6 +149,8 @@ export function SocialWorkerCollaborationPage() {
   const [loadingRequests, setLoadingRequests] = useState(false)
   const [requestsError, setRequestsError] = useState<string | null>(null)
   const [activeCollaborations, setActiveCollaborations] = useState<ActiveCollaboration[]>([])
+  const [loadingActive, setLoadingActive] = useState(false)
+  const [activeError, setActiveError] = useState<string | null>(null)
   const [pastCollaborations] = useState<PastCollaboration[]>([])
   const [selectedRequest, setSelectedRequest] = useState<PendingCollaborationRequestDTO | null>(null)
   const [selectedPastCollab, setSelectedPastCollab] = useState<PastCollaboration | null>(null)
@@ -194,6 +197,43 @@ export function SocialWorkerCollaborationPage() {
     fetchPendingRequests()
   }, [])
 
+  // Fetch active collaborations (where current user is accepted collaborator) on mount
+  useEffect(() => {
+    const fetchActiveCollaborations = async () => {
+      setLoadingActive(true)
+      setActiveError(null)
+      try {
+        const data = await getMyActiveCollaborationRequests()
+        const list = Array.isArray(data) ? data : []
+        const mapped: ActiveCollaboration[] = list.map((d) => {
+          const category = (d.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
+          const role = (d.permission?.toUpperCase() || 'VIEW_ONLY') as ActiveCollaboration['role']
+          const lastUpdate = d.respondedAt || d.requestedAt || new Date().toISOString()
+          return {
+            id: d.collaborationId,
+            helpRequestId: d.helpRequestId || '',
+            requestId: d.requestTrackingId || d.requestId || d.helpRequestId || '',
+            trackingId: d.requestTrackingId,
+            ownerUserId: d.ownerUserId,
+            role,
+            ownerName: d.ownerName || 'Social Worker',
+            category,
+            pendingTasks: 0,
+            lastUpdate: typeof lastUpdate === 'string' ? lastUpdate : new Date(lastUpdate).toISOString(),
+            status: 'ACTIVE',
+          }
+        })
+        setActiveCollaborations(mapped)
+      } catch (err) {
+        console.error('Failed to fetch active collaborations:', err)
+        setActiveError(err instanceof Error ? err.message : 'Failed to load active collaborations')
+      } finally {
+        setLoadingActive(false)
+      }
+    }
+    fetchActiveCollaborations()
+  }, [])
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-US', {
@@ -236,37 +276,35 @@ export function SocialWorkerCollaborationPage() {
   const handleAccept = async (collaborationId: string) => {
     setProcessingId(collaborationId)
     try {
-      const accepted = await acceptHelpRequestCollaborationRequest(collaborationId)
+      await acceptHelpRequestCollaborationRequest(collaborationId)
       setNewRequests((prev) => prev.filter((r) => r.collaborationId !== collaborationId))
-
-      // Move accepted request into Participating tab immediately
-      const acceptedReq = newRequests.find((r) => r.collaborationId === collaborationId)
-      if (acceptedReq) {
-        const category = (acceptedReq.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
-        setActiveCollaborations((prev) => {
-          const exists = prev.some((c) => c.id === collaborationId)
-          if (exists) return prev
-          return [
-            ...prev,
-            {
-              id: collaborationId,
-              helpRequestId: acceptedReq.helpRequestId || acceptedReq.requestId || '',
-              // Prefer human-friendly tracking ID (e.g. HELP-0001) when available
-              requestId: acceptedReq.requestTrackingId || acceptedReq.requestId || acceptedReq.helpRequestId || '',
-              trackingId: acceptedReq.requestTrackingId,
-              ownerUserId: acceptedReq.ownerUserId,
-              role: (acceptedReq.permission?.toUpperCase() || 'VIEW_ONLY') as ActiveCollaboration['role'],
-              ownerName: acceptedReq.ownerName || 'Social Worker',
+      setShowSummaryModal(false)
+      setActiveTab('participating')
+      // Refetch active collaborations so Participating tab shows real data from backend
+      getMyActiveCollaborationRequests()
+        .then((data) => {
+          const list = Array.isArray(data) ? data : []
+          const mapped: ActiveCollaboration[] = list.map((d) => {
+            const category = (d.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
+            const role = (d.permission?.toUpperCase() || 'VIEW_ONLY') as ActiveCollaboration['role']
+            const lastUpdate = d.respondedAt || d.requestedAt || new Date().toISOString()
+            return {
+              id: d.collaborationId,
+              helpRequestId: d.helpRequestId || '',
+              requestId: d.requestTrackingId || d.requestId || d.helpRequestId || '',
+              trackingId: d.requestTrackingId,
+              ownerUserId: d.ownerUserId,
+              role,
+              ownerName: d.ownerName || 'Social Worker',
               category,
               pendingTasks: 0,
-              lastUpdate: new Date().toISOString(),
+              lastUpdate: typeof lastUpdate === 'string' ? lastUpdate : new Date(lastUpdate).toISOString(),
               status: 'ACTIVE',
-            },
-          ]
+            }
+          })
+          setActiveCollaborations(mapped)
         })
-        setActiveTab('participating')
-      }
-      setShowSummaryModal(false)
+        .catch(() => {})
     } catch (err) {
       console.error('Failed to accept collaboration:', err)
       alert(err instanceof Error ? err.message : 'Failed to accept collaboration')
@@ -531,7 +569,17 @@ export function SocialWorkerCollaborationPage() {
 
   const renderParticipatingTab = () => (
     <div>
-      {activeCollaborations.length === 0 ? (
+      {loadingActive ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3 mb-0 text-muted">Loading active collaborations...</p>
+        </div>
+      ) : activeError ? (
+        <div className="text-center text-danger py-5">
+          <span style={{ fontSize: '3rem' }}>⚠️</span>
+          <p className="mt-3 mb-0">{activeError}</p>
+        </div>
+      ) : activeCollaborations.length === 0 ? (
         <div className="text-center text-muted py-5">
           <span style={{ fontSize: '3rem' }}>📂</span>
           <p className="mt-3 mb-0">You are not participating in any collaborations yet.</p>

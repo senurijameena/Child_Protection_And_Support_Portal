@@ -8,7 +8,7 @@ import type { HelpRequestDTO } from '../../types/dashboard'
 import { SocialWorkerNotificationDropdown } from './SocialWorkerNotificationDropdown'
 import './SocialWorkerHeader.css'
 
-// Helper to get full photo URL (handles relative paths from backend)
+
 const getPhotoUrl = (photoPath?: string | null): string | null => {
   if (!photoPath) return null
   // If it's already an absolute URL, return as-is

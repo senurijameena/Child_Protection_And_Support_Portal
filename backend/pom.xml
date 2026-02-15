@@ -30,7 +30,7 @@
     <java.version>17</java.version>
     <spring-boot.version>3.5.7</spring-boot.version>
     <spring-ai.version>1.0.0</spring-ai.version>
-    <skip.frontend.build>false</skip.frontend.build>
+    <skip.frontend.build>true</skip.frontend.build>
 </properties>
 	<dependencyManagement>
 		<dependencies>

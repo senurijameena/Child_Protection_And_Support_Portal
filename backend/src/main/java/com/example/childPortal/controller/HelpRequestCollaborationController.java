@@ -70,4 +70,11 @@ public class HelpRequestCollaborationController {
     ) {
         return ResponseEntity.ok(collaborationService.getMyPendingRequests(userId));
     }
+
+    @GetMapping("/collaboration/my-active")
+    public ResponseEntity<List<HelpRequestCollaboratorDTO>> getMyActiveCollaborations(
+            @AuthenticationPrincipal String userId
+    ) {
+        return ResponseEntity.ok(collaborationService.getMyActiveCollaborations(userId));
+    }
 }

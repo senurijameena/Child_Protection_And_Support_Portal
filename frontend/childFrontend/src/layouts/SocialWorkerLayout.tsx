@@ -17,6 +17,7 @@ const sidebarItems = [
   { path: '/social-worker/follow-ups', label: 'Follow-ups', icon: '⏰', end: false },
   { path: '/social-worker/reports', label: 'Reports', icon: '📊', end: false },
   { path: '/social-worker/analytics', label: 'Analytics', icon: '📈', end: false },
+  { path: '/social-worker/feedback', label: 'Feedback', icon: '🗣️', end: false },
   { path: '/social-worker/profile', label: 'Profile', icon: '👤', end: false },
 ]
 

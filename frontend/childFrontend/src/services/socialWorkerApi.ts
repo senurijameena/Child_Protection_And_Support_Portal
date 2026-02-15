@@ -335,6 +335,16 @@ export async function getMyPendingCollaborationRequests(): Promise<PendingCollab
   return list.map((item) => normalizePendingCollaborationItem((item as Record<string, unknown>) || {}))
 }
 
+/** Active collaborations where current user is collaborator (status ACCEPTED). Same DTO shape as pending. */
+export async function getMyActiveCollaborationRequests(): Promise<PendingCollaborationRequestDTO[]> {
+  const res = await apiGet<PendingCollaborationRequestDTO[] | { data?: unknown[]; content?: unknown[] }>('/help-requests/collaboration/my-active')
+  let list: unknown[] = []
+  if (Array.isArray(res)) list = res
+  else if (res && typeof res === 'object' && Array.isArray((res as { data?: unknown[] }).data)) list = (res as { data: unknown[] }).data
+  else if (res && typeof res === 'object' && Array.isArray((res as { content?: unknown[] }).content)) list = (res as { content: unknown[] }).content
+  return list.map((item) => normalizePendingCollaborationItem((item as Record<string, unknown>) || {}))
+}
+
 // Messages
 export async function getConversations(): Promise<ConversationDTO[]> {
   return apiGet<ConversationDTO[]>('/messages/conversations')

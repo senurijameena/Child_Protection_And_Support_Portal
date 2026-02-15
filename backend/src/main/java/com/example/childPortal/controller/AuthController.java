@@ -40,7 +40,7 @@ public class AuthController {
             Files.createDirectories(dir);
             Path target = dir.resolve(fileName);
             Files.write(target, file.getBytes());
-            String url = "/" + UPLOAD_DIR + "/" + fileName;
+           String url = "/ " + UPLOAD_DIR + "/" + fileName;
             return ResponseEntity.ok(Map.of("url", url));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

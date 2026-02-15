@@ -213,6 +213,36 @@ public class HelpRequestCollaborationService {
         );
     }
 
+    public List<HelpRequestCollaboratorDTO> getMyActiveCollaborations(String userId) {
+        getUser(userId);
+        List<HelpRequestCollaboration> accepted = collaborationRepository
+                .findByCollaboratorUserIdAndStatusOrderByRequestedAtDesc(
+                        userId,
+                        HelpRequestCollaboration.Status.ACCEPTED);
+
+        Map<String, User> ownerUserMap = userRepository.findAllById(
+                        accepted.stream().map(HelpRequestCollaboration::getOwnerUserId).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        Map<String, HelpRequest> requestMap = helpRequestRepository.findAllById(
+                        accepted.stream().map(HelpRequestCollaboration::getHelpRequestId).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(HelpRequest::getId, r -> r));
+
+        Map<String, SocialWorker> workerMap = socialWorkerRepository.findAll().stream()
+                .collect(Collectors.toMap(SocialWorker::getUserId, sw -> sw, (a, b) -> a));
+
+        return accepted.stream()
+                .map(collab -> {
+                    HelpRequest request = requestMap.get(collab.getHelpRequestId());
+                    User owner = ownerUserMap.get(collab.getOwnerUserId());
+                    SocialWorker ownerWorker = owner != null ? workerMap.get(owner.getId()) : null;
+                    return toPendingDTO(collab, request, owner, ownerWorker);
+                })
+                .collect(Collectors.toList());
+    }
+
     public List<HelpRequestCollaboratorDTO> getMyPendingRequests(String userId) {
         getUser(userId);
         List<HelpRequestCollaboration> pending = collaborationRepository

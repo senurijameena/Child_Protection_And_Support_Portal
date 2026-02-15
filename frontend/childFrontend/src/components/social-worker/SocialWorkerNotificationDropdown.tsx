@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Dropdown, Badge, Spinner, Button } from 'react-bootstrap'
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../../services/socialWorkerApi'
+import { getNotifications, getUnreadCount, markNotificationRead, markAllNotificationsRead } from '../../services/socialWorkerApi'
 import type { NotificationDTO } from '../../types/dashboard'
 
 function isUrgentType(type: string | undefined): boolean {
@@ -13,6 +13,7 @@ export function SocialWorkerNotificationDropdown() {
   const [notifications, setNotifications] = useState<NotificationDTO[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const load = () => {
     setLoading(true)
@@ -23,6 +24,12 @@ export function SocialWorkerNotificationDropdown() {
   }
 
   useEffect(() => {
+    getUnreadCount()
+      .then(setUnreadCount)
+      .catch(() => setUnreadCount(0))
+  }, [])
+
+  useEffect(() => {
     if (open) load()
   }, [open])
 
@@ -30,12 +37,13 @@ export function SocialWorkerNotificationDropdown() {
     try {
       await markAllNotificationsRead()
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+      setUnreadCount(0)
     } catch (err) {
       console.error('Failed to mark all notifications as read', err)
     }
   }
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const unreadInListCount = notifications.filter((n) => !n.read).length
   const urgentUnread = notifications.filter((n) => !n.read && isUrgentType(n.type)).length
 
   const unread = notifications.filter((n) => !n.read)
@@ -108,21 +116,6 @@ export function SocialWorkerNotificationDropdown() {
     return ''
   }
 
-  const handleClick = async (n: NotificationDTO) => {
-    try {
-      await markNotificationRead(n.id)
-      setNotifications((prev) =>
-        prev.map((x) => (x.id === n.id ? { ...x, read: true } : x))
-      )
-    } catch {
-      //
-    }
-    if (n.actionUrl) {
-      navigate(n.actionUrl)
-      setOpen(false)
-    }
-  }
-
   return (
     <Dropdown
       show={open}
@@ -138,16 +131,18 @@ export function SocialWorkerNotificationDropdown() {
       >
         <span className="fs-5" aria-hidden="true" style={{ opacity: 0.8 }}>🔔</span>
         {unreadCount > 0 && (
-          <span
-            className="position-absolute translate-middle rounded-circle border border-white"
+          <Badge
+            bg={urgentUnread > 0 ? 'danger' : 'primary'}
+            pill
+            className="position-absolute top-0 start-100 translate-middle"
             style={{
-              top: '25%',
-              left: '75%',
-              width: 12,
-              height: 12,
-              backgroundColor: urgentUnread > 0 ? '#ef4444' : 'var(--sw-teal)',
+              fontSize: '0.62rem',
+              lineHeight: 1,
+              minWidth: 18,
             }}
-          ></span>
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </Badge>
         )}
       </Dropdown.Toggle>
       <Dropdown.Menu
@@ -157,7 +152,7 @@ export function SocialWorkerNotificationDropdown() {
         <div className="px-4 py-3 d-flex justify-content-between align-items-center bg-light bg-opacity-50">
           <div>
             <span className="fw-bold text-dark">Notifications</span>
-            <div className="small text-muted">{unreadCount} new</div>
+            <div className="small text-muted">{unreadInListCount} new</div>
           </div>
           <div>
             <Button variant="link" size="sm" className="px-2 py-0 text-decoration-none" onClick={handleMarkAllRead}>
@@ -191,6 +186,7 @@ export function SocialWorkerNotificationDropdown() {
                     if (!n.read) {
                       await markNotificationRead(n.id)
                       setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
+                      setUnreadCount((prev) => Math.max(0, prev - 1))
                     }
                   } catch (err) {
                     console.error('Failed to mark notification as read', err)
@@ -267,7 +263,7 @@ export function SocialWorkerNotificationDropdown() {
         </div>
 
         <div className="p-2 border-top text-center">
-          <Button variant="link" className="text-decoration-none small fw-bold p-0 py-1" style={{ color: 'var(--sw-teal)', fontSize: '0.75rem' }} onClick={() => { navigate('/dashboard/notifications'); setOpen(false) }}>
+          <Button variant="link" className="text-decoration-none small fw-bold p-0 py-1" style={{ color: 'var(--sw-teal)', fontSize: '0.75rem' }} onClick={() => { navigate('/social-worker/notifications'); setOpen(false) }}>
             View All Notifications
           </Button>
         </div>

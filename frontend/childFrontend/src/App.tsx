@@ -188,6 +188,7 @@ function App() {
         <Route path="packages/create" element={<ServicePackageFormPage />} />
         <Route path="packages/:packageId/edit" element={<ServicePackageFormPage />} />
         <Route path="reports" element={<SocialWorkerReportsPage />} />
+        <Route path="feedback" element={<FeedbackPage />} />
         <Route path="profile" element={<SocialWorkerProfilePage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

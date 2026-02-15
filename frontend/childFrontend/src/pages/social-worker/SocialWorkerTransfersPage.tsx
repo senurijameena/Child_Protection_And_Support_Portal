@@ -140,7 +140,7 @@ export function SocialWorkerTransfersPage() {
         .filter((t) => (t.status || '').toUpperCase() === 'PENDING')
         .map((t) => ({
           ...t,
-          direction: t.toUserId === userId ? 'INCOMING' : 'OUTGOING',
+          direction: (t.toUserId === userId ? 'INCOMING' : 'OUTGOING') as PendingDirection,
         })),
     [transfers, userId]
   )

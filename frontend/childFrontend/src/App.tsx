@@ -66,7 +66,7 @@ import {
 import { SocialWorkerCollaborationPage } from './pages/social-worker/SocialWorkerCollaborationPage'
 import { ServicePackageListingPage } from './pages/social-worker/ServicePackageListingPage'
 import { ServicePackageFormPage } from './pages/social-worker/ServicePackageFormPage'
-
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 function App() {
   return (
@@ -172,7 +172,7 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<SocialWorkerDashboard />} />
+        <Route index element={<ErrorBoundary><SocialWorkerDashboard /></ErrorBoundary>} />
         <Route path="analytics" element={<SocialWorkerAnalyticsPage />} />
         <Route path="requests" element={<SocialWorkerRequestsPage />} />
         <Route path="requests/:requestId" element={<SocialWorkerRequestDetailsPage />} />

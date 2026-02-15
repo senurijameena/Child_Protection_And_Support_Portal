@@ -4,6 +4,7 @@ import { Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
 import { SocialWorkerHeader } from '../components/social-worker/SocialWorkerHeader'
 import SystemAnnouncementBanner from '../components/SystemAnnouncementBanner'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 const sidebarItems = [
   { path: '/social-worker', label: 'Dashboard', icon: '🏠', end: true },
@@ -39,16 +40,18 @@ export function SocialWorkerLayout() {
     <div className="sw-layout min-vh-100 d-flex sw-theme-bg">
       {/* Sidebar - desktop (collapsible) */}
       <aside
-        className={`d-none d-lg-flex flex-column sw-sidebar border-end position-fixed overflow-hidden ${sidebarCollapsed ? 'sw-sidebar-collapsed' : ''
+        className={`d-none d-lg-flex flex-column sw-sidebar border-end position-fixed ${sidebarCollapsed ? 'sw-sidebar-collapsed' : ''
           }`}
         style={{
           width: sidebarCollapsed ? 72 : 260,
-          minHeight: '100vh',
+          height: '100vh',
+          maxHeight: '100vh',
           transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           backgroundColor: '#fff',
+          overflow: 'hidden',
         }}
       >
-        <div className="sw-sidebar-header d-flex align-items-center p-3">
+        <div className="sw-sidebar-header d-flex align-items-center p-3 flex-shrink-0">
           <Link
             to="/social-worker"
             className="text-decoration-none d-flex align-items-center gap-2 flex-grow-1 min-w-0"
@@ -77,7 +80,7 @@ export function SocialWorkerLayout() {
           </button>
         </div>
 
-        <nav className="flex-grow-1 py-4 overflow-auto sw-sidebar-nav">
+        <nav className="flex-grow-1 py-4 overflow-y-auto overflow-x-hidden sw-sidebar-nav" style={{ minHeight: 0 }}>
           {sidebarItems.map((item) => {
             const isCollaboration = item.path === '/social-worker/collaboration'
             const isActive = isCollaboration
@@ -120,7 +123,7 @@ export function SocialWorkerLayout() {
           })}
         </nav>
 
-        <div className="p-3 border-top mt-auto bg-light bg-opacity-50">
+        <div className="p-3 border-top mt-auto bg-light bg-opacity-50 flex-shrink-0">
           {!sidebarCollapsed ? (
             <div className="d-flex flex-column gap-3">
               <div className="px-2 py-1 text-muted small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>
@@ -215,15 +218,17 @@ export function SocialWorkerLayout() {
 
       {/* Main content */}
       <div className="flex-grow-1 d-flex flex-column min-vw-0">
-        {/* Header - Modern Professional Design */}
-        <SocialWorkerHeader />
-        <SystemAnnouncementBanner />
+        <ErrorBoundary>
+          {/* Header - Modern Professional Design */}
+          <SocialWorkerHeader />
+          <SystemAnnouncementBanner />
 
-        <main className="flex-grow-1 py-4 overflow-auto sw-main">
-          <div className="px-3 px-lg-4">
-            <Outlet />
-          </div>
-        </main>
+          <main className="flex-grow-1 py-4 overflow-auto sw-main">
+            <div className="px-3 px-lg-4">
+              <Outlet />
+            </div>
+          </main>
+        </ErrorBoundary>
 
         {/* Footer - minimal */}
         <footer className="sw-footer py-2 px-4 border-top bg-white">

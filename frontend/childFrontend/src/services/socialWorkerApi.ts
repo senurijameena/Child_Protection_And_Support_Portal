@@ -20,6 +20,7 @@ export interface FollowUpDTO {
   status?: string
   priority?: string
   scheduledDate?: string
+  nextScheduledDate?: string
   notes?: string
   missedReason?: string
   createdAt?: string

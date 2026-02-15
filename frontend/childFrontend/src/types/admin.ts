@@ -107,6 +107,7 @@ export interface AnnouncementDTO {
   id: string
   title?: string
   message?: string
+  link?: string
   icon?: string
   type?: 'GENERAL' | 'MAINTENANCE' | 'FEATURE' | 'WORKSHOP'
   active: boolean

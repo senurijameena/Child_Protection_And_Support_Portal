@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, Container, Row, Col, ListGroup, Badge } from 'react-bootstrap'
-import { Calendar, type Event as RbcEvent, dateFnsLocalizer } from 'react-big-calendar'
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { format, parse, startOfWeek, getDay, addHours, startOfDay } from 'date-fns'
+import { format, parse, startOfWeek, getDay, addHours } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { getMyFollowUps, type FollowUpDTO } from '../../services/socialWorkerApi'
 
@@ -14,14 +14,7 @@ const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales
 import { useSearchParams } from 'react-router-dom'
 
 // Helper to check if a follow-up is overdue
-const isOverdue = (followUp: FollowUpDTO): boolean => {
-  if (!followUp.scheduledDate) return false
-  const scheduledDate = new Date(followUp.scheduledDate)
-  if (Number.isNaN(scheduledDate.getTime())) return false
-  const today = startOfDay(new Date())
-  const isCompleted = followUp.status === 'COMPLETED' || followUp.status === 'DONE'
-  return !isCompleted && scheduledDate < today
-}
+type CalendarEvent = { start: Date; end: Date; title: string; resource?: FollowUpDTO }
 
 export function SocialWorkerFollowUpsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -55,16 +48,16 @@ export function SocialWorkerFollowUpsPage() {
 
   const filteredFollowUps = requestFilter ? followUps.filter((f) => f.helpRequestId === requestFilter) : followUps
 
-  const events: RbcEvent[] = filteredFollowUps
+  const events: CalendarEvent[] = filteredFollowUps
     .filter((f) => f.scheduledDate)
     .map((f) => {
       const start = new Date(f.scheduledDate ?? '')
       const end = addHours(start, 1)
       const title = f.type ? `${f.type} • ${f.childName ?? ''}`.trim() : f.notes ?? 'Follow-up'
-      return { start, end, title, resource: f } as RbcEvent
+      return { start, end, title, resource: f }
     })
 
-  const FollowUpEvent = ({ event }: { event: RbcEvent & { resource?: FollowUpDTO } }) => {
+  const FollowUpEvent = ({ event }: { event: CalendarEvent }) => {
     const sd = event.resource?.scheduledDate
     const timeText = sd ? new Date(sd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null
     return (

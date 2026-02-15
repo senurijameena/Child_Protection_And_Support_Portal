@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Form, Button, Card } from 'react-bootstrap'
 import { login } from '../../services/authApi'
-import { ROLE_LABELS } from '../../types/auth'
+import { ROLE_LABELS, normalizeRole } from '../../types/auth'
 import type { Role } from '../../types/auth'
 
 export function LoginPage() {
@@ -31,23 +31,24 @@ export function LoginPage() {
     setLoading(true)
     try {
       const res = await login({ email: email.trim(), password })
+      const resolvedRole = normalizeRole(res.role)
       if (res.approved && res.token) {
         localStorage.setItem('token', res.token)
         localStorage.setItem('user', JSON.stringify({
           userId: res.userId,
           email: res.email,
           fullName: res.fullName,
-          role: res.role,
+          role: resolvedRole,
         }))
         const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
         const target =
-          res.role === 'ADMIN'
+          resolvedRole === 'ADMIN'
             ? '/admin'
-            : res.role === 'PO'
+            : resolvedRole === 'PO'
               ? '/police'
-              : res.role === 'SW'
+              : resolvedRole === 'SW'
                 ? '/social-worker'
-                : res.role === 'PU'
+                : resolvedRole === 'PU'
                   ? '/dashboard'
                   : from || '/'
         navigate(target)

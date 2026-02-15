@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Form, Button, Card } from 'react-bootstrap'
 import type { Role, RegisterRequest } from '../../types/auth'
-import { ROLE_LABELS } from '../../types/auth'
+import { ROLE_LABELS, normalizeRole } from '../../types/auth'
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator'
 import { FileUploadField } from './FileUploadField'
 import { registerPublicUser, registerPoliceStation, registerSocialWorker, uploadRegistrationDocument } from '../../services/authApi'
@@ -123,14 +123,15 @@ export function SignupForm() {
         return
       }
       if (res.approved && res.token) {
+        const resolvedRole = normalizeRole(res.role)
         localStorage.setItem('token', res.token)
-        localStorage.setItem('user', JSON.stringify({ userId: res.userId, email: res.email, fullName: res.fullName, role: res.role }))
+        localStorage.setItem('user', JSON.stringify({ userId: res.userId, email: res.email, fullName: res.fullName, role: resolvedRole }))
         const target =
-          res.role === 'SW'
+          resolvedRole === 'SW'
             ? '/social-worker'
-            : res.role === 'PO'
+            : resolvedRole === 'PO'
               ? '/police'
-              : res.role === 'PU'
+              : resolvedRole === 'PU'
                 ? '/dashboard'
                 : '/'
         navigate(target)

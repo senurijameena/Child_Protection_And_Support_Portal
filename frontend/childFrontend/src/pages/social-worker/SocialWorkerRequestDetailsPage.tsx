@@ -36,6 +36,7 @@ import type { HelpRequestDTO, HelpType, AppliedPackageStatus } from '../../types
 import { HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
 import './SocialWorkerDashboard.css'
 import VerticalTimeline from '../../components/ui/VerticalTimeline'
+import type { TimelineStep } from '../../components/ui/HorizontalTimeline'
 
 const formatDateTime = (iso?: string) => {
   if (!iso) return ''
@@ -142,6 +143,21 @@ const ASSIGNMENT_AVAILABILITY_LABELS: Record<AssignmentAvailability, string> = {
   AVAILABLE: 'Available',
   BUSY: 'Busy',
   FULL: 'Full',
+}
+
+const getAvailabilityVariant = (status?: string): 'success' | 'warning' | 'secondary' => {
+  const normalized = (status || '').toUpperCase()
+  if (normalized === 'ACTIVE' || normalized === 'AVAILABLE') return 'success'
+  if (normalized === 'BUSY' || normalized === 'LIMITED') return 'warning'
+  return 'secondary'
+}
+
+const getAvailabilityLabel = (status?: string): string => {
+  const normalized = (status || '').toUpperCase()
+  if (normalized === 'ACTIVE' || normalized === 'AVAILABLE') return 'Active'
+  if (normalized === 'BUSY' || normalized === 'LIMITED') return 'Busy'
+  if (normalized === 'ON_LEAVE' || normalized === 'UNAVAILABLE') return 'On Leave'
+  return status || 'Unknown'
 }
 
 export function SocialWorkerRequestDetailsPage() {
@@ -294,6 +310,26 @@ export function SocialWorkerRequestDetailsPage() {
     hasFullAccess || (activeCollaboration?.permission === 'SERVICE_ONLY' && mode === 'collaborator')
   const isViewOnlyCollaborator =
     !isOwner && activeCollaboration?.permission === 'VIEW_ONLY' && mode === 'collaborator'
+
+  const buildTimelineSteps = (req: HelpRequestDTO): TimelineStep[] => {
+    const steps: TimelineStep[] = [{ id: 'requested', label: 'Requested', status: 'completed' }]
+    if (req.status === 'ASSIGNED' || req.status === 'IN_PROGRESS' || req.status === 'COMPLETED') {
+      steps.push({ id: 'assigned', label: 'Assigned', status: 'completed' })
+    }
+    if (req.appliedPackage) {
+      steps.push({ id: 'package', label: 'Package Proposed', status: 'completed' })
+    }
+    if (req.status === 'IN_PROGRESS' || req.status === 'COMPLETED') {
+      steps.push({ id: 'progress', label: 'In Progress', status: 'completed' })
+    }
+    if (req.status === 'COMPLETED') {
+      steps.push({ id: 'completed', label: 'Completed', status: 'active' })
+    } else {
+      const last = steps.length - 1
+      steps[last] = { ...steps[last], status: 'active' }
+    }
+    return steps
+  }
 
   useEffect(() => {
     if (applyPackageId) setShowApplyModal(true)
@@ -1265,7 +1301,7 @@ export function SocialWorkerRequestDetailsPage() {
                       else if (type === 'STATUS_CHANGE') label = `Status Updated: ${item.message || item.description}`
 
                       return {
-                        id: item.id || idx,
+                        id: String(item.id ?? idx),
                         label,
                         date: item.eventTime || item.timestamp,
                         description: (item.message && item.description && item.message !== item.description)
@@ -1894,13 +1930,13 @@ export function SocialWorkerRequestDetailsPage() {
                 const updated = await updateServiceItemStatus(requestId, startServiceModal.item, 'IN_PROGRESS', opts)
                 if (updated) setRequest(updated)
 
-                // ensure overall request status is ACTIVE
+                // ensure overall request status is in progress
                 try {
-                  const reqUpdated = await updateRequestStatus(requestId, 'ACTIVE')
+                  const reqUpdated = await updateRequestStatus(requestId, 'IN_PROGRESS')
                   if (reqUpdated) setRequest(reqUpdated)
                 } catch (innerErr) {
                   // non-blocking: if setting request status fails, log but continue
-                  console.error('Failed to set request status ACTIVE', innerErr)
+                  console.error('Failed to set request status IN_PROGRESS', innerErr)
                 }
 
                 // add timeline note for this start action

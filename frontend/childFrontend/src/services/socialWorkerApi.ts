@@ -10,6 +10,7 @@ import type {
   CompletedHelpReportListItemDTO,
   AnnouncementDTO,
 } from '../types/dashboard'
+import type { FeedbackResponseDTO } from '../types/admin'
 
 export interface FollowUpDTO {
   id: string
@@ -32,10 +33,23 @@ export interface TransferRequestDTO {
   entityType?: string
   entityId?: string
   fromUserId?: string
+  fromUserName?: string
   toUserId?: string
+  toUserName?: string
   reason?: string
   status?: string
   requestedAt?: string
+  processedAt?: string
+  processedBy?: string
+}
+
+export interface CompletedRequestRow {
+  id: string
+  requestId?: string
+  type?: string
+  rating?: number
+  hasFeedback?: boolean
+  closedDate?: string
 }
 
 export type CollaborationPermission = 'FULL_ACCESS' | 'VIEW_ONLY' | 'SERVICE_ONLY'
@@ -384,6 +398,20 @@ export async function createHelpRequestTimelineNote(helpRequestId: string, descr
 // Notifications
 export async function getNotifications(): Promise<{ id: string; type?: string; title?: string; message?: string; read: boolean; actionUrl?: string; createdAt?: string }[]> {
   return apiGet('/notifications')
+}
+
+// Social worker dashboard: closed/archived requests with feedback summary
+export async function getSocialWorkerCompletedRequests(): Promise<CompletedRequestRow[]> {
+  return apiGet<CompletedRequestRow[]>('/dashboard/social-worker/completed-requests')
+}
+
+// Feedback for a help request
+export async function getLatestFeedbackForHelpRequest(requestId: string): Promise<FeedbackResponseDTO> {
+  return apiGet<FeedbackResponseDTO>(`/feedback/help-request/${requestId}/latest`)
+}
+
+export async function sendSocialWorkerFeedbackResponse(feedbackId: string, response: string): Promise<FeedbackResponseDTO> {
+  return apiPost<FeedbackResponseDTO>(`/feedback/${feedbackId}/social-worker-response`, { response })
 }
 
 export async function getUnreadCount(): Promise<number> {

@@ -12,8 +12,13 @@ public class FeedbackResponseDTO {
     private String category;
     private String description;
     private Integer rating;
+    private String helpfulness;
+    private String expectedHelp;
+    private String behavior;
     private FeedbackStatus status;
     private String adminResponse;
+    private String socialWorkerResponse;
+    private LocalDateTime socialWorkerResponseDate;
     private LocalDateTime createdAt;
     private String message;
     private boolean success;
@@ -85,6 +90,30 @@ public class FeedbackResponseDTO {
         this.rating = rating;
     }
 
+    public String getHelpfulness() {
+        return helpfulness;
+    }
+
+    public void setHelpfulness(String helpfulness) {
+        this.helpfulness = helpfulness;
+    }
+
+    public String getExpectedHelp() {
+        return expectedHelp;
+    }
+
+    public void setExpectedHelp(String expectedHelp) {
+        this.expectedHelp = expectedHelp;
+    }
+
+    public String getBehavior() {
+        return behavior;
+    }
+
+    public void setBehavior(String behavior) {
+        this.behavior = behavior;
+    }
+
     public FeedbackStatus getStatus() {
         return status;
     }
@@ -99,6 +128,22 @@ public class FeedbackResponseDTO {
 
     public void setAdminResponse(String adminResponse) {
         this.adminResponse = adminResponse;
+    }
+
+    public String getSocialWorkerResponse() {
+        return socialWorkerResponse;
+    }
+
+    public void setSocialWorkerResponse(String socialWorkerResponse) {
+        this.socialWorkerResponse = socialWorkerResponse;
+    }
+
+    public LocalDateTime getSocialWorkerResponseDate() {
+        return socialWorkerResponseDate;
+    }
+
+    public void setSocialWorkerResponseDate(LocalDateTime socialWorkerResponseDate) {
+        this.socialWorkerResponseDate = socialWorkerResponseDate;
     }
 
     public LocalDateTime getCreatedAt() {

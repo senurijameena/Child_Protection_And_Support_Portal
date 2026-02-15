@@ -4,12 +4,16 @@ import { getPublicStatistics } from '../services/api'
 
 export function AboutSection() {
   const [stats, setStats] = useState({
-    registeredUsers: 0,
-    reportedCases: 0,
-    helpRequests: 0,
-    resolvedCases: 0,
-    activeStations: 0,
-    activeSocialWorkers: 0,
+    totalCasesReported: 0,
+    activeCases: 0,
+    casesSaved: 0,
+    caseResolutionRate: 0,
+    helpRequestsCompleted: 0,
+    childrenSupported: 0,
+    publicUsersCount: 0,
+    socialWorkersCount: 0,
+    policeOfficersCount: 0,
+    lastUpdated: '',
   })
   const [loading, setLoading] = useState(true)
 
@@ -22,34 +26,49 @@ export function AboutSection() {
 
   const statCards = [
     {
-      label: 'Registered Users',
-      value: stats.registeredUsers,
-      icon: '👥',
-    },
-    {
-      label: 'Cases Reported',
-      value: stats.reportedCases,
+      label: 'Total Cases Reported',
+      value: stats.totalCasesReported,
       icon: '📋',
     },
     {
-      label: 'Help Requests',
-      value: stats.helpRequests,
-      icon: '🤝',
+      label: 'Active Cases',
+      value: stats.activeCases,
+      icon: '🟠',
     },
     {
       label: 'Cases Resolved',
-      value: stats.resolvedCases,
-      icon: '✓',
+      value: stats.casesSaved,
+      icon: '✅',
     },
     {
-      label: 'Active Stations',
-      value: stats.activeStations,
-      icon: '👮',
+      label: 'Resolution Rate (%)',
+      value: stats.caseResolutionRate,
+      icon: '📈',
+    },
+    {
+      label: 'Help Requests Completed',
+      value: stats.helpRequestsCompleted,
+      icon: '🤝',
+    },
+    {
+      label: 'Children Supported',
+      value: stats.childrenSupported,
+      icon: '🧒',
+    },
+    {
+      label: 'Public Users',
+      value: stats.publicUsersCount,
+      icon: '👥',
     },
     {
       label: 'Social Workers',
-      value: stats.activeSocialWorkers,
+      value: stats.socialWorkersCount,
       icon: '👩‍⚕️',
+    },
+    {
+      label: 'Police Officers',
+      value: stats.policeOfficersCount,
+      icon: '👮',
     },
   ]
 

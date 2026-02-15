@@ -9,8 +9,10 @@ import java.util.List;
 
 public interface FeedbackRepository extends MongoRepository<Feedback, String> {
     List<Feedback> findByUserId(String userId);
-    List<Feedback> findByCaseId(FeedbackType type);
+    List<Feedback> findByCaseId(String caseId);
     List<Feedback> findByHelpRequestId(String helpRequestId);
+    List<Feedback> findByHelpRequestIdIn(List<String> helpRequestIds);
+    List<Feedback> findByType(FeedbackType type);
     List<Feedback> findByStatus(FeedbackStatus status);
     List<Feedback> findAllByOrderBySubmissionDateDesc();
 }

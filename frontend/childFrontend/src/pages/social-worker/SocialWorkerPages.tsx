@@ -248,12 +248,47 @@ export function SocialWorkerPackagesPage() {
     <Container fluid className="py-4 sw-dashboard">
       <Row className="mb-4">
         <Col xs={12}>
-          <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <h1 className="h3 fw-700 mb-1">Service Packages</h1>
-              <p className="text-muted mb-0">
-                Create reusable service bundles by request type and manage your existing packages.
-              </p>
+          <div
+            className="p-4 rounded-3 shadow-sm position-relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white'
+            }}
+          >
+            {/* Decorative pattern */}
+            <div
+              style={{
+                position: 'absolute',
+                top: -30,
+                right: -30,
+                width: '150px',
+                height: '150px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }}
+            />
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 position-relative">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="d-flex align-items-center justify-content-center"
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.25)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <span style={{ fontSize: '2.5rem' }}>📦</span>
+                </div>
+                <div>
+                  <h1 className="h2 fw-bold mb-1">Service Packages</h1>
+                  <p className="mb-0" style={{ opacity: 0.95, fontSize: '0.95rem' }}>
+                    Create reusable service bundles by request type and manage your existing packages
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </Col>
@@ -263,8 +298,11 @@ export function SocialWorkerPackagesPage() {
       <Row className="g-4 mb-4">
         <Col xs={12}>
           <Card className="sw-card border-0">
-            <Card.Header className="bg-white border-0 pt-4 pb-3">
-              <h5 className="mb-0 fw-700">
+            <Card.Header
+              className="border-0 pt-4 pb-3"
+              style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
+            >
+              <h5 className="mb-0 fw-700" style={{ color: '#1e40af' }}>
                 {editingId ? 'Edit Service Package' : 'Create Service Package'}
               </h5>
             </Card.Header>
@@ -416,6 +454,7 @@ export function SocialWorkerPackagesPage() {
                     variant="primary"
                     size="sm"
                     onClick={() => handleSavePackage('PUBLISHED')}
+                    style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', border: 'none' }}
                   >
                     Publish package
                   </Button>
@@ -430,9 +469,12 @@ export function SocialWorkerPackagesPage() {
       <Row className="g-4">
         <Col xs={12} lg={viewedPackage ? 8 : 12}>
           <Card className="sw-card border-0 h-100">
-            <Card.Header className="bg-white border-0 pt-4 pb-3">
+            <Card.Header
+              className="border-0 pt-4 pb-3"
+              style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
+            >
               <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <h5 className="mb-0 fw-700">Existing packages</h5>
+                <h5 className="mb-0 fw-700" style={{ color: '#1e40af' }}>Existing packages</h5>
                 <div className="d-flex flex-wrap gap-2 small">
                   <Form.Control
                     size="sm"

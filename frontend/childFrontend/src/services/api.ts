@@ -68,28 +68,14 @@ async function handleRes<T>(res: Response): Promise<T> {
  * Public statistics endpoint - no authentication required
  * Returns overview statistics for the landing page
  */
-export async function getPublicStatistics(): Promise<{
-  registeredUsers: number
-  reportedCases: number
-  helpRequests: number
-  resolvedCases: number
-  activeStations: number
-  activeSocialWorkers: number
-}> {
+export async function getPublicStatistics(): Promise<any> {
   try {
-    const res = await fetch(`${API_BASE}/public/statistics`, {
+    const res = await fetch(`${API_BASE}/statistics/public`, {
       headers: { 'Content-Type': 'application/json' },
     })
     return handleRes(res)
   } catch {
     // Return default values if endpoint fails
-    return {
-      registeredUsers: 0,
-      reportedCases: 0,
-      helpRequests: 0,
-      resolvedCases: 0,
-      activeStations: 0,
-      activeSocialWorkers: 0,
-    }
+    return {}
   }
 }

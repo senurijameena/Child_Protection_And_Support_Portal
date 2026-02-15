@@ -15,6 +15,8 @@ export type RequestStatus =
   | 'PACKAGE_PROPOSED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
+  | 'CLOSED'
+  | 'ARCHIVED'
   | 'REJECTED'
   | 'PACKAGE_REJECTED'
   | 'CANCELLED'
@@ -89,6 +91,9 @@ export interface HelpRequestDTO {
   status?: RequestStatus
   assignedWorkerId?: string
   requestDate?: string
+  completionDate?: string
+  closedDate?: string
+  archivedDate?: string
   priority?: string
   // Food Assistance fields
   familyMembers?: number
@@ -351,6 +356,8 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   PACKAGE_PROPOSED: 'Package Proposed',
   IN_PROGRESS: 'In Progress',
   COMPLETED: 'Completed',
+  CLOSED: 'Closed',
+  ARCHIVED: 'Archived',
   REJECTED: 'Rejected',
   PACKAGE_REJECTED: 'Package Rejected',
   CANCELLED: 'Cancelled',
@@ -368,6 +375,8 @@ export const REQUEST_STATUS_BADGE_VARIANTS: Record<
   PACKAGE_PROPOSED: 'warning',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
+  CLOSED: 'dark',
+  ARCHIVED: 'secondary',
   REJECTED: 'danger',
   PACKAGE_REJECTED: 'danger',
   CANCELLED: 'danger',

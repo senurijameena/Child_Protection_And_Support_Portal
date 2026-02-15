@@ -30,6 +30,8 @@ public class HelpRequest {
     private LocalDateTime requestDate;
     private LocalDateTime lastUpdated;
     private LocalDateTime completionDate;
+    private LocalDateTime closedDate;
+    private LocalDateTime archivedDate;
 
     private String requestNotes;
 
@@ -86,6 +88,8 @@ public class HelpRequest {
         PACKAGE_PROPOSED,
         IN_PROGRESS,
         COMPLETED,
+        CLOSED,
+        ARCHIVED,
         REJECTED,
         PACKAGE_REJECTED,
         CANCELLED
@@ -249,6 +253,22 @@ public class HelpRequest {
 
     public void setCompletionDate(LocalDateTime completionDate) {
         this.completionDate = completionDate;
+    }
+
+    public LocalDateTime getClosedDate() {
+        return closedDate;
+    }
+
+    public void setClosedDate(LocalDateTime closedDate) {
+        this.closedDate = closedDate;
+    }
+
+    public LocalDateTime getArchivedDate() {
+        return archivedDate;
+    }
+
+    public void setArchivedDate(LocalDateTime archivedDate) {
+        this.archivedDate = archivedDate;
     }
 
     public String getRequestNotes() {

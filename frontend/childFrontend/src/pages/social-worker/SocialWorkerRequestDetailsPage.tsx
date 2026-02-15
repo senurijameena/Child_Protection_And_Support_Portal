@@ -286,6 +286,8 @@ export function SocialWorkerRequestDetailsPage() {
 
   const [finalizeSubmitting, setFinalizeSubmitting] = useState(false)
   const [finalizeError, setFinalizeError] = useState<string | null>(null)
+  const [showCompleteRequestModal, setShowCompleteRequestModal] = useState(false)
+  const [hasShownAutoCompletePrompt, setHasShownAutoCompletePrompt] = useState(false)
   // --- Collaboration permissions ---
   // When opened from Collaboration Center, ?mode=collaborator is set
   const mode = searchParams.get('mode') === 'collaborator' ? 'collaborator' : 'owner'
@@ -310,6 +312,8 @@ export function SocialWorkerRequestDetailsPage() {
     hasFullAccess || (activeCollaboration?.permission === 'SERVICE_ONLY' && mode === 'collaborator')
   const isViewOnlyCollaborator =
     !isOwner && activeCollaboration?.permission === 'VIEW_ONLY' && mode === 'collaborator'
+  const hasAcceptedCollaborators =
+    (collaboration?.collaborators ?? []).some((c) => c.status === 'ACCEPTED')
 
   const buildTimelineSteps = (req: HelpRequestDTO): TimelineStep[] => {
     const steps: TimelineStep[] = [{ id: 'requested', label: 'Requested', status: 'completed' }]
@@ -622,6 +626,44 @@ export function SocialWorkerRequestDetailsPage() {
     }
   }, [])
 
+  const executionChecklist = request?.appliedPackageItemExecutions ?? []
+  const checklistTotal = executionChecklist.length
+  const checklistCompletedCount = executionChecklist.filter(
+    (item) => (item.status || '').toUpperCase() === 'COMPLETED'
+  ).length
+  const assignedResourceCount = executionChecklist.filter(
+    (item) => !!item.assignedResource && item.assignedResource.trim().length > 0
+  ).length
+  const allChecklistCompleted = checklistTotal > 0 && checklistCompletedCount === checklistTotal
+  const allResourcesAssignedForChecklist = checklistTotal > 0 && assignedResourceCount === checklistTotal
+  const canCompleteRequest =
+    hasFullAccess &&
+    !isCollaboratorView &&
+    !!request &&
+    request.appliedPackageStatus === 'ACCEPTED' &&
+    request.serviceStarted &&
+    request.status !== 'COMPLETED' &&
+    allChecklistCompleted &&
+    allResourcesAssignedForChecklist
+  const showCompleteRequestButton =
+    hasFullAccess &&
+    !isCollaboratorView &&
+    !!request &&
+    request.appliedPackageStatus === 'ACCEPTED' &&
+    request.serviceStarted &&
+    request.status !== 'COMPLETED'
+
+  useEffect(() => {
+    setHasShownAutoCompletePrompt(false)
+  }, [requestId])
+
+  useEffect(() => {
+    if (canCompleteRequest && !hasShownAutoCompletePrompt) {
+      setShowCompleteRequestModal(true)
+      setHasShownAutoCompletePrompt(true)
+    }
+  }, [canCompleteRequest, hasShownAutoCompletePrompt])
+
   if (loading && !request) {
     return (
       <Container fluid className="py-4 sw-dashboard">
@@ -681,12 +723,148 @@ export function SocialWorkerRequestDetailsPage() {
   const helpIcon = getHelpTypeIcon(request.helpType)
   const helpLabel = request.helpType ? HELP_TYPE_LABELS[request.helpType] : 'Support request'
   const evidenceUrls = request.documentUrls || []
+  const isRejectedRequest = request.status === 'REJECTED'
+  const hasRequestAccess = isOwner || !!activeCollaboration
 
   const resolveUrl = (url: string) => {
     if (!url) return '#'
     if (url.startsWith('http://') || url.startsWith('https://')) return url
     const base = getUploadBaseUrl()
     return `${base?.endsWith('/') ? base.slice(0, -1) : base}/${url.replace(/^[\\/]+/, '')}`
+  }
+
+  if (!hasRequestAccess) {
+    return (
+      <Container fluid className="py-4 sw-dashboard">
+        <Row className="mb-3">
+          <Col xs={12}>
+            <button
+              type="button"
+              className="btn btn-link text-decoration-none mb-2 p-0"
+              onClick={() => navigate('/social-worker/requests')}
+            >
+              ← Back to Assigned Requests
+            </button>
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={12} lg={8}>
+            <Card className="sw-card border-0">
+              <Card.Body className="p-4">
+                <h5 className="mb-2 fw-700">Access Removed</h5>
+                <p className="text-muted mb-0">
+                  You no longer have access to this request. It may have been transferred to another social worker.
+                </p>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    )
+  }
+
+  if (isRejectedRequest) {
+    return (
+      <Container fluid className="py-4 sw-dashboard">
+        <Row className="mb-3">
+          <Col xs={12}>
+            <button
+              type="button"
+              className="btn btn-link text-decoration-none mb-2 p-0"
+              onClick={() => navigate('/social-worker/requests')}
+            >
+              ← Back to Assigned Requests
+            </button>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <h2 className="h4 fw-700 mb-0">#{request.trackingId ?? request.id}</h2>
+              <Badge bg="secondary">Rejected</Badge>
+            </div>
+            <p className="mb-0 text-muted">Details are read-only for rejected requests.</p>
+          </Col>
+        </Row>
+
+        <Row className="g-4">
+          <Col xs={12} lg={8}>
+            <Card className="sw-card border-0">
+              <Card.Header className="bg-white border-0 pt-4 pb-3">
+                <h5 className="mb-0 fw-700">Help Request Details</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row className="mb-3">
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Type of request</div>
+                    <div className="d-flex align-items-center gap-2 fw-600">
+                      <span>{helpIcon}</span>
+                      <span>{helpLabel}</span>
+                    </div>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Submitted on</div>
+                    <div className="fw-500">{formatDateTime(request.requestDate) || 'Not specified'}</div>
+                  </Col>
+                </Row>
+                <div className="mb-3">
+                  <div className="mb-2 small text-muted">Description</div>
+                  <div className="p-3 rounded-3 bg-light bg-opacity-50 small">
+                    {request.description || 'No detailed description provided.'}
+                  </div>
+                </div>
+                <Row className="mb-3">
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Location</div>
+                    <div className="fw-500">{request.location || 'Not specified'}</div>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <div className="mb-2 small text-muted">Priority</div>
+                    <Badge bg={getPriorityVariant(request.priority)}>
+                      {request.priority?.toUpperCase() ?? 'MEDIUM'}
+                    </Badge>
+                  </Col>
+                </Row>
+                {evidenceUrls.length > 0 && (
+                  <div>
+                    <div className="mb-2 small text-muted">Attachments</div>
+                    <ul className="small mb-0">
+                      {evidenceUrls.map((url, idx) => (
+                        <li key={idx}>
+                          <a href={resolveUrl(url)} target="_blank" rel="noreferrer">
+                            {url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+
+          <Col xs={12} lg={4}>
+            <Card className="sw-card border-0">
+              <Card.Header className="bg-white border-0 pt-4 pb-3">
+                <h5 className="mb-0 fw-700">Requester Details</h5>
+              </Card.Header>
+              <Card.Body>
+                {request.anonymous ? (
+                  <div className="text-muted small">Anonymous request. Identity is hidden.</div>
+                ) : (
+                  <>
+                    <div className="mb-2 small text-muted">Name</div>
+                    <div className="fw-600 mb-3">{request.requesterName || 'Not provided'}</div>
+                    <div className="mb-2 small text-muted">Email</div>
+                    <div className="fw-500 mb-3">{userProfile?.email || 'Not provided'}</div>
+                    <div className="mb-2 small text-muted">Phone</div>
+                    <div className="fw-500 mb-3">{userProfile?.phone || 'Not provided'}</div>
+                    <div className="mb-2 small text-muted">Address</div>
+                    <div className="fw-500">{userProfile?.address || request.location || 'Not provided'}</div>
+                  </>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    )
   }
 
   return (
@@ -1190,7 +1368,7 @@ export function SocialWorkerRequestDetailsPage() {
                       <h5 className="mb-0 fw-700">👥 Collaboration</h5>
                       <div className="small text-muted">Case owner and collaborators.</div>
                     </div>
-                    {hasFullAccess && collaboration && (
+                    {isOwner && collaboration && (
                       <Button
                         size="sm"
                         variant="primary"
@@ -1226,7 +1404,7 @@ export function SocialWorkerRequestDetailsPage() {
                               <span className="fw-600">{c.name || c.userId}</span>
                               {` • ${c.permission.replace('_', ' ').toLowerCase()}`}
                               {` • ${c.status}`}
-                              {hasFullAccess && (
+                              {isOwner && (
                                 <Button
                                   size="sm"
                                   variant="link"
@@ -1425,31 +1603,15 @@ export function SocialWorkerRequestDetailsPage() {
                             </Button>
                           )}
 
-                        {hasFullAccess &&
-                          request.serviceStarted &&
-                          request.finalAssessmentCompleted &&
-                          !request.caseFinalized && (
+                        {showCompleteRequestButton && (
                             <Button
                               variant="success"
                               size="sm"
                               className="fw-600"
-                              disabled={finalizeSubmitting}
-                              onClick={async () => {
-                                if (!requestId) return
-                                setFinalizeSubmitting(true)
-                                try {
-                                  const updated = await finalizeCase(requestId)
-                                  setRequest(updated)
-                                } catch (err) {
-                                  setFinalizeError(
-                                    err instanceof Error ? err.message : 'Failed to finalize case'
-                                  )
-                                } finally {
-                                  setFinalizeSubmitting(false)
-                                }
-                              }}
+                              disabled={finalizeSubmitting || !canCompleteRequest}
+                              onClick={() => setShowCompleteRequestModal(true)}
                             >
-                              🏁 Finalize Case
+                              ✅ Complete Request
                             </Button>
                           )}
                       </div>
@@ -1670,21 +1832,15 @@ export function SocialWorkerRequestDetailsPage() {
                                           Add Follow-up
                                         </Button>
                                       )}
-                                      {(collaboration?.collaborators?.length ?? 0) > 0 && (
+                                      {!isCollaboratorView && hasAcceptedCollaborators && (
                                         <Button
                                           variant="outline-secondary"
                                           size="sm"
                                           className="fw-600"
                                           onClick={() => {
-                                            if (isCollaboratorView) {
-                                              setShowRequestDutiesModal(true)
-                                              setRequestDutiesMessage('')
-                                              setRequestDutiesError(null)
-                                            } else {
-                                              setShowAssignDutiesModal(true)
-                                              setAssignDutiesMessage('')
-                                              setAssignDutiesError(null)
-                                            }
+                                            setShowAssignDutiesModal(true)
+                                            setAssignDutiesMessage('')
+                                            setAssignDutiesError(null)
                                           }}
                                         >
                                           Collaborate
@@ -2969,12 +3125,70 @@ export function SocialWorkerRequestDetailsPage() {
       </Modal>
 
       {/* Final Assessment Modal */}
+      <Modal
+        show={showCompleteRequestModal}
+        onHide={() => setShowCompleteRequestModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-700">✅ Complete Request</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-2 small text-muted">
+            All checklist tasks are complete and resources are assigned. You can now complete this request.
+          </p>
+          <ul className="small mb-3">
+            <li>
+              Checklist progress: <strong>{checklistCompletedCount} / {checklistTotal}</strong>
+            </li>
+            <li>
+              Resources assigned: <strong>{assignedResourceCount} / {checklistTotal}</strong>
+            </li>
+          </ul>
+          <div className="small text-muted">
+            Completing the request will notify both Admin and Public User.
+          </div>
+          {finalizeError && <div className="alert alert-danger py-2 small mt-3 mb-0">{finalizeError}</div>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={() => setShowCompleteRequestModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="success"
+            size="sm"
+            disabled={finalizeSubmitting || !canCompleteRequest}
+            onClick={async () => {
+              if (!requestId) return
+              setFinalizeSubmitting(true)
+              setFinalizeError(null)
+              try {
+                const updated = await finalizeCase(requestId)
+                setRequest(updated)
+                setShowCompleteRequestModal(false)
+              } catch (err) {
+                setFinalizeError(err instanceof Error ? err.message : 'Failed to complete request')
+              } finally {
+                setFinalizeSubmitting(false)
+              }
+            }}
+          >
+            {finalizeSubmitting ? 'Completing…' : 'Confirm Complete'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Final Assessment Modal */}
       <Modal show={showAssessmentModal} onHide={() => setShowAssessmentModal(false)} size="lg" centered>
         <Modal.Header closeButton>
           <Modal.Title className="h6 fw-700">📝 Final Case Assessment</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p className="small text-muted mb-4">Complete this assessment after all service package items are delivered. This is required before finalizing the case.</p>
+          <p className="small text-muted mb-4">Complete this assessment after all service package items are delivered to capture final outcomes and case notes.</p>
           <Row className="g-4">
             <Col xs={12} md={6}>
               <Form.Group className="mb-3">

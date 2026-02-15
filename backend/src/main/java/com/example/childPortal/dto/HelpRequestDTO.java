@@ -44,6 +44,10 @@ public class HelpRequestDTO {
     private LocalDateTime lastUpdated;
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime completionDate;
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    private LocalDateTime closedDate;
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    private LocalDateTime archivedDate;
     private String requestNotes;
 
     // Applied service package details
@@ -291,6 +295,22 @@ public class HelpRequestDTO {
 
     public void setCompletionDate(LocalDateTime completionDate) {
         this.completionDate = completionDate;
+    }
+
+    public LocalDateTime getClosedDate() {
+        return closedDate;
+    }
+
+    public void setClosedDate(LocalDateTime closedDate) {
+        this.closedDate = closedDate;
+    }
+
+    public LocalDateTime getArchivedDate() {
+        return archivedDate;
+    }
+
+    public void setArchivedDate(LocalDateTime archivedDate) {
+        this.archivedDate = archivedDate;
     }
 
     public String getRequestNotes() {

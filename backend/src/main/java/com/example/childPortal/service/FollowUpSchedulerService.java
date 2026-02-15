@@ -40,6 +40,9 @@ public class FollowUpSchedulerService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
     @Autowired(required = false)
     private NotificationService notificationService;
 
@@ -313,6 +316,41 @@ public class FollowUpSchedulerService {
             logger.info("Weekly progress summary job completed.");
         } catch (Exception e) {
             logger.error("Error in weekly progress summary job: ", e);
+        }
+    }
+
+    /**
+     * Close completed requests after 7 days without feedback.
+     * Runs daily at 7:30 AM.
+     */
+    @Scheduled(cron = "0 30 7 * * *")
+    public void closeCompletedRequestsWithoutFeedback() {
+        logger.info("Running completed request auto-close job...");
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime cutoff = now.minusDays(7);
+
+        try {
+            List<HelpRequest> completedRequests = helpRequestRepository.findByStatus(RequestStatus.COMPLETED);
+            for (HelpRequest request : completedRequests) {
+                LocalDateTime completedAt = request.getCompletionDate();
+                if (completedAt == null || completedAt.isAfter(cutoff)) {
+                    continue;
+                }
+                boolean hasFeedback = !feedbackRepository.findByHelpRequestId(request.getId()).isEmpty();
+                if (hasFeedback) {
+                    continue;
+                }
+                request.setStatus(RequestStatus.CLOSED);
+                request.setLastUpdated(now);
+                if (request.getClosedDate() == null) {
+                    request.setClosedDate(now);
+                }
+                helpRequestRepository.save(request);
+                logger.info("Auto-closed help request {} after 7 days without feedback.", request.getTrackingId());
+            }
+            logger.info("Completed request auto-close job completed.");
+        } catch (Exception e) {
+            logger.error("Error in completed request auto-close job: ", e);
         }
     }
 

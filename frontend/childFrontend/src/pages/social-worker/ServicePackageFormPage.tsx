@@ -216,22 +216,60 @@ export function ServicePackageFormPage() {
     <Container fluid className="py-4 sw-dashboard">
       <Row className="mb-4">
         <Col xs={12}>
-          <Link to="/social-worker/packages" className="btn btn-link text-decoration-none p-0 mb-2">
-            ← Back to Service Packages
-          </Link>
-          <h1 className="h3 fw-700 mb-1">
-            {isEdit ? 'Edit Service Package' : 'Create Service Package'}
-          </h1>
-          <p className="text-muted mb-0">
-            {isEdit
-              ? 'Update package details and services.'
-              : 'Define a structured service bundle reusable across help requests.'}
-          </p>
-          {isEdit && (
-            <div className="alert alert-warning small mt-3 mb-0">
-              <strong>Note:</strong> If this package is already used in active requests, changes will apply only to future assignments.
+          <div
+            className="p-4 rounded-3 shadow-sm position-relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white'
+            }}
+          >
+            {/* Decorative pattern */}
+            <div
+              style={{
+                position: 'absolute',
+                top: -30,
+                right: -30,
+                width: '150px',
+                height: '150px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }}
+            />
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 position-relative">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="d-flex align-items-center justify-content-center"
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.25)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <span style={{ fontSize: '2.5rem' }}>📋</span>
+                </div>
+                <div>
+                  <h1 className="h2 fw-bold mb-1">
+                    {isEdit ? 'Edit Service Package' : 'Create Service Package'}
+                  </h1>
+                  <p className="mb-0" style={{ opacity: 0.95, fontSize: '0.95rem' }}>
+                    {isEdit
+                      ? 'Update package details and services'
+                      : 'Define a structured service bundle reusable across help requests'}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/social-worker/packages"
+                className="btn btn-light d-flex align-items-center gap-2"
+                style={{ fontWeight: '600' }}
+              >
+                ← Back to Packages
+              </Link>
             </div>
-          )}
+          </div>
         </Col>
       </Row>
 
@@ -258,8 +296,11 @@ export function ServicePackageFormPage() {
 
       {step === 1 && (
         <Card className="sw-card border-0 mb-4">
-          <Card.Header className="bg-white border-0 pt-4 pb-3">
-            <h5 className="mb-0 fw-700">🧾 Step 1: Basic Package Info</h5>
+          <Card.Header
+            className="border-0 pt-4 pb-3"
+            style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
+          >
+            <h5 className="mb-0 fw-700" style={{ color: '#1e40af' }}>🧾 Step 1: Basic Package Info</h5>
           </Card.Header>
           <Card.Body>
             <Row className="g-3">
@@ -329,12 +370,15 @@ export function ServicePackageFormPage() {
 
       {step === 2 && (
         <Card className="sw-card border-0 mb-4">
-          <Card.Header className="bg-white border-0 pt-4 pb-3">
-            <h5 className="mb-0 fw-700">🧩 Step 2: Select Services (Core Form)</h5>
-            <p className="small text-muted mb-0 mt-1">
+          <Card.Header
+            className="border-0 pt-4 pb-3"
+            style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
+          >
+            <h5 className="mb-0 fw-700" style={{ color: '#1e40af' }}>🧩 Step 2: Select Services</h5>
+            <p className="small mb-0 mt-1" style={{ color: '#3b82f6' }}>
               Add services from the list below or type your own. Each added service can have optional notes.
               {selectedCount > 0 && (
-                <span className="ms-1 fw-600 text-dark">{selectedCount} in package</span>
+                <span className="ms-2 fw-bold" style={{ color: '#1e40af' }}>({selectedCount} in package)</span>
               )}
             </p>
           </Card.Header>
@@ -452,6 +496,7 @@ export function ServicePackageFormPage() {
                   variant="primary"
                   onClick={() => handleSave('PUBLISHED')}
                   disabled={loading || !name.trim()}
+                  style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', border: 'none' }}
                 >
                   ✅ Save & Activate Package
                 </Button>

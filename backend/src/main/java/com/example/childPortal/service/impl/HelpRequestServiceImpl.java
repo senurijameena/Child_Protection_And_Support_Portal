@@ -214,6 +214,19 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     if (status == HelpRequest.RequestStatus.COMPLETED) {
                         helpRequest.setCompletionDate(LocalDateTime.now());
                     }
+                    if (status == HelpRequest.RequestStatus.CLOSED) {
+                        if (helpRequest.getClosedDate() == null) {
+                            helpRequest.setClosedDate(LocalDateTime.now());
+                        }
+                    }
+                    if (status == HelpRequest.RequestStatus.ARCHIVED) {
+                        if (helpRequest.getClosedDate() == null) {
+                            helpRequest.setClosedDate(LocalDateTime.now());
+                        }
+                        if (helpRequest.getArchivedDate() == null) {
+                            helpRequest.setArchivedDate(LocalDateTime.now());
+                        }
+                    }
                     helpRequestRepository.save(helpRequest);
 
                     if (timelineService != null) {
@@ -1094,8 +1107,39 @@ public class HelpRequestServiceImpl implements HelpRequestService {
     public HelpRequestDTO finalizeCase(String requestId, String userId) {
         return helpRequestRepository.findById(requestId)
                 .map(hr -> {
+                    if (!"ACCEPTED".equalsIgnoreCase(hr.getAppliedServicePackageStatus())) {
+                        throw new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Case can be completed only after the applied package is accepted.");
+                    }
+
+                    List<ServiceItemExecution> executions = hr.getAppliedPackageItemExecutions();
+                    if (executions == null || executions.isEmpty()) {
+                        throw new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Case can be completed only after service checklist items are available.");
+                    }
+
+                    boolean allChecklistItemsCompleted = executions.stream()
+                            .allMatch(ex -> "COMPLETED".equalsIgnoreCase(ex.getStatus()));
+                    if (!allChecklistItemsCompleted) {
+                        throw new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Case can be completed only when all checklist tasks are marked complete.");
+                    }
+
+                    boolean allResourcesAssigned = executions.stream()
+                            .allMatch(ex -> ex.getAssignedResource() != null && !ex.getAssignedResource().isBlank());
+                    if (!allResourcesAssigned) {
+                        throw new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Case can be completed only when resources are assigned for all tasks.");
+                    }
+
                     hr.setStatus(HelpRequest.RequestStatus.COMPLETED);
                     hr.setCaseFinalized(true);
+                    hr.setResourcesAssigned(true);
+                    hr.setAllServicesCompleted(true);
                     hr.setCompletionDate(LocalDateTime.now());
                     hr.setLastUpdated(LocalDateTime.now());
                     helpRequestRepository.save(hr);
@@ -1111,6 +1155,15 @@ public class HelpRequestServiceImpl implements HelpRequestService {
                     if (notificationService != null) {
                         notificationService.sendHelpRequestUpdateToAdmin(requestId, "COMPLETED", userId,
                                 hr.getTrackingId());
+                    }
+
+                    // Notify Public User (requester)
+                    if (notificationService != null && hr.getRequesterUserId() != null) {
+                        notificationService.sendHelpRequestUpdate(
+                                hr.getRequesterUserId(),
+                                hr.getId(),
+                                "COMPLETED",
+                                hr.isAnonymous());
                     }
 
                     return convertToFilteredDTO(hr);
@@ -1143,6 +1196,8 @@ public class HelpRequestServiceImpl implements HelpRequestService {
         dto.setCaseFinalized(helpRequest.isCaseFinalized());
         dto.setLastUpdated(helpRequest.getLastUpdated());
         dto.setCompletionDate(helpRequest.getCompletionDate());
+        dto.setClosedDate(helpRequest.getClosedDate());
+        dto.setArchivedDate(helpRequest.getArchivedDate());
         dto.setRequestNotes(helpRequest.getRequestNotes());
 
         // Map applied service package, if any

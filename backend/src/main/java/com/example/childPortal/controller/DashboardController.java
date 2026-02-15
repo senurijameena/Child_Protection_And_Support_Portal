@@ -4,8 +4,11 @@ import com.example.childPortal.dto.CaseDTO;
 import com.example.childPortal.dto.HelpRequestDTO;
 import com.example.childPortal.dto.ServiceOfferDTO;
 import com.example.childPortal.model.Case.CaseStatus;
+import com.example.childPortal.model.Feedback;
 import com.example.childPortal.model.HelpRequest.RequestStatus;
 import com.example.childPortal.model.ServiceOffer.OfferStatus;
+import com.example.childPortal.repository.FeedbackRepository;
+import com.example.childPortal.repository.HelpRequestRepository;
 import com.example.childPortal.service.CaseService;
 import com.example.childPortal.service.HelpRequestService;
 import com.example.childPortal.service.ServiceOfferService;
@@ -17,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -31,6 +36,12 @@ public class DashboardController {
 
         @Autowired
         private ServiceOfferService serviceOfferService;
+
+        @Autowired
+        private HelpRequestRepository helpRequestRepository;
+
+        @Autowired
+        private FeedbackRepository feedbackRepository;
 
         @GetMapping("/stats")
         public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
@@ -100,5 +111,49 @@ public class DashboardController {
                 stats.put("totalAnonymous", anonymousCases + anonymousRequests);
 
                 return ResponseEntity.ok(stats);
+        }
+
+        @GetMapping("/social-worker/completed-requests")
+        public ResponseEntity<List<Map<String, Object>>> getSocialWorkerCompletedRequests(
+                        @AuthenticationPrincipal String userId) {
+                if (userId == null || "anonymousUser".equals(userId)) {
+                        return ResponseEntity.status(401).build();
+                }
+
+                var closedRequests = helpRequestRepository.findByAssignedWorkerId(userId).stream()
+                                .filter(r -> r.getStatus() == RequestStatus.CLOSED
+                                                || r.getStatus() == RequestStatus.ARCHIVED)
+                                .toList();
+
+                Set<String> requestIds = closedRequests.stream().map(r -> r.getId()).collect(Collectors.toSet());
+                Map<String, Feedback> latestFeedbackByRequest = requestIds.isEmpty() ? Map.of()
+                                : feedbackRepository.findByHelpRequestIdIn(List.copyOf(requestIds))
+                                                .stream()
+                                                .collect(Collectors.toMap(
+                                                                Feedback::getHelpRequestId,
+                                                                f -> f,
+                                                                (a, b) -> {
+                                                                        var aTime = a.getSubmissionDate();
+                                                                        var bTime = b.getSubmissionDate();
+                                                                        if (aTime == null)
+                                                                                return b;
+                                                                        if (bTime == null)
+                                                                                return a;
+                                                                        return bTime.isAfter(aTime) ? b : a;
+                                                                }));
+
+                List<Map<String, Object>> rows = closedRequests.stream().map(r -> {
+                        Feedback feedback = latestFeedbackByRequest.get(r.getId());
+                        Map<String, Object> row = new HashMap<>();
+                        row.put("id", r.getId());
+                        row.put("requestId", r.getTrackingId());
+                        row.put("type", r.getHelpType() != null ? r.getHelpType().name() : null);
+                        row.put("rating", feedback != null ? feedback.getRating() : null);
+                        row.put("hasFeedback", feedback != null);
+                        row.put("closedDate", r.getClosedDate() != null ? r.getClosedDate() : r.getCompletionDate());
+                        return row;
+                }).toList();
+
+                return ResponseEntity.ok(rows);
         }
 }

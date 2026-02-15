@@ -141,8 +141,13 @@ export interface FeedbackResponseDTO {
   category?: string
   description?: string
   rating?: number
+  helpfulness?: string
+  expectedHelp?: string
+  behavior?: string
   status?: string
   adminResponse?: string
+  socialWorkerResponse?: string
+  socialWorkerResponseDate?: string
   createdAt?: string
   message?: string
   userName?: string

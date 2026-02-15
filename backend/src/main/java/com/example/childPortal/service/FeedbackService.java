@@ -16,6 +16,8 @@ public interface FeedbackService {
     List<FeedbackResponseDTO> getFeedbackByStatus(FeedbackStatus status);
     FeedbackResponseDTO updateFeedbackStatus(String feedbackId, FeedbackStatus status, String updatedBy);
     FeedbackResponseDTO respondToFeedback(String feedbackId, String response, String adminId);
+    FeedbackResponseDTO respondToFeedbackAsSocialWorker(String feedbackId, String response, String socialWorkerId);
+    FeedbackResponseDTO getLatestFeedbackByHelpRequest(String helpRequestId);
     boolean deleteFeedback(String feedbackId);
     Double getAverageRating();
     List<FeedbackResponseDTO> getPublicFeedback();

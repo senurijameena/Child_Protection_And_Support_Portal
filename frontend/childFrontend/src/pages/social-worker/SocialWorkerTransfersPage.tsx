@@ -16,6 +16,7 @@ import {
 } from '../../services/socialWorkerApi'
 import { HELP_TYPE_LABELS } from '../../types/dashboard'
 import type { HelpType } from '../../types/dashboard'
+import './SocialWorkerDashboard.css'
 
 type PageTab = 'pending' | 'active' | 'completed'
 type PendingDirection = 'INCOMING' | 'OUTGOING'
@@ -334,16 +335,61 @@ export function SocialWorkerTransfersPage() {
 
   return (
     <Container fluid className="py-4 sw-dashboard">
+      {/* Header */}
       <Row className="mb-4">
         <Col xs={12}>
-          <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div>
-              <h1 className="h3 fw-bold mb-1">Transfer Requests</h1>
-              <p className="text-muted mb-0">Manage incoming and outgoing transfer requests.</p>
+          <div 
+            className="p-4 rounded-3 shadow-sm position-relative overflow-hidden"
+            style={{ 
+              background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+              color: 'white'
+            }}
+          >
+            {/* Decorative pattern */}
+            <div 
+              style={{
+                position: 'absolute',
+                top: -50,
+                right: -50,
+                width: '200px',
+                height: '200px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }}
+            />
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 position-relative">
+              <div className="d-flex align-items-center gap-3">
+                <div 
+                  className="d-flex align-items-center justify-content-center"
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.25)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <span style={{ fontSize: '2rem' }}>🔄</span>
+                </div>
+                <div>
+                  <h1 className="h2 fw-bold mb-1">Transfer Requests</h1>
+                  <p className="mb-0" style={{ opacity: 0.95, fontSize: '0.95rem' }}>
+                    Manage incoming and outgoing transfer requests
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => setShowCreateModal(true)}
+                className="btn-light d-flex align-items-center gap-2"
+                style={{
+                  fontWeight: '600',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>➕</span> Create Transfer
+              </Button>
             </div>
-            <Button variant="primary" className="rounded-pill px-3" onClick={() => setShowCreateModal(true)}>
-              Create Transfer Request
-            </Button>
           </div>
         </Col>
       </Row>
@@ -351,112 +397,245 @@ export function SocialWorkerTransfersPage() {
       {error && (
         <Row className="mb-3">
           <Col xs={12}>
-            <div className="alert alert-danger mb-0">{error}</div>
+            <div 
+              className="p-3 rounded-3"
+              style={{ 
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                color: '#dc2626',
+                border: '2px solid rgba(239, 68, 68, 0.2)'
+              }}
+            >
+              <strong>⚠️ Error:</strong> {error}
+            </div>
           </Col>
         </Row>
       )}
 
       <Row>
         <Col xs={12}>
-          <Card className="border-0">
+          <div 
+            className="p-3 rounded-3 shadow-sm mb-3"
+            style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
+          >
+            <div className="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={`btn text-decoration-none px-4 py-2 rounded-pill fw-600 d-flex align-items-center gap-2`}
+                onClick={() => setActiveTab('pending')}
+                style={{
+                  background: activeTab === 'pending' 
+                    ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' 
+                    : 'rgba(255, 255, 255, 0.6)',
+                  color: activeTab === 'pending' ? 'white' : '#2563eb',
+                  border: `2px solid ${activeTab === 'pending' ? '#2563eb' : 'rgba(59, 130, 246, 0.2)'}`,
+                  boxShadow: activeTab === 'pending' ? '0 4px 6px rgba(59, 130, 246, 0.2)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>⏳</span> Pending
+                {incomingTransfers.length > 0 && (
+                  <Badge
+                    pill
+                    className="ms-1"
+                    style={{ 
+                      backgroundColor: activeTab === 'pending' ? 'rgba(255, 255, 255, 0.3)' : '#2563eb',
+                      fontSize: '0.65rem',
+                      padding: '0.25rem 0.5rem'
+                    }}
+                  >
+                    {incomingTransfers.length}
+                  </Badge>
+                )}
+              </button>
+              <button
+                type="button"
+                className={`btn text-decoration-none px-4 py-2 rounded-pill fw-600 d-flex align-items-center gap-2`}
+                onClick={() => setActiveTab('active')}
+                style={{
+                  background: activeTab === 'active' 
+                    ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' 
+                    : 'rgba(255, 255, 255, 0.6)',
+                  color: activeTab === 'active' ? 'white' : '#2563eb',
+                  border: `2px solid ${activeTab === 'active' ? '#2563eb' : 'rgba(59, 130, 246, 0.2)'}`,
+                  boxShadow: activeTab === 'active' ? '0 4px 6px rgba(59, 130, 246, 0.2)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>✅</span> Active
+              </button>
+              <button
+                type="button"
+                className={`btn text-decoration-none px-4 py-2 rounded-pill fw-600 d-flex align-items-center gap-2`}
+                onClick={() => setActiveTab('completed')}
+                style={{
+                  background: activeTab === 'completed' 
+                    ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' 
+                    : 'rgba(255, 255, 255, 0.6)',
+                  color: activeTab === 'completed' ? 'white' : '#2563eb',
+                  border: `2px solid ${activeTab === 'completed' ? '#2563eb' : 'rgba(59, 130, 246, 0.2)'}`,
+                  boxShadow: activeTab === 'completed' ? '0 4px 6px rgba(59, 130, 246, 0.2)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>📋</span> Completed
+              </button>
+            </div>
+          </div>
+
+          <Card className="border-0 shadow-sm">
             <Card.Body className="p-0">
-              <div className="d-flex border-bottom">
-                <button
-                  type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-semibold ${
-                    activeTab === 'pending' ? 'text-primary border-bottom border-primary border-2' : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('pending')}
-                >
-                  Pending Transfers
-                  {incomingTransfers.length > 0 && (
-                    <Badge bg="danger" pill className="ms-2">
-                      {incomingTransfers.length}
-                    </Badge>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-semibold ${
-                    activeTab === 'active' ? 'text-primary border-bottom border-primary border-2' : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('active')}
-                >
-                  Active Transfers
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-semibold ${
-                    activeTab === 'completed' ? 'text-primary border-bottom border-primary border-2' : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('completed')}
-                >
-                  Completed
-                </button>
-              </div>
 
               <div className="p-4">
                 {loading ? (
-                  <div className="text-center text-muted py-5">
-                    <Spinner animation="border" />
-                    <p className="mt-3 mb-0">Loading transfer data...</p>
+                  <div 
+                    className="text-center py-5 rounded-3"
+                    style={{ 
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      border: '2px solid rgba(59, 130, 246, 0.2)'
+                    }}
+                  >
+                    <Spinner animation="border" style={{ color: '#2563eb' }} />
+                    <p className="mt-3 mb-0 fw-semibold" style={{ color: '#2563eb' }}>Loading transfer data...</p>
                   </div>
                 ) : (
                   <>
                     {activeTab === 'pending' && (
                       <>
-                        <h5 className="fw-semibold mb-3">Incoming Requests</h5>
+                        <div 
+                          className="p-3 rounded-3 mb-4"
+                          style={{ 
+                            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+                            border: '2px solid rgba(59, 130, 246, 0.2)'
+                          }}
+                        >
+                          <h5 className="mb-0 fw-bold d-flex align-items-center gap-2" style={{ color: '#2563eb' }}>
+                            <span style={{ fontSize: '1.5rem' }}>📥</span> Incoming Requests
+                          </h5>
+                        </div>
                         {incomingTransfers.length === 0 ? (
-                          <p className="text-muted mb-4">No incoming transfer requests.</p>
+                          <div 
+                            className="p-4 text-center rounded-3 mb-4"
+                            style={{ 
+                              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                              border: '2px dashed rgba(59, 130, 246, 0.3)'
+                            }}
+                          >
+                            <span style={{ fontSize: '3rem' }}>📭</span>
+                            <p className="mt-3 mb-0 fw-semibold" style={{ color: '#2563eb' }}>
+                              No incoming transfer requests
+                            </p>
+                          </div>
                         ) : (
                           <div className="table-responsive mb-4">
                             <Table hover className="align-middle">
-                              <thead className="bg-light">
-                                <tr>
-                                  <th>Request ID</th>
-                                  <th>From SW</th>
-                                  <th>Reason</th>
-                                  <th>Priority</th>
-                                  <th>Requested Date</th>
-                                  <th className="text-end">Actions</th>
+                              <thead>
+                                <tr 
+                                  style={{ 
+                                    background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+                                    color: 'white'
+                                  }}
+                                >
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>📋 Request ID</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>👤 From SW</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>💬 Reason</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>⚡ Priority</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>📅 Date</th>
+                                  <th className="fw-600 small py-3 text-end" style={{ color: 'white' }}>⚙️ Actions</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {incomingTransfers.map((t) => (
-                                  <tr key={t.id}>
-                                    <td>{getTransferLabel(t)}</td>
-                                    <td>{swNameMap[t.fromUserId || ''] || t.fromUserId || '-'}</td>
-                                    <td>{t.reason || '-'}</td>
-                                    <td>
-                                      <Badge bg="warning" text="dark">
+                                {incomingTransfers.map((t, index) => (
+                                  <tr 
+                                    key={t.id}
+                                    style={{ 
+                                      backgroundColor: index % 2 === 0 ? 'rgba(59, 130, 246, 0.05)' : 'white',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.15)';
+                                      e.currentTarget.style.transform = 'scale(1.01)';
+                                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'rgba(59, 130, 246, 0.05)' : 'white';
+                                      e.currentTarget.style.transform = 'scale(1)';
+                                      e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                  >
+                                    <td className="py-3">
+                                      <span className="fw-bold" style={{ color: '#2563eb' }}>
+                                        {getTransferLabel(t)}
+                                      </span>
+                                    </td>
+                                    <td className="py-3">
+                                      <span className="fw-semibold small" style={{ color: '#2563eb' }}>
+                                        {swNameMap[t.fromUserId || ''] || t.fromUserId || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="py-3">
+                                      <span className="small" style={{ color: '#2563eb' }}>
+                                        {t.reason || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="py-3">
+                                      <Badge 
+                                        className="rounded-pill"
+                                        style={{
+                                          backgroundColor: '#2563eb',
+                                          fontSize: '0.75rem',
+                                          padding: '0.4rem 0.8rem'
+                                        }}
+                                      >
                                         {helpPreviewCache[t.entityId || '']?.riskLevel || '-'}
                                       </Badge>
                                     </td>
-                                    <td>{formatRequestedDate(t.requestedAt)}</td>
-                                    <td className="text-end">
+                                    <td className="py-3">
+                                      <span className="small fw-semibold" style={{ color: '#2563eb' }}>
+                                        {formatRequestedDate(t.requestedAt)}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 text-end">
                                       <div className="d-inline-flex gap-2 flex-wrap justify-content-end">
                                         <Button
                                           size="sm"
-                                          variant="outline-primary"
                                           onClick={() => openPreview(t)}
+                                          style={{
+                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                            color: '#2563eb',
+                                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                                            fontWeight: '600',
+                                            fontSize: '0.8rem'
+                                          }}
                                         >
-                                          View
+                                          👁️ View
                                         </Button>
                                         <Button
                                           size="sm"
-                                          variant="success"
                                           disabled={actionLoadingId === t.id}
                                           onClick={() => doAccept(t)}
+                                          style={{
+                                            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            fontWeight: '600',
+                                            fontSize: '0.8rem'
+                                          }}
                                         >
-                                          Accept
+                                          ✅ Accept
                                         </Button>
                                         <Button
                                           size="sm"
-                                          variant="outline-danger"
                                           disabled={actionLoadingId === t.id}
                                           onClick={() => openReject(t)}
+                                          style={{
+                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                            color: '#2563eb',
+                                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                                            fontWeight: '600',
+                                            fontSize: '0.8rem'
+                                          }}
                                         >
-                                          Reject
+                                          ❌ Reject
                                         </Button>
                                       </div>
                                     </td>
@@ -467,20 +646,46 @@ export function SocialWorkerTransfersPage() {
                           </div>
                         )}
 
-                        <h5 className="fw-semibold mb-3">Outgoing Requests</h5>
+                        <div 
+                          className="p-3 rounded-3 mb-4"
+                          style={{ 
+                            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+                            border: '2px solid rgba(59, 130, 246, 0.2)'
+                          }}
+                        >
+                          <h5 className="mb-0 fw-bold d-flex align-items-center gap-2" style={{ color: '#2563eb' }}>
+                            <span style={{ fontSize: '1.5rem' }}>📤</span> Outgoing Requests
+                          </h5>
+                        </div>
                         {outgoingTransfers.length === 0 ? (
-                          <p className="text-muted mb-0">No outgoing transfer requests.</p>
+                          <div 
+                            className="p-4 text-center rounded-3"
+                            style={{ 
+                              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                              border: '2px dashed rgba(59, 130, 246, 0.3)'
+                            }}
+                          >
+                            <span style={{ fontSize: '3rem' }}>📭</span>
+                            <p className="mt-3 mb-0 fw-semibold" style={{ color: '#2563eb' }}>
+                              No outgoing transfer requests
+                            </p>
+                          </div>
                         ) : (
                           <div className="table-responsive">
                             <Table hover className="align-middle mb-0">
-                              <thead className="bg-light">
-                                <tr>
-                                  <th>Request ID</th>
-                                  <th>To SW</th>
-                                  <th>Reason</th>
-                                  <th>Status</th>
-                                  <th>Date</th>
-                                  <th className="text-end">Action</th>
+                              <thead>
+                                <tr 
+                                  style={{ 
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #fb923c 100%)',
+                                    color: 'white'
+                                  }}
+                                >
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>📋 Request ID</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>👤 To SW</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>💬 Reason</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>✓ Status</th>
+                                  <th className="fw-600 small py-3" style={{ color: 'white' }}>📅 Date</th>
+                                  <th className="fw-600 small py-3 text-end" style={{ color: 'white' }}>⚙️ Action</th>
                                 </tr>
                               </thead>
                               <tbody>

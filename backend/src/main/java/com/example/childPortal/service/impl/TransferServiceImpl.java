@@ -2,7 +2,9 @@ package com.example.childPortal.service.impl;
 
 import com.example.childPortal.dto.TransferRequestDTO;
 import com.example.childPortal.model.TransferRequest;
+import com.example.childPortal.model.User;
 import com.example.childPortal.repository.TransferRequestRepository;
+import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.HelpRequestService;
 import com.example.childPortal.service.NotificationService;
 import com.example.childPortal.service.TransferService;
@@ -20,6 +22,7 @@ public class TransferServiceImpl implements TransferService {
 
     @Autowired private TransferRequestRepository transferRequestRepository;
     @Autowired private HelpRequestService helpRequestService;
+    @Autowired private UserRepository userRepository;
     @Autowired(required = false) private NotificationService notificationService;
 
     @Override
@@ -234,10 +237,21 @@ public class TransferServiceImpl implements TransferService {
         dto.setEntityId(transfer.getEntityId());
         dto.setEntityType(transfer.getEntityType());
         dto.setFromUserId(transfer.getFromUserId());
+        dto.setFromUserName(resolveUserName(transfer.getFromUserId()));
         dto.setToUserId(transfer.getToUserId());
+        dto.setToUserName(resolveUserName(transfer.getToUserId()));
         dto.setReason(transfer.getReason());
         dto.setStatus(transfer.getStatus().name());
         dto.setRequestedAt(transfer.getRequestedAt());
+        dto.setProcessedAt(transfer.getProcessedAt());
+        dto.setProcessedBy(transfer.getProcessedBy());
         return dto;
+    }
+
+    private String resolveUserName(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return null;
+        }
+        return userRepository.findById(userId).map(User::getFullName).orElse(null);
     }
 }

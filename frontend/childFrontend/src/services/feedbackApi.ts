@@ -10,6 +10,9 @@ export interface SubmitFeedbackPayload {
   caseId?: string
   helpRequestId?: string
   category?: string
+  helpfulness?: string
+  expectedHelp?: string
+  behavior?: string
   anonymous?: boolean
 }
 

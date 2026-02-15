@@ -6,6 +6,8 @@ import com.example.childPortal.repository.*;
 import com.example.childPortal.service.FeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     private FeedbackRepository feedbackRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private HelpRequestRepository helpRequestRepository;
 
     @Override
     public FeedbackResponseDTO submitFeedback(FeedbackDTO feedbackDTO, String userId) {
@@ -34,10 +38,26 @@ public class FeedbackServiceImpl implements FeedbackService {
             }
 
             feedback.setCategory(feedbackDTO.getCategory());
+            feedback.setHelpfulness(feedbackDTO.getHelpfulness());
+            feedback.setExpectedHelp(feedbackDTO.getExpectedHelp());
+            feedback.setBehavior(feedbackDTO.getBehavior());
             feedback.setAnonymous(feedbackDTO.isAnonymous());
             feedback.setSubmissionDate(LocalDateTime.now());
 
             feedback = feedbackRepository.save(feedback);
+
+            if (feedback.getHelpRequestId() != null && !feedback.getHelpRequestId().trim().isEmpty()) {
+                helpRequestRepository.findById(feedback.getHelpRequestId()).ifPresent(request -> {
+                    if (request.getStatus() == HelpRequest.RequestStatus.COMPLETED) {
+                        request.setStatus(HelpRequest.RequestStatus.CLOSED);
+                        request.setLastUpdated(LocalDateTime.now());
+                        if (request.getClosedDate() == null) {
+                            request.setClosedDate(LocalDateTime.now());
+                        }
+                        helpRequestRepository.save(request);
+                    }
+                });
+            }
 
             FeedbackResponseDTO response = new FeedbackResponseDTO();
             response.setId(feedback.getId());
@@ -65,7 +85,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     @Override
     public List<FeedbackResponseDTO> getFeedbackByCase(String caseId) {
-        return feedbackRepository.findById(caseId).stream()
+        return feedbackRepository.findByCaseId(caseId).stream()
                 .map(this::convertToResponseDTO)
                 .toList();
     }
@@ -86,7 +106,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     @Override
     public List<FeedbackResponseDTO> getFeedbackByType(Feedback.FeedbackType type) {
-        return feedbackRepository.findByCaseId(type).stream()
+        return feedbackRepository.findByType(type).stream()
                 .map(this::convertToResponseDTO)
                 .toList();
     }
@@ -107,13 +127,76 @@ public class FeedbackServiceImpl implements FeedbackService {
     public FeedbackResponseDTO respondToFeedback(String feedbackId, String response, String adminId) {
         return feedbackRepository.findById(feedbackId)
                 .map(feedback -> {
+                    if (feedback.getAdminResponse() != null && !feedback.getAdminResponse().trim().isEmpty()) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Final response already sent for this feedback.");
+                    }
                     feedback.setAdminResponse(response);
                     feedback.setResponseDate(LocalDateTime.now());
                     feedback.setStatus(Feedback.FeedbackStatus.RESPONDED);
                     feedbackRepository.save(feedback);
+
+                    // Final status transition after social worker final response.
+                    if (feedback.getHelpRequestId() != null && !feedback.getHelpRequestId().trim().isEmpty()) {
+                        helpRequestRepository.findById(feedback.getHelpRequestId()).ifPresent(request -> {
+                            if (request.getStatus() == HelpRequest.RequestStatus.COMPLETED) {
+                                request.setStatus(HelpRequest.RequestStatus.CLOSED);
+                                request.setLastUpdated(LocalDateTime.now());
+                                if (request.getClosedDate() == null) {
+                                    request.setClosedDate(LocalDateTime.now());
+                                }
+                                helpRequestRepository.save(request);
+                            }
+                        });
+                    }
                     return convertToResponseDTO(feedback);
                 })
                 .orElse(null);
+    }
+
+    @Override
+    public FeedbackResponseDTO respondToFeedbackAsSocialWorker(String feedbackId, String response, String socialWorkerId) {
+        return feedbackRepository.findById(feedbackId)
+                .map(feedback -> {
+                    if (feedback.getSocialWorkerResponse() != null && !feedback.getSocialWorkerResponse().trim().isEmpty()) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Final response already sent for this feedback.");
+                    }
+                    feedback.setSocialWorkerResponse(response);
+                    feedback.setSocialWorkerResponseDate(LocalDateTime.now());
+                    feedback.setStatus(Feedback.FeedbackStatus.RESPONDED);
+                    feedbackRepository.save(feedback);
+
+                    if (feedback.getHelpRequestId() != null && !feedback.getHelpRequestId().trim().isEmpty()) {
+                        helpRequestRepository.findById(feedback.getHelpRequestId()).ifPresent(request -> {
+                            if (request.getStatus() == HelpRequest.RequestStatus.COMPLETED) {
+                                request.setStatus(HelpRequest.RequestStatus.CLOSED);
+                                request.setLastUpdated(LocalDateTime.now());
+                                if (request.getClosedDate() == null) {
+                                    request.setClosedDate(LocalDateTime.now());
+                                }
+                                helpRequestRepository.save(request);
+                            }
+                        });
+                    }
+                    return convertToResponseDTO(feedback);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public FeedbackResponseDTO getLatestFeedbackByHelpRequest(String helpRequestId) {
+        List<Feedback> feedbacks = feedbackRepository.findByHelpRequestId(helpRequestId);
+        if (feedbacks == null || feedbacks.isEmpty()) {
+            return null;
+        }
+        Feedback latest = feedbacks.stream()
+                .filter(f -> f.getSubmissionDate() != null)
+                .max((a, b) -> a.getSubmissionDate().compareTo(b.getSubmissionDate()))
+                .orElse(feedbacks.get(0));
+        return convertToResponseDTO(latest);
     }
 
     @Override
@@ -210,8 +293,13 @@ public class FeedbackServiceImpl implements FeedbackService {
         }
 
         dto.setCategory(feedback.getCategory());
+        dto.setHelpfulness(feedback.getHelpfulness());
+        dto.setExpectedHelp(feedback.getExpectedHelp());
+        dto.setBehavior(feedback.getBehavior());
         dto.setStatus(feedback.getStatus());
         dto.setAdminResponse(feedback.getAdminResponse());
+        dto.setSocialWorkerResponse(feedback.getSocialWorkerResponse());
+        dto.setSocialWorkerResponseDate(feedback.getSocialWorkerResponseDate());
         dto.setCreatedAt(feedback.getSubmissionDate());
         dto.setSuccess(true);
         return dto;

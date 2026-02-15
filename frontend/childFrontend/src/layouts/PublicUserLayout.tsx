@@ -1,21 +1,22 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Navbar, Container, Offcanvas } from 'react-bootstrap'
 import { useAuth } from '../hooks/useAuth'
 import SystemAnnouncementBanner from '../components/SystemAnnouncementBanner'
 
 const sidebarItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: 'ðŸ ', end: true },
-  { path: '/dashboard/report-case', label: 'Report Case', icon: 'ðŸ“', end: false },
-  { path: '/dashboard/request-help', label: 'Request Help', icon: 'ðŸ™‹', end: false },
-  { path: '/dashboard/my-cases', label: 'My Cases', icon: 'ðŸ“', end: false },
-  { path: '/dashboard/my-requests', label: 'My Requests', icon: 'ðŸ“‹', end: false },
-  { path: '/dashboard/messages', label: 'Messages', icon: 'ðŸ’¬', end: false },
-  { path: '/dashboard/notifications', label: 'Notifications', icon: 'ðŸ””', end: false },
-  { path: '/dashboard/service-offers', label: 'Service Offers', icon: 'ðŸŽ', end: false },
+  { path: '/dashboard', label: 'Dashboard', icon: '🏠', end: true },
+  { path: '/dashboard/report-case', label: 'Report Case', icon: '📝', end: false },
+  { path: '/dashboard/request-help', label: 'Request Help', icon: '🙋', end: false },
+  { path: '/dashboard/my-cases', label: 'My Cases', icon: '📁', end: false },
+  { path: '/dashboard/my-requests', label: 'My Requests', icon: '📋', end: false },
+  { path: '/dashboard/messages', label: 'Messages', icon: '💬', end: false },
+  { path: '/dashboard/notifications', label: 'Notifications', icon: '🔔', end: false },
+  { path: '/dashboard/service-offers', label: 'Service Offers', icon: '🎁', end: false },
   { path: '/dashboard/feedback', label: 'Feedback', icon: '🗣️', end: false },
-  { path: '/dashboard/profile', label: 'Profile', icon: 'ðŸ‘¤', end: false },
-]
+  { path: '/dashboard/profile', label: 'Profile', icon: '👤', end: false },
+];
+
 
 export function PublicUserLayout() {
   const { user, logout } = useAuth()
@@ -128,13 +129,14 @@ export function PublicUserLayout() {
               </Link>
               <div className="d-flex align-items-center gap-3">
                 <Link
-                  to="/dashboard/notifications"
-                  className="position-relative d-inline-flex align-items-center justify-content-center rounded-circle border bg-white"
-                  style={{ width: 34, height: 34, borderColor: '#e5e7eb', color: '#0f172a' }}
-                  aria-label="View notifications"
-                >
-                  <span className="fs-6">ðŸ””</span>
-                </Link>
+  to="/dashboard/notifications"
+  className="position-relative d-inline-flex align-items-center justify-content-center rounded-circle border bg-white"
+  style={{ width: 34, height: 34, borderColor: '#e5e7eb', color: '#0f172a' }}
+  aria-label="View notifications"
+>
+  <span className="fs-6">🔔</span>
+</Link>
+
                 <span className="px-3 py-1 rounded-pill bg-light border small text-muted">
                   {user?.fullName || user?.email || 'User'}
                 </span>

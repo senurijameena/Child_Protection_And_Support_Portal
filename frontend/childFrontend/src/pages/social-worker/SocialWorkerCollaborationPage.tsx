@@ -14,6 +14,7 @@ import {
 } from '../../services/socialWorkerApi'
 import { useAuth } from '../../hooks/useAuth'
 import type { HelpRequestDTO, RequestStatus } from '../../types/dashboard'
+import './SocialWorkerDashboard.css'
 
 // Types for collaboration requests
 interface CollaborationRequest {
@@ -304,7 +305,7 @@ export function SocialWorkerCollaborationPage() {
           })
           setActiveCollaborations(mapped)
         })
-        .catch(() => {})
+        .catch(() => { })
     } catch (err) {
       console.error('Failed to accept collaboration:', err)
       alert(err instanceof Error ? err.message : 'Failed to accept collaboration')
@@ -410,26 +411,53 @@ export function SocialWorkerCollaborationPage() {
   const renderNewRequestsTab = () => (
     <div>
       {loadingRequests ? (
-        <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
-          <p className="mt-3 mb-0 text-muted">Loading collaboration requests...</p>
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: '2px solid rgba(59, 130, 246, 0.2)'
+          }}
+        >
+          <Spinner animation="border" style={{ color: '#3b82f6' }} />
+          <p className="mt-3 mb-0 fw-semibold" style={{ color: '#1e40af' }}>Loading collaboration requests...</p>
         </div>
       ) : requestsError ? (
-        <div className="text-center text-danger py-5">
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '2px solid rgba(239, 68, 68, 0.2)'
+          }}
+        >
           <span style={{ fontSize: '3rem' }}>⚠️</span>
-          <p className="mt-3 mb-0">{requestsError}</p>
+          <p className="mt-3 mb-0 fw-semibold" style={{ color: '#991b1b' }}>{requestsError}</p>
         </div>
       ) : newRequests.length === 0 ? (
-        <div className="text-center text-muted py-5">
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: '2px dashed rgba(59, 130, 246, 0.3)'
+          }}
+        >
           <span style={{ fontSize: '3rem' }}>📭</span>
-          <p className="mt-3 mb-0">No new collaboration requests at the moment.</p>
+          <p className="mt-3 mb-1 fw-semibold" style={{ color: '#1e40af' }}>No new collaboration requests</p>
+          <p className="mb-0 small" style={{ color: '#3b82f6' }}>You're all caught up!</p>
         </div>
       ) : (
         <>
-          <p className="text-muted small mb-3">
-            Another social worker invited you to collaborate on these requests. You have not accepted or rejected them yet.
-          </p>
-          <Row className="g-3">
+          <div
+            className="p-3 rounded-3 mb-4"
+            style={{
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}
+          >
+            <p className="mb-0 small fw-semibold" style={{ color: '#1e40af' }}>
+              ℹ️ Another social worker invited you to collaborate on these requests. You have not accepted or rejected them yet.
+            </p>
+          </div>
+          <Row className="g-4">
             {newRequests.map((request) => {
               const category = (request.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
               const role = (request.permission?.toUpperCase() || 'VIEW_ONLY') as CollaborationRequest['requestedRole']
@@ -439,83 +467,148 @@ export function SocialWorkerCollaborationPage() {
 
               return (
                 <Col xs={12} md={6} key={request.collaborationId}>
-                  <Card className="h-100 border-0 shadow-sm">
+                  <Card
+                    className="h-100 border-0 shadow-sm"
+                    style={{
+                      background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-5px)';
+                      e.currentTarget.style.boxShadow = '0 12px 24px rgba(59, 130, 246, 0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
+                  >
                     <Card.Body className="d-flex flex-column justify-content-between">
                       <div>
-                        <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div className="d-flex justify-content-between align-items-start mb-3">
                           <div>
-                            <div className="small text-muted">Request ID</div>
-                            <div className="fw-600">{requestId}</div>
+                            <div className="small fw-semibold mb-1" style={{ color: '#1e40af' }}>
+                              📋 Request ID
+                            </div>
+                            <div className="fw-bold h5 mb-0" style={{ color: '#1e3a8a' }}>{requestId}</div>
                           </div>
-                          <Badge bg={CATEGORY_VARIANTS[category] || 'secondary'}>
+                          <Badge
+                            className="rounded-pill"
+                            style={{
+                              backgroundColor: '#3b82f6',
+                              fontSize: '0.75rem',
+                              padding: '0.4rem 0.8rem'
+                            }}
+                          >
                             {CATEGORY_LABELS[category] || request.requestCategory || 'Other'}
                           </Badge>
                         </div>
-                        <div className="small text-muted mb-1">
-                          Category:{' '}
-                          <span className="fw-500">
-                            {CATEGORY_LABELS[category] || request.requestCategory || 'Other'}
-                          </span>
+
+                        <div
+                          className="p-2 rounded-3 mb-2"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)'
+                          }}
+                        >
+                          <div className="small mb-1">
+                            <span className="fw-semibold" style={{ color: '#1e40af' }}>🏷️ Category:</span>{' '}
+                            <span style={{ color: '#1e3a8a' }}>
+                              {CATEGORY_LABELS[category] || request.requestCategory || 'Other'}
+                            </span>
+                          </div>
+                          <div className="small mb-1">
+                            <span className="fw-semibold" style={{ color: '#1e40af' }}>👤 Owner:</span>{' '}
+                            <span style={{ color: '#1e3a8a' }}>
+                              {request.ownerName || 'Social Worker'}
+                            </span>
+                          </div>
+                          <div className="small mb-1">
+                            <span className="fw-semibold" style={{ color: '#1e40af' }}>🎯 Requested Role:</span>{' '}
+                            <Badge
+                              className="ms-1 rounded-pill"
+                              style={{
+                                backgroundColor: '#06b6d4',
+                                fontSize: '0.7rem',
+                                padding: '0.25rem 0.5rem'
+                              }}
+                            >
+                              {ROLE_LABELS[role] || request.permission || 'View Only'}
+                            </Badge>
+                          </div>
+                          <div className="small">
+                            <span className="fw-semibold" style={{ color: '#1e40af' }}>📅 Requested:</span>{' '}
+                            <span style={{ color: '#1e3a8a' }}>
+                              {request.requestedAt ? formatDate(request.requestedAt) : '-'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="small text-muted mb-1">
-                          Request owner:{' '}
-                          <span className="fw-500">
-                            {request.ownerName || 'Social Worker'}
-                          </span>
-                        </div>
-                        <div className="small text-muted mb-1">
-                          Requested role:{' '}
-                          <Badge bg={ROLE_VARIANTS[role] || 'secondary'} className="fw-normal ms-1">
-                            {ROLE_LABELS[role] || request.permission || 'View Only'}
-                          </Badge>
-                        </div>
-                        <div className="small text-muted mb-1">
-                          Requested date:{' '}
-                          <span className="fw-500">
-                            {request.requestedAt ? formatDate(request.requestedAt) : '-'}
-                          </span>
-                        </div>
-                        <div className="mt-2">
-                          <div className="small text-muted mb-1">Reason for collaboration</div>
-                          <div className="bg-light rounded-3 p-2 small" style={{ minHeight: 48 }}>
+
+                        <div
+                          className="p-3 rounded-3"
+                          style={{
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)'
+                          }}
+                        >
+                          <div className="small fw-semibold mb-1" style={{ color: '#1e40af' }}>
+                            💬 Reason for collaboration
+                          </div>
+                          <div className="small" style={{ color: '#1e3a8a', minHeight: 48 }}>
                             {request.reason || 'No reason provided'}
                           </div>
                         </div>
                       </div>
-                      <div className="d-flex flex-wrap gap-2 mt-3">
+
+                      <div className="d-flex flex-column gap-2 mt-3">
                         <Button
-                          variant="outline-secondary"
                           size="sm"
-                          className="flex-grow-1"
                           onClick={() => handleViewSummary(request)}
                           disabled={isProcessing}
-                        >
-                          View Summary
-                        </Button>
-                        <Button
-                          variant="success"
-                          size="sm"
-                          className="flex-grow-1"
-                          onClick={() => handleAccept(request.collaborationId)}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing ? <Spinner size="sm" animation="border" /> : 'Accept'}
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          className="flex-grow-1"
-                          onClick={() => {
-                            setSelectedRequest(request)
-                            setRejectTargetId(request.collaborationId)
-                            setRejectReason('');
-                            setRejectError(null)
-                            setShowRejectModal(true)
+                          style={{
+                            backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                            color: '#4b5563',
+                            border: '1px solid rgba(107, 114, 128, 0.3)',
+                            fontWeight: '600'
                           }}
-                          disabled={isProcessing}
                         >
-                          {isProcessing ? <Spinner size="sm" animation="border" /> : 'Reject'}
+                          👁️ View Summary
                         </Button>
+                        <div className="d-flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-grow-1"
+                            onClick={() => handleAccept(request.collaborationId)}
+                            disabled={isProcessing}
+                            style={{
+                              background: 'linear-gradient(135deg, #10b981 0%, #22c55e 100%)',
+                              color: 'white',
+                              border: 'none',
+                              fontWeight: '600'
+                            }}
+                          >
+                            {isProcessing ? <Spinner size="sm" animation="border" /> : '✅ Accept'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="flex-grow-1"
+                            onClick={() => {
+                              setSelectedRequest(request)
+                              setRejectTargetId(request.collaborationId)
+                              setRejectReason('');
+                              setRejectError(null)
+                              setShowRejectModal(true)
+                            }}
+                            disabled={isProcessing}
+                            style={{
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                              color: '#dc2626',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              fontWeight: '600'
+                            }}
+                          >
+                            {isProcessing ? <Spinner size="sm" animation="border" /> : '❌ Reject'}
+                          </Button>
+                        </div>
                       </div>
                     </Card.Body>
                   </Card>
@@ -570,88 +663,167 @@ export function SocialWorkerCollaborationPage() {
   const renderParticipatingTab = () => (
     <div>
       {loadingActive ? (
-        <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
-          <p className="mt-3 mb-0 text-muted">Loading active collaborations...</p>
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: '2px solid rgba(59, 130, 246, 0.2)'
+          }}
+        >
+          <Spinner animation="border" style={{ color: '#3b82f6' }} />
+          <p className="mt-3 mb-0 fw-semibold" style={{ color: '#1e40af' }}>Loading active collaborations...</p>
         </div>
       ) : activeError ? (
-        <div className="text-center text-danger py-5">
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '2px solid rgba(239, 68, 68, 0.2)'
+          }}
+        >
           <span style={{ fontSize: '3rem' }}>⚠️</span>
-          <p className="mt-3 mb-0">{activeError}</p>
+          <p className="mt-3 mb-0 fw-semibold" style={{ color: '#991b1b' }}>{activeError}</p>
         </div>
       ) : activeCollaborations.length === 0 ? (
-        <div className="text-center text-muted py-5">
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: '2px dashed rgba(59, 130, 246, 0.3)'
+          }}
+        >
           <span style={{ fontSize: '3rem' }}>📂</span>
-          <p className="mt-3 mb-0">You are not participating in any collaborations yet.</p>
+          <p className="mt-3 mb-1 fw-semibold" style={{ color: '#1e40af' }}>No active collaborations</p>
+          <p className="mb-0 small" style={{ color: '#3b82f6' }}>Start collaborating by accepting requests from the New Requests tab</p>
         </div>
       ) : (
         <div className="table-responsive">
           <Table hover className="align-middle mb-0">
-            <thead className="bg-light">
-              <tr>
-                <th className="fw-600 text-muted small py-3 ps-3">Request ID</th>
-                <th className="fw-600 text-muted small py-3">Role</th>
-                <th className="fw-600 text-muted small py-3">Owner</th>
-                <th className="fw-600 text-muted small py-3">Category</th>
-                <th className="fw-600 text-muted small py-3 text-center">Your Pending Tasks</th>
-                <th className="fw-600 text-muted small py-3">Last Update</th>
-                <th className="fw-600 text-muted small py-3">Priority</th>
-                <th className="fw-600 text-muted small py-3">Status</th>
+            <thead>
+              <tr
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: 'white'
+                }}
+              >
+                <th className="fw-600 small py-3 ps-3" style={{ color: 'white' }}>📋 Request ID</th>
+                <th className="fw-600 small py-3" style={{ color: 'white' }}>🎯 Role</th>
+                <th className="fw-600 small py-3" style={{ color: 'white' }}>👤 Owner</th>
+                <th className="fw-600 small py-3" style={{ color: 'white' }}>🏷️ Category</th>
+                <th className="fw-600 small py-3 text-center" style={{ color: 'white' }}>📝 Pending Tasks</th>
+                <th className="fw-600 small py-3" style={{ color: 'white' }}>🕒 Last Update</th>
+                <th className="fw-600 small py-3" style={{ color: 'white' }}>⚡ Priority</th>
+                <th className="fw-600 small py-3" style={{ color: 'white' }}>✓ Status</th>
               </tr>
             </thead>
             <tbody>
-              {activeCollaborations.map((collab) => (
+              {activeCollaborations.map((collab, index) => (
                 <tr
                   key={collab.id}
                   className="border-bottom"
                   onClick={() => handleRowClick(collab.helpRequestId)}
-                  style={{ cursor: 'pointer' }}
+                  style={{
+                    cursor: 'pointer',
+                    backgroundColor: index % 2 === 0 ? 'rgba(59, 130, 246, 0.05)' : 'white',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                    e.currentTarget.style.transform = 'scale(1.01)';
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'rgba(59, 130, 246, 0.05)' : 'white';
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 >
                   <td className="py-3 ps-3">
-                    <span className="fw-600 text-primary">
+                    <span className="fw-bold" style={{ color: '#3b82f6' }}>
                       {collab.trackingId || collab.requestId}
                     </span>
                   </td>
                   <td className="py-3">
-                    <Badge bg={ROLE_VARIANTS[collab.role]} className="fw-normal">
+                    <Badge
+                      className="rounded-pill"
+                      style={{
+                        backgroundColor: '#06b6d4',
+                        fontSize: '0.75rem',
+                        padding: '0.4rem 0.8rem'
+                      }}
+                    >
                       {ROLE_LABELS[collab.role]}
                     </Badge>
                   </td>
                   <td className="py-3">
-                    <span className="small">{collab.ownerName}</span>
+                    <span className="small fw-semibold" style={{ color: '#1e40af' }}>{collab.ownerName}</span>
                   </td>
                   <td className="py-3">
-                    <Badge bg={CATEGORY_VARIANTS[collab.category]} className="fw-normal">
+                    <Badge
+                      className="rounded-pill"
+                      style={{
+                        backgroundColor: '#3b82f6',
+                        fontSize: '0.75rem',
+                        padding: '0.4rem 0.8rem'
+                      }}
+                    >
                       {CATEGORY_LABELS[collab.category]}
                     </Badge>
                   </td>
                   <td className="py-3 text-center">
                     {collab.pendingTasks > 0 ? (
-                      <Badge bg="danger" pill>
+                      <Badge
+                        pill
+                        style={{
+                          backgroundColor: '#ef4444',
+                          fontSize: '0.75rem',
+                          padding: '0.4rem 0.6rem',
+                          animation: 'pulse 2s infinite'
+                        }}
+                      >
                         {collab.pendingTasks}
                       </Badge>
                     ) : (
-                      <span className="text-muted small">—</span>
+                      <span style={{ color: '#6b7280', fontSize: '1.2rem' }}>—</span>
                     )}
                   </td>
                   <td className="py-3">
-                    <span className="small text-muted">
+                    <span className="small fw-semibold" style={{ color: '#6b7280' }}>
                       {formatRelativeTime(collab.lastUpdate)}
                     </span>
                   </td>
                   <td className="py-3">
                     {(() => {
                       const p = getCollaborationPriority(collab.pendingTasks)
-                      const variant = p === 'HIGH' ? 'danger' : p === 'MEDIUM' ? 'warning' : 'secondary'
+                      const colors = {
+                        HIGH: { bg: '#ef4444', text: 'white' },
+                        MEDIUM: { bg: '#f59e0b', text: 'white' },
+                        LOW: { bg: '#9ca3af', text: 'white' }
+                      }
                       return (
-                        <Badge bg={variant} className="fw-normal">
+                        <Badge
+                          className="rounded-pill"
+                          style={{
+                            backgroundColor: colors[p as keyof typeof colors].bg,
+                            color: colors[p as keyof typeof colors].text,
+                            fontSize: '0.75rem',
+                            padding: '0.4rem 0.8rem'
+                          }}
+                        >
                           {p.charAt(0) + p.slice(1).toLowerCase()}
                         </Badge>
                       )
                     })()}
                   </td>
                   <td className="py-3">
-                    <Badge bg={STATUS_VARIANTS[collab.status]} className="fw-normal">
+                    <Badge
+                      className="rounded-pill"
+                      style={{
+                        backgroundColor: '#22c55e',
+                        fontSize: '0.75rem',
+                        padding: '0.4rem 0.8rem'
+                      }}
+                    >
                       {STATUS_LABELS[collab.status]}
                     </Badge>
                   </td>
@@ -661,20 +833,73 @@ export function SocialWorkerCollaborationPage() {
           </Table>
 
           {/* Quick Actions Legend */}
-          <div className="bg-light rounded-3 p-3 mt-4">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <span>ℹ️</span>
-              <span className="fw-600 small">As a Collaborator, you can:</span>
+          <div
+            className="rounded-3 p-4 mt-4"
+            style={{
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              border: '2px solid rgba(59, 130, 246, 0.2)'
+            }}
+          >
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <span style={{ fontSize: '1.5rem' }}>ℹ️</span>
+              <span className="fw-bold" style={{ color: '#1e40af' }}>As a Collaborator, you can:</span>
             </div>
-            <div className="d-flex flex-wrap gap-3 small text-muted">
-              <span>📝 Add internal note</span>
-              <span>🔗 Assign resource</span>
-              <span>💬 Send message</span>
-              <span>⏰ Add follow-up</span>
-              <span>📎 Upload document</span>
+            <div className="d-flex flex-wrap gap-3 mb-3">
+              <span
+                className="px-3 py-2 rounded-pill small fw-semibold"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#1e40af'
+                }}
+              >
+                📝 Add internal note
+              </span>
+              <span
+                className="px-3 py-2 rounded-pill small fw-semibold"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#1e40af'
+                }}
+              >
+                🔗 Assign resource
+              </span>
+              <span
+                className="px-3 py-2 rounded-pill small fw-semibold"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#1e40af'
+                }}
+              >
+                💬 Send message
+              </span>
+              <span
+                className="px-3 py-2 rounded-pill small fw-semibold"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#1e40af'
+                }}
+              >
+                ⏰ Add follow-up
+              </span>
+              <span
+                className="px-3 py-2 rounded-pill small fw-semibold"
+                style={{
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#1e40af'
+                }}
+              >
+                📎 Upload document
+              </span>
             </div>
-            <div className="mt-2 small text-danger">
-              <span>🚫 Note: Collaborators cannot close cases</span>
+            <div
+              className="px-3 py-2 rounded-3 small fw-semibold d-inline-block"
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                color: '#dc2626',
+                border: '1px solid rgba(239, 68, 68, 0.2)'
+              }}
+            >
+              🚫 Note: Collaborators cannot close cases
             </div>
           </div>
         </div>
@@ -691,40 +916,80 @@ export function SocialWorkerCollaborationPage() {
     <div>
       {activeCollaborations.length > 0 && (
         <div className="mb-4">
-          <h6 className="fw-700 mb-3">Active Collaborations</h6>
+          <div
+            className="p-3 rounded-3 mb-3"
+            style={{
+              background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+              border: '2px solid rgba(59, 130, 246, 0.2)'
+            }}
+          >
+            <h6 className="fw-bold mb-0" style={{ color: '#1e40af' }}>✅ Active Collaborations</h6>
+          </div>
           <div className="table-responsive">
             <Table hover size="sm" className="align-middle mb-0">
-              <thead className="bg-light">
-                <tr>
-                  <th className="fw-600 text-muted small py-3 ps-3">Request ID</th>
-                  <th className="fw-600 text-muted small py-3">Owner</th>
-                  <th className="fw-600 text-muted small py-3">Category</th>
-                  <th className="fw-600 text-muted small py-3">Role</th>
-                  <th className="fw-600 text-muted small py-3">Status</th>
-                  <th className="fw-600 text-muted small py-3 pe-3 text-end">Actions</th>
+              <thead>
+                <tr
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white'
+                  }}
+                >
+                  <th className="fw-600 small py-3 ps-3" style={{ color: 'white' }}>📋 Request ID</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>👤 Owner</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>🏷️ Category</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>🎯 Role</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>✓ Status</th>
+                  <th className="fw-600 small py-3 pe-3 text-end" style={{ color: 'white' }}>⚙️ Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {activeCollaborations.map((collab) => (
-                  <tr key={collab.id} className="border-bottom">
+                {activeCollaborations.map((collab, index) => (
+                  <tr
+                    key={collab.id}
+                    className="border-bottom"
+                    style={{
+                      backgroundColor: index % 2 === 0 ? 'rgba(59, 130, 246, 0.05)' : 'white'
+                    }}
+                  >
                     <td className="py-3 ps-3">
-                      <span className="fw-600 text-primary">
+                      <span className="fw-bold" style={{ color: '#3b82f6' }}>
                         {collab.trackingId || collab.requestId}
                       </span>
                     </td>
-                    <td className="py-3 small">{collab.ownerName}</td>
+                    <td className="py-3 small fw-semibold" style={{ color: '#1e40af' }}>{collab.ownerName}</td>
                     <td className="py-3">
-                      <Badge bg={CATEGORY_VARIANTS[collab.category]} className="fw-normal">
+                      <Badge
+                        className="rounded-pill"
+                        style={{
+                          backgroundColor: '#3b82f6',
+                          fontSize: '0.7rem',
+                          padding: '0.3rem 0.7rem'
+                        }}
+                      >
                         {CATEGORY_LABELS[collab.category]}
                       </Badge>
                     </td>
                     <td className="py-3">
-                      <Badge bg={ROLE_VARIANTS[collab.role]} className="fw-normal">
+                      <Badge
+                        className="rounded-pill"
+                        style={{
+                          backgroundColor: '#06b6d4',
+                          fontSize: '0.7rem',
+                          padding: '0.3rem 0.7rem'
+                        }}
+                      >
                         {ROLE_LABELS[collab.role]}
                       </Badge>
                     </td>
                     <td className="py-3">
-                      <Badge bg={STATUS_VARIANTS['ACTIVE']} className="fw-normal">
+                      <Badge
+                        className="rounded-pill"
+                        style={{
+                          backgroundColor: '#10b981',
+                          fontSize: '0.7rem',
+                          padding: '0.3rem 0.7rem'
+                        }}
+                      >
                         Active
                       </Badge>
                     </td>
@@ -732,22 +997,34 @@ export function SocialWorkerCollaborationPage() {
                       <div className="d-flex justify-content-end gap-2">
                         <Button
                           size="sm"
-                          variant="outline-primary"
-                          className="rounded-pill"
+                          className="rounded-pill px-3"
                           onClick={() => handleRowClick(collab.helpRequestId)}
+                          style={{
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            color: '#3b82f6',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            fontWeight: '600',
+                            fontSize: '0.8rem'
+                          }}
                         >
-                          View
+                          👁️ View
                         </Button>
                         {collab.ownerUserId &&
                           currentUserId &&
                           collab.ownerUserId !== currentUserId && (
                             <Button
                               size="sm"
-                              variant="outline-secondary"
-                              className="rounded-pill"
+                              className="rounded-pill px-3"
                               onClick={() => handleMessageWorker(collab.ownerUserId)}
+                              style={{
+                                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                                color: '#6b7280',
+                                border: '1px solid rgba(107, 114, 128, 0.3)',
+                                fontWeight: '600',
+                                fontSize: '0.8rem'
+                              }}
                             >
-                              Message
+                              💬 Message
                             </Button>
                           )}
                       </div>
@@ -761,42 +1038,75 @@ export function SocialWorkerCollaborationPage() {
       )}
 
       {pastCollaborations.length === 0 ? (
-        <div className="text-center text-muted py-5">
+        <div
+          className="text-center py-5 rounded-3"
+          style={{
+            backgroundColor: 'rgba(107, 114, 128, 0.1)',
+            border: '2px dashed rgba(107, 114, 128, 0.3)'
+          }}
+        >
           <span style={{ fontSize: '3rem' }}>📜</span>
-          <p className="mt-3 mb-0">No past collaborations found.</p>
+          <p className="mt-3 mb-1 fw-semibold" style={{ color: '#374151' }}>No past collaborations found</p>
+          <p className="mb-0 small" style={{ color: '#6b7280' }}>Completed collaborations will appear here</p>
         </div>
       ) : (
         <div>
           {/* Summary Stats */}
           <Row className="g-3 mb-4">
             <Col xs={6} md={3}>
-              <div className="bg-light rounded-3 p-3 text-center">
-                <div className="fw-700 h4 mb-1 text-primary">{pastCollaborations.length}</div>
-                <div className="small text-muted">Total Collaborations</div>
+              <div
+                className="rounded-3 p-3 text-center shadow-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                  border: '2px solid rgba(59, 130, 246, 0.2)'
+                }}
+              >
+                <div className="fw-bold h3 mb-1" style={{ color: '#1e40af' }}>
+                  {pastCollaborations.length}
+                </div>
+                <div className="small fw-semibold" style={{ color: '#3b82f6' }}>📊 Total Collaborations</div>
               </div>
             </Col>
             <Col xs={6} md={3}>
-              <div className="bg-light rounded-3 p-3 text-center">
-                <div className="fw-700 h4 mb-1 text-success">
+              <div
+                className="rounded-3 p-3 text-center shadow-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+                  border: '2px solid rgba(16, 185, 129, 0.2)'
+                }}
+              >
+                <div className="fw-bold h3 mb-1" style={{ color: '#065f46' }}>
                   {pastCollaborations.filter(c => c.outcome === 'RESOLVED').length}
                 </div>
-                <div className="small text-muted">Resolved</div>
+                <div className="small fw-semibold" style={{ color: '#10b981' }}>✅ Resolved</div>
               </div>
             </Col>
             <Col xs={6} md={3}>
-              <div className="bg-light rounded-3 p-3 text-center">
-                <div className="fw-700 h4 mb-1 text-warning">
+              <div
+                className="rounded-3 p-3 text-center shadow-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)',
+                  border: '2px solid rgba(245, 158, 11, 0.2)'
+                }}
+              >
+                <div className="fw-bold h3 mb-1" style={{ color: '#92400e' }}>
                   {pastCollaborations.filter(c => c.outcome === 'PARTIAL').length}
                 </div>
-                <div className="small text-muted">Partial</div>
+                <div className="small fw-semibold" style={{ color: '#f59e0b' }}>⚠️ Partial</div>
               </div>
             </Col>
             <Col xs={6} md={3}>
-              <div className="bg-light rounded-3 p-3 text-center">
-                <div className="fw-700 h4 mb-1 text-danger">
+              <div
+                className="rounded-3 p-3 text-center shadow-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)',
+                  border: '2px solid rgba(239, 68, 68, 0.2)'
+                }}
+              >
+                <div className="fw-bold h3 mb-1" style={{ color: '#991b1b' }}>
                   {pastCollaborations.filter(c => c.outcome === 'ESCALATED').length}
                 </div>
-                <div className="small text-muted">Escalated</div>
+                <div className="small fw-semibold" style={{ color: '#ef4444' }}>🚨 Escalated</div>
               </div>
             </Col>
           </Row>
@@ -804,43 +1114,81 @@ export function SocialWorkerCollaborationPage() {
           {/* Table */}
           <div className="table-responsive">
             <Table hover className="align-middle mb-0">
-              <thead className="bg-light">
-                <tr>
-                  <th className="fw-600 text-muted small py-3 ps-3">Request ID</th>
-                  <th className="fw-600 text-muted small py-3">Owner</th>
-                  <th className="fw-600 text-muted small py-3">Category</th>
-                  <th className="fw-600 text-muted small py-3">Your Contribution</th>
-                  <th className="fw-600 text-muted small py-3">Completion Date</th>
-                  <th className="fw-600 text-muted small py-3 pe-3">Outcome</th>
+              <thead>
+                <tr
+                  style={{
+                    background: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)',
+                    color: 'white'
+                  }}
+                >
+                  <th className="fw-600 small py-3 ps-3" style={{ color: 'white' }}>📋 Request ID</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>👤 Owner</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>🏷️ Category</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>🎯 Your Contribution</th>
+                  <th className="fw-600 small py-3" style={{ color: 'white' }}>📅 Completion Date</th>
+                  <th className="fw-600 small py-3 pe-3" style={{ color: 'white' }}>✓ Outcome</th>
                 </tr>
               </thead>
               <tbody>
-                {pastCollaborations.map((collab) => (
+                {pastCollaborations.map((collab, index) => (
                   <tr
                     key={collab.id}
                     onClick={() => handleViewPastSummary(collab)}
-                    style={{ cursor: 'pointer' }}
                     className="border-bottom"
+                    style={{
+                      cursor: 'pointer',
+                      backgroundColor: index % 2 === 0 ? 'rgba(107, 114, 128, 0.05)' : 'white',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.1)';
+                      e.currentTarget.style.transform = 'scale(1.01)';
+                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(107, 114, 128, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'rgba(107, 114, 128, 0.05)' : 'white';
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     <td className="py-3 ps-3">
-                      <span className="fw-600">{collab.requestId}</span>
+                      <span className="fw-bold" style={{ color: '#6b7280' }}>{collab.requestId}</span>
                     </td>
                     <td className="py-3">
-                      <span className="small">{collab.ownerName}</span>
+                      <span className="small fw-semibold" style={{ color: '#4b5563' }}>{collab.ownerName}</span>
                     </td>
                     <td className="py-3">
-                      <Badge bg={CATEGORY_VARIANTS[collab.category]} className="fw-normal">
+                      <Badge
+                        className="rounded-pill"
+                        style={{
+                          backgroundColor: '#6b7280',
+                          fontSize: '0.75rem',
+                          padding: '0.4rem 0.8rem'
+                        }}
+                      >
                         {CATEGORY_LABELS[collab.category]}
                       </Badge>
                     </td>
                     <td className="py-3">
-                      <span className="small">{CONTRIBUTION_LABELS[collab.contribution]}</span>
+                      <span className="small fw-semibold" style={{ color: '#4b5563' }}>
+                        {CONTRIBUTION_LABELS[collab.contribution]}
+                      </span>
                     </td>
                     <td className="py-3">
-                      <span className="small text-muted">{formatDate(collab.completionDate)}</span>
+                      <span className="small fw-semibold" style={{ color: '#6b7280' }}>
+                        {formatDate(collab.completionDate)}
+                      </span>
                     </td>
                     <td className="py-3 pe-3">
-                      <Badge bg={OUTCOME_VARIANTS[collab.outcome]} className="fw-normal">
+                      <Badge
+                        className="rounded-pill"
+                        style={{
+                          backgroundColor: collab.outcome === 'RESOLVED' ? '#10b981' :
+                            collab.outcome === 'PARTIAL' ? '#f59e0b' : '#ef4444',
+                          fontSize: '0.75rem',
+                          padding: '0.4rem 0.8rem'
+                        }}
+                      >
                         {OUTCOME_LABELS[collab.outcome]}
                       </Badge>
                     </td>
@@ -851,13 +1199,24 @@ export function SocialWorkerCollaborationPage() {
           </div>
 
           {/* Info Note */}
-          <div className="bg-info bg-opacity-10 border border-info rounded-3 p-3 mt-4">
-            <div className="d-flex align-items-start gap-2">
-              <span>📋</span>
-              <p className="mb-0 small text-muted">
-                <strong className="text-dark">History & Accountability:</strong> This record shows all your past collaboration contributions. 
-                Click on any row to view a read-only summary of your involvement.
-              </p>
+          <div
+            className="rounded-3 p-4 mt-4"
+            style={{
+              background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+              border: '2px solid rgba(59, 130, 246, 0.2)'
+            }}
+          >
+            <div className="d-flex align-items-start gap-3">
+              <span style={{ fontSize: '1.5rem' }}>📋</span>
+              <div>
+                <p className="mb-0 fw-semibold" style={{ color: '#1e40af' }}>
+                  History & Accountability
+                </p>
+                <p className="mb-0 small" style={{ color: '#3b82f6' }}>
+                  This record shows all your past collaboration contributions.
+                  Click on any row to view a read-only summary of your involvement.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -870,78 +1229,140 @@ export function SocialWorkerCollaborationPage() {
       {/* Header */}
       <Row className="mb-4">
         <Col xs={12}>
-          <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
-            <div className="d-flex align-items-center gap-2">
-              <span style={{ fontSize: '1.75rem' }}>👥</span>
-              <h1 className="h3 fw-700 mb-0">Collaboration Center</h1>
+          <div
+            className="p-4 rounded-3 shadow-sm position-relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white'
+            }}
+          >
+            {/* Decorative pattern */}
+            <div
+              style={{
+                position: 'absolute',
+                top: -50,
+                right: -50,
+                width: '200px',
+                height: '200px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }}
+            />
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 position-relative">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="d-flex align-items-center justify-content-center"
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.25)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <span style={{ fontSize: '2rem' }}>🤝</span>
+                </div>
+                <div>
+                  <h1 className="h2 fw-bold mb-1">Collaboration Center</h1>
+                  <p className="mb-0" style={{ opacity: 0.95, fontSize: '0.95rem' }}>
+                    Collaborate with other social workers on shared requests
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setShowCreateModal(true)}
+                className="btn-light d-flex align-items-center gap-2"
+                style={{
+                  fontWeight: '600',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>➕</span> New Collaboration
+              </Button>
             </div>
-            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-              + New Collaboration
-            </Button>
           </div>
-          <p className="text-muted mb-0">
-            Collaborate with other social workers on shared requests.
-          </p>
         </Col>
       </Row>
 
       {/* Tabs */}
       <Row className="mb-4">
         <Col xs={12}>
-          <Card className="sw-card border-0">
-            <Card.Body className="p-0">
-              <div className="d-flex border-bottom">
-                <button
-                  type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-600 position-relative ${
-                    activeTab === 'new'
-                      ? 'text-primary border-bottom border-primary border-2'
-                      : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('new')}
-                >
-                  New Requests
-                  {newRequests.length > 0 && (
-                    <Badge
-                      bg="danger"
-                      pill
-                      className="ms-2"
-                      style={{ fontSize: '0.65rem' }}
-                    >
-                      {newRequests.length}
-                    </Badge>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-600 ${
-                    activeTab === 'participating'
-                      ? 'text-primary border-bottom border-primary border-2'
-                      : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('participating')}
-                >
-                  Active Collaborations
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-link text-decoration-none px-4 py-3 rounded-0 fw-600 ${
-                    activeTab === 'past'
-                      ? 'text-primary border-bottom border-primary border-2'
-                      : 'text-muted'
-                  }`}
-                  onClick={() => setActiveTab('past')}
-                >
-                  Past Collaborations
-                </button>
-              </div>
+          <div
+            className="p-3 rounded-3 shadow-sm mb-3"
+            style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
+          >
+            <div className="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={`btn text-decoration-none px-4 py-2 rounded-pill fw-600 d-flex align-items-center gap-2`}
+                onClick={() => setActiveTab('new')}
+                style={{
+                  background: activeTab === 'new'
+                    ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                    : 'rgba(255, 255, 255, 0.6)',
+                  color: activeTab === 'new' ? 'white' : '#1e40af',
+                  border: `2px solid ${activeTab === 'new' ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'}`,
+                  boxShadow: activeTab === 'new' ? '0 4px 6px rgba(59, 130, 246, 0.3)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>🔔</span> New Requests
+                {newRequests.length > 0 && (
+                  <Badge
+                    pill
+                    className="ms-1"
+                    style={{
+                      backgroundColor: activeTab === 'new' ? 'rgba(255, 255, 255, 0.3)' : '#ef4444',
+                      fontSize: '0.65rem',
+                      padding: '0.25rem 0.5rem'
+                    }}
+                  >
+                    {newRequests.length}
+                  </Badge>
+                )}
+              </button>
+              <button
+                type="button"
+                className={`btn text-decoration-none px-4 py-2 rounded-pill fw-600 d-flex align-items-center gap-2`}
+                onClick={() => setActiveTab('participating')}
+                style={{
+                  background: activeTab === 'participating'
+                    ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                    : 'rgba(255, 255, 255, 0.6)',
+                  color: activeTab === 'participating' ? 'white' : '#1e40af',
+                  border: `2px solid ${activeTab === 'participating' ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'}`,
+                  boxShadow: activeTab === 'participating' ? '0 4px 6px rgba(59, 130, 246, 0.3)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>✅</span> Active Collaborations
+              </button>
+              <button
+                type="button"
+                className={`btn text-decoration-none px-4 py-2 rounded-pill fw-600 d-flex align-items-center gap-2`}
+                onClick={() => setActiveTab('past')}
+                style={{
+                  background: activeTab === 'past'
+                    ? 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)'
+                    : 'rgba(255, 255, 255, 0.6)',
+                  color: activeTab === 'past' ? 'white' : '#1e40af',
+                  border: `2px solid ${activeTab === 'past' ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'}`,
+                  boxShadow: activeTab === 'past' ? '0 4px 6px rgba(59, 130, 246, 0.3)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>📜</span> Past Collaborations
+              </button>
+            </div>
+          </div>
 
-              {/* Tab Content */}
-              <div className="p-4">
-                {activeTab === 'new' && renderNewRequestsTab()}
-                {activeTab === 'participating' && renderParticipatingTab()}
-                {activeTab === 'past' && renderAllCollaborationsTab()}
-              </div>
+          <Card className="border-0 shadow-sm">
+            <Card.Body className="p-4">
+              {activeTab === 'new' && renderNewRequestsTab()}
+              {activeTab === 'participating' && renderParticipatingTab()}
+              {activeTab === 'past' && renderAllCollaborationsTab()}
             </Card.Body>
           </Card>
         </Col>
@@ -949,163 +1370,281 @@ export function SocialWorkerCollaborationPage() {
 
       {/* Create collaboration modal */}
       <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} centered size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Create Collaboration</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Row className="g-3">
-            <Col xs={12} md={6}>
-              <label className="small fw-600 text-muted">Help Request *</label>
-              <select
-                className="form-select"
-                value={createRequestId}
-                onChange={(e) => setCreateRequestId(e.target.value)}
-                disabled={loadingMyRequests || (!!myRequestsError && eligibleRequests.length === 0)}
-              >
-                <option value="">
-                  {loadingMyRequests
-                    ? 'Loading your accepted requests...'
-                    : eligibleRequests.length > 0
-                      ? 'Select a request'
-                      : myRequestsError
-                        ? 'Unable to load your requests'
-                        : 'No accepted requests available'}
-                </option>
-                {eligibleRequests.map((req) => (
-                  <option key={req.id} value={req.id}>
-                    {req.trackingId || req.id} — {req.helpType || 'Request'} ({req.status})
+        <div style={{ borderRadius: '12px', overflow: 'hidden' }}>
+          <Modal.Header
+            closeButton
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white',
+              border: 'none'
+            }}
+          >
+            <Modal.Title className="d-flex align-items-center gap-2">
+              <span style={{ fontSize: '1.5rem' }}>➕</span>
+              <span className="fw-bold">Create Collaboration</span>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ backgroundColor: '#eff6ff' }}>
+            <Row className="g-3">
+              <Col xs={12} md={6}>
+                <label className="small fw-semibold mb-1" style={{ color: '#1e40af' }}>
+                  📋 Help Request *
+                </label>
+                <select
+                  className="form-select"
+                  value={createRequestId}
+                  onChange={(e) => setCreateRequestId(e.target.value)}
+                  disabled={loadingMyRequests || (!!myRequestsError && eligibleRequests.length === 0)}
+                  style={{
+                    border: '2px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <option value="">
+                    {loadingMyRequests
+                      ? 'Loading your accepted requests...'
+                      : eligibleRequests.length > 0
+                        ? 'Select a request'
+                        : myRequestsError
+                          ? 'Unable to load your requests'
+                          : 'No accepted requests available'}
                   </option>
-                ))}
-              </select>
-              <div className="form-text">
-                Shows requests assigned to you that are accepted/active but not completed.
-              </div>
-              {myRequestsError && (
-                <div className="text-danger small mt-1">
-                  {myRequestsError}
+                  {eligibleRequests.map((req) => (
+                    <option key={req.id} value={req.id}>
+                      {req.trackingId || req.id} — {req.helpType || 'Request'} ({req.status})
+                    </option>
+                  ))}
+                </select>
+                <div className="form-text small" style={{ color: '#047857' }}>
+                  Shows requests assigned to you that are accepted/active but not completed.
                 </div>
-              )}
-            </Col>
-            <Col xs={12} md={6}>
-              <label className="small fw-600 text-muted">Permission</label>
-              <select
-                className="form-select"
-                value={createPermission}
-                onChange={(e) => setCreatePermission(e.target.value as CollaborationPermission)}
-              >
-                <option value="FULL_ACCESS">Full Access</option>
-                <option value="VIEW_ONLY">View Only</option>
-                <option value="SERVICE_ONLY">Service Only</option>
-              </select>
-            </Col>
-            <Col xs={12}>
-              <label className="small fw-600 text-muted">Reason *</label>
-              <textarea
-                className="form-control"
-                rows={3}
-                value={createReason}
-                onChange={(e) => setCreateReason(e.target.value)}
-                placeholder="Explain why you need this collaborator"
-              />
-            </Col>
-          </Row>
-
-          <hr />
-          <h6 className="fw-700 mb-3">Select Social Worker (availability & specialization)</h6>
-          <Row className="g-3 mb-3">
-            <Col xs={12} md={4}>
-              <label className="small text-muted fw-600">Search</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Name"
-                value={swSearch}
-                onChange={(e) => setSwSearch(e.target.value)}
-              />
-            </Col>
-            <Col xs={6} md={4}>
-              <label className="small text-muted fw-600">Availability</label>
-              <select
-                className="form-select"
-                value={swAvailability}
-                onChange={(e) => setSwAvailability(e.target.value as typeof swAvailability)}
-              >
-                <option value="ALL">All</option>
-                <option value="AVAILABLE">Available</option>
-                <option value="BUSY">Busy</option>
-                <option value="ON_LEAVE">On Leave</option>
-              </select>
-            </Col>
-            <Col xs={6} md={4}>
-              <label className="small text-muted fw-600">Specialization</label>
-              <select
-                className="form-select"
-                value={swSpecialization}
-                onChange={(e) => setSwSpecialization(e.target.value)}
-              >
-                <option value="ALL">All</option>
-                {[...new Set(availableSW.flatMap((sw) => sw.specializations || []))].map((spec) => (
-                  <option key={spec} value={spec}>
-                    {spec}
-                  </option>
-                ))}
-              </select>
-            </Col>
-          </Row>
-
-          <div className="table-responsive" style={{ maxHeight: 320, overflowY: 'auto' }}>
-            <Table hover size="sm" className="align-middle">
-              <thead className="table-light">
-                <tr className="small text-muted">
-                  <th>Name</th>
-                  <th>Availability</th>
-                  <th>Specializations</th>
-                  <th className="text-end">Select</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSW.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="text-center text-muted py-3">
-                      No social workers match your filters.
-                    </td>
-                  </tr>
+                {myRequestsError && (
+                  <div
+                    className="small mt-2 p-2 rounded-3"
+                    style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      color: '#dc2626',
+                      border: '1px solid rgba(239, 68, 68, 0.2)'
+                    }}
+                  >
+                    {myRequestsError}
+                  </div>
                 )}
-                {filteredSW.map((sw) => (
-                  <tr key={sw.userId}>
-                    <td>{sw.fullName}</td>
-                    <td>
-                      <Badge bg={sw.availabilityStatus === 'AVAILABLE' ? 'success' : sw.availabilityStatus === 'BUSY' ? 'warning' : 'secondary'}>
-                        {sw.availabilityStatus || 'Unknown'}
-                      </Badge>
-                    </td>
-                    <td className="small">
-                      {(sw.specializations || []).join(', ') || '—'}
-                    </td>
-                    <td className="text-end">
-                      <input
-                        type="radio"
-                        name="sw-select"
-                        value={sw.userId}
-                        checked={selectedSwUserId === sw.userId}
-                        onChange={() => setSelectedSwUserId(sw.userId)}
-                      />
-                    </td>
+              </Col>
+              <Col xs={12} md={6}>
+                <label className="small fw-semibold mb-1" style={{ color: '#1e40af' }}>
+                  🎯 Permission
+                </label>
+                <select
+                  className="form-select"
+                  value={createPermission}
+                  onChange={(e) => setCreatePermission(e.target.value as CollaborationPermission)}
+                  style={{
+                    border: '2px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <option value="FULL_ACCESS">Full Access</option>
+                  <option value="VIEW_ONLY">View Only</option>
+                  <option value="SERVICE_ONLY">Service Only</option>
+                </select>
+              </Col>
+              <Col xs={12}>
+                <label className="small fw-semibold mb-1" style={{ color: '#1e40af' }}>
+                  💬 Reason *
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={createReason}
+                  onChange={(e) => setCreateReason(e.target.value)}
+                  placeholder="Explain why you need this collaborator"
+                  style={{
+                    border: '2px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                />
+              </Col>
+            </Row>
+
+            <hr style={{ borderColor: 'rgba(59, 130, 246, 0.2)', margin: '1.5rem 0' }} />
+            <h6 className="fw-bold mb-3" style={{ color: '#1e40af' }}>
+              👥 Select Social Worker (availability & specialization)
+            </h6>
+            <Row className="g-3 mb-3">
+              <Col xs={12} md={4}>
+                <label className="small fw-semibold mb-1" style={{ color: '#1e3a8a' }}>
+                  🔍 Search
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Name"
+                  value={swSearch}
+                  onChange={(e) => setSwSearch(e.target.value)}
+                  style={{
+                    border: '2px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                />
+              </Col>
+              <Col xs={6} md={4}>
+                <label className="small fw-semibold mb-1" style={{ color: '#1e3a8a' }}>
+                  📊 Availability
+                </label>
+                <select
+                  className="form-select"
+                  value={swAvailability}
+                  onChange={(e) => setSwAvailability(e.target.value as typeof swAvailability)}
+                  style={{
+                    border: '2px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <option value="ALL">All</option>
+                  <option value="AVAILABLE">Available</option>
+                  <option value="BUSY">Busy</option>
+                  <option value="ON_LEAVE">On Leave</option>
+                </select>
+              </Col>
+              <Col xs={6} md={4}>
+                <label className="small fw-semibold mb-1" style={{ color: '#1e3a8a' }}>
+                  🎓 Specialization
+                </label>
+                <select
+                  className="form-select"
+                  value={swSpecialization}
+                  onChange={(e) => setSwSpecialization(e.target.value)}
+                  style={{
+                    border: '2px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <option value="ALL">All</option>
+                  {[...new Set(availableSW.flatMap((sw) => sw.specializations || []))].map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </select>
+              </Col>
+            </Row>
+
+            <div
+              className="table-responsive rounded-3"
+              style={{
+                maxHeight: 320,
+                overflowY: 'auto',
+                border: '2px solid rgba(59, 130, 246, 0.2)'
+              }}
+            >
+              <Table hover size="sm" className="align-middle mb-0">
+                <thead>
+                  <tr
+                    style={{
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white'
+                    }}
+                  >
+                    <th className="fw-semibold small py-3" style={{ color: 'white' }}>👤 Name</th>
+                    <th className="fw-semibold small py-3" style={{ color: 'white' }}>📊 Availability</th>
+                    <th className="fw-semibold small py-3" style={{ color: 'white' }}>🎓 Specializations</th>
+                    <th className="fw-semibold small py-3 text-end" style={{ color: 'white' }}>✓ Select</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-          {createError && <div className="alert alert-danger py-2 small mt-2 mb-0">{createError}</div>}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setShowCreateModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" disabled={createSubmitting} onClick={handleCreateCollaboration}>
-            {createSubmitting ? 'Sending…' : 'Send Collaboration Request'}
-          </Button>
-        </Modal.Footer>
+                </thead>
+                <tbody>
+                  {filteredSW.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4">
+                        <span style={{ color: '#6b7280' }}>No social workers match your filters.</span>
+                      </td>
+                    </tr>
+                  )}
+                  {filteredSW.map((sw, index) => (
+                    <tr
+                      key={sw.userId}
+                      style={{
+                        backgroundColor: index % 2 === 0 ? 'rgba(16, 185, 129, 0.05)' : 'white'
+                      }}
+                    >
+                      <td className="fw-semibold small" style={{ color: '#065f46' }}>{sw.fullName}</td>
+                      <td>
+                        <Badge
+                          className="rounded-pill"
+                          style={{
+                            backgroundColor: sw.availabilityStatus === 'AVAILABLE' ? '#10b981' :
+                              sw.availabilityStatus === 'BUSY' ? '#f59e0b' : '#6b7280',
+                            fontSize: '0.7rem',
+                            padding: '0.3rem 0.7rem'
+                          }}
+                        >
+                          {sw.availabilityStatus || 'Unknown'}
+                        </Badge>
+                      </td>
+                      <td className="small" style={{ color: '#047857' }}>
+                        {(sw.specializations || []).join(', ') || '—'}
+                      </td>
+                      <td className="text-end">
+                        <input
+                          type="radio"
+                          name="sw-select"
+                          value={sw.userId}
+                          checked={selectedSwUserId === sw.userId}
+                          onChange={() => setSelectedSwUserId(sw.userId)}
+                          style={{
+                            cursor: 'pointer',
+                            accentColor: '#10b981',
+                            width: '18px',
+                            height: '18px'
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+            {createError && (
+              <div
+                className="py-2 px-3 small mt-3 mb-0 rounded-3"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: '#dc2626',
+                  border: '2px solid rgba(239, 68, 68, 0.2)'
+                }}
+              >
+                ⚠️ {createError}
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer style={{ backgroundColor: '#f0fdf4', borderTop: '2px solid rgba(16, 185, 129, 0.2)' }}>
+            <Button
+              onClick={() => setShowCreateModal(false)}
+              style={{
+                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                color: '#4b5563',
+                border: '2px solid rgba(107, 114, 128, 0.3)',
+                fontWeight: '600',
+                borderRadius: '8px'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={createSubmitting}
+              onClick={handleCreateCollaboration}
+              style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: 'white',
+                border: 'none',
+                fontWeight: '600',
+                borderRadius: '8px'
+              }}
+            >
+              {createSubmitting ? '⏳ Sending…' : '✉️ Send Collaboration Request'}
+            </Button>
+          </Modal.Footer>
+        </div>
       </Modal>
 
       {/* View Summary Modal */}
@@ -1126,7 +1665,7 @@ export function SocialWorkerCollaborationPage() {
             const category = (selectedRequest.requestCategory?.toUpperCase() || 'OTHER') as CollaborationRequest['requestCategory']
             const role = (selectedRequest.permission?.toUpperCase() || 'VIEW_ONLY') as CollaborationRequest['requestedRole']
             const isProcessing = processingId === selectedRequest.collaborationId
-            
+
             return (
               <div>
                 {/* Request Info Header */}
@@ -1178,10 +1717,10 @@ export function SocialWorkerCollaborationPage() {
                     {selectedRequest.servicesApplied && selectedRequest.servicesApplied.length > 0 ? (
                       <div className="d-flex flex-wrap gap-2">
                         {selectedRequest.servicesApplied.map((service, index) => (
-                          <Badge 
-                            key={index} 
-                            bg="white" 
-                            text="dark" 
+                          <Badge
+                            key={index}
+                            bg="white"
+                            text="dark"
                             className="border px-3 py-2 fw-normal"
                           >
                             ✓ {service}
@@ -1199,7 +1738,7 @@ export function SocialWorkerCollaborationPage() {
                   <div className="d-flex align-items-start gap-2">
                     <span>🔒</span>
                     <p className="mb-0 small text-muted">
-                      <strong className="text-dark">Privacy Notice:</strong> Detailed personal information 
+                      <strong className="text-dark">Privacy Notice:</strong> Detailed personal information
                       about the child and family will only be visible after you accept this collaboration request.
                     </p>
                   </div>
@@ -1454,7 +1993,7 @@ export function SocialWorkerCollaborationPage() {
                 <div className="d-flex align-items-start gap-2">
                   <span>📂</span>
                   <p className="mb-0 small text-muted">
-                    <strong className="text-dark">Archived Record:</strong> This collaboration has been completed 
+                    <strong className="text-dark">Archived Record:</strong> This collaboration has been completed
                     and archived. The information shown here is read-only and serves as a historical record of your contribution.
                   </p>
                 </div>

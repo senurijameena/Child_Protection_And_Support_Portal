@@ -4,9 +4,8 @@
    ================================================ */
 
 .sw-dashboard {
-  background: linear-gradient(135deg, #f9fafb 0%, #f0f9ff 100%);
   min-height: calc(100vh - 80px);
-  padding: 2rem 1rem;
+  padding: 1rem 0;
 }
 
 /* Dashboard Header */
@@ -33,23 +32,66 @@
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--sw-shadow-sm);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sw-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sw-stat-card:hover::before {
+  opacity: 1;
 }
 
 .sw-stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--sw-shadow-md);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
   border-color: rgba(59, 130, 246, 0.3);
 }
 
 .sw-stat-card .stat-icon {
-  opacity: 0.8;
+  opacity: 0.9;
   transition: all 0.3s ease;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .sw-stat-card:hover .stat-icon {
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(5deg);
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* Fade in up animation for cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Quick Action Cards */
@@ -122,6 +164,8 @@
 /* Table Styles */
 .sw-card .table {
   margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .sw-card .table thead tr {
@@ -136,19 +180,111 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: none;
 }
 
 .sw-card .table tbody tr {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.sw-card .table tbody tr::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
 }
 
 .sw-card .table tbody tr:hover {
   background-color: var(--sw-pale-blue);
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 1;
 }
 
 .sw-card .table tbody td {
-  border-bottom-color: var(--sw-border-color);
+  border-bottom-color: transparent;
   color: var(--sw-text-dark);
+  vertical-align: middle;
+}
+
+/* Colorful Table Headers */
+.table thead {
+  position: relative;
+}
+
+.table thead::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    rgba(99, 102, 241, 0.5) 0%, 
+    rgba(59, 130, 246, 0.5) 25%, 
+    rgba(16, 185, 129, 0.5) 50%, 
+    rgba(245, 158, 11, 0.5) 75%, 
+    rgba(239, 68, 68, 0.5) 100%
+  );
+}
+
+/* Badge improvements */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Transfer tab special styling */
+.nav-pills .nav-link {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-pills .nav-link:hover {
+  transform: translateY(-2px);
+}
+
+/* Table row hover effects */
+.table tbody tr {
+  cursor: pointer;
+}
+
+/* Smooth scrolling for tables */
+.table-responsive {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 /* Progress Bar */
@@ -252,28 +388,71 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 .sw-dashboard>* {
   animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .sw-dashboard> :nth-child(1) {
-  animation-delay: 0.1s;
+  animation-delay: 0.05s;
 }
 
 .sw-dashboard> :nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.1s;
 }
 
 .sw-dashboard> :nth-child(3) {
-  animation-delay: 0.3s;
+  animation-delay: 0.15s;
 }
 
 .sw-dashboard> :nth-child(4) {
-  animation-delay: 0.4s;
+  animation-delay: 0.2s;
 }
 
 .sw-dashboard> :nth-child(5) {
-  animation-delay: 0.5s;
+  animation-delay: 0.25s;
+}
+
+.sw-dashboard> :nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+.sw-dashboard> :nth-child(7) {
+  animation-delay: 0.35s;
 }
 
 /* Cursor Pointer */

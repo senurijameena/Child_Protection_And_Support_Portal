@@ -12,6 +12,9 @@ public class FeedbackDTO {
     private String message;
     private Integer rating;
     private String category;
+    private String helpfulness;
+    private String expectedHelp;
+    private String behavior;
     private boolean anonymous;
     private LocalDateTime submissionDate;
 
@@ -36,6 +39,12 @@ public class FeedbackDTO {
     public void setRating(Integer rating) { this.rating = rating; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getHelpfulness() { return helpfulness; }
+    public void setHelpfulness(String helpfulness) { this.helpfulness = helpfulness; }
+    public String getExpectedHelp() { return expectedHelp; }
+    public void setExpectedHelp(String expectedHelp) { this.expectedHelp = expectedHelp; }
+    public String getBehavior() { return behavior; }
+    public void setBehavior(String behavior) { this.behavior = behavior; }
     public boolean isAnonymous() { return anonymous; }
     public void setAnonymous(boolean anonymous) { this.anonymous = anonymous; }
     public LocalDateTime getSubmissionDate() { return submissionDate; }

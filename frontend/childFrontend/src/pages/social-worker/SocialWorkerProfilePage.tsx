@@ -28,6 +28,40 @@ const getInitials = (fullName?: string) => {
     .toUpperCase()
 }
 
+const formatUserId = (rawId?: string, role?: string) => {
+  if (!rawId) return '-'
+  const upperRole = (role || '').toUpperCase()
+  const numericPart = rawId.replace(/\D/g, '') || rawId
+
+  // Admin: AD-000 style (3 digits from the end)
+  if (upperRole === 'ADMIN') {
+    const last3 = numericPart.slice(-3) || numericPart
+    return `AD-${last3.padStart(3, '0')}`
+  }
+
+  let prefix = ''
+  switch (upperRole) {
+    case 'PU':
+    case 'PUBLIC':
+      prefix = 'PU-'
+      break
+    case 'PO':
+    case 'POLICE':
+      prefix = 'PO-'
+      break
+    case 'SW':
+    case 'SOCIAL_WORKER':
+      prefix = 'SW-'
+      break
+    default:
+      // Unknown roles: show raw ID
+      return rawId
+  }
+
+  const last4 = numericPart.slice(-4) || numericPart
+  return `${prefix}${last4.padStart(4, '0')}`
+}
+
 // Helper to get full photo URL (handles relative paths from backend)
 const getPhotoUrl = (photoPath?: string | null): string | null => {
   if (!photoPath) return null
@@ -439,7 +473,7 @@ export function SocialWorkerProfilePage() {
                     <Col xs={12} md={6}>
                       <Form.Group className="mb-3">
                         <Form.Label>Professional ID</Form.Label>
-                        <Form.Control value={user?.userId?.slice(0, 8) ?? ''} disabled />
+                        <Form.Control value={formatUserId(user?.userId, user?.role)} disabled />
                       </Form.Group>
                     </Col>
                     <Col xs={12}>

@@ -45,6 +45,9 @@ public class UserServiceImpl implements UserService {
     private CaseRepository caseRepository;
 
     @Autowired
+    private HelpRequestRepository helpRequestRepository;
+
+    @Autowired
     private CaseService caseService;
 
     @Autowired
@@ -137,19 +140,6 @@ public class UserServiceImpl implements UserService {
         }
         if (request.getIdDocumentUrl() != null && !request.getIdDocumentUrl().isEmpty()) {
             user.setOfficialIdFile(request.getIdDocumentUrl());
-        }
-
-        // Pre-validation for role-specific unique fields
-        if (request.getRole() == Role.PO) {
-            String badgeNumber = request.getBadgeNumber();
-            if (policeOfficerRepository.existsByBadgeNumber(badgeNumber)) {
-                return new LoginResponse(null, "Badge number " + badgeNumber + " is already registered", false);
-            }
-        } else if (request.getRole() == Role.SW) {
-            String licenseNumber = request.getLicenseNumber();
-            if (socialWorkerRepository.existsByLicenseNumber(licenseNumber)) {
-                return new LoginResponse(null, "License number " + licenseNumber + " is already registered", false);
-            }
         }
 
         try {
@@ -440,9 +430,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserManagementDTO> getAllUsersForManagement() {
-        return userRepository.findAll().stream()
-                .map(this::convertToUserManagementDTO)
-                .collect(Collectors.toList());
+        try {
+            return userRepository.findAll().stream()
+                    .map(user -> {
+                        try {
+                            return convertToUserManagementDTO(user);
+                        } catch (Exception e) {
+                            System.err.println("Error converting user to DTO: " + user.getId() + " - " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(dto -> dto != null)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error in getAllUsersForManagement: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     @Override
@@ -539,6 +544,20 @@ public class UserServiceImpl implements UserService {
         dto.setApproved(user.isApproved());
         dto.setRegistrationDate(user.getRegistrationDate());
         dto.setLastLogin(user.getLastLogin());
+        // Always set availabilityStatus - default to AVAILABLE if null (for social workers and police officers)
+        if (user.getRole() != null && (user.getRole() == Role.SW || user.getRole() == Role.PO)) {
+            AvailabilityStatus status = user.getAvailabilityStatus();
+            // Debug logging for social workers
+            if (user.getRole() == Role.SW && user.getFullName() != null && user.getFullName().contains("Dulmika")) {
+                System.out.println("DEBUG: Dulmika status - User ID: " + user.getId() + 
+                    ", Full Name: " + user.getFullName() + 
+                    ", AvailabilityStatus from DB: " + status + 
+                    ", Status name: " + (status != null ? status.name() : "NULL"));
+            }
+            dto.setAvailabilityStatus(status != null ? status.name() : "AVAILABLE");
+        } else {
+            dto.setAvailabilityStatus(user.getAvailabilityStatus() != null ? user.getAvailabilityStatus().name() : null);
+        }
 
         if (user.getRole() == Role.PO) {
             policeOfficerRepository.findByUserId(user.getId()).ifPresent(officer -> {
@@ -555,6 +574,15 @@ public class UserServiceImpl implements UserService {
                 dto.setYearsOfExperience(String.valueOf(worker.getYearsOfExperience()));
             });
         }
+
+        // Check if user has anonymous submissions (cases or help requests)
+        boolean hasAnonymousCases = caseRepository.findByReporterUserId(user.getId())
+                .stream()
+                .anyMatch(Case::isAnonymous);
+        boolean hasAnonymousRequests = helpRequestRepository.findByRequesterUserId(user.getId())
+                .stream()
+                .anyMatch(HelpRequest::isAnonymous);
+        dto.setHasAnonymousSubmissions(hasAnonymousCases || hasAnonymousRequests);
 
         return dto;
     }

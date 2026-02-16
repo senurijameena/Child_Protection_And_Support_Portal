@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -154,6 +155,15 @@ public class AdminController {
             @PathVariable String role) {
         List<UserManagementDTO> users = userService.getUsersByRoleForManagement(role);
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/users/with-anonymous-submissions")
+    public ResponseEntity<List<UserManagementDTO>> getUsersWithAnonymousSubmissions() {
+        List<UserManagementDTO> allUsers = userService.getAllUsersForManagement();
+        List<UserManagementDTO> usersWithAnonymous = allUsers.stream()
+                .filter(UserManagementDTO::isHasAnonymousSubmissions)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(usersWithAnonymous);
     }
 
     @PutMapping("/users/{userId}")

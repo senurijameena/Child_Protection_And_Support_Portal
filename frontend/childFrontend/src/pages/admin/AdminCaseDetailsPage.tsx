@@ -193,59 +193,91 @@ export function AdminCaseDetailsPage() {
                   <img src={`${getUploadBaseUrl()}${c.photographUrl}`} alt="Child photograph" style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }} />
                 </div>
               )}
-              {c.evidenceUrls && c.evidenceUrls.length > 0 && (
-                <div className="mt-4">
-                  <h6 className="mb-1">Evidence</h6>
-                  <div className="text-muted small mb-2">Read-only evidence uploaded by the reporter</div>
-                  <div className="d-flex flex-wrap gap-3">
-                    {c.evidenceUrls.map((url, i) => {
-                      const fullUrl = `${getUploadBaseUrl()}${url}`
-                      const lower = url.toLowerCase()
-                      const isImage =
-                        lower.endsWith('.jpg') ||
-                        lower.endsWith('.jpeg') ||
-                        lower.endsWith('.png') ||
-                        lower.endsWith('.gif') ||
-                        lower.endsWith('.webp')
-                      const isPdf = lower.endsWith('.pdf')
-                      const label = url.split('/').pop() || `Evidence ${i + 1}`
-                      return (
-                        <Card key={url} style={{ width: 180 }} className="border-0 shadow-sm">
+            </Card.Body>
+          </Card>
+
+          {/* Evidence Section - Always show */}
+          <Card className="border-0 shadow-sm rounded-4 mb-4">
+            <Card.Header className="bg-white border-0 pt-3">
+              <h5 className="mb-0">Evidence</h5>
+              <p className="text-muted small mb-0">Evidence files uploaded by the reporter</p>
+            </Card.Header>
+            <Card.Body>
+              {c.evidenceUrls && Array.isArray(c.evidenceUrls) && c.evidenceUrls.length > 0 ? (
+                <div className="row g-3">
+                  {c.evidenceUrls.map((url, i) => {
+                    if (!url || url.trim() === '') return null
+                    const fullUrl = `${getUploadBaseUrl()}${url}`
+                    const lower = url.toLowerCase()
+                    const isImage =
+                      lower.endsWith('.jpg') ||
+                      lower.endsWith('.jpeg') ||
+                      lower.endsWith('.png') ||
+                      lower.endsWith('.gif') ||
+                      lower.endsWith('.webp')
+                    const isPdf = lower.endsWith('.pdf')
+                    const fileName = url.split('/').pop() || `Evidence ${i + 1}`
+                    return (
+                      <div key={`${url}-${i}`} className="col-md-4 col-sm-6">
+                        <Card className="border shadow-sm h-100">
                           {isImage ? (
-                            <a href={fullUrl} target="_blank" rel="noopener noreferrer">
+                            <div style={{ height: '200px', overflow: 'hidden' }}>
                               <img
                                 src={fullUrl}
-                                alt={label}
-                                className="card-img-top"
-                                style={{ maxHeight: 120, objectFit: 'cover' }}
+                                alt={fileName}
+                                className="w-100 h-100"
+                                style={{ objectFit: 'cover', cursor: 'pointer' }}
+                                onClick={() => window.open(fullUrl, '_blank')}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                  target.parentElement!.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100"><span class="text-muted">Image not found</span></div>'
+                                }}
                               />
-                            </a>
+                            </div>
                           ) : (
-                            <div className="p-3 text-center">
-                              <span className="d-block mb-2">{isPdf ? 'PDF Document' : 'File'}</span>
+                            <div className="d-flex align-items-center justify-content-center" style={{ height: '200px', backgroundColor: '#f8f9fa' }}>
+                              <div className="text-center">
+                                <div className="mb-2" style={{ fontSize: '3rem' }}>
+                                  {isPdf ? '📄' : '📎'}
+                                </div>
+                                <div className="small text-muted">{isPdf ? 'PDF Document' : 'File'}</div>
+                              </div>
                             </div>
                           )}
-                          <Card.Body className="py-2 px-3">
-                            <div className="small text-truncate" title={label}>
-                              {label}
+                          <Card.Body className="p-2">
+                            <div className="small text-truncate mb-2" title={fileName}>
+                              {fileName}
                             </div>
-                            <a
-                              href={fullUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="small text-primary d-block mt-1"
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="w-100"
+                              onClick={() => window.open(fullUrl, '_blank')}
                             >
                               View
-                            </a>
+                            </Button>
                           </Card.Body>
                         </Card>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <p className="mb-0">No evidence files uploaded for this case.</p>
+                  <p className="small mt-2 mb-0">
+                    {c.evidenceUrls === null || c.evidenceUrls === undefined
+                      ? 'Evidence field is null or undefined'
+                      : Array.isArray(c.evidenceUrls) && c.evidenceUrls.length === 0
+                        ? 'Evidence array is empty'
+                        : 'No evidence available'}
+                  </p>
                 </div>
               )}
             </Card.Body>
           </Card>
+
           {timeline.length > 0 && (
             <Card className="border-0 shadow-sm rounded-4">
               <Card.Header className="bg-white border-0 pt-3">

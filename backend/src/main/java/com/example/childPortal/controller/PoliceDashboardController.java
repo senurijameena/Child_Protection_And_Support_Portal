@@ -26,7 +26,6 @@ public class PoliceDashboardController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
         Map<String, Object> stats = new HashMap<>();
-<<<<<<< HEAD
         
         // Demo fallback
         if (userId == null) {
@@ -34,9 +33,6 @@ public class PoliceDashboardController {
             System.out.println("Using DEMO ID for stats");
         }
         
-=======
-
->>>>>>> origin/combination
         // Log for debugging
         System.out.println("Fetching police stats for user: " + userId);
 
@@ -47,39 +43,6 @@ public class PoliceDashboardController {
                 .count();
 
         long urgentCases = assignedCases.stream()
-<<<<<<< HEAD
-            .filter(c -> c.isEmergency() || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
-            .count();
-
-        // Logic for Resolved Today
-        java.time.LocalDate today = java.time.LocalDate.now();
-        long resolvedToday = assignedCases.stream()
-            .filter(c -> c.getStatus() == CaseStatus.RESOLVED && c.getReportDate() != null) // simplified assumption: resolution date check would be better if available in DTO
-            .count(); 
-            // Note: Since DTO might not have resolutionDate exposed or populated, we might be limited. 
-            // However, we can check if status is RESOLVED and maybe use local tracking if needed.
-            // For now, let's refine if we can: DTO doesn't seem to have resolutionDate.
-            // Let's rely on finding cases with status RESOLVED. 
-            // If we strictly need 'Today', we need resolutionDate. 
-            // Checking CaseDTO again... Step 75 showing CaseDTO definition.
-            // CaseDTO does NOT have resolutionDate.
-            
-        // Let's try to get full details or just rely on what we have. 
-        // If we can't get resolution date, we can't accurately say "Resolved Today".
-        // Use a placeholder of 0 for now but don't hardcode a random number.
-        // Or better, fetch all cases with full details if possible, or just accept limitation.
-        
-        // Let's implement Avg Response Time
-        // Simple metric: (Now - ReportDate) for active cases? Or (ResolutionDate - ReportDate) for resolved?
-        // Let's just say "N/A" if no resolved cases, instead of hardcoded '2.4h'.
-        
-        stats.put("assignedCases", assignedCases.size());
-        stats.put("activeCases", activeCases);
-        stats.put("urgentCases", urgentCases);
-        stats.put("emergencyCases", urgentCases); 
-        stats.put("resolvedToday", resolvedToday); 
-        stats.put("avgResponse", "N/A"); // Better than fake data
-=======
                 .filter(c -> c.isEmergency()
                         || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
                 .count();
@@ -92,7 +55,6 @@ public class PoliceDashboardController {
         stats.put("emergencyCases", urgentCases);
         stats.put("resolvedToday", resolvedToday);
         stats.put("avgResponse", "2.4h"); // Mock
->>>>>>> origin/combination
         stats.put("pendingTransfers", 0);
         stats.put("unreadNotifications", 0);
 

@@ -46,12 +46,11 @@ public class SocialWorkerController {
         return socialWorkerService.getSocialWorkerByUserId(userId)
                 .map(worker -> {
                     SocialWorkerDTO dto = new SocialWorkerDTO();
-                    dto.setId(worker.getId());
-                    dto.setUserId(worker.getUser().getId());
+                    dto.setUserId(worker.getUserId());
+                    dto.setLicenseNumber(worker.getLicenseNumber());
+                    dto.setSpecializations(worker.getSpecializations());
                     dto.setOrganization(worker.getOrganization());
-                    dto.setSpecialization(worker.getSpecialization());
-                    dto.setAvailabilityStatus(worker.getAvailabilityStatus());
-                    // Add other fields as needed
+                    dto.setYearsOfExperience(String.valueOf(worker.getYearsOfExperience()));
                     return ResponseEntity.ok(dto);
                 })
                 .orElse(ResponseEntity.notFound().build());

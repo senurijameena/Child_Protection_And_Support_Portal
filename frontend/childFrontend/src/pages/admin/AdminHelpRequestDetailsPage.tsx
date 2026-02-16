@@ -113,34 +113,39 @@ export function AdminHelpRequestDetailsPage() {
               </p>
               <p className="text-muted">{r.description || '-'}</p>
 
-              {/* 🥘 Food Assistance Conditional Fields */}
-              {r.helpType === 'FOOD_ASSISTANCE' && (
+              {/* 🥘 Food Assistance Conditional Fields - Only show if has data */}
+              {r.helpType === 'FOOD_ASSISTANCE' && 
+               (r.familyMembers || r.monthlyIncomeRange || r.employmentStatus) && (
                 <div className="mt-4 p-3 bg-light rounded-3">
                   <h6 className="mb-3">🥘 Food Assistance Details</h6>
-                  <p><strong>Family Members:</strong> {r.familyMembers || '-'}</p>
-                  <p><strong>Monthly Income Range:</strong> {r.monthlyIncomeRange || '-'}</p>
-                  <p><strong>Employment Status:</strong> {r.employmentStatus || '-'}</p>
+                  {r.familyMembers && <p><strong>Family Members:</strong> {r.familyMembers}</p>}
+                  {r.monthlyIncomeRange && <p><strong>Monthly Income Range:</strong> {r.monthlyIncomeRange}</p>}
+                  {r.employmentStatus && <p><strong>Employment Status:</strong> {r.employmentStatus}</p>}
                 </div>
               )}
 
-              {/* 🎓 Education Conditional Fields */}
-              {r.helpType === 'EDUCATION_SUPPORT' && (
+              {/* 🎓 Education Conditional Fields - Only show if has data */}
+              {r.helpType === 'EDUCATION_SUPPORT' && 
+               (r.schoolGrade || (r.requiredItems && r.requiredItems.length > 0) || r.examYear) && (
                 <div className="mt-4 p-3 bg-light rounded-3">
                   <h6 className="mb-3">🎓 Education Support Details</h6>
-                  <p><strong>School Grade:</strong> {r.schoolGrade || '-'}</p>
-                  <p><strong>Required Items:</strong> {r.requiredItems?.length ? r.requiredItems.join(', ') : '-'}</p>
-                  <p><strong>Exam Year:</strong> {r.examYear || '-'}</p>
+                  {r.schoolGrade && <p><strong>School Grade:</strong> {r.schoolGrade}</p>}
+                  {r.requiredItems && r.requiredItems.length > 0 && (
+                    <p><strong>Required Items:</strong> {r.requiredItems.join(', ')}</p>
+                  )}
+                  {r.examYear && <p><strong>Exam Year:</strong> {r.examYear}</p>}
                 </div>
               )}
 
-              {/* 🏥 Medical Conditional Fields */}
-              {r.helpType === 'MEDICAL_HELP' && (
+              {/* 🏥 Medical Conditional Fields - Only show if has data */}
+              {r.helpType === 'MEDICAL_HELP' && 
+               (r.conditionDescription || r.urgencyLevel || r.hospitalName || r.estimatedCost || r.medicalReportUrl) && (
                 <div className="mt-4 p-3 bg-light rounded-3">
                   <h6 className="mb-3">🏥 Medical Help Details</h6>
-                  <p><strong>Condition Description:</strong> {r.conditionDescription || '-'}</p>
-                  <p><strong>Urgency Level:</strong> {r.urgencyLevel || '-'}</p>
-                  <p><strong>Hospital/Clinic:</strong> {r.hospitalName || '-'}</p>
-                  <p><strong>Estimated Cost:</strong> {r.estimatedCost || '-'}</p>
+                  {r.conditionDescription && <p><strong>Condition Description:</strong> {r.conditionDescription}</p>}
+                  {r.urgencyLevel && <p><strong>Urgency Level:</strong> {r.urgencyLevel}</p>}
+                  {r.hospitalName && <p><strong>Hospital/Clinic:</strong> {r.hospitalName}</p>}
+                  {r.estimatedCost && <p><strong>Estimated Cost:</strong> {r.estimatedCost}</p>}
                   {r.medicalReportUrl && (
                     <div className="mt-2">
                       <a href={`${getUploadBaseUrl()}${r.medicalReportUrl}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary">
@@ -151,52 +156,99 @@ export function AdminHelpRequestDetailsPage() {
                 </div>
               )}
 
-              {/* 🏠 Shelter Conditional Fields */}
-              {r.helpType === 'SHELTER' && (
+              {/* 🏠 Shelter Conditional Fields - Only show if has data */}
+              {r.helpType === 'SHELTER' && 
+               (r.currentHousingType !== undefined || r.riskOfEviction !== undefined || r.immediateDanger !== undefined) && (
                 <div className="mt-4 p-3 bg-light rounded-3">
                   <h6 className="mb-3">🏠 Shelter Details</h6>
-                  <p><strong>Current Housing Type:</strong> {r.currentHousingType || '-'}</p>
-                  <p><strong>Risk of Eviction:</strong> <Badge bg={r.riskOfEviction ? 'danger' : 'success'}>{r.riskOfEviction ? 'Yes' : 'No'}</Badge></p>
-                  <p><strong>Immediate Danger:</strong> <Badge bg={r.immediateDanger ? 'danger' : 'success'}>{r.immediateDanger ? 'Yes' : 'No'}</Badge></p>
+                  {r.currentHousingType && <p><strong>Current Housing Type:</strong> {r.currentHousingType}</p>}
+                  {r.riskOfEviction !== undefined && (
+                    <p><strong>Risk of Eviction:</strong> <Badge bg={r.riskOfEviction ? 'danger' : 'success'}>{r.riskOfEviction ? 'Yes' : 'No'}</Badge></p>
+                  )}
+                  {r.immediateDanger !== undefined && (
+                    <p><strong>Immediate Danger:</strong> <Badge bg={r.immediateDanger ? 'danger' : 'success'}>{r.immediateDanger ? 'Yes' : 'No'}</Badge></p>
+                  )}
                 </div>
               )}
 
-              {/* 👕 Clothing Conditional Fields */}
-              {r.helpType === 'CLOTHING' && (
+              {/* 👕 Clothing Conditional Fields - Only show if has data */}
+              {r.helpType === 'CLOTHING' && r.quantityNeeded && (
                 <div className="mt-4 p-3 bg-light rounded-3">
                   <h6 className="mb-3">👕 Clothing Details</h6>
-                  <p><strong>Quantity Needed:</strong> {r.quantityNeeded || '-'}</p>
+                  <p><strong>Quantity Needed:</strong> {r.quantityNeeded}</p>
                 </div>
               )}
 
-              {/* 🧠 Counseling Conditional Fields */}
-              {r.helpType === 'COUNSELING' && (
+              {/* 🧠 Counseling Conditional Fields - Only show if has data */}
+              {r.helpType === 'COUNSELING' && 
+               (r.counselingType || r.preferredContactMethod) && (
                 <div className="mt-4 p-3 bg-light rounded-3">
                   <h6 className="mb-3">🧠 Counseling Details</h6>
-                  <p><strong>Counseling Type:</strong> {r.counselingType || '-'}</p>
-                  <p><strong>Preferred Contact Method:</strong> {r.preferredContactMethod || '-'}</p>
+                  {r.counselingType && <p><strong>Counseling Type:</strong> {r.counselingType}</p>}
+                  {r.preferredContactMethod && <p><strong>Preferred Contact Method:</strong> {r.preferredContactMethod}</p>}
                 </div>
               )}
 
-              {r.documentUrls && r.documentUrls.length > 0 && (
-                <div className="mt-4">
-                  <h6 className="mb-1">Evidence / Documents</h6>
-                  <div className="d-flex flex-wrap gap-2">
-                    {r.documentUrls.map((url, i) => (
-                      <a
-                        key={url}
-                        href={`${getUploadBaseUrl()}${url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-sm btn-outline-primary"
-                        aria-label={`View evidence ${i + 1}`}
-                      >
-                        View
-                      </a>
-                    ))}
+              {/* Evidence / Documents - Always show, with better display */}
+              <div className="mt-4">
+                <h6 className="mb-3">Evidence / Documents</h6>
+                {r.documentUrls && r.documentUrls.length > 0 ? (
+                  <div className="row g-3">
+                    {r.documentUrls.map((url, i) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url)
+                      const fileName = url.split('/').pop() || `Document ${i + 1}`
+                      return (
+                        <div key={url} className="col-md-4 col-sm-6">
+                          <Card className="h-100 border">
+                            <Card.Body className="p-3">
+                              {isImage ? (
+                                <div className="mb-2" style={{ height: '150px', overflow: 'hidden', borderRadius: '4px' }}>
+                                  <img
+                                    src={`${getUploadBaseUrl()}${url}`}
+                                    alt={`Evidence ${i + 1}`}
+                                    className="w-100 h-100"
+                                    style={{ objectFit: 'cover' }}
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = 'none'
+                                      const parent = target.parentElement
+                                      if (parent) {
+                                        parent.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100 text-muted"><span>Image not available</span></div>'
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="mb-2 d-flex align-items-center justify-content-center bg-light rounded" style={{ height: '150px' }}>
+                                  <span className="fs-1">📄</span>
+                                </div>
+                              )}
+                              <div className="small text-muted mb-2" style={{ 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis', 
+                                whiteSpace: 'nowrap' 
+                              }}>
+                                {fileName}
+                              </div>
+                              <a
+                                href={`${getUploadBaseUrl()}${url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-sm btn-outline-primary w-100"
+                                aria-label={`View evidence ${i + 1}`}
+                              >
+                                View
+                              </a>
+                            </Card.Body>
+                          </Card>
+                        </div>
+                      )
+                    })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-muted">No evidence files uploaded for this help request</p>
+                )}
+              </div>
             </Card.Body>
           </Card>
           {timeline.length > 0 && (

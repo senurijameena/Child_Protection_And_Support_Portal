@@ -101,7 +101,7 @@ export const socialWorkerService = {
     terms: string;
   }) {
     try {
-      const response = await api.post('/api/services/offer/create', offerData);
+      const response = await api.post('/api/services/offer', offerData);
       return response.data;
     } catch (error) {
       console.error('Error making service offer:', error);

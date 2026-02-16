@@ -12,6 +12,7 @@ import {
     Legend,
 } from 'chart.js';
 import { authService } from '../../services/authService';
+import { policeService } from '../../services/policeService';
 import { Link } from 'react-router-dom';
 
 // Register ChartJS components
@@ -57,18 +58,21 @@ const PoliceDashboard: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Attempt to fetch real data
-                const token = localStorage.getItem('authToken');
-                const headers = { 'Authorization': `Bearer ${token}` };
-
                 // Fetch Stats
-                const statsRes = await fetch('/api/police/dashboard/stats', { headers });
+                try {
+                    const statsData = await policeService.getPoliceStatistics();
+                    setStats(statsData);
+                } catch (e) {
+                    console.error("Failed to fetch statistics", e);
+                }
 
                 // Fetch Cases
-                const casesRes = await fetch('/api/police/dashboard/cases', { headers });
-
-                if (statsRes.ok) setStats(await statsRes.json());
-                if (casesRes.ok) setCases(await casesRes.json());
+                try {
+                    const casesData = await policeService.getAssignedCases();
+                    setCases(casesData);
+                } catch (e) {
+                    console.error("Failed to fetch cases", e);
+                }
 
                 // Simulate network delay
                 setTimeout(() => setLoading(false), 800);
@@ -254,7 +258,7 @@ const PoliceDashboard: React.FC = () => {
                     <Card className="shadow-sm border-0 h-100">
                         <Card.Header className="bg-white py-3 d-flex justify-content-between align-items-center">
                             <h5 className="mb-0 fw-bold">Assigned Cases</h5>
-                            <Button variant="outline-primary" size="sm" as={Link as any} to="/cases/my-cases">View All</Button>
+                            <Button variant="outline-primary" size="sm" as={Link as any} to="/police/assignments/active">View All</Button>
                         </Card.Header>
                         <Card.Body className="p-0">
                             <Table hover responsive className="mb-0 align-middle">
@@ -285,10 +289,10 @@ const PoliceDashboard: React.FC = () => {
                                                 <td>{getStatusBadge(c.status ? c.status.toString() : 'NEW')}</td>
                                                 <td className="text-muted small">{dateDisplay}</td>
                                                 <td className="text-end pe-4">
-                                                    <Button variant="light" size="sm" className="me-1" title="View Details" as={Link as any} to={`/cases/${c.id}`}>
+                                                    <Button variant="light" size="sm" className="me-1" title="View Details" as={Link as any} to={`/police/cases/${c.id}`}>
                                                         <i className="bi bi-eye"></i>
                                                     </Button>
-                                                    <Button variant="light" size="sm" title="Edit" as={Link as any} to={`/cases/${c.id}`}>
+                                                    <Button variant="light" size="sm" title="Edit" as={Link as any} to={`/police/cases/${c.id}`}>
                                                         <i className="bi bi-pencil"></i>
                                                     </Button>
                                                 </td>

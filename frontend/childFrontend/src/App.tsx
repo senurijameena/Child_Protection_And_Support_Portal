@@ -69,6 +69,11 @@ function App() {
         <Route path="/register/social-worker" element={<SocialWorkerRegistrationPage />} />
         <Route path="/register/social-worker/success" element={<SocialWorkerRegistrationSuccessPage />} />
 
+        {/* DEMO ROUTE - Unprotected */}
+        <Route element={<PoliceLayout />}>
+          <Route path="/police/demo/dashboard" element={<PoliceDashboard />} />
+        </Route>
+
         {/* Dashboard Route - Redirects based on role */}
         <Route
           path="/dashboard"
@@ -161,7 +166,9 @@ function App() {
           <Route path="/police/assignments/active" element={<MyCasesPage />} />
           <Route path="/police/assignments/emergency" element={<MyCasesPage />} />
           <Route path="/police/assignments/history" element={<MyCasesPage />} />
+          <Route path="/police/assignments/history" element={<MyCasesPage />} />
           <Route path="/police/cases/search" element={<MyCasesPage />} />
+          <Route path="/police/cases/:caseId" element={<CaseDetailsPage />} />
           {/* Add more specific routes as needed */}
         </Route>
 

@@ -4,10 +4,10 @@ import { api } from './api';
 // Transform backend response to frontend expected structure
 const transformHelpRequestResponse = (backendData) => {
   if (!backendData) return null;
-  
+
   // If already transformed, return as is
   if (backendData.requesterInfo) return backendData;
-  
+
   // Transform flat backend structure to nested frontend structure
   return {
     ...backendData,
@@ -23,11 +23,11 @@ const transformHelpRequestResponse = (backendData) => {
       ages: backendData.approximateAge || '',
       specialNeeds: backendData.specialNeeds || []
     },
-    location: typeof backendData.location === 'string' 
+    location: typeof backendData.location === 'string'
       ? { address: backendData.location }
       : (backendData.location || {}),
-    helpTypes: Array.isArray(backendData.helpTypes) 
-      ? backendData.helpTypes 
+    helpTypes: Array.isArray(backendData.helpTypes)
+      ? backendData.helpTypes
       : (backendData.helpType ? [backendData.helpType] : []),
     urgency: backendData.priority || backendData.urgency || 'MEDIUM'
   };
@@ -39,20 +39,20 @@ export const helpRequestService = {
     // Transform nested frontend structure to flat backend DTO structure
     const backendData = {
       anonymous: requestData.requesterInfo?.isAnonymous || requestData.anonymous || false,
-      requesterName: requestData.requesterInfo?.isAnonymous 
+      requesterName: requestData.requesterInfo?.isAnonymous
         ? (requestData.requesterInfo?.name || 'Anonymous')
         : (requestData.requesterInfo?.name || ''),
-      approximateAge: Array.isArray(requestData.peopleDetails?.ages) 
-        ? requestData.peopleDetails.ages[0] 
+      approximateAge: Array.isArray(requestData.peopleDetails?.ages)
+        ? requestData.peopleDetails.ages[0]
         : (requestData.peopleDetails?.ages || requestData.approximateAge || ''),
       gender: requestData.peopleDetails?.gender || requestData.gender || '',
       identificationMarks: requestData.peopleDetails?.identificationMarks || requestData.identificationMarks || '',
-      helpType: Array.isArray(requestData.helpTypes) 
-        ? requestData.helpTypes[0] 
+      helpType: Array.isArray(requestData.helpTypes)
+        ? requestData.helpTypes[0]
         : (requestData.helpTypes || requestData.helpType || ''),
       description: requestData.description || '',
-      location: typeof requestData.location === 'string' 
-        ? requestData.location 
+      location: typeof requestData.location === 'string'
+        ? requestData.location
         : (requestData.location?.address || ''),
       documentUrls: requestData.documentUrls || [],
       priority: requestData.urgency || requestData.priority || 'MEDIUM'
@@ -64,7 +64,7 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // GET /api/help-requests/{requestId} - Get help request by ID
   getHelpRequest: async (requestId) => {
     const response = await api.get(`/api/help-requests/${requestId}`);
@@ -74,7 +74,7 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // GET /api/help-requests/my-requests - Get my help requests
   getMyRequests: async () => {
     const response = await api.get('/api/help-requests/my-requests');
@@ -84,7 +84,7 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // GET /api/help-requests/all - Get all help requests
   getAllRequests: async () => {
     const response = await api.get('/api/help-requests/all');
@@ -94,7 +94,7 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // GET /api/help-requests/status/{status} - Get by status
   getByStatus: async (status) => {
     const response = await api.get(`/api/help-requests/status/${status}`);
@@ -104,7 +104,7 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // GET /api/help-requests/type/{helpType} - Get by help type
   getByType: async (helpType) => {
     const response = await api.get(`/api/help-requests/type/${helpType}`);
@@ -114,7 +114,7 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // GET /api/help-requests/search/location - Search by location
   searchByLocation: async (location) => {
     const response = await api.get('/api/help-requests/search/location', { params: { location } });
@@ -124,20 +124,20 @@ export const helpRequestService = {
     }
     return response;
   },
-  
+
   // PUT /api/help-requests/{requestId}/status - Update status
-  updateStatus: (requestId, status) => 
+  updateStatus: (requestId, status) =>
     api.put(`/api/help-requests/${requestId}/status`, null, { params: { status } }),
-  
+
   // PUT /api/help-requests/{requestId}/assign - Assign to social worker
-  assignSocialWorker: (requestId, workerId) => 
+  assignSocialWorker: (requestId, workerId) =>
     api.put(`/api/help-requests/${requestId}/assign`, null, { params: { workerId } }),
-  
+
   // DELETE /api/help-requests/{requestId} - Delete help request
-  deleteRequest: (requestId) => 
+  deleteRequest: (requestId) =>
     api.delete(`/api/help-requests/${requestId}`),
-  
+
   // Close/Decline help request with reason
-  closeRequest: (requestId, reason) => 
-    api.put(`/api/help-requests/${requestId}/close`, { reason, solution: reason })
+  closeRequest: (requestId, reason) =>
+    helpRequestService.updateStatus(requestId, 'COMPLETED')
 };

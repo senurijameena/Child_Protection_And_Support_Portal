@@ -5,7 +5,7 @@ export const policeService = {
 
   async getPoliceProfile(userId: string) {
     try {
-      const response = await api.get(`/api/police/profile/${userId}`);
+      const response = await api.get(`/api/user/profile/${userId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching police profile:', error);
@@ -13,9 +13,9 @@ export const policeService = {
     }
   },
 
-  async getPoliceStatistics(userId: string) {
+  async getPoliceStatistics() {
     try {
-      const response = await api.get(`/api/police/statistics/${userId}`);
+      const response = await api.get('/api/police/dashboard/stats');
       return response.data;
     } catch (error) {
       console.error('Error fetching police statistics:', error);
@@ -23,9 +23,9 @@ export const policeService = {
     }
   },
 
-  async getAssignedCases(userId: string) {
+  async getAssignedCases() {
     try {
-      const response = await api.get(`/api/police/cases/assigned/${userId}`);
+      const response = await api.get('/api/police/dashboard/cases');
       return response.data;
     } catch (error) {
       console.error('Error fetching assigned cases:', error);
@@ -35,7 +35,7 @@ export const policeService = {
 
   async getEmergencyAlerts() {
     try {
-      const response = await api.get('/api/police/alerts/emergency');
+      const response = await api.get('/api/cases/status/URGENT');
       return response.data;
     } catch (error) {
       console.error('Error fetching emergency alerts:', error);
@@ -45,7 +45,7 @@ export const policeService = {
 
   async getTeamMembers() {
     try {
-      const response = await api.get('/api/police/team');
+      const response = await api.get('/api/status/available/POLICE');
       return response.data;
     } catch (error) {
       console.error('Error fetching team members:', error);

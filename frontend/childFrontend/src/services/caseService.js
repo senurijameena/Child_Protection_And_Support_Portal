@@ -2,9 +2,9 @@ import { api } from './api';
 
 const transformCaseResponse = (backendData) => {
   if (!backendData) return null;
-  
+
   if (backendData.reporterInfo) return backendData;
-  
+
   return {
     ...backendData,
     reporterInfo: {
@@ -42,10 +42,10 @@ export const caseService = {
       caseDescription: caseData.caseDetails?.description || '',
       evidenceUrls: caseData.evidence?.map(item => item.url || '').filter(url => url) || []
     };
-    
+
     return api.post('/api/cases/report', requestBody);
   },
-  
+
   getCaseById: async (caseId) => {
     const response = await api.get(`/api/cases/${caseId}`);
     // Transform response to frontend structure
@@ -54,7 +54,7 @@ export const caseService = {
     }
     return response;
   },
-  
+
   getMyCases: async () => {
     const response = await api.get('/api/cases/my-cases');
     if (Array.isArray(response.data)) {
@@ -62,7 +62,7 @@ export const caseService = {
     }
     return response;
   },
-  
+
   getAllCases: async () => {
     const response = await api.get('/api/cases/all');
     if (Array.isArray(response.data)) {
@@ -70,7 +70,7 @@ export const caseService = {
     }
     return response;
   },
-  
+
   getCasesByStatus: async (status) => {
     const response = await api.get(`/api/cases/status/${status}`);
     if (Array.isArray(response.data)) {
@@ -78,25 +78,25 @@ export const caseService = {
     }
     return response;
   },
-  
-  updateStatus: (caseId, status) => 
+
+  updateStatus: (caseId, status) =>
     api.put(`/api/cases/${caseId}/status`, null, { params: { status } }),
-  
+
   assignOfficer: (caseId, officerId) =>
     api.put(`/api/cases/${caseId}/assign/officer`, null, { params: { officerId } }),
-  
+
   assignSocialWorker: (caseId, workerId) =>
     api.put(`/api/cases/${caseId}/assign/social-worker`, null, { params: { workerId } }),
-  
+
   deleteCase: (caseId) => api.delete(`/api/cases/${caseId}`),
-  
+
   getAllCasesWithDetails: () => api.get('/api/cases/admin/all-details'),
-  
+
   getPublicActiveCases: () => api.get('/api/cases/public/active'),
-  
+
   // Close/Decline case with reason
-  closeCase: (caseId, reason) => 
-    api.put(`/api/cases/${caseId}/close`, { reason, solution: reason })
+  closeCase: (caseId, reason) =>
+    caseService.updateStatus(caseId, 'CLOSED')
 };
 
 export const caseAPI = caseService;

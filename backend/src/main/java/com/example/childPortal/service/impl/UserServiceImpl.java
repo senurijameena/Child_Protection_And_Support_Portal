@@ -111,6 +111,19 @@ public class UserServiceImpl implements UserService {
             user.setProfilePhoto(request.getProfilePhoto());
         }
 
+        // Pre-validation for role-specific unique fields
+        if (request.getRole() == Role.PO) {
+            String badgeNumber = request.getBadgeNumber();
+            if (policeOfficerRepository.existsByBadgeNumber(badgeNumber)) {
+                return new LoginResponse(null, "Badge number " + badgeNumber + " is already registered", false);
+            }
+        } else if (request.getRole() == Role.SW) {
+            String licenseNumber = request.getLicenseNumber();
+            if (socialWorkerRepository.existsByLicenseNumber(licenseNumber)) {
+                return new LoginResponse(null, "License number " + licenseNumber + " is already registered", false);
+            }
+        }
+
         try {
             user = userRepository.save(user);
 

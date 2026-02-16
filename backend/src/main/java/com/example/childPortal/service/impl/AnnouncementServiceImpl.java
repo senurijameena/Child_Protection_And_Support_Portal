@@ -5,6 +5,7 @@ import com.example.childPortal.model.Announcement;
 import com.example.childPortal.model.Announcement.AnnouncementType;
 import com.example.childPortal.repository.AnnouncementRepository;
 import com.example.childPortal.service.AnnouncementService;
+import com.example.childPortal.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,9 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     @Autowired
     private AnnouncementRepository announcementRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public List<AnnouncementDTO> getActiveAnnouncements() {
@@ -66,6 +70,21 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         announcement.setCreatedAt(LocalDateTime.now());
 
         announcement = announcementRepository.save(announcement);
+
+        // Post-create side effects based on announcement type
+        if (announcement.getType() == AnnouncementType.MAINTENANCE) {
+            // Maintenance → in-app notification to all users
+            notificationService.sendMaintenanceAnnouncementToAllUsers(
+                    announcement.getId(),
+                    announcement.getTitle(),
+                    announcement.getMessage());
+        } else if (announcement.getType() == AnnouncementType.WORKSHOP) {
+            // Workshop → email to all public users and social workers
+            notificationService.sendWorkshopAnnouncementEmailToPublicAndSocialWorkers(
+                    announcement.getTitle(),
+                    announcement.getMessage());
+        }
+
         return convertToDTO(announcement);
     }
 

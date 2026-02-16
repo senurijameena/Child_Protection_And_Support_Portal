@@ -6,10 +6,13 @@ import com.example.childPortal.model.CaseType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface CaseRepository extends MongoRepository<Case, String> {
     List<Case> findByReporterUserId(String reporterUserId);
 
@@ -21,9 +24,17 @@ public interface CaseRepository extends MongoRepository<Case, String> {
 
     List<Case> findByAssignedOfficerId(String officerId);
 
+    List<Case> findByAssignedStationId(String stationId);
+
     List<Case> findByAssignedWorkerId(String workerId);
 
     List<Case> findAllByOrderByReportDateDesc();
+
+    List<Case> findTop5ByOrderByReportDateDesc();
+
+    long countByEmergency(boolean emergency);
+
+    long countByStatusIn(List<CaseStatus> statuses);
 
     List<Case> findByLocationAndApproximateAgeAndGenderAndIncidentDateBetween(
             String location,

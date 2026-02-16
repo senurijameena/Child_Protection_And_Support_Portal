@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cases")
-@CrossOrigin(origins = "http://localhost:5173")
 public class CaseController {
 
     @Autowired
@@ -23,32 +22,28 @@ public class CaseController {
     @GetMapping("/admin/all-details")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<CaseDTO>> getAllCasesWithFullDetails() {
-        List<CaseDTO> cases = caseService.getAllCasesWithFullDetails(); 
+        List<CaseDTO> cases = caseService.getAllCasesWithFullDetails();
         return ResponseEntity.ok(cases);
     }
 
     @GetMapping("/public/active")
     public ResponseEntity<List<CaseDTO>> getActivePublicCases() {
-        List<CaseDTO> cases = caseService.getPublicActiveCases(); 
+        List<CaseDTO> cases = caseService.getPublicActiveCases();
         return ResponseEntity.ok(cases);
     }
-    
+
     @PostMapping("/report")
     public ResponseEntity<CaseResponse> reportCase(
             @RequestBody CaseReportRequest request,
             @AuthenticationPrincipal String userId) {
         CaseResponse response = caseService.reportCase(request, userId);
-        return response.isSuccess() ? 
-            ResponseEntity.ok(response) : 
-            ResponseEntity.badRequest().body(response);
+        return response.isSuccess() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
     }
 
     @GetMapping("/{caseId}")
     public ResponseEntity<CaseDTO> getCase(@PathVariable String caseId) {
         CaseDTO caseDTO = caseService.getCaseById(caseId);
-        return caseDTO != null ? 
-            ResponseEntity.ok(caseDTO) : 
-            ResponseEntity.notFound().build();
+        return caseDTO != null ? ResponseEntity.ok(caseDTO) : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/my-cases")
@@ -69,44 +64,79 @@ public class CaseController {
         return ResponseEntity.ok(cases);
     }
 
+    @GetMapping("/station/{stationId}")
+    public ResponseEntity<List<CaseDTO>> getCasesForStation(@PathVariable String stationId) {
+        List<CaseDTO> cases = caseService.getCasesForStation(stationId);
+        return ResponseEntity.ok(cases);
+    }
+
     @PutMapping("/{caseId}/status")
     public ResponseEntity<CaseDTO> updateCaseStatus(
-            @PathVariable String caseId, 
+            @PathVariable String caseId,
             @RequestParam CaseStatus status,
             @AuthenticationPrincipal String userId) {
         CaseDTO updatedCase = caseService.updateCaseStatus(caseId, status, userId);
-        return updatedCase != null ? 
-            ResponseEntity.ok(updatedCase) : 
-            ResponseEntity.notFound().build();
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{caseId}/notes")
+    public ResponseEntity<CaseDTO> updateCaseNotes(
+            @PathVariable String caseId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+        String notes = body.getOrDefault("notes", "");
+        CaseDTO updatedCase = caseService.updateCaseNotes(caseId, notes, userId);
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{caseId}/assign/officer")
     public ResponseEntity<CaseDTO> assignToOfficer(
-            @PathVariable String caseId, 
+            @PathVariable String caseId,
             @RequestParam String officerId,
             @AuthenticationPrincipal String adminId) {
         CaseDTO updatedCase = caseService.assignCaseToOfficer(caseId, officerId, adminId);
-        return updatedCase != null ? 
-            ResponseEntity.ok(updatedCase) : 
-            ResponseEntity.notFound().build();
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{caseId}/assign/station")
+    public ResponseEntity<CaseDTO> assignToStation(
+            @PathVariable String caseId,
+            @RequestParam String stationId,
+            @AuthenticationPrincipal String adminId) {
+        CaseDTO updatedCase = caseService.assignCaseToStation(caseId, stationId, adminId);
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{caseId}/assign/social-worker")
     public ResponseEntity<CaseDTO> assignToSocialWorker(
-            @PathVariable String caseId, 
+            @PathVariable String caseId,
             @RequestParam String workerId,
             @AuthenticationPrincipal String adminId) {
         CaseDTO updatedCase = caseService.assignCaseToSocialWorker(caseId, workerId, adminId);
-        return updatedCase != null ? 
-            ResponseEntity.ok(updatedCase) : 
-            ResponseEntity.notFound().build();
+        return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{caseId}/evidence")
+    public ResponseEntity<CaseDTO> uploadEvidence(
+            @PathVariable String caseId,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @AuthenticationPrincipal String userId) {
+        try {
+            // Mock file storage logic
+            String fileName = file.getOriginalFilename();
+            String evidenceUrl = "/uploads/case_evidence/" + caseId + "/" + fileName;
+
+            CaseDTO updatedCase = caseService.addEvidenceToCase(caseId, evidenceUrl);
+            return updatedCase != null ? ResponseEntity.ok(updatedCase) : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @DeleteMapping("/{caseId}")
     public ResponseEntity<String> deleteCase(@PathVariable String caseId) {
         boolean deleted = caseService.deleteCase(caseId);
-        return deleted ? 
-            ResponseEntity.ok("Case deleted successfully") : 
-            ResponseEntity.notFound().build();
+        return deleted ? ResponseEntity.ok("Case deleted successfully") : ResponseEntity.notFound().build();
     }
+
 }

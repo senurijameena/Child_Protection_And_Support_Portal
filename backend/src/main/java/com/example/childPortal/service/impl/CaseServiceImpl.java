@@ -12,7 +12,10 @@ import com.example.childPortal.model.Case.CaseStatus;
 import com.example.childPortal.repository.CaseRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
+import com.example.childPortal.service.CaseTimelineService;
 import com.example.childPortal.service.NotificationService;
+import com.example.childPortal.dto.CaseTimelineDTO;
+import com.example.childPortal.model.CaseTimelineEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,15 @@ public class CaseServiceImpl implements CaseService {
     private UserRepository userRepository;
     @Autowired(required = false)
     private NotificationService notificationService;
+
+    @Autowired(required = false)
+    private com.example.childPortal.service.SocialWorkerService socialWorkerService;
+
+    @Autowired(required = false)
+    private com.example.childPortal.service.PoliceOfficerService policeOfficerService;
+
+    @Autowired(required = false)
+    private CaseTimelineService caseTimelineService;
 
     @Override
     @Transactional
@@ -185,6 +197,11 @@ public class CaseServiceImpl implements CaseService {
                 notificationService.sendCaseCreatedNotification(reporterUserId, savedCase.getId(),
                         savedCase.getTrackingId(), request.isAnonymous());
             }
+            // Notify admins of new case
+            if (notificationService != null) {
+                notificationService.sendCaseCreatedNotificationToAdmin(savedCase.getId(),
+                        savedCase.getTrackingId(), savedCase.getCaseType() != null ? savedCase.getCaseType().name() : null);
+            }
 
             return new CaseResponse(savedCase.getId(), savedCase.getTrackingId(), "Case reported successfully", true);
         } catch (Exception e) {
@@ -260,6 +277,17 @@ public class CaseServiceImpl implements CaseService {
 
         Case updatedCase = caseRepository.save(caseEntity);
 
+        // Notify admins when police/anyone updates case status
+        if (notificationService != null) {
+            Optional<User> updater = userRepository.findById(updatedBy);
+            String updaterName = updater.map(User::getFullName).orElse(updatedBy);
+            notificationService.sendCaseStatusUpdateToAdmin(caseId, caseEntity.getTrackingId(),
+                    status.name(), updaterName);
+            if (status == CaseStatus.RESOLVED || status == CaseStatus.CLOSED) {
+                notificationService.sendCaseCompletedNotificationToAdmin(caseId, caseEntity.getTrackingId());
+            }
+        }
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -277,6 +305,31 @@ public class CaseServiceImpl implements CaseService {
         Case caseEntity = caseOpt.get();
         caseEntity.setAssignedOfficerId(officerId);
         caseEntity.setStatus(CaseStatus.ASSIGNED);
+        caseEntity.setLastUpdated(LocalDateTime.now());
+
+        Case updatedCase = caseRepository.save(caseEntity);
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
+    }
+
+    @Override
+    @Transactional
+    public CaseDTO assignCaseToStation(String caseId, String stationId, String assignedBy) {
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        if (caseOpt.isEmpty()) {
+            return null;
+        }
+
+        Case caseEntity = caseOpt.get();
+        caseEntity.setAssignedStationId(stationId);
+        // Whenever a station is assigned (and the case is not already completed), mark as ASSIGNED
+        if (caseEntity.getStatus() != CaseStatus.RESOLVED && caseEntity.getStatus() != CaseStatus.CLOSED) {
+            caseEntity.setStatus(CaseStatus.ASSIGNED);
+        }
         caseEntity.setLastUpdated(LocalDateTime.now());
 
         Case updatedCase = caseRepository.save(caseEntity);
@@ -384,6 +437,37 @@ public class CaseServiceImpl implements CaseService {
     public List<CaseDTO> getCasesForOfficer(String officerId) {
         List<Case> cases = caseRepository.findByAssignedOfficerId(officerId);
 
+        // Resilience: If this is a User ID, also check if there's a PoliceOfficer
+        // profile and find cases assigned to its ID
+        if (policeOfficerService != null) {
+            Optional<com.example.childPortal.model.PoliceOfficer> profile = policeOfficerService
+                    .getPoliceOfficerByUserId(officerId);
+            if (profile.isPresent()) {
+                String profileId = profile.get().getId();
+                if (!officerId.equals(profileId)) {
+                    List<Case> profileCases = caseRepository.findByAssignedOfficerId(profileId);
+                    for (Case pc : profileCases) {
+                        if (cases.stream().noneMatch(existing -> existing.getId().equals(pc.getId()))) {
+                            cases.add(pc);
+                        }
+                    }
+                }
+            }
+        }
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return cases.stream()
+                .map(caseEntity -> CaseDTO.createFilteredDTO(caseEntity, userRole, currentUserId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CaseDTO> getCasesForStation(String stationId) {
+        List<Case> cases = caseRepository.findByAssignedStationId(stationId);
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
         Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
@@ -396,6 +480,24 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<CaseDTO> getCasesForWorker(String workerId) {
         List<Case> cases = caseRepository.findByAssignedWorkerId(workerId);
+
+        // Resilience: If this is a User ID, also check if there's a SocialWorker
+        // profile and find cases assigned to its ID
+        if (socialWorkerService != null) {
+            Optional<com.example.childPortal.model.SocialWorker> profile = socialWorkerService
+                    .getSocialWorkerByUserId(workerId);
+            if (profile.isPresent()) {
+                String profileId = profile.get().getId();
+                if (!workerId.equals(profileId)) {
+                    List<Case> profileCases = caseRepository.findByAssignedWorkerId(profileId);
+                    for (Case pc : profileCases) {
+                        if (cases.stream().noneMatch(existing -> existing.getId().equals(pc.getId()))) {
+                            cases.add(pc);
+                        }
+                    }
+                }
+            }
+        }
 
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userRepository.findById(currentUserId);
@@ -512,6 +614,63 @@ public class CaseServiceImpl implements CaseService {
                 .count();
     }
 
+    @Override
+    @Transactional
+    public CaseDTO addEvidenceToCase(String caseId, String evidenceUrl) {
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        if (caseOpt.isEmpty())
+            return null;
+
+        Case caseEntity = caseOpt.get();
+        List<String> evidence = caseEntity.getEvidenceUrls();
+        if (evidence == null) {
+            evidence = new ArrayList<>();
+        }
+        evidence.add(evidenceUrl);
+        caseEntity.setEvidenceUrls(evidence);
+        caseEntity.setLastUpdated(LocalDateTime.now());
+        Case updatedCase = caseRepository.save(caseEntity);
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
+    }
+
+    @Override
+    @Transactional
+    public CaseDTO declineCaseByOfficer(String caseId, String officerId, String reason) {
+        Optional<Case> caseOpt = caseRepository.findById(caseId);
+        if (caseOpt.isEmpty())
+            return null;
+
+        Case caseEntity = caseOpt.get();
+        String officerName = userRepository.findById(officerId).map(User::getFullName).orElse("Officer");
+        String note = String.format("[%s] Officer declined: %s", LocalDateTime.now(), reason);
+        String existingNotes = caseEntity.getCaseNotes();
+        caseEntity.setCaseNotes(existingNotes != null ? existingNotes + "\n" + note : note);
+        caseEntity.setLastUpdated(LocalDateTime.now());
+        Case updatedCase = caseRepository.save(caseEntity);
+
+        if (caseTimelineService != null) {
+            CaseTimelineDTO dto = new CaseTimelineDTO();
+            dto.setCaseId(caseId);
+            dto.setEventType(CaseTimelineEvent.EventType.NOTE_ADDED);
+            dto.setDescription("Officer declined: " + reason);
+            dto.setPerformedByUserId(officerId);
+            dto.setPerformedByName(officerName);
+            dto.setEventTime(LocalDateTime.now());
+            caseTimelineService.createTimelineEvent(dto);
+        }
+
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> currentUserOpt = userRepository.findById(currentUserId);
+        Role userRole = currentUserOpt.map(User::getRole).orElse(Role.PU);
+
+        return CaseDTO.createFilteredDTO(updatedCase, userRole, currentUserId);
+    }
+
     private CaseDTO convertToFullDTO(Case caseEntity) {
         CaseDTO dto = new CaseDTO();
         dto.setId(caseEntity.getId());
@@ -529,6 +688,7 @@ public class CaseServiceImpl implements CaseService {
         dto.setEvidenceUrls(caseEntity.getEvidenceUrls());
         dto.setStatus(caseEntity.getStatus());
         dto.setAssignedOfficerId(caseEntity.getAssignedOfficerId());
+        dto.setAssignedStationId(caseEntity.getAssignedStationId());
         dto.setAssignedWorkerId(caseEntity.getAssignedWorkerId());
         dto.setReportDate(caseEntity.getReportDate());
         dto.setPriority(caseEntity.getPriority());

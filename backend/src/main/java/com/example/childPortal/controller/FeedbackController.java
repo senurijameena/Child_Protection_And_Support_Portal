@@ -50,6 +50,12 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackList); 
     } 
 
+    @GetMapping("/help-request/{requestId}/latest")
+    public ResponseEntity<FeedbackResponseDTO> getLatestFeedbackForHelpRequest(@PathVariable String requestId) {
+        FeedbackResponseDTO feedback = feedbackService.getLatestFeedbackByHelpRequest(requestId);
+        return feedback != null ? ResponseEntity.ok(feedback) : ResponseEntity.notFound().build();
+    }
+
     @GetMapping("/all") 
     public ResponseEntity<List<FeedbackResponseDTO>> getAllFeedback() { 
         List<FeedbackResponseDTO> feedbackList = feedbackService.getAllFeedback(); 
@@ -96,6 +102,19 @@ public class FeedbackController {
         FeedbackResponseDTO updatedFeedback = feedbackService.respondToFeedback(feedbackId, request.getResponse(), adminId); 
         return updatedFeedback != null ? ResponseEntity.ok(updatedFeedback) : ResponseEntity.notFound().build(); 
     } 
+
+    @PostMapping("/{feedbackId}/social-worker-response")
+    public ResponseEntity<FeedbackResponseDTO> respondToFeedbackAsSocialWorker(
+            @PathVariable String feedbackId,
+            @RequestBody AdminResponseRequest request,
+            @AuthenticationPrincipal String userId) {
+        if (request.getResponse() == null || request.getResponse().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        FeedbackResponseDTO updatedFeedback = feedbackService.respondToFeedbackAsSocialWorker(
+                feedbackId, request.getResponse(), userId);
+        return updatedFeedback != null ? ResponseEntity.ok(updatedFeedback) : ResponseEntity.notFound().build();
+    }
 
     @DeleteMapping("/{feedbackId}") 
     public ResponseEntity<String> deleteFeedback(@PathVariable String feedbackId) { 

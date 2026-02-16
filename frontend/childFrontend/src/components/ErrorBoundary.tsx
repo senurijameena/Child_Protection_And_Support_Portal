@@ -1,65 +1,46 @@
-import { Component } from 'react';
-import type { ErrorInfo, ReactNode } from 'react';
-import { Container, Alert, Button } from 'react-bootstrap';
+import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 interface Props {
-  children: ReactNode;
+  children: ReactNode
+  fallback?: ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+  hasError: boolean
+  error: Error | null
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorInfo: null };
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props)
+    this.state = { hasError: false, error: null }
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo
-    });
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error }
   }
 
-  public render() {
-    if (this.state.hasError) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      if (this.props.fallback) return this.props.fallback
       return (
-        <Container className="mt-5">
-          <Alert variant="danger">
-            <Alert.Heading>Something went wrong!</Alert.Heading>
-            <p>{this.state.error && this.state.error.toString()}</p>
-            {this.state.errorInfo && (
-              <details style={{ whiteSpace: 'pre-wrap' }}>
-                {this.state.errorInfo.componentStack}
-              </details>
-            )}
-            <Button
-              variant="primary"
-              onClick={() => {
-                this.setState({ hasError: false, error: null, errorInfo: null });
-                window.location.href = '/';
-              }}
-            >
-              Go to Home
-            </Button>
-          </Alert>
-        </Container>
-      );
+        <div className="p-4 border border-danger rounded bg-light">
+          <h5 className="text-danger">Something went wrong</h5>
+          <p className="small text-muted mb-2">{this.state.error.message}</p>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-primary"
+            onClick={() => this.setState({ hasError: false, error: null })}
+          >
+            Try again
+          </button>
+        </div>
+      )
     }
-
-    return this.props.children;
+    return this.props.children
   }
 }
-
-export default ErrorBoundary;
-

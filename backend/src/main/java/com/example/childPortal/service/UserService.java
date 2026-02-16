@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface UserService {
     LoginResponse registerUser(RegisterRequest request);
+    LoginResponse registerPoliceStation(RegisterRequest request);
     LoginResponse loginUser(LoginRequest request);
     Optional<User> getUserById(String userId);
     UserDTO getUserProfile(String userId);
@@ -40,4 +41,6 @@ public interface UserService {
     void removeProfilePhoto(String userId);
 
     UserDTO updateUserProfile(String userId, UserUpdateRequest updateRequest);
+
+    void changePassword(String userId, String currentPassword, String newPassword);
 }

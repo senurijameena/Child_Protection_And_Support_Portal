@@ -36,13 +36,16 @@ public class MessageServiceImpl implements MessageService {
     @Autowired
     private HelpRequestRepository helpRequestRepository;
 
+    @Autowired
+    private com.example.childPortal.service.NotificationService notificationService;
+
     @Override
     public List<ConversationDTO> getConversations(String userId) {
 
         List<Message> allMessages = messageRepository.findByFromUserIdOrToUserIdOrderBySentAtDesc(userId, userId);
 
         Map<String, List<Message>> conversationsMap = new HashMap<>();
-        
+
         for (Message msg : allMessages) {
             String participantId;
             if (msg.getFromUserId().equals(userId)) {
@@ -50,12 +53,12 @@ public class MessageServiceImpl implements MessageService {
             } else {
                 participantId = msg.getFromUserId();
             }
-            
+
             conversationsMap.computeIfAbsent(participantId, k -> new ArrayList<>()).add(msg);
         }
 
         List<ConversationDTO> conversations = new ArrayList<>();
-        
+
         for (Map.Entry<String, List<Message>> entry : conversationsMap.entrySet()) {
             String participantId = entry.getKey();
             List<Message> messages = entry.getValue();
@@ -63,14 +66,15 @@ public class MessageServiceImpl implements MessageService {
             Message lastMessage = messages.get(0);
 
             long unreadCount = messages.stream()
-                .filter(m -> m.getToUserId().equals(userId) && !m.isRead())
-                .count();
+                    .filter(m -> m.getToUserId().equals(userId) && !m.isRead())
+                    .count();
 
             Optional<User> participantOpt = userRepository.findById(participantId);
-            if (!participantOpt.isPresent()) continue;
-            
+            if (!participantOpt.isPresent())
+                continue;
+
             User participant = participantOpt.get();
-            
+
             ConversationDTO dto = new ConversationDTO();
             dto.setId(participantId); // Use participantId as conversation ID
             dto.setParticipantId(participantId);
@@ -87,7 +91,7 @@ public class MessageServiceImpl implements MessageService {
                     dto.setCaseTrackingId(caseOpt.get().generateTrackingId());
                 }
             }
-            
+
             if (lastMessage.getRelatedRequestId() != null) {
                 dto.setRelatedRequestId(lastMessage.getRelatedRequestId());
                 Optional<HelpRequest> requestOpt = helpRequestRepository.findById(lastMessage.getRelatedRequestId());
@@ -95,19 +99,19 @@ public class MessageServiceImpl implements MessageService {
                     dto.setRequestTrackingId(requestOpt.get().generateTrackingId());
                 }
             }
-            
+
             conversations.add(dto);
         }
 
         conversations.sort((a, b) -> b.getLastMessageTime().compareTo(a.getLastMessageTime()));
-        
+
         return conversations;
     }
 
     @Override
     public List<MessageDTO> getConversationMessages(String userId, String participantId) {
         List<Message> messages = messageRepository.findConversationMessagesOrdered(userId, participantId);
-        
+
         return messages.stream().map(msg -> convertToDTO(msg, userId)).collect(Collectors.toList());
     }
 
@@ -121,8 +125,16 @@ public class MessageServiceImpl implements MessageService {
         message.setRelatedRequestId(request.getRelatedRequestId());
         message.setSentAt(LocalDateTime.now());
         message.setRead(false);
-        
+
         Message saved = messageRepository.save(message);
+
+        // Notify recipient
+        if (notificationService != null) {
+            String fromUserName = userRepository.findById(fromUserId).map(User::getFullName).orElse("Someone");
+            notificationService.sendNewMessageNotification(request.getToUserId(), fromUserId, fromUserName,
+                    request.getMessage());
+        }
+
         return convertToDTO(saved, fromUserId);
     }
 
@@ -156,15 +168,14 @@ public class MessageServiceImpl implements MessageService {
 
         Optional<User> fromUser = userRepository.findById(message.getFromUserId());
         Optional<User> toUser = userRepository.findById(message.getToUserId());
-        
+
         if (fromUser.isPresent()) {
             dto.setFromUserName(fromUser.get().getFullName());
         }
         if (toUser.isPresent()) {
             dto.setToUserName(toUser.get().getFullName());
         }
-        
+
         return dto;
     }
 }
-

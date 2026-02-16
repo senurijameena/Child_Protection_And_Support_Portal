@@ -11,6 +11,8 @@ public class CaseTimelineDTO {
     private String description;
     private String performedByUserId;
     private String performedByName;
+    private String performedByRole;
+    private String title;
     private LocalDateTime eventTime;
 
     public CaseTimelineDTO() {}
@@ -29,6 +31,10 @@ public class CaseTimelineDTO {
     public void setPerformedByUserId(String performedByUserId) { this.performedByUserId = performedByUserId; }
     public String getPerformedByName() { return performedByName; }
     public void setPerformedByName(String performedByName) { this.performedByName = performedByName; }
+    public String getPerformedByRole() { return performedByRole; }
+    public void setPerformedByRole(String performedByRole) { this.performedByRole = performedByRole; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
     public LocalDateTime getEventTime() { return eventTime; }
     public void setEventTime(LocalDateTime eventTime) { this.eventTime = eventTime; }
 }

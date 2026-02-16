@@ -1,25 +1,21 @@
-import React from 'react';
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
-import LandingStatistics from '../components/LandingStatistics';
-import HowItWorks from '../components/HowItWorks';
-import TestimonialsSection from '../components/TestimonialsSection';
-import Footer from '../components/Footer';
-import FeaturesShowcase from '../components/FeaturesShowcase';
+import { PublicNavbar } from '../components/PublicNavbar'
+import { HeroSection } from '../components/HeroSection'
+import { AboutSection } from '../components/AboutSection'
+import { FeaturesSection } from '../components/FeaturesSection'
+import { TestimonialsSection } from '../components/TestimonialsSection'
+import { LandingFooter } from '../components/LandingFooter'
 
-const LandingPage: React.FC = () => {
+export function LandingPage() {
   return (
-    <>
-      <Header />
-      <HeroSection />
-      <LandingStatistics />
-      <HowItWorks />
-      <FeaturesShowcase />
-      <TestimonialsSection />
-      <Footer />
-    </>
-  );
-};
-
-export default LandingPage;
-
+    <div className="d-flex flex-column min-vh-100 landing-page-root">
+      <PublicNavbar />
+      <main className="flex-grow-1 landing-page-main">
+        <HeroSection />
+        <AboutSection />
+        <FeaturesSection />
+        <TestimonialsSection />
+      </main>
+      <LandingFooter />
+    </div>
+  )
+}

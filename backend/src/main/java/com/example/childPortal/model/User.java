@@ -11,6 +11,7 @@ public class User {
     private String fullName;
     private String email;
     private String phone;
+    private String address;
     private String password;
     private Role role;
     private boolean active;
@@ -25,144 +26,189 @@ public class User {
     private String statusNote;
 
     private int currentCaseCount;
-    private int currentHelpRequestCount; 
+    private int currentHelpRequestCount;
     private int maxCapacity;
-    
+
     private WorkSchedule workSchedule;
 
     public User() {
         this.registrationDate = LocalDateTime.now();
         this.active = true;
         this.approved = true; // Auto-approve all users on registration
-        this.availabilityStatus = AvailabilityStatus.AVAILABLE; 
-        this.statusChangedAt = LocalDateTime.now(); 
+        this.availabilityStatus = AvailabilityStatus.AVAILABLE;
+        this.statusChangedAt = LocalDateTime.now();
         this.currentCaseCount = 0;
         this.currentHelpRequestCount = 0;
-        this.maxCapacity = 10; 
+        this.maxCapacity = 10;
     }
 
-    public String getId() { 
-        return id; 
+    public String getId() {
+        return id;
     }
-    public void setId(String id) { 
-        this.id = id; 
+
+    public void setId(String id) {
+        this.id = id;
     }
-    public String getFullName() { 
+
+    public String getFullName() {
         return fullName;
     }
+
     public void setFullName(String fullName) {
-        this.fullName = fullName; 
+        this.fullName = fullName;
     }
+
     public String getEmail() {
-        return email; 
+        return email;
     }
-    public void setEmail(String email) { 
-        this.email = email; 
+
+    public void setEmail(String email) {
+        this.email = email;
     }
+
     public String getPhone() {
-        return phone; 
+        return phone;
     }
+
     public void setPhone(String phone) {
         this.phone = phone;
     }
-    public String getPassword() { 
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPassword() {
         return password;
     }
-    public void setPassword(String password) { 
+
+    public void setPassword(String password) {
         this.password = password;
     }
-    public Role getRole() { 
-        return role; 
+
+    public Role getRole() {
+        return role;
     }
-    public void setRole(Role role) { 
-        this.role = role; 
+
+    public void setRole(Role role) {
+        this.role = role;
     }
-    public boolean isActive() { 
-        return active; 
+
+    public boolean isActive() {
+        return active;
     }
-    public void setActive(boolean active) { 
-        this.active = active; 
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
-    public boolean isApproved() { 
-        return approved; 
+
+    public boolean isApproved() {
+        return approved;
     }
-    public void setApproved(boolean approved) { 
-        this.approved = approved; 
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
     }
+
     public String getOfficialIdFile() {
-        return officialIdFile; 
+        return officialIdFile;
     }
+
     public void setOfficialIdFile(String officialIdFile) {
-        this.officialIdFile = officialIdFile; 
+        this.officialIdFile = officialIdFile;
     }
+
     public String getProfilePhoto() {
         return profilePhoto;
     }
+
     public void setProfilePhoto(String profilePhoto) {
         this.profilePhoto = profilePhoto;
     }
-    public LocalDateTime getRegistrationDate() { 
+
+    public LocalDateTime getRegistrationDate() {
         return registrationDate;
     }
-    public void setRegistrationDate(LocalDateTime registrationDate) { 
-        this.registrationDate = registrationDate; 
+
+    public void setRegistrationDate(LocalDateTime registrationDate) {
+        this.registrationDate = registrationDate;
     }
-    public LocalDateTime getLastLogin() { 
+
+    public LocalDateTime getLastLogin() {
         return lastLogin;
     }
-    public void setLastLogin(LocalDateTime lastLogin) { 
+
+    public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
     }
-    public AvailabilityStatus getAvailabilityStatus() { 
-        return availabilityStatus; 
-    } 
+
+    public AvailabilityStatus getAvailabilityStatus() {
+        return availabilityStatus;
+    }
+
     public void setAvailabilityStatus(AvailabilityStatus availabilityStatus) {
         this.availabilityStatus = availabilityStatus;
-        this.statusChangedAt = LocalDateTime.now(); 
+        this.statusChangedAt = LocalDateTime.now();
     }
-    public LocalDateTime getStatusChangedAt() { 
+
+    public LocalDateTime getStatusChangedAt() {
         return statusChangedAt;
     }
+
     public void setStatusChangedAt(LocalDateTime statusChangedAt) {
         this.statusChangedAt = statusChangedAt;
     }
-    public String getStatusNote() { 
+
+    public String getStatusNote() {
         return statusNote;
     }
-    public void setStatusNote(String statusNote) { 
-        this.statusNote = statusNote; 
+
+    public void setStatusNote(String statusNote) {
+        this.statusNote = statusNote;
     }
-    public int getCurrentCaseCount() { 
-        return currentCaseCount; 
+
+    public int getCurrentCaseCount() {
+        return currentCaseCount;
     }
+
     public void setCurrentCaseCount(int currentCaseCount) {
         this.currentCaseCount = currentCaseCount;
     }
-    public int getCurrentHelpRequestCount() { 
+
+    public int getCurrentHelpRequestCount() {
         return currentHelpRequestCount;
-    } 
+    }
+
     public void setCurrentHelpRequestCount(int currentHelpRequestCount) {
-        this.currentHelpRequestCount = currentHelpRequestCount; 
+        this.currentHelpRequestCount = currentHelpRequestCount;
     }
-    public int getMaxCapacity() { 
-        return maxCapacity; 
+
+    public int getMaxCapacity() {
+        return maxCapacity;
     }
-    public void setMaxCapacity(int maxCapacity) { 
-        this.maxCapacity = maxCapacity; 
+
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
     }
+
     public WorkSchedule getWorkSchedule() {
         return workSchedule;
     }
+
     public void setWorkSchedule(WorkSchedule workSchedule) {
         this.workSchedule = workSchedule;
     }
-    
+
     public boolean canTakeMoreAssignments() {
         if (availabilityStatus == AvailabilityStatus.OFF_DUTY) {
             return false;
         }
         if (availabilityStatus == AvailabilityStatus.EMERGENCY_ONLY) {
-            return false; 
+            return false;
         }
         if (role == Role.PO) {
             return currentCaseCount < maxCapacity;
@@ -171,17 +217,19 @@ public class User {
         }
         return true;
     }
-    
+
     public boolean isAvailableForEmergency() {
-        return availabilityStatus != AvailabilityStatus.OFF_DUTY; 
+        return availabilityStatus != AvailabilityStatus.OFF_DUTY;
     }
+
     public void incrementAssignmentCount() {
-    if (role == Role.PO) {
-        currentCaseCount++;
-    } else if (role == Role.SW) {
-        currentHelpRequestCount++;
+        if (role == Role.PO) {
+            currentCaseCount++;
+        } else if (role == Role.SW) {
+            currentHelpRequestCount++;
+        }
     }
-    }
+
     public void decrementAssignmentCount() {
 
         if (role == Role.PO) {
@@ -191,8 +239,3 @@ public class User {
         }
     }
 }
-
-
-
-
-

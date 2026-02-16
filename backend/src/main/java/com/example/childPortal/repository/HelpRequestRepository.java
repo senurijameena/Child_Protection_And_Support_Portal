@@ -5,8 +5,11 @@ import com.example.childPortal.model.HelpRequest.RequestStatus;
 import com.example.childPortal.model.HelpType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
+@Repository
 public interface HelpRequestRepository extends MongoRepository<HelpRequest, String> {
     List<HelpRequest> findByRequesterUserId(String requesterUserId);
 
@@ -20,6 +23,10 @@ public interface HelpRequestRepository extends MongoRepository<HelpRequest, Stri
 
     List<HelpRequest> findByAnonymous(boolean anonymous);
 
+    List<HelpRequest> findTop5ByOrderByRequestDateDesc();
+
+    long countByStatusIn(List<RequestStatus> statuses);
+
     List<HelpRequest> findAllByOrderByRequestDateDesc();
 
     List<HelpRequest> findByLocationContainingIgnoreCase(String location);
@@ -32,4 +39,6 @@ public interface HelpRequestRepository extends MongoRepository<HelpRequest, Stri
 
     @Query("{ 'trackingId': { $regex: ?0, $options: 'i' } }")
     List<HelpRequest> findByTrackingIdStartingWith(String prefix);
+
+    Optional<HelpRequest> findByTrackingId(String trackingId);
 }

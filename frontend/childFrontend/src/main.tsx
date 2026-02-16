@@ -1,16 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import App from './App'
-import ErrorBoundary from './components/ErrorBoundary'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import './index.css'
+import App from './App.tsx'
 
-console.log('React app is loading...');
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BrowserRouter>
       <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
+    </BrowserRouter>
+  </StrictMode>,
 )

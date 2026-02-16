@@ -1,220 +1,120 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Card, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import apiService from '../services/apiService';
-import type { Feedback } from '../types';
-import './TestimonialsSection.css';
+import { useEffect, useMemo, useState } from 'react'
+import { Container, Row, Col, Card } from 'react-bootstrap'
+import { getPublicFeedback } from '../services/feedbackApi'
+import type { FeedbackResponseDTO } from '../types/admin'
 
-const TestimonialsSection: React.FC = () => {
-  const navigate = useNavigate();
-  const [testimonials, setTestimonials] = useState<Feedback[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
+const fallbackTestimonials = [
+  {
+    quote:
+      'This portal made it easy for us to connect with support when we needed it most. The response was fast and caring.',
+    author: 'Sarah M.',
+    role: 'Parent / Caregiver',
+    rating: 5,
+  },
+  {
+    quote:
+      'As a social worker, the streamlined case management and follow-up tools have significantly improved our efficiency.',
+    author: 'David K.',
+    role: 'Social Worker',
+    rating: 5,
+  },
+  {
+    quote:
+      'Clear communication between police and social services helps us protect children faster. This portal bridges that gap.',
+    author: 'Officer James L.',
+    role: 'Police Station',
+    rating: 5,
+  },
+]
 
-  useEffect(() => {
-    const fetchTestimonials = async () => {
-      try {
-        setLoading(true);
-        const feedback = await apiService.getPublicFeedback();
+function roleLabelFromFeedback(item: FeedbackResponseDTO): string {
+  const source = `${item.type || ''} ${item.category || ''}`.toUpperCase()
+  if (source.includes('SOCIAL')) return 'Social Worker'
+  if (source.includes('POLICE')) return 'Police Station'
+  if (source.includes('HELP_REQUEST')) return 'Support Request'
+  if (source.includes('SYSTEM')) return 'Portal User'
+  return 'Community Member'
+}
 
-        const filtered = feedback
-          .filter(f => f.rating && f.rating >= 4 && f.comment && f.comment.trim().length > 0)
-          .slice(0, 8);
+function shortName(name?: string): string {
+  if (!name || !name.trim()) return 'Anonymous User'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[1].charAt(0)}.`
+}
 
-        const testimonialsToShow = filtered.length > 0
-          ? filtered
-          : feedback.filter(f => f.comment && f.comment.trim().length > 0).slice(0, 8);
-
-        setTestimonials(testimonialsToShow);
-      } catch (err) {
-        console.error('Error fetching testimonials:', err);
-
-        setTestimonials([
-          {
-            id: '1',
-            userId: 'user1',
-            userName: 'Parent, Mumbai',
-            rating: 5,
-            comment: 'This system saved my daughter. Within 2 hours, help arrived and she\'s now safe.',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            userId: 'user2',
-            userName: 'Community Member',
-            rating: 5,
-            comment: 'Excellent service! The coordination between different agencies was seamless. Highly recommend.',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: '3',
-            userId: 'user3',
-            userName: 'Parent',
-            rating: 5,
-            comment: 'The 24/7 support is amazing. I got help when I needed it most. Thank you for this initiative.',
-            createdAt: new Date().toISOString()
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTestimonials();
-  }, []);
+export function TestimonialsSection() {
+  const [feedback, setFeedback] = useState<FeedbackResponseDTO[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (testimonials.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [testimonials.length]);
+    getPublicFeedback()
+      .then((rows) => setFeedback(Array.isArray(rows) ? rows : []))
+      .catch(() => setFeedback([]))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const nextTestimonial = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-  };
+  const testimonials = useMemo(() => {
+    const mapped = feedback
+      .filter((f) => !!(f.message || f.description))
+      .slice(0, 3)
+      .map((f) => ({
+        quote: (f.message || f.description || '').trim(),
+        author: shortName(f.userName || (f.anonymous ? 'Anonymous User' : undefined)),
+        role: roleLabelFromFeedback(f),
+        rating: Math.max(1, Math.min(5, Number(f.rating || 5))),
+      }))
+    return mapped.length > 0 ? mapped : fallbackTestimonials
+  }, [feedback])
 
-  const prevTestimonial = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
-
-  const goToTestimonial = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
-
-  if (loading) {
-    return (
-      <section className="testimonials-section py-5" id="testimonials">
-        <Container>
-          <div className="text-center mb-5">
-            <h2 className="display-5 fw-bold text-primary mb-3">
-              🌟 REAL SUCCESS STORIES
-            </h2>
-          </div>
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        </Container>
-      </section>
-    );
-  }
-
-  if (testimonials.length === 0) {
-    return (
-      <section className="testimonials-section py-5" id="testimonials">
-        <Container>
-          <div className="text-center mb-5">
-            <h2 className="display-5 fw-bold text-primary mb-3">
-              🌟 REAL SUCCESS STORIES
-            </h2>
-          </div>
-          <div className="text-center py-5">
-            <p className="text-muted">No testimonials available at the moment.</p>
-          </div>
-        </Container>
-      </section>
-    );
-  }
-
-  const currentTestimonial = testimonials[currentIndex];
+  const averageRating = useMemo(() => {
+    const ratings = feedback
+      .map((f) => Number(f.rating))
+      .filter((r) => Number.isFinite(r) && r > 0)
+    if (ratings.length === 0) return 5
+    return ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+  }, [feedback])
 
   return (
-    <section className="testimonials-section py-5" id="testimonials">
+    <section className="py-5 my-5 bg-light landing-testimonials-section">
       <Container>
         <div className="text-center mb-5">
-          <h2 className="display-5 fw-bold text-primary mb-3">
-            🌟 REAL SUCCESS STORIES
-          </h2>
-          <p className="lead text-muted">
-            Hear from families and communities we've helped
+          <div className="landing-section-pill mb-2 d-inline-block">Community Voices</div>
+          <h2 className="display-5 fw-bold text-dark mb-3">Success Stories & Trust</h2>
+          <p className="lead text-secondary mx-auto" style={{ maxWidth: '600px' }}>
+            Real feedback from people using the portal every day
           </p>
-        </div>
-
-        <div className="testimonials-carousel">
-          <div className="carousel-controls">
-            <Button
-              variant="outline-primary"
-              className="carousel-btn prev-btn"
-              onClick={prevTestimonial}
-              aria-label="Previous testimonial"
-            >
-              ←
-            </Button>
-            <Button
-              variant="outline-primary"
-              className="carousel-btn next-btn"
-              onClick={nextTestimonial}
-              aria-label="Next testimonial"
-            >
-              →
-            </Button>
-          </div>
-
-          <Card className="testimonial-card border-0 shadow-lg">
-            <Card.Body className="p-5">
-              <div className="testimonial-content">
-                <div className="testimonial-avatar mb-4">
-                  <div className="avatar-circle">
-                    <i className="bi bi-person-circle"></i>
-                  </div>
-                </div>
-                <blockquote className="testimonial-quote mb-4">
-                  "{currentTestimonial.comment}"
-                </blockquote>
-                <div className="testimonial-author-info">
-                  <div className="author-name fw-bold text-primary">
-                    {currentTestimonial.userName || 'Verified Citizen'}
-                  </div>
-                  <div className="testimonial-meta text-muted small">
-                    📍 Case ID: {currentTestimonial.id?.substring(0, 8).toUpperCase()} |
-                    Type: {currentTestimonial.userId?.startsWith('PO') ? 'Police Feedback' :
-                      currentTestimonial.userId?.startsWith('SW') ? 'Social Worker Feedback' :
-                        'Public Case'} |
-                    Date: {formatDate(currentTestimonial.createdAt)}
-                  </div>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-
-          <div className="carousel-indicators mt-4">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                className={`indicator-dot ${index === currentIndex ? 'active' : ''}`}
-                onClick={() => goToTestimonial(index)}
-                aria-label={`Go to testimonial ${index + 1}`}
-              />
-            ))}
-            <span className="indicator-text ms-3">
-              {currentIndex + 1}/{testimonials.length} testimonials
+          <div className="landing-feedback-meta mt-3">
+            <span className="landing-feedback-pill">
+              ⭐ {loading ? '...' : averageRating.toFixed(1)} / 5 average rating
+            </span>
+            <span className="landing-feedback-pill">
+              {loading ? 'Loading...' : `${feedback.length || testimonials.length} public feedback entries`}
             </span>
           </div>
         </div>
-
-        <div className="text-center mt-4">
-          <Button
-            variant="outline-primary"
-            onClick={() => {
-              const element = document.getElementById('statistics');
-              element?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            SEE SYSTEM IMPACT
-          </Button>
-        </div>
+        <Row className="g-4">
+          {testimonials.map((t, idx) => (
+            <Col key={idx} xs={12} md={4}>
+              <Card className="h-100 border-0 shadow-sm rounded-4 p-4 bg-white landing-testimonial-card">
+                <div className="mb-2">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <span key={i} className="text-warning fs-5">★</span>
+                  ))}
+                </div>
+                <Card.Text className="text-secondary mb-3 fst-italic">"{t.quote}"</Card.Text>
+                <div className="d-flex align-items-center gap-2">
+                  <div className="landing-avatar-badge">{t.author.charAt(0)}</div>
+                  <div>
+                  <strong className="text-dark">{t.author}</strong>
+                  <small className="d-block text-muted">{t.role}</small>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
       </Container>
     </section>
-  );
-};
-
-export default TestimonialsSection;
+  )
+}

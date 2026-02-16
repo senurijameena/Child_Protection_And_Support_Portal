@@ -23,6 +23,7 @@ public class TransferRequest {
     
     public enum TransferStatus {
         PENDING,
+        ACTIVE,
         APPROVED,
         REJECTED,
         CANCELLED

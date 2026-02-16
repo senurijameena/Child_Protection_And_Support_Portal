@@ -26,6 +26,7 @@ public class Case {
 
     private CaseStatus status;
     private String assignedOfficerId;
+    private String assignedStationId;
     private String assignedWorkerId;
     private Priority priority;
     private boolean emergency;
@@ -43,7 +44,8 @@ public class Case {
         INVESTIGATING,
         RESOLVED,
         CLOSED,
-        REJECTED
+        REJECTED,
+        CANCELLED
     }
 
     public Case() {
@@ -180,6 +182,14 @@ public class Case {
 
     public void setAssignedOfficerId(String assignedOfficerId) {
         this.assignedOfficerId = assignedOfficerId;
+    }
+
+    public String getAssignedStationId() {
+        return assignedStationId;
+    }
+
+    public void setAssignedStationId(String assignedStationId) {
+        this.assignedStationId = assignedStationId;
     }
 
     public String getAssignedWorkerId() {

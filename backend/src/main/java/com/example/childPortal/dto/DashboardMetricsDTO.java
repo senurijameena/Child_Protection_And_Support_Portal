@@ -11,11 +11,20 @@ public class DashboardMetricsDTO {
     private long pendingHelpRequests;
     private long totalUsers;
     private long pendingApprovals;
+    private long resolvedCases;
     private double averageResponseTime;
     private double caseResolutionRate;
     private Map<String, Long> casesByStatus;
     private Map<String, Long> helpRequestsByType;
     private LocalDateTime lastUpdated;
+
+    public long getResolvedCases() {
+        return resolvedCases;
+    }
+
+    public void setResolvedCases(long resolvedCases) {
+        this.resolvedCases = resolvedCases;
+    }
 
     public long getTotalCases() {
         return totalCases;
@@ -113,4 +122,3 @@ public class DashboardMetricsDTO {
         this.lastUpdated = lastUpdated;
     }
 }
-

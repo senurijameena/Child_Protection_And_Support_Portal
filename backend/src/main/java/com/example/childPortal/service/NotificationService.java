@@ -59,6 +59,13 @@ public class NotificationService {
                         "<p><strong>Request ID:</strong> {REQUEST_ID}</p>" +
                         "<a href='{REQUEST_URL}'>View Details</a>");
 
+        EMAIL_TEMPLATES.put("HELP_REQUEST_ASSIGNED",
+                "<h2>New Help Request Assigned</h2>" +
+                        "<p>A new help request has been assigned to you.</p>" +
+                        "<p><strong>Request ID:</strong> {REQUEST_ID}</p>" +
+                        "<p><strong>Priority:</strong> {PRIORITY}</p>" +
+                        "<a href='{REQUEST_URL}'>View Details</a>");
+
         EMAIL_TEMPLATES.put("REGISTRATION_SUCCESS",
                 "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>" +
                         "<h2 style='color: #1a56db;'>🎉 Registration Successful!</h2>" +
@@ -91,6 +98,22 @@ public class NotificationService {
                         "<p style='margin-top: 30px;'>Best regards,<br><strong>Child Protection and Support Portal Team</strong></p>"
                         +
                         "</div>");
+    }
+
+    /**
+     * Lightweight notification creator used across services.
+     * Persists to MongoDB and returns the saved entity.
+     */
+    public Notification createNotification(String userId, String type, String title, String message, String actionUrl) {
+        Notification notification = new Notification();
+        notification.setUserId(userId);
+        notification.setType(type);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setActionUrl(actionUrl);
+        notification.setRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        return notificationRepository.save(notification);
     }
 
     public void sendUserApprovalNotification(String userId) {
@@ -140,6 +163,80 @@ public class NotificationService {
         }
     }
 
+    public void sendHelpRequestAssignmentNotification(String userId, String requestId, String trackingId,
+            String priority, boolean isAnonymous) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Always send app notification with actionUrl
+        // Social workers view assigned requests in their dashboard at /social-worker/requests/:requestId
+        String actionUrl = "/social-worker/requests/" + requestId;
+
+        String title = "New Help Request Assigned";
+        logNotification(userId, "HELP_REQUEST_ASSIGNED", title,
+                "Help Request " + trackingId + " (" + priority + ") has been assigned to you.", actionUrl);
+
+        // Send email
+        String subject = "New Help Request Assigned - Child Protection Portal";
+        String content = EMAIL_TEMPLATES.get("HELP_REQUEST_ASSIGNED")
+                .replace("{REQUEST_ID}", trackingId)
+                .replace("{PRIORITY}", priority)
+                .replace("{REQUEST_URL}", appUrl + "/dashboard"); // Redirect to dashboard to see new requests
+        sendEmail(user.getEmail(), subject, content);
+    }
+
+    /**
+     * Notify all admins when a new case is submitted.
+     */
+    public void sendCaseCreatedNotificationToAdmin(String databaseId, String trackingId, String caseType) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/cases/" + databaseId;
+        String title = "New Case Submitted";
+        String message = "Case " + trackingId + " (" + (caseType != null ? caseType : "Unknown") + ") has been submitted for review.";
+        for (User admin : admins) {
+            logNotification(admin.getId(), "NEW_CASE_ADMIN", title, message, actionUrl);
+        }
+    }
+
+    /**
+     * Notify all admins when a new help request is submitted.
+     */
+    public void sendHelpRequestCreatedNotificationToAdmin(String databaseId, String trackingId, String helpType) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/help-requests/" + databaseId;
+        String title = "New Help Request Submitted";
+        String message = "Help Request " + trackingId + " (" + (helpType != null ? helpType : "Unknown") + ") has been submitted for review.";
+        for (User admin : admins) {
+            logNotification(admin.getId(), "NEW_HELP_REQUEST_ADMIN", title, message, actionUrl);
+        }
+    }
+
+    /**
+     * Notify all admins when police station updates case status.
+     */
+    public void sendCaseStatusUpdateToAdmin(String caseId, String trackingId, String status, String updatedBy) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/cases/" + caseId;
+        String title = "Case Status Updated";
+        String message = "Case " + trackingId + " updated to " + status + " by " + updatedBy;
+        for (User admin : admins) {
+            logNotification(admin.getId(), "CASE_STATUS_UPDATE_ADMIN", title, message, actionUrl);
+        }
+    }
+
+    /**
+     * Notify all admins when case/request is completed.
+     */
+    public void sendCaseCompletedNotificationToAdmin(String caseId, String trackingId) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String actionUrl = "/admin/cases/" + caseId;
+        String title = "Case Completed";
+        String message = "Case " + trackingId + " has been completed.";
+        for (User admin : admins) {
+            logNotification(admin.getId(), "CASE_COMPLETED_ADMIN", title, message, actionUrl);
+        }
+    }
+
     public void sendCaseCreatedNotification(String userId, String databaseId, String trackingId, boolean isAnonymous) {
         // Always send app notification with actionUrl
         String actionUrl = "/cases/" + databaseId;
@@ -186,6 +283,46 @@ public class NotificationService {
             } catch (Exception e) {
                 System.err.println("Failed to send help request creation email: " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Broadcast a maintenance announcement notification to all users.
+     */
+    public void sendMaintenanceAnnouncementToAllUsers(String announcementId, String title, String message) {
+        List<User> allUsers = userRepository.findAll();
+        String notificationTitle = (title != null && !title.isBlank()) ? title : "System Maintenance Notice";
+        String notificationMessage = (message != null && !message.isBlank())
+                ? message
+                : "The system will undergo maintenance. Some features may be temporarily unavailable.";
+
+        for (User user : allUsers) {
+            // Informational broadcast, no specific action URL required
+            logNotification(user.getId(), "MAINTENANCE_ANNOUNCEMENT", notificationTitle, notificationMessage, null);
+        }
+    }
+
+    /**
+     * Send workshop announcement emails to all public users and social workers.
+     */
+    public void sendWorkshopAnnouncementEmailToPublicAndSocialWorkers(String title, String message) {
+        String subject = (title != null && !title.isBlank())
+                ? "[Workshop] " + title
+                : "Upcoming Workshop - Child Protection and Support Portal";
+        String body = (message != null && !message.isBlank())
+                ? message
+                : "You are invited to an upcoming workshop on child protection and support. Please log in to the portal for more details.";
+
+        // Public users
+        List<User> publicUsers = userRepository.findByRole(Role.PU);
+        for (User user : publicUsers) {
+            sendEmail(user.getEmail(), subject, body);
+        }
+
+        // Social workers
+        List<User> socialWorkers = userRepository.findByRole(Role.SW);
+        for (User user : socialWorkers) {
+            sendEmail(user.getEmail(), subject, body);
         }
     }
 
@@ -372,5 +509,103 @@ public class NotificationService {
             default:
                 return appUrl + "/dashboard";
         }
+    }
+
+    public void sendHelpRequestUpdateToAdmin(String requestId, String status, String updatedBy, String trackingId) {
+        String subject = "Help Request Update: " + status;
+        String content = String.format(
+                "<h2>Help Request Updated</h2>" +
+                        "<p><strong>Request ID:</strong> %s</p>" +
+                        "<p><strong>Status:</strong> %s</p>" +
+                        "<p><strong>Updated By:</strong> %s</p>" +
+                        "<p><a href='%s/admin/help-requests/%s'>View Request</a></p>",
+                trackingId, status, updatedBy, appUrl, requestId);
+
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        for (User admin : admins) {
+            sendEmail(admin.getEmail(), subject, content);
+            logNotification(admin.getId(), "HELP_REQUEST_UPDATE_ADMIN",
+                    "Help Request " + trackingId + " updated to " + status, "/admin/help-requests/" + requestId);
+        }
+    }
+
+    public void sendNewMessageNotification(String toUserId, String fromUserId, String fromUserName,
+            String messagePreview) {
+        String title = "New Message from " + fromUserName;
+        String message = messagePreview.length() > 50 ? messagePreview.substring(0, 47) + "..." : messagePreview;
+        String actionUrl = "/messages?participantId=" + fromUserId;
+
+        logNotification(toUserId, "NEW_MESSAGE", title, message, actionUrl);
+    }
+
+    public void sendCompletedHelpReportToAdmin(
+            String requestId,
+            String trackingId,
+            String reportId,
+            String socialWorkerName,
+            String socialWorkerId) {
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        String title = "Completed Help Request Report Submitted";
+        String message = "Report " + reportId + " for " + trackingId
+                + " was submitted by " + socialWorkerName + " (" + socialWorkerId + ").";
+        String actionUrl = "/admin/help-requests/" + requestId;
+        for (User admin : admins) {
+            logNotification(admin.getId(), "COMPLETED_HELP_REPORT_SUBMITTED", title, message, actionUrl);
+        }
+    }
+
+    public void sendCompletedHelpReportReviewToSocialWorker(
+            String socialWorkerUserId,
+            String requestId,
+            String trackingId,
+            String reportId,
+            String decision,
+            String note) {
+        String title = "Completed Report Review Update";
+        String message = "Admin decision for report " + reportId + " (" + trackingId + "): " + decision
+                + (note != null && !note.isBlank() ? ". Note: " + note : "");
+        String actionUrl = "/social-worker/requests/" + requestId + "/report";
+        logNotification(socialWorkerUserId, "COMPLETED_HELP_REPORT_REVIEW", title, message, actionUrl);
+    }
+
+    public void sendHelpRequestCollaborationRequested(
+            String collaboratorUserId,
+            String requestId,
+            String trackingId,
+            String ownerName,
+            String permission) {
+        String title = "Collaboration Request";
+        String message = ownerName + " invited you to collaborate on "
+                + (trackingId != null ? trackingId : requestId)
+                + " with " + permission + " access.";
+        // Direct to Collaboration Center where user can view and respond to all pending requests
+        String actionUrl = "/social-worker/collaboration";
+        logNotification(collaboratorUserId, "HELP_COLLAB_REQUESTED", title, message, actionUrl);
+    }
+
+    public void sendHelpRequestCollaborationDecision(
+            String ownerUserId,
+            String requestId,
+            String trackingId,
+            String collaboratorName,
+            boolean accepted) {
+        String title = "Collaboration Response";
+        String message = collaboratorName + (accepted ? " accepted " : " rejected ")
+                + "your collaboration request for "
+                + (trackingId != null ? trackingId : requestId) + ".";
+        String actionUrl = "/social-worker/requests/" + requestId;
+        logNotification(ownerUserId, "HELP_COLLAB_RESPONSE", title, message, actionUrl);
+    }
+
+    public void sendHelpRequestCollaboratorRemoved(
+            String collaboratorUserId,
+            String requestId,
+            String trackingId,
+            String ownerName) {
+        String title = "Removed From Collaboration";
+        String message = ownerName + " removed you from collaboration on "
+                + (trackingId != null ? trackingId : requestId) + ".";
+        String actionUrl = "/social-worker/requests/" + requestId;
+        logNotification(collaboratorUserId, "HELP_COLLAB_REMOVED", title, message, actionUrl);
     }
 }

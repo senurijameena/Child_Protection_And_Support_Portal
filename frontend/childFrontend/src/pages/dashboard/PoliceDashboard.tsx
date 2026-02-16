@@ -11,7 +11,7 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
-import { authService } from '../../services/authService';
+import { useAuth } from '../../hooks/useAuth';
 import { policeService } from '../../services/policeService';
 import { Link } from 'react-router-dom';
 
@@ -49,7 +49,7 @@ const MOCK_ACTIVITY = [
 ];
 
 const PoliceDashboard: React.FC = () => {
-    const user = authService.getCurrentUser();
+    const { user } = useAuth();
     const [stats, setStats] = useState<any>(MOCK_STATS);
     const [cases, setCases] = useState<any[]>(MOCK_CASES);
     const [loading, setLoading] = useState(true);
@@ -165,8 +165,8 @@ const PoliceDashboard: React.FC = () => {
                 <Card.Body className="p-4">
                     <Row className="align-items-center">
                         <Col md={8}>
-                            <h2 className="mb-1 fw-bold">Welcome back, Officer {user?.name || 'User'}</h2>
-                            <p className="mb-0 opacity-75">Badge #{user?.id?.substring(0, 5).toUpperCase() || '12345'} | Rank: Sergeant</p>
+                            <h2 className="mb-1 fw-bold">Welcome back, Officer {user?.fullName || 'User'}</h2>
+                            <p className="mb-0 opacity-75">Badge #{user?.userId?.substring(0, 5).toUpperCase() || '12345'} | Rank: Sergeant</p>
                         </Col>
                         <Col md={4} className="text-md-end mt-3 mt-md-0">
                             <div className="d-inline-block bg-white bg-opacity-25 rounded px-3 py-2">

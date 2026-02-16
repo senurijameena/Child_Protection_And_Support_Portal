@@ -15,8 +15,6 @@ export type RequestStatus =
   | 'PACKAGE_PROPOSED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
-  | 'CLOSED'
-  | 'ARCHIVED'
   | 'REJECTED'
   | 'PACKAGE_REJECTED'
   | 'CANCELLED'
@@ -66,7 +64,6 @@ export interface CaseDTO {
   priority?: string
   caseNotes?: string
   gender?: string
-  approximateAge?: string
   photographUrl?: string
   physicalIdentificationMarks?: string
   lastSeenDressDetails?: string
@@ -85,15 +82,10 @@ export interface HelpRequestDTO {
   description?: string
   location?: string
   gender?: string
-  approximateAge?: string
   documentUrls?: string[]
-  requestNotes?: string
   status?: RequestStatus
   assignedWorkerId?: string
   requestDate?: string
-  completionDate?: string
-  closedDate?: string
-  archivedDate?: string
   priority?: string
   // Food Assistance fields
   familyMembers?: number
@@ -216,7 +208,6 @@ export interface AnnouncementDTO {
   id: string
   title: string
   message: string
-  link?: string
   icon?: string
   type: AnnouncementType
   active: boolean
@@ -356,8 +347,6 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   PACKAGE_PROPOSED: 'Package Proposed',
   IN_PROGRESS: 'In Progress',
   COMPLETED: 'Completed',
-  CLOSED: 'Closed',
-  ARCHIVED: 'Archived',
   REJECTED: 'Rejected',
   PACKAGE_REJECTED: 'Package Rejected',
   CANCELLED: 'Cancelled',
@@ -375,8 +364,6 @@ export const REQUEST_STATUS_BADGE_VARIANTS: Record<
   PACKAGE_PROPOSED: 'warning',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
-  CLOSED: 'dark',
-  ARCHIVED: 'secondary',
   REJECTED: 'danger',
   PACKAGE_REJECTED: 'danger',
   CANCELLED: 'danger',

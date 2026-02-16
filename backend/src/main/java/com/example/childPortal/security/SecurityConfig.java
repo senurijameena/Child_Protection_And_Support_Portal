@@ -101,12 +101,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/cases/public/**").permitAll()
                 .requestMatchers("/statistics/public").permitAll()
                 .requestMatchers("/api/feedback/public").permitAll()
-<<<<<<< HEAD
                 .requestMatchers("/api/police/dashboard/**").permitAll() // For Demo Purpose
-=======
                 .requestMatchers(HttpMethod.GET, "/api/stations", "/api/stations/**").permitAll()
                 .requestMatchers("/api/contact/public").permitAll()
->>>>>>> origin/combination
 
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/police/**").hasAuthority("ROLE_PO")

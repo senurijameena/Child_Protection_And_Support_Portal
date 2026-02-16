@@ -65,6 +65,8 @@ export interface UserManagementDTO {
   specializations?: string[]
   organization?: string
   yearsOfExperience?: string
+  hasAnonymousSubmissions?: boolean
+  availabilityStatus?: string
 }
 
 export interface UserStatisticsDTO {
@@ -107,7 +109,6 @@ export interface AnnouncementDTO {
   id: string
   title?: string
   message?: string
-  link?: string
   icon?: string
   type?: 'GENERAL' | 'MAINTENANCE' | 'FEATURE' | 'WORKSHOP'
   active: boolean
@@ -141,13 +142,8 @@ export interface FeedbackResponseDTO {
   category?: string
   description?: string
   rating?: number
-  helpfulness?: string
-  expectedHelp?: string
-  behavior?: string
   status?: string
   adminResponse?: string
-  socialWorkerResponse?: string
-  socialWorkerResponseDate?: string
   createdAt?: string
   message?: string
   userName?: string

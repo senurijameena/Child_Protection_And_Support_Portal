@@ -45,14 +45,6 @@ export function HelpRequestManagementPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const getPriorityVariant = (priority?: string) => {
-    const p = priority?.toUpperCase()
-    if (p === 'HIGH') return 'danger'
-    if (p === 'MEDIUM') return 'warning'
-    if (p === 'LOW') return 'primary'
-    return 'secondary'
-  }
-
   const loadRequests = () => {
     setLoading(true)
     getAllHelpRequests()
@@ -74,6 +66,12 @@ export function HelpRequestManagementPage() {
     if (filterType && r.helpType !== filterType) return false
     return true
   })
+
+  const getAssignedWorkerName = (workerId?: string) => {
+    if (!workerId) return '-'
+    const worker = workers.find((w) => (w.userId || w.id) === workerId)
+    return worker?.fullName || '-'
+  }
 
   const handleStatusChange = async (id: string, status: string) => {
     setActionLoading(true)
@@ -189,12 +187,12 @@ export function HelpRequestManagementPage() {
               <tr>
                 <th>ID</th>
                 <th>Type</th>
-                <th>Priority</th>
                 <th>Requester</th>
                 <th>Location</th>
                 <th>Status</th>
                 <th>Date</th>
                 <th>Assigned</th>
+                <th>Assigned Social Worker</th>
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
@@ -213,11 +211,6 @@ export function HelpRequestManagementPage() {
                     </td>
                     <td>
                       {HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}
-                    </td>
-                    <td>
-                      <Badge bg={getPriorityVariant(r.priority)}>
-                        {(r.priority || 'MEDIUM').toUpperCase()}
-                      </Badge>
                     </td>
                     <td>
                       {r.anonymous ? (
@@ -248,6 +241,13 @@ export function HelpRequestManagementPage() {
                         <Badge bg="success">Assigned</Badge>
                       ) : (
                         <Badge bg="secondary">Unassigned</Badge>
+                      )}
+                    </td>
+                    <td>
+                      {r.assignedWorkerId ? (
+                        <span className="fw-medium">{getAssignedWorkerName(r.assignedWorkerId)}</span>
+                      ) : (
+                        <span className="text-muted">-</span>
                       )}
                     </td>
                     <td className="text-end">

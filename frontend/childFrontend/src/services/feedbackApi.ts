@@ -27,3 +27,7 @@ export async function getMyFeedback(userId: string): Promise<FeedbackResponseDTO
 export async function getPublicFeedback(): Promise<FeedbackResponseDTO[]> {
   return apiGet<FeedbackResponseDTO[]>('/feedback/public')
 }
+
+export async function getLatestFeedbackForHelpRequest(requestId: string): Promise<FeedbackResponseDTO> {
+  return apiGet<FeedbackResponseDTO>(`/feedback/help-request/${requestId}/latest`)
+}

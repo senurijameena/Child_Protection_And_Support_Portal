@@ -241,9 +241,12 @@ export function SocialWorkerDashboard() {
     }
   }
 
-  // Latest 4 requests for Recent Activities (must be before early returns to keep hook order)
+  // Latest active requests first for Recent Activities (must be before early returns to keep hook order)
   const recentActivities = useMemo(() => {
-    return [...requests]
+    const activeStatuses = new Set(['ASSIGNED', 'IN_PROGRESS', 'PACKAGE_PROPOSED'])
+    const activeRequests = requests.filter((r) => r.status && activeStatuses.has(r.status))
+    const source = activeRequests.length > 0 ? activeRequests : requests
+    return [...source]
       .sort((a, b) => {
         const da = a.requestDate || ''
         const db = b.requestDate || ''

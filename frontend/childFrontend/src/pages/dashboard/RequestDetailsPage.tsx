@@ -9,8 +9,10 @@ import {
   rejectAppliedPackage,
   requestServiceAdjustment,
 } from '../../services/dashboardApi'
+import { submitFeedback, getLatestFeedbackForHelpRequest } from '../../services/feedbackApi'
 import { REQUEST_STATUS_LABELS, REQUEST_STATUS_BADGE_VARIANTS, HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
 import type { HelpRequestDTO, AppliedPackageStatus, RequestStatus } from '../../types/dashboard'
+import type { FeedbackResponseDTO } from '../../types/admin'
 
 const formatDate = (iso?: string) => {
   if (!iso) return '—'
@@ -39,15 +41,41 @@ export function RequestDetailsPage() {
   const [adjustmentMessage, setAdjustmentMessage] = useState('')
   const [adjustmentSubmitting, setAdjustmentSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [existingFeedback, setExistingFeedback] = useState<FeedbackResponseDTO | null>(null)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackRating, setFeedbackRating] = useState(5)
+  const [feedbackHelpfulness, setFeedbackHelpfulness] = useState('VERY_HELPFUL')
+  const [feedbackExpectedHelp, setFeedbackExpectedHelp] = useState('YES')
+  const [feedbackBehavior, setFeedbackBehavior] = useState('EXCELLENT')
+  const [feedbackRecommend, setFeedbackRecommend] = useState('YES')
+  const [feedbackComment, setFeedbackComment] = useState('')
 
   const load = () => {
     if (!requestId) return
-    Promise.all([getHelpRequest(requestId), getHelpRequestTimeline(requestId)])
-      .then(([req, tl]) => {
-        setR(req)
-        setTimeline(Array.isArray(tl) ? tl : [])
+    setLoadError(null)
+    Promise.allSettled([getHelpRequest(requestId), getHelpRequestTimeline(requestId)])
+      .then(([reqRes, tlRes]) => {
+        if (reqRes.status === 'fulfilled') {
+          setR(reqRes.value)
+        } else {
+          setR(null)
+          setLoadError('Unable to load request details. Please try again.')
+        }
+        if (tlRes.status === 'fulfilled') {
+          setTimeline(Array.isArray(tlRes.value) ? tlRes.value : [])
+        } else {
+          setTimeline([])
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        setR(null)
+        setTimeline([])
+        setLoadError('Unable to load request details. Please try again.')
+      })
       .finally(() => setLoading(false))
   }
 
@@ -56,13 +84,35 @@ export function RequestDetailsPage() {
     load()
   }, [requestId])
 
+  useEffect(() => {
+    if (!r?.id) return
+    const eligibleStatuses: RequestStatus[] = ['COMPLETED', 'CLOSED', 'ARCHIVED']
+    const feedbackEligible =
+      (!!r.status && eligibleStatuses.includes(r.status)) || !!r.caseFinalized || !!r.allServicesCompleted
+    if (!feedbackEligible) {
+      setExistingFeedback(null)
+      return
+    }
+    setFeedbackLoading(true)
+    getLatestFeedbackForHelpRequest(r.id)
+      .then((fb) => setExistingFeedback(fb))
+      .catch(() => setExistingFeedback(null))
+      .finally(() => setFeedbackLoading(false))
+  }, [r?.id, r?.status])
+
   const pkg = r?.appliedPackage
   const pkgStatus: AppliedPackageStatus | undefined = r?.appliedPackageStatus
   const isPending = !pkgStatus || pkgStatus === 'PENDING'
   const isAccepted = pkgStatus === 'ACCEPTED'
   const isRejected = pkgStatus === 'REJECTED'
+  const feedbackEligibleStatuses: RequestStatus[] = ['COMPLETED', 'CLOSED', 'ARCHIVED']
+  const isFeedbackEligible =
+    (!!r?.status && feedbackEligibleStatuses.includes(r.status)) || !!r?.caseFinalized || !!r?.allServicesCompleted
+  const canShowGiveFeedbackButton = isFeedbackEligible && !existingFeedback
   const effectiveRequestStatus: RequestStatus =
-    r?.appliedPackageStatus === 'REJECTED'
+    (r?.status === 'COMPLETED' || r?.status === 'CLOSED' || r?.status === 'ARCHIVED')
+      ? r.status
+      : r?.appliedPackageStatus === 'REJECTED'
       ? 'PACKAGE_REJECTED'
       : r?.appliedPackageStatus === 'ACCEPTED'
         ? 'IN_PROGRESS'
@@ -121,10 +171,61 @@ export function RequestDetailsPage() {
     }
   }
 
-  if (loading || !r) {
+  const buildFeedbackMessage = () => {
+    const lines = [
+      `Satisfaction: ${feedbackHelpfulness.replace('_', ' ')}`,
+      `Expected help received: ${feedbackExpectedHelp}`,
+      `Social worker behavior: ${feedbackBehavior}`,
+      `Would recommend: ${feedbackRecommend}`,
+    ]
+    if (feedbackComment.trim()) {
+      lines.push(`Comment: ${feedbackComment.trim()}`)
+    }
+    return lines.join('\n')
+  }
+
+  const handleSubmitFeedback = async () => {
+    if (!r?.id) return
+    setFeedbackSubmitting(true)
+    setFeedbackError(null)
+    try {
+      const saved = await submitFeedback({
+        type: 'HELP_REQUEST',
+        helpRequestId: r.id,
+        rating: feedbackRating,
+        helpfulness: feedbackHelpfulness,
+        expectedHelp: feedbackExpectedHelp,
+        behavior: feedbackBehavior,
+        category: `RECOMMEND_${feedbackRecommend}`,
+        message: buildFeedbackMessage(),
+      })
+      setExistingFeedback(saved)
+      setShowFeedbackModal(false)
+      setMessage('Feedback submitted successfully. Thank you for your response.')
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : 'Failed to submit feedback')
+    } finally {
+      setFeedbackSubmitting(false)
+    }
+  }
+
+  if (loading) {
     return (
       <div className="d-flex justify-content-center py-5">
         <Spinner animation="border" variant="primary" />
+      </div>
+    )
+  }
+
+  if (!r) {
+    return (
+      <div className="animate-fade-in-up">
+        <div className="mb-3">
+          <Link to="/dashboard/my-requests" className="text-primary text-decoration-none">Back to My Requests</Link>
+        </div>
+        <div className="alert alert-warning mb-0">
+          {loadError || 'Request details are unavailable right now.'}
+        </div>
       </div>
     )
   }
@@ -362,6 +463,28 @@ export function RequestDetailsPage() {
               <Link to="/dashboard/service-offers" className="btn btn-outline-success btn-sm rounded-pill mt-3">
                 Service Offers
               </Link>
+
+              {isFeedbackEligible && (
+                <div className="mt-4 pt-3 border-top">
+                  <h6 className="fw-semibold mb-2">Service Feedback</h6>
+                  {feedbackLoading ? (
+                    <div className="small text-muted">Checking existing feedback...</div>
+                  ) : canShowGiveFeedbackButton ? (
+                    <Button
+                      variant="warning"
+                      className="rounded-pill btn-sm fw-semibold"
+                      onClick={() => {
+                        setFeedbackError(null)
+                        setShowFeedbackModal(true)
+                      }}
+                    >
+                      Give Feedback
+                    </Button>
+                  ) : (
+                    <div className="small text-success">Feedback already submitted. Thank you.</div>
+                  )}
+                </div>
+              )}
             </Card.Body>
           </Card>
         </div>
@@ -422,6 +545,183 @@ export function RequestDetailsPage() {
             disabled={adjustmentSubmitting || !adjustmentMessage.trim()}
           >
             {adjustmentSubmitting ? 'Sending…' : 'Send request'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Give feedback modal */}
+      <Modal show={showFeedbackModal} onHide={() => setShowFeedbackModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Submit Feedback</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <div className="fw-semibold mb-2">Rating Section</div>
+            <div className="d-flex gap-2 flex-wrap">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Button
+                  key={n}
+                  type="button"
+                  variant={feedbackRating === n ? 'warning' : 'outline-secondary'}
+                  size="sm"
+                  onClick={() => setFeedbackRating(n)}
+                >
+                  {'⭐'.repeat(n)}
+                </Button>
+              ))}
+            </div>
+            <div className="small text-muted mt-1">1–5 star</div>
+          </div>
+
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Satisfaction Options</Form.Label>
+            <div className="d-flex flex-column gap-1">
+              <Form.Check
+                type="radio"
+                name="feedbackHelpfulness"
+                id="helpfulness-very-helpful"
+                label="Very Helpful"
+                checked={feedbackHelpfulness === 'VERY_HELPFUL'}
+                onChange={() => setFeedbackHelpfulness('VERY_HELPFUL')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackHelpfulness"
+                id="helpfulness-helpful"
+                label="Helpful"
+                checked={feedbackHelpfulness === 'HELPFUL'}
+                onChange={() => setFeedbackHelpfulness('HELPFUL')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackHelpfulness"
+                id="helpfulness-neutral"
+                label="Neutral"
+                checked={feedbackHelpfulness === 'NEUTRAL'}
+                onChange={() => setFeedbackHelpfulness('NEUTRAL')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackHelpfulness"
+                id="helpfulness-not-helpful"
+                label="Not Helpful"
+                checked={feedbackHelpfulness === 'NOT_HELPFUL'}
+                onChange={() => setFeedbackHelpfulness('NOT_HELPFUL')}
+              />
+            </div>
+          </Form.Group>
+
+          <div className="fw-semibold mb-2">Questions</div>
+
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Did you receive the expected help?</Form.Label>
+            <div className="d-flex flex-column gap-1">
+              <Form.Check
+                type="radio"
+                name="feedbackExpectedHelp"
+                id="expected-help-yes"
+                label="Yes"
+                checked={feedbackExpectedHelp === 'YES'}
+                onChange={() => setFeedbackExpectedHelp('YES')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackExpectedHelp"
+                id="expected-help-partially"
+                label="Partially"
+                checked={feedbackExpectedHelp === 'PARTIALLY'}
+                onChange={() => setFeedbackExpectedHelp('PARTIALLY')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackExpectedHelp"
+                id="expected-help-no"
+                label="No"
+                checked={feedbackExpectedHelp === 'NO'}
+                onChange={() => setFeedbackExpectedHelp('NO')}
+              />
+            </div>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Behavior of Social Worker</Form.Label>
+            <div className="d-flex flex-column gap-1">
+              <Form.Check
+                type="radio"
+                name="feedbackBehavior"
+                id="behavior-excellent"
+                label="Excellent"
+                checked={feedbackBehavior === 'EXCELLENT'}
+                onChange={() => setFeedbackBehavior('EXCELLENT')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackBehavior"
+                id="behavior-good"
+                label="Good"
+                checked={feedbackBehavior === 'GOOD'}
+                onChange={() => setFeedbackBehavior('GOOD')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackBehavior"
+                id="behavior-average"
+                label="Average"
+                checked={feedbackBehavior === 'AVERAGE'}
+                onChange={() => setFeedbackBehavior('AVERAGE')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackBehavior"
+                id="behavior-poor"
+                label="Poor"
+                checked={feedbackBehavior === 'POOR'}
+                onChange={() => setFeedbackBehavior('POOR')}
+              />
+            </div>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Would you recommend this service?</Form.Label>
+            <div className="d-flex flex-column gap-1">
+              <Form.Check
+                type="radio"
+                name="feedbackRecommend"
+                id="recommend-yes"
+                label="Yes"
+                checked={feedbackRecommend === 'YES'}
+                onChange={() => setFeedbackRecommend('YES')}
+              />
+              <Form.Check
+                type="radio"
+                name="feedbackRecommend"
+                id="recommend-no"
+                label="No"
+                checked={feedbackRecommend === 'NO'}
+                onChange={() => setFeedbackRecommend('NO')}
+              />
+            </div>
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Label className="fw-semibold">Comment Box</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={feedbackComment}
+              onChange={(e) => setFeedbackComment(e.target.value)}
+              placeholder="Write your experience (optional)"
+            />
+          </Form.Group>
+
+          {feedbackError && <div className="alert alert-danger py-2 small mb-0 mt-3">{feedbackError}</div>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowFeedbackModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSubmitFeedback} disabled={feedbackSubmitting}>
+            {feedbackSubmitting ? 'Submitting...' : 'Submit Feedback'}
           </Button>
         </Modal.Footer>
       </Modal>

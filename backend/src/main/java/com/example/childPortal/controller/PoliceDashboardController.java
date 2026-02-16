@@ -7,6 +7,7 @@ import com.example.childPortal.model.User;
 import com.example.childPortal.repository.PoliceStationRepository;
 import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
+import com.example.childPortal.service.PoliceOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +26,7 @@ public class PoliceDashboardController {
     private CaseService caseService;
 
     @Autowired
-    private com.example.childPortal.service.PoliceOfficerService policeOfficerService;
+    private PoliceOfficerService policeOfficerService;
 
     @Autowired
     private PoliceStationRepository policeStationRepository;
@@ -36,14 +37,22 @@ public class PoliceDashboardController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
         Map<String, Object> stats = new HashMap<>();
+<<<<<<< HEAD
+
+=======
         
+>>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
         // Demo fallback
         if (userId == null) {
-            userId = "DEMO_OFFICER_001"; 
+            userId = "DEMO_OFFICER_001";
             System.out.println("Using DEMO ID for stats");
         }
+<<<<<<< HEAD
+
+=======
         
         // Log for debugging
+>>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
         System.out.println("Fetching police stats for user: " + userId);
 
         // First try officer-based mapping
@@ -84,6 +93,20 @@ public class PoliceDashboardController {
                 .count();
 
         long urgentCases = assignedCases.stream()
+<<<<<<< HEAD
+                .filter(c -> c.isEmergency()
+                        || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
+                .count();
+
+        long resolvedToday = 0;
+
+        stats.put("assignedCases", assignedCases.size());
+        stats.put("activeCases", activeCases);
+        stats.put("urgentCases", urgentCases);
+        stats.put("emergencyCases", urgentCases);
+        stats.put("resolvedToday", resolvedToday);
+        stats.put("avgResponse", "N/A");
+=======
                 .filter(c -> c.isEmergency() || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
                 .count();
 
@@ -99,6 +122,7 @@ public class PoliceDashboardController {
         stats.put("emergencyCases", urgentCases); 
         stats.put("resolvedToday", resolvedToday); 
         stats.put("avgResponse", "N/A"); // Better than fake data
+>>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
         stats.put("pendingTransfers", 0);
         stats.put("unreadNotifications", 0);
 
@@ -107,7 +131,6 @@ public class PoliceDashboardController {
 
     @GetMapping("/cases")
     public ResponseEntity<List<CaseDTO>> getAssignedCases(@AuthenticationPrincipal String userId) {
-        // Demo fallback
         if (userId == null) {
             userId = "DEMO_OFFICER_001";
         }
@@ -125,8 +148,6 @@ public class PoliceDashboardController {
         if (officerOpt.isPresent()) {
             String stationId = officerOpt.get().getStationId();
             if (stationId != null) {
-                // Determine if we want ALL station cases or just unassigned ones.
-                // Usually a dashboard might show "My Station's Cases"
                 List<CaseDTO> stationCases = caseService.getCasesForStation(stationId);
                 return ResponseEntity.ok(stationCases);
             }

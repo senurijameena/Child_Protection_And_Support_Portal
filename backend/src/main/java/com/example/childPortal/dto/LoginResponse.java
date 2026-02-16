@@ -1,0 +1,63 @@
+package com.example.childPortal.dto;
+import com.example.childPortal.model.Role;
+
+public class LoginResponse {
+    private String token;
+    private String userId;
+    private String email;
+    private String fullName;
+    private Role role;
+    private boolean approved;
+    private String message;
+    private String profilePhoto;
+
+    public LoginResponse() {}
+
+    public LoginResponse(String token, String userId, String email, Role role, boolean approved) {
+        this.token = token;
+        this.userId = userId;
+        this.email = email;
+        this.role = role;
+        this.approved = approved;
+        this.message = approved ? "Login successful" : "Account pending approval";
+    }
+
+    public LoginResponse(String token, String userId, String email, String fullName, Role role, boolean approved) {
+        this.token = token;
+        this.userId = userId;
+        this.email = email;
+        this.fullName = fullName;
+        this.role = role;
+        this.approved = approved;
+        this.message = approved ? "Login successful" : "Account pending approval";
+    }
+
+    public LoginResponse(String token, String message, boolean success) {
+        this.token = token;
+        this.message = message;
+        this.approved = success;
+    }
+
+     public LoginResponse(String message, boolean success) {
+        this.message = message;
+        this.approved = success;
+        this.token = null;
+    }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getProfilePhoto() { return profilePhoto; }
+    public void setProfilePhoto(String profilePhoto) { this.profilePhoto = profilePhoto; }
+}

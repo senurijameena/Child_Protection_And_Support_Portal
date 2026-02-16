@@ -1,0 +1,291 @@
+.messages-page .messages-left,
+.messages-page .messages-right {
+  min-height: 72vh;
+}
+
+.messages-page .filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.messages-page .filter-pill {
+  border: 1px solid #d7deea;
+  border-radius: 999px;
+  background: #f8f9fc;
+  color: #3c4860;
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.messages-page .filter-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(236, 72, 153, 0.2);
+}
+
+.messages-page .filter-pill.active {
+  background: #e9f2ff;
+  color: #0d4ea8;
+  border-color: #a8c8f7;
+}
+
+.messages-page .conversation-list {
+  overflow-y: auto;
+  max-height: calc(72vh - 140px);
+  padding-right: 4px;
+}
+
+/* Custom scrollbar for conversation list */
+.messages-page .conversation-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-page .conversation-list::-webkit-scrollbar-track {
+  background: rgba(236, 72, 153, 0.05);
+  border-radius: 10px;
+}
+
+.messages-page .conversation-list::-webkit-scrollbar-thumb {
+  background: rgba(236, 72, 153, 0.3);
+  border-radius: 10px;
+}
+
+.messages-page .conversation-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(236, 72, 153, 0.5);
+}
+
+.messages-page .conversation-item {
+  width: 100%;
+  border: 1px solid #edf0f5;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  margin-bottom: 10px;
+  padding: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.messages-page .conversation-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.messages-page .conversation-item.active::before {
+  background: linear-gradient(180deg, #ec4899 0%, #f472b6 100%);
+}
+
+.messages-page .conversation-item:hover {
+  background: #f9fbff;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+}
+
+.messages-page .conversation-item.active {
+  background: #eef5ff;
+  border-color: #c7daf7;
+  transform: translateX(4px);
+}
+
+.messages-page .request-id {
+  font-size: 12px;
+  color: #3f5f87;
+  margin-bottom: 2px;
+}
+
+.messages-page .message-area {
+  background: #f7f9fd;
+  border-radius: 10px;
+  margin: 12px;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Custom scrollbar for message area */
+.messages-page .message-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-page .message-area::-webkit-scrollbar-track {
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 10px;
+}
+
+.messages-page .message-area::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+}
+
+.messages-page .message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+.messages-page .message-row {
+  display: flex;
+  margin-bottom: 16px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.messages-page .message-row.mine {
+  justify-content: flex-end;
+}
+
+.messages-page .message-row.other {
+  justify-content: flex-start;
+}
+
+.messages-page .message-bubble {
+  max-width: 78%;
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.messages-page .message-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.messages-page .message-row.mine .message-bubble {
+  background: #dfeeff;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.messages-page .message-row.other .message-bubble {
+  border-radius: 16px 16px 16px 4px;
+}
+
+.messages-page .message-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.messages-page .message-meta {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #728096;
+  font-weight: 500;
+}
+
+/* Pulse animation for unread badge */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.messages-page .input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.messages-page .input-row .form-control {
+  flex: 1;
+}
+
+.messages-page .input-row button {
+  transition: all 0.3s ease;
+}
+
+.messages-page .input-row button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.messages-page .attach-field {
+  max-width: 220px;
+}
+
+.messages-page .closed-note {
+  border-radius: 8px;
+  font-size: 12px;
+  color: #6a6f77;
+  background: #f2f2f2;
+  border: 1px solid #dddddd;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Card improvements */
+.messages-page .card {
+  transition: all 0.3s ease;
+}
+
+.messages-page .card-header {
+  position: relative;
+  z-index: 1;
+}
+
+.messages-page .card-footer {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 991px) {
+  .messages-page .messages-left,
+  .messages-page .messages-right {
+    min-height: auto;
+  }
+
+  .messages-page .conversation-list {
+    max-height: 340px;
+  }
+
+  .messages-page .message-area {
+    min-height: 320px;
+    margin: 10px;
+  }
+}
+
+@media (max-width: 767px) {
+  .messages-page .input-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .messages-page .attach-field {
+    max-width: none;
+    width: 100%;
+  }
+}

@@ -2,6 +2,10 @@ package com.example.childPortal.controller;
 
 import com.example.childPortal.dto.CaseDTO;
 import com.example.childPortal.model.Case.CaseStatus;
+import com.example.childPortal.model.PoliceStation;
+import com.example.childPortal.model.User;
+import com.example.childPortal.repository.PoliceStationRepository;
+import com.example.childPortal.repository.UserRepository;
 import com.example.childPortal.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +27,12 @@ public class PoliceDashboardController {
     @Autowired
     private com.example.childPortal.service.PoliceOfficerService policeOfficerService;
 
+    @Autowired
+    private PoliceStationRepository policeStationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
         Map<String, Object> stats = new HashMap<>();
@@ -36,7 +46,38 @@ public class PoliceDashboardController {
         // Log for debugging
         System.out.println("Fetching police stats for user: " + userId);
 
-        List<CaseDTO> assignedCases = caseService.getCasesForOfficer(userId);
+        // First try officer-based mapping
+        java.util.Optional<com.example.childPortal.model.PoliceOfficer> officerOpt =
+                policeOfficerService.getPoliceOfficerByUserId(userId);
+
+        List<CaseDTO> assignedCases;
+
+        if (officerOpt.isPresent() && officerOpt.get().getStationId() != null) {
+            // Individual officer: show cases assigned to this officer
+            assignedCases = caseService.getCasesForOfficer(userId);
+        } else {
+            // Try station account: find station by registeredUserId, then by email as fallback
+            java.util.Optional<PoliceStation> stationOpt = policeStationRepository.findByRegisteredUserId(userId);
+
+            if (stationOpt.isEmpty()) {
+                java.util.Optional<User> userOpt = userRepository.findById(userId);
+                if (userOpt.isPresent()) {
+                    String email = userOpt.get().getEmail();
+                    if (email != null && !email.isBlank()) {
+                        stationOpt = policeStationRepository.findByEmail(email);
+                    }
+                }
+            }
+
+            if (stationOpt.isPresent()) {
+                String stationId = stationOpt.get().getId();
+                System.out.println("Using station-based stats for station: " + stationId);
+                assignedCases = caseService.getCasesForStation(stationId);
+            } else {
+                // Fallback to officer cases (may be empty)
+                assignedCases = caseService.getCasesForOfficer(userId);
+            }
+        }
 
         long activeCases = assignedCases.stream()
                 .filter(c -> c.getStatus() != CaseStatus.RESOLVED && c.getStatus() != CaseStatus.CLOSED)
@@ -90,7 +131,27 @@ public class PoliceDashboardController {
                 return ResponseEntity.ok(stationCases);
             }
         }
+        // Fallback for station accounts registered via Register Police Station:
+        // use PoliceStation.registeredUserId or, if missing, match by email.
+        java.util.Optional<PoliceStation> stationOpt = policeStationRepository.findByRegisteredUserId(userId);
+        if (stationOpt.isEmpty()) {
+            java.util.Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                String email = userOpt.get().getEmail();
+                if (email != null && !email.isBlank()) {
+                    stationOpt = policeStationRepository.findByEmail(email);
+                }
+            }
+        }
 
+        if (stationOpt.isPresent()) {
+            String stationId = stationOpt.get().getId();
+            System.out.println("Using station-based cases for station: " + stationId);
+            List<CaseDTO> stationCases = caseService.getCasesForStation(stationId);
+            return ResponseEntity.ok(stationCases);
+        }
+
+        System.out.println("No station mapping found for user: " + userId);
         return ResponseEntity.ok(java.util.Collections.emptyList());
     }
 

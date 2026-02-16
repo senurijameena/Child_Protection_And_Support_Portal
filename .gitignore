@@ -1,0 +1,6 @@
+backend/target/
+frontend/childFrontend/node_modules/
+backend/build.log
+backend/verbose.log
+*.log
+.DS_Store

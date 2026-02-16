@@ -20,7 +20,7 @@ export function PublicNavbar() {
 
   return (
     <>
-      <Navbar expand="lg" className="bg-white shadow-sm py-2 sticky-top">
+      <Navbar expand="lg" className="bg-white shadow-sm py-2 sticky-top landing-navbar">
         <Container fluid className="px-3 px-lg-4">
           <Navbar.Brand as={Link} to="/" className="fw-bold text-primary d-flex align-items-center gap-2">
             <img
@@ -110,14 +110,14 @@ export function PublicNavbar() {
             <div className="d-flex gap-2">
               <Link
                 to="/login"
-                className="btn btn-outline-primary px-4 py-2 rounded-pill fw-medium"
+                className="btn btn-outline-primary px-4 py-2 rounded-pill fw-medium landing-nav-btn"
                 style={{ textDecoration: 'none' }}
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className="btn btn-primary px-4 py-2 rounded-pill fw-medium btn-primary-custom text-white"
+                className="btn btn-primary px-4 py-2 rounded-pill fw-medium btn-primary-custom text-white landing-nav-btn-primary"
                 style={{ textDecoration: 'none' }}
               >
                 Sign Up

@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap'
 
 export function LandingFooter() {
   return (
-    <footer id="contact" className="bg-dark text-white py-5 mt-5">
+    <footer id="contact" className="bg-dark text-white py-5 mt-5 landing-footer">
       <Container>
         <Row className="g-4">
           <Col xs={12} md={3}>
@@ -38,7 +38,7 @@ export function LandingFooter() {
             <h6 className="fw-semibold mb-3">Emergency Helpline</h6>
             <a
               href="tel:911"
-              className="d-inline-block btn btn-danger px-4 py-2 rounded-pill fw-semibold text-white text-decoration-none"
+              className="d-inline-block btn btn-danger px-4 py-2 rounded-pill fw-semibold text-white text-decoration-none landing-emergency-btn"
             >
               🚨 Call 911
             </a>
@@ -47,16 +47,16 @@ export function LandingFooter() {
         </Row>
         <Row className="mt-4 pt-4 border-top border-secondary">
           <Col xs={12} className="d-flex flex-wrap justify-content-center gap-4">
-            <a href="#" className="text-white-50 text-decoration-none small" aria-label="Facebook">
+            <a href="#" className="text-white-50 text-decoration-none small landing-social-pill" aria-label="Facebook">
               Facebook
             </a>
-            <a href="#" className="text-white-50 text-decoration-none small" aria-label="Twitter">
+            <a href="#" className="text-white-50 text-decoration-none small landing-social-pill" aria-label="Twitter">
               Twitter
             </a>
-            <a href="#" className="text-white-50 text-decoration-none small" aria-label="LinkedIn">
+            <a href="#" className="text-white-50 text-decoration-none small landing-social-pill" aria-label="LinkedIn">
               LinkedIn
             </a>
-            <a href="#" className="text-white-50 text-decoration-none small" aria-label="Instagram">
+            <a href="#" className="text-white-50 text-decoration-none small landing-social-pill" aria-label="Instagram">
               Instagram
             </a>
           </Col>

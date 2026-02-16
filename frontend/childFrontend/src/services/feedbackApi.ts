@@ -23,3 +23,7 @@ export async function submitFeedback(payload: SubmitFeedbackPayload): Promise<Fe
 export async function getMyFeedback(userId: string): Promise<FeedbackResponseDTO[]> {
   return apiGet<FeedbackResponseDTO[]>(`/feedback/user/${userId}`)
 }
+
+export async function getPublicFeedback(): Promise<FeedbackResponseDTO[]> {
+  return apiGet<FeedbackResponseDTO[]>('/feedback/public')
+}

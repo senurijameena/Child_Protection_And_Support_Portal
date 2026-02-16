@@ -7,9 +7,9 @@ import { LandingFooter } from '../components/LandingFooter'
 
 export function LandingPage() {
   return (
-    <div className="d-flex flex-column min-vh-100">
+    <div className="d-flex flex-column min-vh-100 landing-page-root">
       <PublicNavbar />
-      <main className="flex-grow-1">
+      <main className="flex-grow-1 landing-page-main">
         <HeroSection />
         <AboutSection />
         <FeaturesSection />

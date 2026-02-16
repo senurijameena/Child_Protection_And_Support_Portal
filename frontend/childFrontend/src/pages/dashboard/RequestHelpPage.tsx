@@ -51,11 +51,7 @@ export function RequestHelpPage() {
   const [preferredContactMethod, setPreferredContactMethod] = useState('')
 
   const toggleHelpType = (type: HelpType) => {
-    if (helpTypes.includes(type)) {
-      setHelpTypes(helpTypes.filter((t) => t !== type))
-    } else {
-      setHelpTypes([...helpTypes, type])
-    }
+    setHelpTypes([type])
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,12 +172,13 @@ export function RequestHelpPage() {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label>Type of Help Needed * (Select one or more)</Form.Label>
+              <Form.Label>Type of Help Needed * (Select one)</Form.Label>
               <div className="d-flex flex-wrap gap-2">
                 {HELP_TYPES.map((type) => (
                   <Form.Check
                     key={type}
-                    type="checkbox"
+                    type="radio"
+                    name="helpType"
                     id={`helptype-${type}`}
                     label={HELP_TYPE_LABELS[type]}
                     checked={helpTypes.includes(type)}

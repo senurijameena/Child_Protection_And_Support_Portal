@@ -19,7 +19,7 @@ export function AboutSection() {
 
   useEffect(() => {
     getPublicStatistics()
-      .then(setStats)
+      .then((data) => setStats((prev) => ({ ...prev, ...data })))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -72,11 +72,22 @@ export function AboutSection() {
     },
   ]
 
+  const impactCards = statCards.slice(0, 3)
+  const supportCards = statCards.slice(3)
+
+  const formatStatValue = (label: string, value: number) => {
+    if (loading) return '...'
+    if (label.includes('Rate')) return `${Number(value ?? 0).toFixed(1)}%`
+    return Number(value ?? 0).toLocaleString()
+  }
+
   return (
-    <section id="about" className="py-5 my-5">
+    <section id="about" className="py-5 my-5 landing-about-section position-relative overflow-hidden">
+      <div className="landing-about-glow" aria-hidden="true" />
       <Container>
         <Row className="align-items-center g-4">
           <Col lg={6}>
+            <div className="landing-section-pill mb-2">About The Platform</div>
             <h2 className="display-5 fw-bold text-dark mb-3">About Our Portal</h2>
             <p className="lead text-secondary mb-3">
               The Child Protection and Support Portal is a unified platform designed to strengthen
@@ -89,16 +100,52 @@ export function AboutSection() {
             </p>
           </Col>
           <Col lg={6}>
-            <div className="rounded-4 p-4" style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #d1fae5 100%)' }}>
-              <div className="d-flex flex-wrap gap-2 justify-content-center">
-                {statCards.map((card) => (
-                  <div key={card.label} className="text-center px-3 py-3 bg-white rounded-3 shadow-sm" style={{ flex: '1 1 calc(50% - 8px)', minWidth: '140px' }}>
-                    <div className="fs-3 mb-2">{card.icon}</div>
-                    <div className="fw-bold text-primary fs-5">{loading ? '...' : card.value.toLocaleString()}</div>
-                    <small className="text-secondary d-block" style={{ fontSize: '0.8rem' }}>{card.label}</small>
+            <div className="rounded-4 p-4 landing-stats-panel">
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div>
+                  <div className="landing-stats-title">Live Impact Snapshot</div>
+                  <div className="landing-stats-subtitle">Real-time indicators from active records</div>
+                </div>
+                <div className="landing-stats-badge">Realtime</div>
+              </div>
+
+              <div className="landing-impact-grid mb-3">
+                {impactCards.map((card, idx) => (
+                  <div
+                    key={card.label}
+                    className="landing-impact-card"
+                    style={{ animationDelay: `${idx * 0.05}s` }}
+                  >
+                    <div className="landing-impact-icon">{card.icon}</div>
+                    <div>
+                      <div className="landing-impact-value">{formatStatValue(card.label, card.value)}</div>
+                      <div className="landing-impact-label">{card.label}</div>
+                    </div>
                   </div>
                 ))}
               </div>
+
+              <div className="landing-mini-stats-grid">
+                {supportCards.map((card, idx) => (
+                  <div
+                    key={card.label}
+                    className="landing-stat-card"
+                    style={{ animationDelay: `${idx * 0.04}s` }}
+                  >
+                    <div className="landing-stat-card-top">
+                      <span className="landing-stat-icon">{card.icon}</span>
+                      <span className="landing-stat-value">{formatStatValue(card.label, card.value)}</span>
+                    </div>
+                    <small className="landing-stat-label">{card.label}</small>
+                  </div>
+                ))}
+              </div>
+
+              {stats.lastUpdated && (
+                <div className="text-center text-secondary small mt-3 landing-updated-time">
+                  Last updated: {stats.lastUpdated}
+                </div>
+              )}
             </div>
           </Col>
         </Row>

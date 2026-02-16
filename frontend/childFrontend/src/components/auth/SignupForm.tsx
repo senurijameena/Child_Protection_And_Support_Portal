@@ -175,9 +175,10 @@ export function SignupForm() {
   )
 
   return (
-    <Card className="shadow-sm border-0 rounded-4 overflow-hidden auth-card">
+    <Card className="shadow-sm border-0 rounded-4 overflow-hidden auth-card signup-auth-card">
       <Card.Body className="p-4 p-md-5">
-        <h2 className="h3 fw-bold text-dark mb-2">Create Account</h2>
+        <div className="landing-section-pill mb-2 d-inline-block">Create Account</div>
+        <h2 className="h3 fw-bold text-dark mb-2">Get Started Securely</h2>
         <p className="text-secondary mb-4">Join the Child Protection and Support Portal</p>
 
         {serverError && (

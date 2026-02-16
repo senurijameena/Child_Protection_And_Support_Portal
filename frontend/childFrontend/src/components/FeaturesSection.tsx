@@ -43,9 +43,10 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="services" className="py-5 my-5">
+    <section id="services" className="py-5 my-5 landing-features-section position-relative overflow-hidden">
       <Container>
         <div className="text-center mb-5">
+          <div className="landing-section-pill mb-2 d-inline-block">Role-tailored Experience</div>
           <h2 className="display-5 fw-bold text-dark mb-3">Portal Features by Role</h2>
           <p className="lead text-secondary mx-auto" style={{ maxWidth: '600px' }}>
             Tailored tools for every stakeholder in the child protection ecosystem
@@ -54,8 +55,8 @@ export function FeaturesSection() {
         <Row className="g-4">
           {features.map((feature, idx) => (
             <Col key={idx} xs={12} md={6} lg={3}>
-              <Card className="h-100 border-0 shadow-sm feature-card rounded-4 p-4 bg-white">
-                <div className="mb-3">{feature.icon}</div>
+              <Card className="h-100 border-0 shadow-sm feature-card rounded-4 p-4 bg-white landing-feature-card">
+                <div className="mb-3 landing-feature-icon-wrap">{feature.icon}</div>
                 <Card.Title className="fw-semibold text-dark fs-5">{feature.title}</Card.Title>
                 <Card.Text className="text-secondary small mb-0">{feature.description}</Card.Text>
               </Card>

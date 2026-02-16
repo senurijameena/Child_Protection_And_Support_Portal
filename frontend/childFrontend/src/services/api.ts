@@ -64,18 +64,54 @@ async function handleRes<T>(res: Response): Promise<T> {
   return data as T
 }
 
+export interface PublicStatisticsResponse {
+  totalCasesReported?: number
+  activeCases?: number
+  casesSaved?: number
+  caseResolutionRate?: number
+  helpRequestsCompleted?: number
+  childrenSupported?: number
+  publicUsersCount?: number
+  socialWorkersCount?: number
+  policeOfficersCount?: number
+  lastUpdated?: string
+}
+
 /**
  * Public statistics endpoint - no authentication required
- * Returns overview statistics for the landing page
+ * Returns overview statistics for the landing page.
+ *
+ * Backend has been served in two route styles across environments:
+ * - /api/statistics/public
+ * - /statistics/public
+ * Try both and normalize numeric fields so the landing page gets real values.
  */
-export async function getPublicStatistics(): Promise<any> {
-  try {
-    const res = await fetch(`${API_BASE}/statistics/public`, {
-      headers: { 'Content-Type': 'application/json' },
-    })
-    return handleRes(res)
-  } catch {
-    // Return default values if endpoint fails
-    return {}
+export async function getPublicStatistics(): Promise<PublicStatisticsResponse> {
+  const roots = [API_BASE, API_BASE.endsWith('/api') ? API_BASE.slice(0, -4) : API_BASE]
+
+  for (const root of roots) {
+    try {
+      const res = await fetch(`${root}/statistics/public`, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await handleRes<Record<string, unknown>>(res)
+
+      return {
+        totalCasesReported: Number(data.totalCasesReported ?? 0),
+        activeCases: Number(data.activeCases ?? 0),
+        casesSaved: Number(data.casesSaved ?? 0),
+        caseResolutionRate: Number(data.caseResolutionRate ?? 0),
+        helpRequestsCompleted: Number(data.helpRequestsCompleted ?? 0),
+        childrenSupported: Number(data.childrenSupported ?? 0),
+        publicUsersCount: Number(data.publicUsersCount ?? 0),
+        socialWorkersCount: Number(data.socialWorkersCount ?? 0),
+        policeOfficersCount: Number(data.policeOfficersCount ?? 0),
+        lastUpdated: typeof data.lastUpdated === 'string' ? data.lastUpdated : '',
+      }
+    } catch {
+      // try next root
+    }
   }
+
+  return {}
 }

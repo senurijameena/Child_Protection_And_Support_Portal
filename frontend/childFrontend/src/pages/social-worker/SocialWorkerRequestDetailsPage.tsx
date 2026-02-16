@@ -626,32 +626,37 @@ export function SocialWorkerRequestDetailsPage() {
     }
   }, [])
 
-  const executionChecklist = request?.appliedPackageItemExecutions ?? []
+  const executionChecklist =
+    (request?.appliedPackageItemExecutions && request.appliedPackageItemExecutions.length > 0
+      ? request.appliedPackageItemExecutions
+      : request?.appliedPackage?.items) ?? []
   const checklistTotal = executionChecklist.length
   const checklistCompletedCount = executionChecklist.filter(
-    (item) => (item.status || '').toUpperCase() === 'COMPLETED'
+    (item) => (item.status || '').trim().toUpperCase() === 'COMPLETED'
   ).length
   const assignedResourceCount = executionChecklist.filter(
     (item) => !!item.assignedResource && item.assignedResource.trim().length > 0
   ).length
   const allChecklistCompleted = checklistTotal > 0 && checklistCompletedCount === checklistTotal
   const allResourcesAssignedForChecklist = checklistTotal > 0 && assignedResourceCount === checklistTotal
+  const normalizedAppliedPackageStatus = (request?.appliedPackageStatus || '').trim().toUpperCase()
+  const hasServiceExecutionStarted = !!request?.serviceStarted || checklistTotal > 0
   const canCompleteRequest =
     hasFullAccess &&
     !isCollaboratorView &&
     !!request &&
-    request.appliedPackageStatus === 'ACCEPTED' &&
-    request.serviceStarted &&
-    request.status !== 'COMPLETED' &&
+    normalizedAppliedPackageStatus === 'ACCEPTED' &&
+    hasServiceExecutionStarted &&
+    (request.status || '').toUpperCase() !== 'COMPLETED' &&
     allChecklistCompleted &&
     allResourcesAssignedForChecklist
   const showCompleteRequestButton =
     hasFullAccess &&
     !isCollaboratorView &&
     !!request &&
-    request.appliedPackageStatus === 'ACCEPTED' &&
-    request.serviceStarted &&
-    request.status !== 'COMPLETED'
+    normalizedAppliedPackageStatus === 'ACCEPTED' &&
+    hasServiceExecutionStarted &&
+    (request.status || '').toUpperCase() !== 'COMPLETED'
 
   useEffect(() => {
     setHasShownAutoCompletePrompt(false)

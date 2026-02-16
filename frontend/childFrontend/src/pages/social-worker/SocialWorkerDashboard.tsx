@@ -384,8 +384,6 @@ export function SocialWorkerDashboard() {
         </div>
       </div>
 
-      <SystemAnnouncementCard announcements={announcements} />
-
       <Row className="g-3 mb-4">
         {statCards.map((card) => (
           <Col key={card.title} xs={12} sm={6} lg={4} xl>
@@ -811,6 +809,8 @@ export function SocialWorkerDashboard() {
           )}
         </Card.Body>
       </Card>
+
+      <SystemAnnouncementCard announcements={announcements} />
 
       <Modal show={!!rescheduleModal} onHide={() => setRescheduleModal(null)} centered>
         <Modal.Header closeButton>

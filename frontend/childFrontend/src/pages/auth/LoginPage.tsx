@@ -66,7 +66,7 @@ export function LoginPage() {
   const roles: Role[] = ['PU', 'PO', 'SW', 'ADMIN']
 
   return (
-    <div className="login-split">
+    <div className="login-split login-page-upgraded">
       <button
         type="button"
         onClick={goBack}
@@ -82,11 +82,16 @@ export function LoginPage() {
           <img src="/images/logo.jpeg" alt="Child Portal logo" className="login-left-logo" />
           <h2>Child Protection Portal</h2>
           <p>Secure access for social workers, police, administrators, and families.</p>
+          <div className="login-trust-points mt-4 text-start">
+            <div className="login-trust-item">Shielded user sessions</div>
+            <div className="login-trust-item">Role-based access control</div>
+            <div className="login-trust-item">Real-time case coordination</div>
+          </div>
         </div>
       </div>
 
       <div className="login-right">
-        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card w-100">
+        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card w-100 login-auth-card">
           <Card.Body className="p-4 p-md-5">
             <div className="text-center mb-4">
               <h1 className="h3 fw-bold text-dark mb-1">Welcome Back</h1>

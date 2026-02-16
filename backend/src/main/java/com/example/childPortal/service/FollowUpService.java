@@ -3,6 +3,7 @@ package com.example.childPortal.service;
 import com.example.childPortal.model.FollowUp;
 import com.example.childPortal.repository.FollowUpRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,7 +26,7 @@ public class FollowUpService {
         return followUpRepository.save(followUp);
     }
 
-    public FollowUp updateFollowUp(String id, FollowUp followUpDetails) {
+    public FollowUp updateFollowUp(@NonNull String id, FollowUp followUpDetails) {
         Optional<FollowUp> optionalFollowUp = followUpRepository.findById(id);
         if (optionalFollowUp.isPresent()) {
             FollowUp existingFollowUp = optionalFollowUp.get();
@@ -38,8 +39,14 @@ public class FollowUpService {
                 existingFollowUp.setStatus(followUpDetails.getStatus());
             if (followUpDetails.getPriority() != null)
                 existingFollowUp.setPriority(followUpDetails.getPriority());
+            if (followUpDetails.getTitle() != null)
+                existingFollowUp.setTitle(followUpDetails.getTitle());
+            if (followUpDetails.getServiceItem() != null)
+                existingFollowUp.setServiceItem(followUpDetails.getServiceItem());
             if (followUpDetails.getScheduledDate() != null)
                 existingFollowUp.setScheduledDate(followUpDetails.getScheduledDate());
+            if (followUpDetails.getNextScheduledDate() != null)
+                existingFollowUp.setNextScheduledDate(followUpDetails.getNextScheduledDate());
             if (followUpDetails.getNotes() != null)
                 existingFollowUp.setNotes(followUpDetails.getNotes());
             if (followUpDetails.getMissedReason() != null)
@@ -48,10 +55,10 @@ public class FollowUpService {
             existingFollowUp.setUpdatedAt(LocalDateTime.now());
             return followUpRepository.save(existingFollowUp);
         }
-        return null; // Or throw exception
+        return null; 
     }
 
-    public void deleteFollowUp(String id) {
+    public void deleteFollowUp(@NonNull String id) {
         followUpRepository.deleteById(id);
     }
 }

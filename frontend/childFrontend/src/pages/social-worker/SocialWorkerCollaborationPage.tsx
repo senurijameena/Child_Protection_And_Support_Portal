@@ -264,6 +264,7 @@ export function SocialWorkerCollaborationPage() {
   }
 
   const handleMessageWorker = (targetUserId?: string | null) => {
+    // SW-VIVA-8: Direct message handoff to collaborator/owner from collaboration view.
     if (!targetUserId || !currentUserId || targetUserId === currentUserId) return
     navigate(`/social-worker/messages?userId=${encodeURIComponent(targetUserId)}`)
   }
@@ -275,6 +276,7 @@ export function SocialWorkerCollaborationPage() {
   }
 
   const handleAccept = async (collaborationId: string) => {
+    // SW-VIVA-9: Accept incoming collaboration invitation.
     setProcessingId(collaborationId)
     try {
       await acceptHelpRequestCollaborationRequest(collaborationId)
@@ -315,6 +317,7 @@ export function SocialWorkerCollaborationPage() {
   }
 
   const handleReject = async (collaborationId: string, reason: string) => {
+    // SW-VIVA-10: Reject incoming collaboration invitation with reason.
     if (!reason.trim()) {
       setRejectError('Reason is required.')
       return
@@ -385,6 +388,7 @@ export function SocialWorkerCollaborationPage() {
   }, [myRequests])
 
   const handleCreateCollaboration = async () => {
+    // SW-VIVA-11: Owner sends a collaboration request to another social worker.
     if (!createRequestId.trim() || !selectedSwUserId || !createReason.trim()) {
       setCreateError('Request, collaborator, and reason are required.')
       return

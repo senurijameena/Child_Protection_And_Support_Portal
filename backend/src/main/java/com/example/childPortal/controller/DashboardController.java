@@ -120,12 +120,15 @@ public class DashboardController {
                         return ResponseEntity.status(401).build();
                 }
 
-                var closedRequests = helpRequestRepository.findByAssignedWorkerId(userId).stream()
-                                .filter(r -> r.getStatus() == RequestStatus.CLOSED
+                // SW-VIVA-BE-1: Backend data source for SW "Completed Requests" table.
+                // Includes completed + closed + archived requests assigned to current social worker.
+                var completedRows = helpRequestRepository.findByAssignedWorkerId(userId).stream()
+                                .filter(r -> r.getStatus() == RequestStatus.COMPLETED
+                                                || r.getStatus() == RequestStatus.CLOSED
                                                 || r.getStatus() == RequestStatus.ARCHIVED)
                                 .toList();
 
-                Set<String> requestIds = closedRequests.stream().map(r -> r.getId()).collect(Collectors.toSet());
+                Set<String> requestIds = completedRows.stream().map(r -> r.getId()).collect(Collectors.toSet());
                 Map<String, Feedback> latestFeedbackByRequest = requestIds.isEmpty() ? Map.of()
                                 : feedbackRepository.findByHelpRequestIdIn(List.copyOf(requestIds))
                                                 .stream()
@@ -142,7 +145,7 @@ public class DashboardController {
                                                                         return bTime.isAfter(aTime) ? b : a;
                                                                 }));
 
-                List<Map<String, Object>> rows = closedRequests.stream().map(r -> {
+                List<Map<String, Object>> rows = completedRows.stream().map(r -> {
                         Feedback feedback = latestFeedbackByRequest.get(r.getId());
                         Map<String, Object> row = new HashMap<>();
                         row.put("id", r.getId());

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -340,6 +339,8 @@ public class FollowUpSchedulerService {
                 if (hasFeedback) {
                     continue;
                 }
+                // SW-VIVA-BE-4: Automatic status transition when no PU feedback for 7 days.
+                // COMPLETED -> CLOSED
                 request.setStatus(RequestStatus.CLOSED);
                 request.setLastUpdated(now);
                 if (request.getClosedDate() == null) {
@@ -351,6 +352,44 @@ public class FollowUpSchedulerService {
             logger.info("Completed request auto-close job completed.");
         } catch (Exception e) {
             logger.error("Error in completed request auto-close job: ", e);
+        }
+    }
+
+    /**
+     * Archive closed requests after a short grace period.
+     * This completes the status flow: COMPLETED -> CLOSED -> ARCHIVED.
+     * Runs daily at 7:45 AM.
+     */
+    @Scheduled(cron = "0 45 7 * * *")
+    public void archiveClosedRequests() {
+        logger.info("Running closed request auto-archive job...");
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime cutoff = now.minusDays(1);
+
+        try {
+            List<HelpRequest> closedRequests = helpRequestRepository.findByStatus(RequestStatus.CLOSED);
+            for (HelpRequest request : closedRequests) {
+                LocalDateTime closedAt = request.getClosedDate();
+                if (closedAt == null) {
+                    closedAt = request.getCompletionDate();
+                }
+                if (closedAt == null || closedAt.isAfter(cutoff)) {
+                    continue;
+                }
+
+                // SW-VIVA-BE-5: Final lifecycle step.
+                // CLOSED -> ARCHIVED
+                request.setStatus(RequestStatus.ARCHIVED);
+                request.setLastUpdated(now);
+                if (request.getArchivedDate() == null) {
+                    request.setArchivedDate(now);
+                }
+                helpRequestRepository.save(request);
+                logger.info("Auto-archived help request {}.", request.getTrackingId());
+            }
+            logger.info("Closed request auto-archive job completed.");
+        } catch (Exception e) {
+            logger.error("Error in closed request auto-archive job: ", e);
         }
     }
 

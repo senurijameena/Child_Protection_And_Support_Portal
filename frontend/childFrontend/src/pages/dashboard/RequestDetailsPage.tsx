@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import { Card, Badge, Spinner, ListGroup, Button, Form, Modal } from 'react-bootstrap'
 import { getUploadBaseUrl } from '../../services/api'
 import {
@@ -8,6 +8,10 @@ import {
   acceptAppliedPackage,
   rejectAppliedPackage,
   requestServiceAdjustment,
+  getAssignedResourcesPublic,
+  getFollowUpsPublic,
+  type PublicAssignedResourceDTO,
+  type UpcomingFollowUpPublicDTO,
 } from '../../services/dashboardApi'
 import { submitFeedback, getLatestFeedbackForHelpRequest } from '../../services/feedbackApi'
 import { REQUEST_STATUS_LABELS, REQUEST_STATUS_BADGE_VARIANTS, HELP_TYPE_LABELS, APPLIED_PACKAGE_STATUS_LABELS } from '../../types/dashboard'
@@ -20,6 +24,28 @@ const formatDate = (iso?: string) => {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString()
 }
 
+const formatFollowUpDate = (iso?: string) => {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString()
+}
+
+const formatFollowUpTime = (iso?: string) => {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+const followUpMethodIcon = (method?: string) => {
+  const m = String(method ?? '').toUpperCase()
+  if (m.includes('PHONE')) return '📞'
+  if (m.includes('HOME')) return '🏠'
+  if (m.includes('ONLINE') || m.includes('MEETING')) return '💻'
+  if (m.includes('HOSPITAL')) return '🏥'
+  if (m.includes('OFFICE') || m.includes('DOCUMENT')) return '🏢'
+  return '📅'
+}
+
 const getPriorityVariant = (priority: unknown) => {
   const p = String(priority ?? '').toUpperCase()
   if (p === 'HIGH') return 'danger'
@@ -30,6 +56,7 @@ const getPriorityVariant = (priority: unknown) => {
 
 export function RequestDetailsPage() {
   const { requestId } = useParams<{ requestId: string }>()
+  const location = useLocation()
   const [r, setR] = useState<HelpRequestDTO | null>(null)
   const [timeline, setTimeline] = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,12 +80,19 @@ export function RequestDetailsPage() {
   const [feedbackBehavior, setFeedbackBehavior] = useState('EXCELLENT')
   const [feedbackRecommend, setFeedbackRecommend] = useState('YES')
   const [feedbackComment, setFeedbackComment] = useState('')
+  const [assignedResources, setAssignedResources] = useState<PublicAssignedResourceDTO[]>([])
+  const [upcomingFollowUps, setUpcomingFollowUps] = useState<UpcomingFollowUpPublicDTO[]>([])
 
   const load = () => {
     if (!requestId) return
     setLoadError(null)
-    Promise.allSettled([getHelpRequest(requestId), getHelpRequestTimeline(requestId)])
-      .then(([reqRes, tlRes]) => {
+    Promise.allSettled([
+      getHelpRequest(requestId),
+      getHelpRequestTimeline(requestId),
+      getAssignedResourcesPublic(requestId),
+      getFollowUpsPublic(requestId),
+    ])
+      .then(([reqRes, tlRes, resourcesRes, followUpsRes]) => {
         if (reqRes.status === 'fulfilled') {
           setR(reqRes.value)
         } else {
@@ -70,10 +104,22 @@ export function RequestDetailsPage() {
         } else {
           setTimeline([])
         }
+        if (resourcesRes.status === 'fulfilled') {
+          setAssignedResources(resourcesRes.value)
+        } else {
+          setAssignedResources([])
+        }
+        if (followUpsRes.status === 'fulfilled') {
+          setUpcomingFollowUps(followUpsRes.value)
+        } else {
+          setUpcomingFollowUps([])
+        }
       })
       .catch(() => {
         setR(null)
         setTimeline([])
+        setAssignedResources([])
+        setUpcomingFollowUps([])
         setLoadError('Unable to load request details. Please try again.')
       })
       .finally(() => setLoading(false))
@@ -208,6 +254,14 @@ export function RequestDetailsPage() {
       setFeedbackSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    const shouldOpenFromQuery = new URLSearchParams(location.search).get('feedback') === '1'
+    if (!shouldOpenFromQuery) return
+    if (!isFeedbackEligible || !!existingFeedback || feedbackLoading) return
+    setFeedbackError(null)
+    setShowFeedbackModal(true)
+  }, [location.search, isFeedbackEligible, existingFeedback, feedbackLoading])
 
   if (loading) {
     return (
@@ -418,6 +472,83 @@ export function RequestDetailsPage() {
                     </div>
                   )
                 })()}
+
+                <div className="mt-3 pt-3 border-top">
+                  <h6 className="fw-600 mb-2">🏥 Assigned Resources</h6>
+                  {(() => {
+                    const fallbackResources = (((r as any)?.appliedPackageItemExecutions ?? []) as any[])
+                      .filter((x) => !!x?.assignedResource)
+                      .map((x) => ({
+                        resourceName: x.assignedResource as string,
+                        serviceType: x.serviceItem as string | undefined,
+                        contactPhone: '',
+                        address: '',
+                        emergencySupport: undefined,
+                        instructions: x.notes as string | undefined,
+                        assignedAt: x.updatedAt as string | undefined,
+                      }))
+                    const resourcesToShow = assignedResources.length > 0 ? assignedResources : fallbackResources
+                    if (resourcesToShow.length === 0) {
+                      return <p className="small text-muted mb-0">No assigned resources yet.</p>
+                    }
+                    return (
+                      <div className="d-grid gap-2">
+                        {resourcesToShow.map((res, idx) => (
+                          <div key={`${res.resourceName ?? 'resource'}-${idx}`} className="border rounded-3 p-3">
+                            <div className="fw-600 mb-1">{res.resourceName || 'Assigned Resource'}</div>
+                            <div className="small">
+                              <div><strong>Service Type:</strong> {res.serviceType || '—'}</div>
+                              <div><strong>Contact Phone:</strong> {res.contactPhone || '—'}</div>
+                              <div><strong>Location:</strong> {res.address || '—'}</div>
+                              <div><strong>Emergency Support:</strong> {res.emergencySupport === true ? 'Yes' : res.emergencySupport === false ? 'No' : '—'}</div>
+                              <div><strong>Assigned On:</strong> {formatDate(res.assignedAt)}</div>
+                              <div><strong>Instructions:</strong> {res.instructions || '—'}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                <div className="mt-3 pt-3 border-top">
+                  <h6 className="fw-600 mb-2">📅 Upcoming Follow-Up</h6>
+                  {upcomingFollowUps.length === 0 ? (
+                    <p className="small text-muted mb-0">No follow-up updates yet.</p>
+                  ) : (
+                    <div className="d-grid gap-2">
+                      {upcomingFollowUps.map((fu, idx) => {
+                        const status = String(fu.status ?? 'SCHEDULED').toUpperCase()
+                        return (
+                          <div key={`${fu.scheduledDate}-${idx}`} className="border rounded-3 p-3">
+                            <div className="fw-600 mb-1">
+                              {followUpMethodIcon(fu.method)} {fu.method || 'Follow-Up'}
+                            </div>
+                            <div className="small">
+                              <div><strong>Date:</strong> {formatFollowUpDate(fu.scheduledDate)}</div>
+                              <div><strong>Time:</strong> {formatFollowUpTime(fu.scheduledDate)}</div>
+                              <div><strong>Method:</strong> {fu.method || '—'}</div>
+                            </div>
+                            <div className="small text-muted mt-2">
+                              You will be contacted by your Social Worker. Please ensure your phone is reachable.
+                            </div>
+                            {status === 'COMPLETED' && (
+                              <div className="small text-success mt-2">
+                                Follow-Up Completed on {formatFollowUpDate(fu.scheduledDate)}.
+                              </div>
+                            )}
+                            {(status === 'MISSED' || status === 'RESCHEDULED') && (
+                              <div className="small text-warning mt-2">
+                                Follow-Up was rescheduled.
+                                {fu.nextScheduledDate ? ` New Date: ${formatFollowUpDate(fu.nextScheduledDate)}.` : ''}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </Card.Body>
             </Card>
           )}
@@ -552,7 +683,7 @@ export function RequestDetailsPage() {
       {/* Give feedback modal */}
       <Modal show={showFeedbackModal} onHide={() => setShowFeedbackModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Submit Feedback</Modal.Title>
+          <Modal.Title>Public User Feedback Form</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="mb-3">

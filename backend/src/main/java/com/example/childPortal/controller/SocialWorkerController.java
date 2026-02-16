@@ -46,15 +46,9 @@ public class SocialWorkerController {
                 .map(worker -> {
                     SocialWorkerDTO dto = new SocialWorkerDTO();
                     dto.setUserId(worker.getUserId());
-<<<<<<< HEAD
-                    dto.setOrganization(worker.getOrganization());
-                    dto.setSpecializations(worker.getSpecializations());
-                    dto.setLicenseNumber(worker.getLicenseNumber());
-=======
                     dto.setLicenseNumber(worker.getLicenseNumber());
                     dto.setSpecializations(worker.getSpecializations());
                     dto.setOrganization(worker.getOrganization());
->>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
                     dto.setYearsOfExperience(String.valueOf(worker.getYearsOfExperience()));
                     // Add other fields as needed
                     return ResponseEntity.ok(dto);

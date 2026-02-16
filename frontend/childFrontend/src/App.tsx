@@ -51,6 +51,8 @@ import { PoliceReportsPage } from './pages/police/PoliceReportsPage'
 import { PoliceProfilePage } from './pages/police/PoliceProfilePage'
 import { SocialWorkerDashboard } from './pages/social-worker/SocialWorkerDashboard'
 import { SocialWorkerAnalyticsPage } from './pages/social-worker/SocialWorkerAnalytics'
+import { SocialWorkerFeedbackPage } from './pages/social-worker/SocialWorkerFeedbackPage'
+import { SocialWorkerFeedbackViewPage } from './pages/social-worker/SocialWorkerFeedbackViewPage'
 import {
   SocialWorkerRequestsPage,
   SocialWorkerRequestDetailsPage,
@@ -188,7 +190,8 @@ function App() {
         <Route path="packages/create" element={<ServicePackageFormPage />} />
         <Route path="packages/:packageId/edit" element={<ServicePackageFormPage />} />
         <Route path="reports" element={<SocialWorkerReportsPage />} />
-        <Route path="feedback" element={<FeedbackPage />} />
+        <Route path="feedback" element={<SocialWorkerFeedbackPage />} />
+        <Route path="feedback/:requestId" element={<SocialWorkerFeedbackViewPage />} />
         <Route path="profile" element={<SocialWorkerProfilePage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

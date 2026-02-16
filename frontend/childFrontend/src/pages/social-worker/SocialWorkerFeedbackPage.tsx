@@ -44,7 +44,7 @@ export function SocialWorkerFeedbackPage() {
     <Card className="border-0 shadow-sm rounded-3">
       <Card.Header className="bg-white">
         <h5 className="mb-0 fw-bold">Social Worker Feedback</h5>
-        <div className="text-muted small">Closed or archived requests with feedback summary</div>
+        <div className="text-muted small">Completed requests with feedback summary</div>
       </Card.Header>
       <Card.Body className="p-0">
         {error && <div className="alert alert-danger m-3">{error}</div>}

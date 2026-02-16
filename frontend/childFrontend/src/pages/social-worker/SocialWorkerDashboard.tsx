@@ -104,6 +104,8 @@ export function SocialWorkerDashboard() {
         setLoading(false)
       }
     }, 15000)
+    // SW-VIVA-1: Dashboard bootstrap call.
+    // Loads assigned requests, follow-ups, notifications, announcements, and completed feedback rows in one place.
     Promise.all([
       getAssignedRequests(userId),
       getMyFollowUps(),
@@ -203,6 +205,7 @@ export function SocialWorkerDashboard() {
   }, [followUps, calendarMonth])
 
   const handleMarkComplete = async (followUpId: string) => {
+    // SW-VIVA-2: Follow-up task completion action from dashboard schedule.
     setScheduleActionLoading(followUpId)
     try {
       const updated = await updateFollowUp(followUpId, { status: 'COMPLETED' })
@@ -224,6 +227,7 @@ export function SocialWorkerDashboard() {
   }
 
   const handleReschedule = async () => {
+    // SW-VIVA-3: Follow-up reschedule action from dashboard schedule.
     if (!rescheduleModal?.id || !rescheduleDate) return
     setScheduleActionLoading(`reschedule-${rescheduleModal.id}`)
     try {
@@ -367,6 +371,19 @@ export function SocialWorkerDashboard() {
     })),
   ]
 
+  const now = new Date()
+  const currentDate = now.toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+  const currentTime = now.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const socialWorkerName = user?.fullName?.trim() || 'Social Worker'
+
   return (
     <div className="sw-dashboard animate-fade-in-up">
       <div
@@ -379,9 +396,9 @@ export function SocialWorkerDashboard() {
         <div className="d-flex align-items-center gap-3 mb-2">
           <span style={{ fontSize: '2.5rem' }}>🏥</span>
           <div>
-            <h1 className="h2 fw-bold mb-1">Care & Support Dashboard</h1>
+            <h1 className="h2 fw-bold mb-1">Welcome again, {socialWorkerName}</h1>
             <p className="mb-0" style={{ opacity: 0.9, fontSize: '0.95rem' }}>
-              Manage help requests, deliver services, and track your performance
+              {currentDate} | {currentTime}
             </p>
           </div>
         </div>
@@ -748,7 +765,7 @@ export function SocialWorkerDashboard() {
       <Card className="border-0 shadow-sm rounded-3 mb-4" style={{ background: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)' }}>
         <Card.Header className="bg-transparent border-0 pt-3">
           <h5 className="mb-0 fw-bold" style={{ color: '#0f766e' }}>Completed Requests</h5>
-          <p className="mb-0 small" style={{ color: '#0f766e' }}>Closed or archived cases with feedback</p>
+          <p className="mb-0 small" style={{ color: '#0f766e' }}>Completed / closed / archived requests with feedback</p>
         </Card.Header>
         <Card.Body className="p-0">
           {completedRows.length === 0 ? (

@@ -58,6 +58,43 @@ export async function getAppliedPackage(requestId: string): Promise<ServicePacka
   }
 }
 
+/** Public user: assigned resources for a help request (public-safe fields only). */
+export interface PublicAssignedResourceDTO {
+  resourceName?: string
+  serviceType?: string
+  contactPhone?: string
+  address?: string
+  emergencySupport?: boolean
+  instructions?: string
+  assignedAt?: string
+}
+
+export async function getAssignedResourcesPublic(requestId: string): Promise<PublicAssignedResourceDTO[]> {
+  try {
+    const list = await apiGet<PublicAssignedResourceDTO[]>(`/help-requests/${requestId}/assigned-resources-public`)
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
+/** Public user: follow-up cards (date/time/method/status) for request details view. */
+export interface UpcomingFollowUpPublicDTO {
+  scheduledDate: string
+  method: string
+  status?: 'SCHEDULED' | 'COMPLETED' | 'MISSED' | 'RESCHEDULED' | string
+  nextScheduledDate?: string
+}
+
+export async function getFollowUpsPublic(requestId: string): Promise<UpcomingFollowUpPublicDTO[]> {
+  try {
+    const list = await apiGet<UpcomingFollowUpPublicDTO[]>(`/help-requests/${requestId}/follow-ups/public`)
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
 /** Public user: Accept the applied service package. */
 export async function acceptAppliedPackage(requestId: string): Promise<HelpRequestDTO> {
   return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/package/accept`, {})

@@ -135,6 +135,8 @@ export function SocialWorkerRequestsPage() {
     const loadData = async () => {
       try {
         setLoading(true)
+        // SW-VIVA-4: Assigned Requests page data load.
+        // Pulls request list + follow-ups + transfer state + collaboration state for tabbed request handling.
         const [assignedRequests, myFollowUps, userTransfers, pendingCollab, activeCollab, socialWorkers] = await Promise.all([
           getAssignedRequests(user.userId),
           getMyFollowUps().catch(() => []),
@@ -328,6 +330,7 @@ export function SocialWorkerRequestsPage() {
   }
 
   const handleAccept = async (req: HelpRequestDTO) => {
+    // SW-VIVA-5: Accept assigned request and move request into active workflow.
     setSubmitting(true)
     try {
       await acceptHelpRequest(req.id)
@@ -353,6 +356,7 @@ export function SocialWorkerRequestsPage() {
   }
 
   const handleRejectSubmit = async () => {
+    // SW-VIVA-6: Reject assigned request with mandatory reason.
     if (!selectedRequestId || !rejectReason.trim()) {
       return
     }
@@ -388,6 +392,7 @@ export function SocialWorkerRequestsPage() {
   }
 
   const handleTransferSubmit = async () => {
+    // SW-VIVA-7: Transfer request to another social worker (with target + reason).
     if (!selectedRequestId || !transferTargetSwId || !transferReason.trim()) {
       return
     }
@@ -1052,6 +1057,19 @@ export function SocialWorkerRequestsPage() {
     )
   }
 
+  const resolveTransferRequestedDate = (transfer: TransferRequestDTO): string => {
+    return (
+      transfer.requestedAt ||
+      (transfer as any).requestedAt ||
+      (transfer as any).requestedDate ||
+      (transfer as any).createdAt ||
+      (transfer as any).createdDate ||
+      (transfer as any).updatedAt ||
+      (transfer as any).updatedDate ||
+      ''
+    )
+  }
+
   const renderPendingTransfers = () => {
     if (pendingTransfers.length === 0) {
       return (
@@ -1140,7 +1158,7 @@ export function SocialWorkerRequestsPage() {
                         </div>
                       </td>
                       <td style={{ padding: '1rem', color: '#2563eb' }}>
-                        {formatDateTime((transfer as any).requestedDate || (transfer as any).createdDate)}
+                        {formatDateTime(resolveTransferRequestedDate(transfer))}
                       </td>
                       <td style={{ padding: '1rem' }}>
                         <Badge

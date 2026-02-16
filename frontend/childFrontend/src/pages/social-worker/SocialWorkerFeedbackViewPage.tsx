@@ -21,6 +21,15 @@ const renderStars = (rating?: number | string) => {
   return '⭐'.repeat(Math.min(5, Math.max(1, value)))
 }
 
+const formatChoice = (value?: string) => {
+  if (!value) return '—'
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export function SocialWorkerFeedbackViewPage() {
   const { requestId } = useParams()
   const navigate = useNavigate()
@@ -66,7 +75,7 @@ export function SocialWorkerFeedbackViewPage() {
   }, [feedback])
 
   const canArchive = useMemo(() => {
-    return request?.status === 'CLOSED' || request?.status === 'ARCHIVED'
+    return request?.status === 'CLOSED'
   }, [request?.status])
 
   const handleSend = async () => {
@@ -131,7 +140,7 @@ export function SocialWorkerFeedbackViewPage() {
         <Card.Body>
           <div className="d-flex justify-content-between flex-wrap gap-2">
             <div>
-              <h4 className="mb-1">Feedback View</h4>
+              <h4 className="mb-1">Social Worker Feedback View</h4>
               <div className="text-muted small">Review feedback and close out the request</div>
             </div>
             <Badge bg="light" text="dark" className="border">
@@ -140,15 +149,15 @@ export function SocialWorkerFeedbackViewPage() {
           </div>
           <Row className="g-3 mt-1">
             <Col md={4}>
-              <div className="small text-muted">Request ID</div>
+              <div className="small text-muted">Request ID:</div>
               <div className="fw-600">{requestLabel}</div>
             </Col>
             <Col md={4}>
-              <div className="small text-muted">Service Type</div>
+              <div className="small text-muted">Service Type:</div>
               <div className="fw-600">{serviceType}</div>
             </Col>
             <Col md={4}>
-              <div className="small text-muted">Completion Date</div>
+              <div className="small text-muted">Completion Date:</div>
               <div className="fw-600">{formatDate(request.completionDate)}</div>
             </Col>
           </Row>
@@ -169,27 +178,32 @@ export function SocialWorkerFeedbackViewPage() {
             <>
               <Row className="g-3 mb-2">
                 <Col md={3}>
-                  <div className="small text-muted">Rating</div>
-                  <div className="fw-600">{renderStars(feedback.rating)} {feedback.rating ? `(${feedback.rating}/5)` : ''}</div>
+                  <div className="small text-muted">⭐ Rating</div>
+                  <div className="fw-600">{feedback.rating ? `${feedback.rating}/5` : '—'}</div>
                 </Col>
                 <Col md={3}>
                   <div className="small text-muted">Helpfulness</div>
-                  <div className="fw-600">{feedback.helpfulness || '—'}</div>
+                  <div className="fw-600">{formatChoice(feedback.helpfulness)}</div>
                 </Col>
                 <Col md={3}>
                   <div className="small text-muted">Expected Help</div>
-                  <div className="fw-600">{feedback.expectedHelp || '—'}</div>
+                  <div className="fw-600">{formatChoice(feedback.expectedHelp)}</div>
                 </Col>
                 <Col md={3}>
                   <div className="small text-muted">Behavior</div>
-                  <div className="fw-600">{feedback.behavior || '—'}</div>
+                  <div className="fw-600">{formatChoice(feedback.behavior)}</div>
                 </Col>
               </Row>
               <div className="mt-3">
-                <div className="small text-muted mb-1">User Comment</div>
+                <div className="small text-muted mb-1">User Comment:</div>
                 <div className="border rounded-3 p-3 bg-light">
-                  <div className="small">{feedback.message || 'No comment provided.'}</div>
+                  <div className="small">"{feedback.message || 'No comment provided.'}"</div>
                 </div>
+              </div>
+              <div className="mt-3 small text-muted">
+                {feedback.socialWorkerResponse
+                  ? `Final response sent: "${feedback.socialWorkerResponse}"`
+                  : 'No social worker response sent yet.'}
               </div>
             </>
           )}
@@ -199,7 +213,8 @@ export function SocialWorkerFeedbackViewPage() {
       <Card className="border-0 shadow-sm">
         <Card.Body className="d-flex flex-wrap gap-2 justify-content-between align-items-center">
           <div className="small text-muted">
-            Message allowed even if user is anonymous. One final text message only.
+            <div className="fw-600 mb-1">Social Worker Response Message</div>
+            Message allowed even if user is anonymous. Only text message. One final message only.
           </div>
           <div className="d-flex gap-2">
             <Button

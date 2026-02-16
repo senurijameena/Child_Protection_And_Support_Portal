@@ -14,7 +14,10 @@ public class FollowUp {
     private String type; // Home Visit, Phone Call, etc.
     private String status; // UPCOMING, CONFIRMED, URGENT, SCHEDULED, COMPLETED, MISSED
     private String priority; // HIGH, MEDIUM, LOW
+    private String title; // Short title for this follow-up (e.g. "Home visit – Week 1")
+    private String serviceItem; // Linked checklist/service task for this follow-up
     private LocalDateTime scheduledDate;
+    private LocalDateTime nextScheduledDate; // New date when missed/rescheduled
     private String notes;
     private String missedReason;
     private LocalDateTime createdAt;
@@ -84,12 +87,36 @@ public class FollowUp {
         this.priority = priority;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getServiceItem() {
+        return serviceItem;
+    }
+
+    public void setServiceItem(String serviceItem) {
+        this.serviceItem = serviceItem;
+    }
+
     public LocalDateTime getScheduledDate() {
         return scheduledDate;
     }
 
     public void setScheduledDate(LocalDateTime scheduledDate) {
         this.scheduledDate = scheduledDate;
+    }
+
+    public LocalDateTime getNextScheduledDate() {
+        return nextScheduledDate;
+    }
+
+    public void setNextScheduledDate(LocalDateTime nextScheduledDate) {
+        this.nextScheduledDate = nextScheduledDate;
     }
 
     public String getNotes() {

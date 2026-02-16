@@ -17,6 +17,8 @@ export interface FollowUpDTO {
   socialWorkerId?: string
   helpRequestId?: string
   childName?: string
+  title?: string
+  serviceItem?: string
   type?: string
   status?: string
   priority?: string
@@ -91,10 +93,12 @@ export async function getHelpRequest(requestId: string): Promise<HelpRequestDTO>
 }
 
 export async function acceptHelpRequest(requestId: string): Promise<HelpRequestDTO> {
+  // SW-VIVA-API-A: Accept assigned request.
   return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/accept`, {})
 }
 
 export async function declineHelpRequest(requestId: string, reason: string): Promise<HelpRequestDTO> {
+  // SW-VIVA-API-B: Reject assigned request with reason.
   return apiPut<HelpRequestDTO>(`/help-requests/${requestId}/decline`, { reason })
 }
 
@@ -206,6 +210,7 @@ export async function requestHelpRequestTransfer(data: {
   requestedAssigneeId: string
   reason: string
 }): Promise<TransferRequestDTO> {
+  // SW-VIVA-API-C: Request transfer to another social worker.
   return apiPost<TransferRequestDTO>('/transfers/help-request/request', data)
 }
 
@@ -260,12 +265,14 @@ export async function requestHelpRequestCollaborator(
     reason?: string
   }
 ): Promise<HelpRequestCollaboratorDTO> {
+  // SW-VIVA-API-D: Invite collaborator for a specific help request.
   return apiPost<HelpRequestCollaboratorDTO>(`/help-requests/${requestId}/collaboration/request`, data)
 }
 
 export async function acceptHelpRequestCollaborationRequest(
   collaborationId: string
 ): Promise<HelpRequestCollaboratorDTO> {
+  // SW-VIVA-API-E: Accept incoming collaboration invitation.
   return apiPost<HelpRequestCollaboratorDTO>(`/help-requests/collaboration/${collaborationId}/accept`, {})
 }
 
@@ -273,6 +280,7 @@ export async function rejectHelpRequestCollaborationRequest(
   collaborationId: string,
   reason?: string
 ): Promise<HelpRequestCollaboratorDTO> {
+  // SW-VIVA-API-F: Reject incoming collaboration invitation with reason.
   return apiPost<HelpRequestCollaboratorDTO>(`/help-requests/collaboration/${collaborationId}/reject`, reason ? { reason } : {})
 }
 

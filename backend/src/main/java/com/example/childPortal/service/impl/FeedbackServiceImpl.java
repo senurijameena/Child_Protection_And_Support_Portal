@@ -159,6 +159,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     public FeedbackResponseDTO respondToFeedbackAsSocialWorker(String feedbackId, String response, String socialWorkerId) {
         return feedbackRepository.findById(feedbackId)
                 .map(feedback -> {
+                    // SW-VIVA-BE-2: Enforce one final SW response (anti-spam rule).
                     if (feedback.getSocialWorkerResponse() != null && !feedback.getSocialWorkerResponse().trim().isEmpty()) {
                         throw new ResponseStatusException(
                                 HttpStatus.CONFLICT,
@@ -171,6 +172,8 @@ public class FeedbackServiceImpl implements FeedbackService {
 
                     if (feedback.getHelpRequestId() != null && !feedback.getHelpRequestId().trim().isEmpty()) {
                         helpRequestRepository.findById(feedback.getHelpRequestId()).ifPresent(request -> {
+                            // SW-VIVA-BE-3: Status flow trigger after SW feedback response.
+                            // COMPLETED -> CLOSED (archiving is handled by scheduler later).
                             if (request.getStatus() == HelpRequest.RequestStatus.COMPLETED) {
                                 request.setStatus(HelpRequest.RequestStatus.CLOSED);
                                 request.setLastUpdated(LocalDateTime.now());

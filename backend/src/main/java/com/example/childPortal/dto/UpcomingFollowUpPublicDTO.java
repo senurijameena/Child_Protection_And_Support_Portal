@@ -1,17 +1,10 @@
 package com.example.childPortal.dto;
 
-import java.time.LocalDateTime;
-
-/**
- * Public-safe view of a follow-up. Shown to the Public User on request details.
- * Includes: date, time, method (type), status flow (SCHEDULED, COMPLETED, MISSED, RESCHEDULED).
- * For MISSED/RESCHEDULED, nextScheduledDate is the new date. Does NOT include internal notes.
- */
 public class UpcomingFollowUpPublicDTO {
-    private String scheduledDate;   // ISO date-time string for frontend to format
-    private String method;         // e.g. "Phone Call", "Home Visit"
-    private String status;         // SCHEDULED, COMPLETED, MISSED, RESCHEDULED
-    private String nextScheduledDate; // When status is MISSED/RESCHEDULED, the new date (ISO)
+    private String scheduledDate;  
+    private String method;         
+    private String status;
+    private String nextScheduledDate;
 
     public String getScheduledDate() {
         return scheduledDate;

@@ -13,6 +13,13 @@ const getPriorityVariant = (priority?: string) => {
   return 'secondary'
 }
 
+const isFeedbackEligibleRequest = (r: HelpRequestDTO) =>
+  r.status === 'COMPLETED' ||
+  r.status === 'CLOSED' ||
+  r.status === 'ARCHIVED' ||
+  !!r.caseFinalized ||
+  !!r.allServicesCompleted
+
 export function MyRequestsPage() {
   const [requests, setRequests] = useState<HelpRequestDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -104,6 +111,14 @@ export function MyRequestsPage() {
                         <Link to={`/dashboard/requests/${r.id}`} className="btn btn-sm btn-outline-primary rounded-pill">
                           View
                         </Link>
+                        {isFeedbackEligibleRequest(r) && (
+                          <Link
+                            to={`/dashboard/requests/${r.id}?feedback=1`}
+                            className="btn btn-sm btn-warning rounded-pill ms-2"
+                          >
+                            Give Feedback
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   ))

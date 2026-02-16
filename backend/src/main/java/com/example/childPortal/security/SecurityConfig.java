@@ -101,7 +101,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/cases/public/**").permitAll()
                 .requestMatchers("/statistics/public").permitAll()
                 .requestMatchers("/api/feedback/public").permitAll()
-                .requestMatchers("/api/police/dashboard/**").permitAll() // For Demo Purpose
+                .requestMatchers("/api/police/dashboard/**").permitAll() 
                 .requestMatchers(HttpMethod.GET, "/api/stations", "/api/stations/**").permitAll()
                 .requestMatchers("/api/contact/public").permitAll()
 

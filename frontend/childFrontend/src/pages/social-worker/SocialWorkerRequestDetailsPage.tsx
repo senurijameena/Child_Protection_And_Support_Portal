@@ -205,9 +205,13 @@ export function SocialWorkerRequestDetailsPage() {
   const [assignError, setAssignError] = useState<string | null>(null)
   const [assignmentResources, setAssignmentResources] = useState<AssignmentResource[]>([])
   const [followUpModal, setFollowUpModal] = useState<{ item?: string } | null>(null)
+  const [followUpTitle, setFollowUpTitle] = useState('')
+  const [followUpTaskItem, setFollowUpTaskItem] = useState('')
   const [followUpVisitDate, setFollowUpVisitDate] = useState('')
   const [followUpNextVisitDate, setFollowUpNextVisitDate] = useState('')
-  const [followUpMode, setFollowUpMode] = useState<'HOME_VISIT' | 'PAYMENT_TRANSFER' | 'PHONE_CALL' | 'OTHER'>('HOME_VISIT')
+  const [followUpMode, setFollowUpMode] = useState<
+    'PHONE_CALL' | 'HOME_VISIT' | 'ONLINE_MEETING' | 'HOSPITAL_VISIT' | 'DOCUMENT_COLLECTION' | 'OFFICE_VISIT'
+  >('HOME_VISIT')
   const [followUpCondition, setFollowUpCondition] = useState('')
   const [followUpNotes, setFollowUpNotes] = useState('')
   const [followUpSubmitting, setFollowUpSubmitting] = useState(false)
@@ -287,6 +291,7 @@ export function SocialWorkerRequestDetailsPage() {
   const [finalizeSubmitting, setFinalizeSubmitting] = useState(false)
   const [finalizeError, setFinalizeError] = useState<string | null>(null)
   const [showCompleteRequestModal, setShowCompleteRequestModal] = useState(false)
+  const [showCompletionSuccessBanner, setShowCompletionSuccessBanner] = useState(false)
   const [hasShownAutoCompletePrompt, setHasShownAutoCompletePrompt] = useState(false)
   // --- Collaboration permissions ---
   // When opened from Collaboration Center, ?mode=collaborator is set
@@ -874,6 +879,16 @@ export function SocialWorkerRequestDetailsPage() {
 
   return (
     <Container fluid className="py-4 sw-dashboard">
+      {showCompletionSuccessBanner && (
+        <Row className="mb-3">
+          <Col xs={12}>
+            <div className="alert alert-success d-flex align-items-center mb-0">
+              <span className="me-2 fs-5">✅</span>
+              <span>All tasks completed successfully. This request has been marked complete.</span>
+            </div>
+          </Col>
+        </Row>
+      )}
       <Row className="mb-3">
         <Col xs={12} className="d-flex justify-content-between align-items-start flex-wrap gap-2">
           <div>
@@ -1825,6 +1840,8 @@ export function SocialWorkerRequestDetailsPage() {
                                             setFollowUpModal(
                                               selectedRequirementItem ? { item: selectedRequirementItem } : { item: undefined }
                                             )
+                                            setFollowUpTitle('')
+                                            setFollowUpTaskItem(selectedRequirementItem ?? '')
                                             setFollowUpVisitDate(local)
                                             setFollowUpNextVisitDate('')
                                             setFollowUpMode('HOME_VISIT')
@@ -2720,6 +2737,53 @@ export function SocialWorkerRequestDetailsPage() {
                 <div className="alert alert-danger py-2 small">{followUpError}</div>
               )}
               <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">📌 Title</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={followUpTitle}
+                  onChange={(e) => setFollowUpTitle(e.target.value)}
+                  placeholder="e.g. Follow-up call after treatment"
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">📋 Task / Checklist item</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={followUpTaskItem}
+                  onChange={(e) => setFollowUpTaskItem(e.target.value)}
+                >
+                  <option value="">General (no specific task)</option>
+                  {[
+                    ...new Set(
+                      ((request?.appliedPackageItemExecutions ?? request?.appliedPackage?.items) ?? [])
+                        .map((itemOrExec: { serviceItem?: string } | string) =>
+                          typeof itemOrExec === 'string' ? itemOrExec : itemOrExec?.serviceItem
+                        )
+                        .filter(Boolean) as string[]
+                    ),
+                  ].map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-600 text-muted">📞 Method</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={followUpMode}
+                  onChange={(e) => setFollowUpMode(e.target.value as typeof followUpMode)}
+                >
+                  <option value="PHONE_CALL">📞 Phone Call</option>
+                  <option value="HOME_VISIT">🏠 Home Visit</option>
+                  <option value="ONLINE_MEETING">💻 Online Meeting</option>
+                  <option value="HOSPITAL_VISIT">🏥 Hospital Visit</option>
+                  <option value="DOCUMENT_COLLECTION">🏢 Document Collection</option>
+                  <option value="OFFICE_VISIT">🏢 Office Visit</option>
+                </Form.Control>
+              </Form.Group>
+              <Form.Group className="mb-3">
                 <Form.Label className="small fw-600 text-muted">📅 Visit date</Form.Label>
                 <Form.Control
                   type="datetime-local"
@@ -2797,6 +2861,13 @@ export function SocialWorkerRequestDetailsPage() {
                               <span className="fw-600">{dateLabel}</span>
                               <span className="text-muted">{mode}</span>
                             </div>
+                            {(fu.title || fu.serviceItem) && (
+                              <div className="small mb-1">
+                                {fu.title && <span className="fw-600">{fu.title}</span>}
+                                {fu.title && fu.serviceItem && ' · '}
+                                {fu.serviceItem && <span className="text-muted">Task: {fu.serviceItem}</span>}
+                              </div>
+                            )}
                             <div className="text-muted">
                               Outcome:{' '}
                               <strong>
@@ -2847,6 +2918,8 @@ export function SocialWorkerRequestDetailsPage() {
                 const created = await createFollowUp({
                   helpRequestId: requestId,
                   type: followUpMode,
+                  title: followUpTitle.trim() || undefined,
+                  serviceItem: followUpTaskItem.trim() || undefined,
                   scheduledDate: visitDateIso,
                   nextScheduledDate: nextVisitIso,
                   notes: notesCombined,
@@ -2854,6 +2927,8 @@ export function SocialWorkerRequestDetailsPage() {
                 })
                 setFollowUps((prev) => [...prev, created])
                 setFollowUpModal(null)
+                setFollowUpTitle('')
+                setFollowUpTaskItem('')
                 setFollowUpVisitDate('')
                 setFollowUpNextVisitDate('')
                 setFollowUpNotes('')
@@ -3174,6 +3249,8 @@ export function SocialWorkerRequestDetailsPage() {
                 const updated = await finalizeCase(requestId)
                 setRequest(updated)
                 setShowCompleteRequestModal(false)
+                setShowCompletionSuccessBanner(true)
+                setTimeout(() => setShowCompletionSuccessBanner(false), 8000)
               } catch (err) {
                 setFinalizeError(err instanceof Error ? err.message : 'Failed to complete request')
               } finally {

@@ -296,8 +296,8 @@ export function SocialWorkerRequestDetailsPage() {
     () =>
       currentUserId && collaboration
         ? (collaboration.collaborators || []).find(
-            (c) => c.userId === currentUserId && c.status === 'ACCEPTED'
-          ) ?? null
+          (c) => c.userId === currentUserId && c.status === 'ACCEPTED'
+        ) ?? null
         : null,
     [collaboration, currentUserId]
   )
@@ -632,10 +632,10 @@ export function SocialWorkerRequestDetailsPage() {
       : request?.appliedPackage?.items) ?? []
   const checklistTotal = executionChecklist.length
   const checklistCompletedCount = executionChecklist.filter(
-    (item) => (item.status || '').trim().toUpperCase() === 'COMPLETED'
+    (item) => typeof item === 'object' && (item.status || '').trim().toUpperCase() === 'COMPLETED'
   ).length
   const assignedResourceCount = executionChecklist.filter(
-    (item) => !!item.assignedResource && item.assignedResource.trim().length > 0
+    (item) => typeof item === 'object' && !!item.assignedResource && item.assignedResource.trim().length > 0
   ).length
   const allChecklistCompleted = checklistTotal > 0 && checklistCompletedCount === checklistTotal
   const allResourcesAssignedForChecklist = checklistTotal > 0 && assignedResourceCount === checklistTotal
@@ -966,7 +966,7 @@ export function SocialWorkerRequestDetailsPage() {
       )}
 
       {isAssigned ? (
-      <Row className="g-4">
+        <Row className="g-4">
           <Col xs={12} lg={8}>
             <Card className="sw-card border-0 mb-4">
               <Card.Header className="bg-white border-0 pt-4 pb-3">
@@ -1421,11 +1421,11 @@ export function SocialWorkerRequestDetailsPage() {
                                       setCollaboration((prev) =>
                                         prev
                                           ? {
-                                              ...prev,
-                                              collaborators: prev.collaborators.filter(
-                                                (col) => col.collaborationId !== c.collaborationId
-                                              ),
-                                            }
+                                            ...prev,
+                                            collaborators: prev.collaborators.filter(
+                                              (col) => col.collaborationId !== c.collaborationId
+                                            ),
+                                          }
                                           : prev
                                       )
                                     } catch (err) {
@@ -1609,16 +1609,16 @@ export function SocialWorkerRequestDetailsPage() {
                           )}
 
                         {showCompleteRequestButton && (
-                            <Button
-                              variant="success"
-                              size="sm"
-                              className="fw-600"
-                              disabled={finalizeSubmitting || !canCompleteRequest}
-                              onClick={() => setShowCompleteRequestModal(true)}
-                            >
-                              ✅ Complete Request
-                            </Button>
-                          )}
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="fw-600"
+                            disabled={finalizeSubmitting || !canCompleteRequest}
+                            onClick={() => setShowCompleteRequestModal(true)}
+                          >
+                            ✅ Complete Request
+                          </Button>
+                        )}
                       </div>
                       {isPackageApprovedNotStarted && (
                         <div className="small text-muted mt-2">No resource assignment yet.</div>
@@ -1660,9 +1660,8 @@ export function SocialWorkerRequestDetailsPage() {
                                     return (
                                       <li
                                         key={item}
-                                        className={`py-2 px-2 rounded-3 mb-1 cursor-pointer ${
-                                          isSelected ? 'bg-primary bg-opacity-10' : 'bg-light bg-opacity-25'
-                                        }`}
+                                        className={`py-2 px-2 rounded-3 mb-1 cursor-pointer ${isSelected ? 'bg-primary bg-opacity-10' : 'bg-light bg-opacity-25'
+                                          }`}
                                         onClick={() => setSelectedRequirementItem(item)}
                                       >
                                         <div className="d-flex justify-content-between align-items-center gap-2">
@@ -1680,8 +1679,8 @@ export function SocialWorkerRequestDetailsPage() {
                                             {completed
                                               ? 'Completed'
                                               : inProgress
-                                              ? 'In Progress'
-                                              : 'Not Started'}
+                                                ? 'In Progress'
+                                                : 'Not Started'}
                                           </Badge>
                                         </div>
                                       </li>
@@ -1728,7 +1727,7 @@ export function SocialWorkerRequestDetailsPage() {
                             </Card.Header>
                             <Card.Body className="py-2 small">
                               {Array.isArray(request.appliedPackageItemExecutions) &&
-                              request.appliedPackageItemExecutions.some((ex) => ex.assignedResource) ? (
+                                request.appliedPackageItemExecutions.some((ex) => ex.assignedResource) ? (
                                 <ul className="list-unstyled mb-0">
                                   {request.appliedPackageItemExecutions
                                     .filter((ex) => ex.assignedResource)

@@ -1,12 +1,12 @@
 
-import { api } from './api';
+import { apiGet, apiPost } from './api';
 
 export const socialWorkerService = {
 
   async getSocialWorkerProfile(userId: string) {
     try {
-      const response = await api.get(`/api/social-worker/profile/${userId}`);
-      return response.data;
+      const data = await apiGet<any>(`/social-worker/profile/${userId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching social worker profile:', error);
       throw error;
@@ -15,8 +15,8 @@ export const socialWorkerService = {
 
   async getSocialWorkerStatistics(userId: string) {
     try {
-      const response = await api.get(`/api/social-worker/statistics/${userId}`);
-      return response.data;
+      const data = await apiGet<any>(`/social-worker/statistics/${userId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching social worker statistics:', error);
       throw error;
@@ -25,8 +25,8 @@ export const socialWorkerService = {
 
   async getActiveAssignments(userId: string) {
     try {
-      const response = await api.get(`/api/social-worker/assignments/active/${userId}`);
-      return response.data;
+      const data = await apiGet<any[]>(`/social-worker/assignments/active/${userId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching active assignments:', error);
       throw error;
@@ -35,8 +35,8 @@ export const socialWorkerService = {
 
   async getPendingOffers(userId: string) {
     try {
-      const response = await api.get(`/api/social-worker/offers/pending/${userId}`);
-      return response.data;
+      const data = await apiGet<any[]>(`/social-worker/offers/pending/${userId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching pending offers:', error);
       throw error;
@@ -45,8 +45,8 @@ export const socialWorkerService = {
 
   async getUrgentRequests() {
     try {
-      const response = await api.get('/api/social-worker/requests/urgent');
-      return response.data;
+      const data = await apiGet<any[]>('/social-worker/requests/urgent');
+      return data;
     } catch (error) {
       console.error('Error fetching urgent requests:', error);
       throw error;
@@ -55,8 +55,8 @@ export const socialWorkerService = {
 
   async getAvailableRequests(userId: string) {
     try {
-      const response = await api.get(`/api/social-worker/requests/available/${userId}`);
-      return response.data;
+      const data = await apiGet<any[]>(`/social-worker/requests/available/${userId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching available requests:', error);
       throw error;
@@ -66,8 +66,8 @@ export const socialWorkerService = {
   async getTodaySchedule(userId: string) {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const response = await api.get(`/api/social-worker/schedule/${userId}?date=${today}`);
-      return response.data;
+      const data = await apiGet<any[]>(`/social-worker/schedule/${userId}?date=${today}`);
+      return data;
     } catch (error) {
       console.error('Error fetching today schedule:', error);
       throw error;
@@ -76,8 +76,8 @@ export const socialWorkerService = {
 
   async getAvailableResources(userId: string) {
     try {
-      const response = await api.get(`/api/social-worker/resources/available/${userId}`);
-      return response.data;
+      const data = await apiGet<any[]>(`/social-worker/resources/available/${userId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching available resources:', error);
       throw error;
@@ -86,8 +86,8 @@ export const socialWorkerService = {
 
   async updateWorkerStatus(statusData: { status: string; reason?: string }) {
     try {
-      const response = await api.post('/api/social-worker/status/update', statusData);
-      return response.data;
+      const data = await apiPost<any>('/social-worker/status/update', statusData);
+      return data;
     } catch (error) {
       console.error('Error updating worker status:', error);
       throw error;
@@ -101,8 +101,8 @@ export const socialWorkerService = {
     terms: string;
   }) {
     try {
-      const response = await api.post('/api/services/offer', offerData);
-      return response.data;
+      const data = await apiPost<any>('/services/offer', offerData);
+      return data;
     } catch (error) {
       console.error('Error making service offer:', error);
       throw error;
@@ -116,8 +116,8 @@ export const socialWorkerService = {
     urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   }) {
     try {
-      const response = await api.post('/api/social-worker/resources/request', resourceData);
-      return response.data;
+      const data = await apiPost<any>('/social-worker/resources/request', resourceData);
+      return data;
     } catch (error) {
       console.error('Error requesting resources:', error);
       throw error;

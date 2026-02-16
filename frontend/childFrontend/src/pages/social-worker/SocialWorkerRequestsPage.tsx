@@ -89,7 +89,7 @@ const getHelpTypeIcon = (type?: HelpType) => {
 
 const maskRequester = (req: HelpRequestDTO): string => {
   if (req.anonymous) return 'Anonymous'
-  return req.requesterName || req.requesterId || 'Unknown'
+  return req.requesterName || req.requesterUserId || 'Unknown'
 }
 
 export function SocialWorkerRequestsPage() {
@@ -110,7 +110,7 @@ export function SocialWorkerRequestsPage() {
   const [transferSubTab, setTransferSubTab] = useState<TransferSubTab>('pending')
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
-  
+
   // Action state
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
@@ -118,7 +118,7 @@ export function SocialWorkerRequestsPage() {
   const [transferTargetSwId, setTransferTargetSwId] = useState('')
   const [transferReason, setTransferReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  
+
   // SW list for transfer
   const [availableSW, setAvailableSW] = useState<
     Array<{ userId: string; fullName: string; availabilityStatus?: string; specializations?: string[]; serviceArea?: string }>
@@ -452,7 +452,7 @@ export function SocialWorkerRequestsPage() {
   const renderPendingTab = () => {
     if (pendingRequests.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
         >
@@ -466,7 +466,7 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
       >
@@ -497,9 +497,9 @@ export function SocialWorkerRequestsPage() {
               </thead>
               <tbody>
                 {pendingRequests.map((req, index) => (
-                  <tr 
+                  <tr
                     key={req.id}
-                    style={{ 
+                    style={{
                       backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(219, 234, 254, 0.4)',
                       transition: 'all 0.2s ease',
                       cursor: 'pointer'
@@ -517,8 +517,8 @@ export function SocialWorkerRequestsPage() {
                       {req.trackingId || req.id}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
-                        style={{ 
+                      <Badge
+                        style={{
                           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
@@ -530,9 +530,9 @@ export function SocialWorkerRequestsPage() {
                       </Badge>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
+                      <Badge
                         bg={getPriorityVariant(req.priority)}
-                        style={{ 
+                        style={{
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
                           fontWeight: '500',
@@ -588,7 +588,7 @@ export function SocialWorkerRequestsPage() {
   const renderActiveTab = () => {
     if (activeRequests.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
         >
@@ -602,7 +602,7 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
       >
@@ -633,9 +633,9 @@ export function SocialWorkerRequestsPage() {
               </thead>
               <tbody>
                 {activeRequests.map((req, index) => (
-                  <tr 
+                  <tr
                     key={req.id}
-                    style={{ 
+                    style={{
                       backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(191, 219, 254, 0.4)',
                       transition: 'all 0.2s ease',
                       cursor: 'pointer'
@@ -653,8 +653,8 @@ export function SocialWorkerRequestsPage() {
                       {req.trackingId || req.id}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
-                        style={{ 
+                      <Badge
+                        style={{
                           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
@@ -666,9 +666,9 @@ export function SocialWorkerRequestsPage() {
                       </Badge>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
+                      <Badge
                         bg={getPriorityVariant(req.priority)}
-                        style={{ 
+                        style={{
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
                           fontWeight: '500',
@@ -679,8 +679,8 @@ export function SocialWorkerRequestsPage() {
                       </Badge>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
-                        style={{ 
+                      <Badge
+                        style={{
                           background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
@@ -734,7 +734,7 @@ export function SocialWorkerRequestsPage() {
   const renderReassignedTab = () => {
     if (reassignedRequests.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bae6fd 100%)' }}
         >
@@ -748,7 +748,7 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bae6fd 100%)' }}
       >
@@ -782,9 +782,9 @@ export function SocialWorkerRequestsPage() {
               </thead>
               <tbody>
                 {reassignedRequests.map((req, index) => (
-                  <tr 
+                  <tr
                     key={req.id}
-                    style={{ 
+                    style={{
                       backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(186, 230, 253, 0.4)',
                       transition: 'all 0.2s ease',
                       cursor: 'pointer'
@@ -803,8 +803,8 @@ export function SocialWorkerRequestsPage() {
                         <div style={{ fontWeight: '600', color: '#1e40af', marginBottom: '0.25rem' }}>
                           {req.trackingId || req.id}
                         </div>
-                        <Badge 
-                          style={{ 
+                        <Badge
+                          style={{
                             background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
                             padding: '0.25rem 0.5rem',
                             fontSize: '0.75rem',
@@ -817,8 +817,8 @@ export function SocialWorkerRequestsPage() {
                       </div>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
-                        style={{ 
+                      <Badge
+                        style={{
                           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
@@ -830,9 +830,9 @@ export function SocialWorkerRequestsPage() {
                       </Badge>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
+                      <Badge
                         bg={getPriorityVariant(req.priority)}
-                        style={{ 
+                        style={{
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
                           fontWeight: '500',
@@ -853,8 +853,8 @@ export function SocialWorkerRequestsPage() {
                       </div>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <div 
-                        style={{ 
+                      <div
+                        style={{
                           padding: '0.5rem',
                           background: 'rgba(29, 78, 216, 0.1)',
                           borderRadius: '6px',
@@ -982,65 +982,65 @@ export function SocialWorkerRequestsPage() {
     return (
       <>
         {/* Transfer Sub-tabs */}
-        <div 
+        <div
           className="mb-3 p-2 rounded-3"
           style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
         >
           <div className="d-flex gap-2 flex-wrap">
-              <button
-                className={`btn ${transferSubTab === 'pending' ? 'active' : ''}`}
-                onClick={() => setTransferSubTab('pending')}
-                style={{
-                  borderRadius: '8px',
-                  padding: '0.5rem 1rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  transition: 'all 0.3s ease',
-                  background: transferSubTab === 'pending' 
-                    ? 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)'
-                    : 'transparent',
-                  color: transferSubTab === 'pending' ? 'white' : '#64748b',
-                  boxShadow: transferSubTab === 'pending' ? '0 4px 6px rgba(59, 130, 246, 0.3)' : 'none'
-                }}
-              >
-                ⏳ Pending {pendingTransfers.length > 0 && `(${pendingTransfers.length})`}
-              </button>
-              <button
-                className={`btn ${transferSubTab === 'approved' ? 'active' : ''}`}
-                onClick={() => setTransferSubTab('approved')}
-                style={{
-                  borderRadius: '8px',
-                  padding: '0.5rem 1rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  transition: 'all 0.3s ease',
-                  background: transferSubTab === 'approved' 
-                    ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'
-                    : 'transparent',
-                  color: transferSubTab === 'approved' ? 'white' : '#64748b',
-                  boxShadow: transferSubTab === 'approved' ? '0 4px 6px rgba(37, 99, 235, 0.3)' : 'none'
-                }}
-              >
-                ✅ Approved {approvedTransfers.length > 0 && `(${approvedTransfers.length})`}
-              </button>
-              <button
-                className={`btn ${transferSubTab === 'rejected' ? 'active' : ''}`}
-                onClick={() => setTransferSubTab('rejected')}
-                style={{
-                  borderRadius: '8px',
-                  padding: '0.5rem 1rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  transition: 'all 0.3s ease',
-                  background: transferSubTab === 'rejected' 
-                    ? 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)'
-                    : 'transparent',
-                  color: transferSubTab === 'rejected' ? 'white' : '#64748b',
-                  boxShadow: transferSubTab === 'rejected' ? '0 4px 6px rgba(29, 78, 216, 0.3)' : 'none'
-                }}
-              >
-                ❌ Rejected {rejectedTransfers.length > 0 && `(${rejectedTransfers.length})`}
-              </button>
+            <button
+              className={`btn ${transferSubTab === 'pending' ? 'active' : ''}`}
+              onClick={() => setTransferSubTab('pending')}
+              style={{
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                fontWeight: '600',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                background: transferSubTab === 'pending'
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)'
+                  : 'transparent',
+                color: transferSubTab === 'pending' ? 'white' : '#64748b',
+                boxShadow: transferSubTab === 'pending' ? '0 4px 6px rgba(59, 130, 246, 0.3)' : 'none'
+              }}
+            >
+              ⏳ Pending {pendingTransfers.length > 0 && `(${pendingTransfers.length})`}
+            </button>
+            <button
+              className={`btn ${transferSubTab === 'approved' ? 'active' : ''}`}
+              onClick={() => setTransferSubTab('approved')}
+              style={{
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                fontWeight: '600',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                background: transferSubTab === 'approved'
+                  ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'
+                  : 'transparent',
+                color: transferSubTab === 'approved' ? 'white' : '#64748b',
+                boxShadow: transferSubTab === 'approved' ? '0 4px 6px rgba(37, 99, 235, 0.3)' : 'none'
+              }}
+            >
+              ✅ Approved {approvedTransfers.length > 0 && `(${approvedTransfers.length})`}
+            </button>
+            <button
+              className={`btn ${transferSubTab === 'rejected' ? 'active' : ''}`}
+              onClick={() => setTransferSubTab('rejected')}
+              style={{
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                fontWeight: '600',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                background: transferSubTab === 'rejected'
+                  ? 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)'
+                  : 'transparent',
+                color: transferSubTab === 'rejected' ? 'white' : '#64748b',
+                boxShadow: transferSubTab === 'rejected' ? '0 4px 6px rgba(29, 78, 216, 0.3)' : 'none'
+              }}
+            >
+              ❌ Rejected {rejectedTransfers.length > 0 && `(${rejectedTransfers.length})`}
+            </button>
           </div>
         </div>
 
@@ -1055,7 +1055,7 @@ export function SocialWorkerRequestsPage() {
   const renderPendingTransfers = () => {
     if (pendingTransfers.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
         >
@@ -1069,7 +1069,7 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}
       >
@@ -1090,9 +1090,9 @@ export function SocialWorkerRequestsPage() {
                 {pendingTransfers.map((transfer, index) => {
                   const req = requests.find(r => r.id === transfer.entityId)
                   return (
-                    <tr 
+                    <tr
                       key={transfer.id}
-                      style={{ 
+                      style={{
                         backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(219, 234, 254, 0.4)',
                         transition: 'all 0.2s ease'
                       }}
@@ -1102,8 +1102,8 @@ export function SocialWorkerRequestsPage() {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         {req && (
-                          <Badge 
-                            style={{ 
+                          <Badge
+                            style={{
                               background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                               padding: '0.5rem 0.75rem',
                               fontSize: '0.85rem',
@@ -1125,8 +1125,8 @@ export function SocialWorkerRequestsPage() {
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <div 
-                          style={{ 
+                        <div
+                          style={{
                             padding: '0.5rem',
                             background: 'rgba(59, 130, 246, 0.1)',
                             borderRadius: '6px',
@@ -1143,8 +1143,8 @@ export function SocialWorkerRequestsPage() {
                         {formatDateTime((transfer as any).requestedDate || (transfer as any).createdDate)}
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <Badge 
-                          style={{ 
+                        <Badge
+                          style={{
                             background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
                             padding: '0.5rem 0.75rem',
                             fontSize: '0.85rem',
@@ -1168,7 +1168,7 @@ export function SocialWorkerRequestsPage() {
   const renderApprovedTransfers = () => {
     if (approvedTransfers.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
         >
@@ -1182,7 +1182,7 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
       >
@@ -1203,9 +1203,9 @@ export function SocialWorkerRequestsPage() {
                 {approvedTransfers.map((transfer, index) => {
                   const req = requests.find(r => r.id === transfer.entityId)
                   return (
-                    <tr 
+                    <tr
                       key={transfer.id}
-                      style={{ 
+                      style={{
                         backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(191, 219, 254, 0.4)',
                         transition: 'all 0.2s ease'
                       }}
@@ -1215,8 +1215,8 @@ export function SocialWorkerRequestsPage() {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         {req && (
-                          <Badge 
-                            style={{ 
+                          <Badge
+                            style={{
                               background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                               padding: '0.5rem 0.75rem',
                               fontSize: '0.85rem',
@@ -1238,8 +1238,8 @@ export function SocialWorkerRequestsPage() {
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <div 
-                          style={{ 
+                        <div
+                          style={{
                             padding: '0.5rem',
                             background: 'rgba(37, 99, 235, 0.1)',
                             borderRadius: '6px',
@@ -1256,8 +1256,8 @@ export function SocialWorkerRequestsPage() {
                         {formatDateTime(resolveTransferProcessedDate(transfer) || transfer.requestedAt)}
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <Badge 
-                          style={{ 
+                        <Badge
+                          style={{
                             background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
                             padding: '0.5rem 0.75rem',
                             fontSize: '0.85rem',
@@ -1281,7 +1281,7 @@ export function SocialWorkerRequestsPage() {
   const renderRejectedTransfers = () => {
     if (rejectedTransfers.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)' }}
         >
@@ -1295,7 +1295,7 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)' }}
       >
@@ -1317,9 +1317,9 @@ export function SocialWorkerRequestsPage() {
                 {rejectedTransfers.map((transfer, index) => {
                   const req = requests.find(r => r.id === transfer.entityId)
                   return (
-                    <tr 
+                    <tr
                       key={transfer.id}
-                      style={{ 
+                      style={{
                         backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(254, 226, 226, 0.4)',
                         transition: 'all 0.2s ease'
                       }}
@@ -1329,8 +1329,8 @@ export function SocialWorkerRequestsPage() {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         {req && (
-                          <Badge 
-                            style={{ 
+                          <Badge
+                            style={{
                               background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                               padding: '0.5rem 0.75rem',
                               fontSize: '0.85rem',
@@ -1352,8 +1352,8 @@ export function SocialWorkerRequestsPage() {
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <div 
-                          style={{ 
+                        <div
+                          style={{
                             padding: '0.5rem',
                             background: 'rgba(239, 68, 68, 0.1)',
                             borderRadius: '6px',
@@ -1367,8 +1367,8 @@ export function SocialWorkerRequestsPage() {
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <div 
-                          style={{ 
+                        <div
+                          style={{
                             padding: '0.5rem',
                             background: 'rgba(220, 38, 38, 0.15)',
                             border: '1px solid rgba(220, 38, 38, 0.3)',
@@ -1387,8 +1387,8 @@ export function SocialWorkerRequestsPage() {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         <div>
-                          <Badge 
-                            style={{ 
+                          <Badge
+                            style={{
                               background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                               padding: '0.5rem 0.75rem',
                               fontSize: '0.85rem',
@@ -1418,12 +1418,12 @@ export function SocialWorkerRequestsPage() {
     return (
       <>
         {/* Primary SW Section - You control these cases */}
-        <Card 
+        <Card
           className="border-0 shadow-sm mb-4"
           style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
         >
-          <Card.Header 
-            style={{ 
+          <Card.Header
+            style={{
               background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)',
               color: 'white',
               fontWeight: '600',
@@ -1461,9 +1461,9 @@ export function SocialWorkerRequestsPage() {
                     {activeCollaborations.filter((c: any) => c.isPrimarySw).map((collab: any, index: number) => {
                       const req = requests.find(r => r.id === collab.helpRequestId)
                       return (
-                        <tr 
+                        <tr
                           key={collab.id}
-                          style={{ 
+                          style={{
                             backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(219, 234, 254, 0.4)',
                             transition: 'all 0.2s ease'
                           }}
@@ -1472,8 +1472,8 @@ export function SocialWorkerRequestsPage() {
                             {getCollabRequestIdLabel(collab, req)}
                           </td>
                           <td style={{ padding: '1rem' }}>
-                            <Badge 
-                              style={{ 
+                            <Badge
+                              style={{
                                 background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                                 padding: '0.5rem 0.75rem',
                                 fontSize: '0.85rem',
@@ -1485,8 +1485,8 @@ export function SocialWorkerRequestsPage() {
                           </td>
                           <td style={{ padding: '1rem' }}>
                             <div>
-                              <Badge 
-                                bg="primary" 
+                              <Badge
+                                bg="primary"
                                 style={{ marginRight: '0.25rem', padding: '0.375rem 0.5rem', fontSize: '0.8rem' }}
                               >
                                 👤 {collab.collaboratorName || collab.collaboratorId}
@@ -1522,12 +1522,12 @@ export function SocialWorkerRequestsPage() {
         </Card>
 
         {/* Collaborator Section - Limited permissions */}
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' }}
         >
-          <Card.Header 
-            style={{ 
+          <Card.Header
+            style={{
               background: 'linear-gradient(135deg, #10b981 0%, #22c55e 100%)',
               color: 'white',
               fontWeight: '600',
@@ -1566,9 +1566,9 @@ export function SocialWorkerRequestsPage() {
                     {activeCollaborations.filter((c: any) => !c.isPrimarySw).map((collab: any, index: number) => {
                       const req = requests.find(r => r.id === collab.helpRequestId)
                       return (
-                        <tr 
+                        <tr
                           key={collab.id}
-                          style={{ 
+                          style={{
                             backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(209, 250, 229, 0.4)',
                             transition: 'all 0.2s ease'
                           }}
@@ -1577,8 +1577,8 @@ export function SocialWorkerRequestsPage() {
                             {getCollabRequestIdLabel(collab, req)}
                           </td>
                           <td style={{ padding: '1rem' }}>
-                            <Badge 
-                              style={{ 
+                            <Badge
+                              style={{
                                 background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                                 padding: '0.5rem 0.75rem',
                                 fontSize: '0.85rem',
@@ -1603,32 +1603,32 @@ export function SocialWorkerRequestsPage() {
                           </td>
                           <td style={{ padding: '1rem' }}>
                             <div className="d-flex flex-wrap gap-1">
-                              <Badge 
-                                bg="success" 
+                              <Badge
+                                bg="success"
                                 style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
                               >
                                 ✅ View
                               </Badge>
-                              <Badge 
-                                bg="success" 
+                              <Badge
+                                bg="success"
                                 style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
                               >
                                 📝 Notes
                               </Badge>
-                              <Badge 
-                                bg="success" 
+                              <Badge
+                                bg="success"
                                 style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
                               >
                                 💡 Suggest
                               </Badge>
-                              <Badge 
-                                bg="success" 
+                              <Badge
+                                bg="success"
                                 style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
                               >
                                 ⏰ Logs
                               </Badge>
-                              <Badge 
-                                bg="success" 
+                              <Badge
+                                bg="success"
                                 style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
                               >
                                 💬 Message
@@ -1669,7 +1669,7 @@ export function SocialWorkerRequestsPage() {
   const renderCompletedTab = () => {
     if (completedRequests.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}
         >
@@ -1683,15 +1683,15 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}
       >
         <Card.Body className="p-0">
           {/* Read-only Notice */}
-          <div 
+          <div
             className="m-3 p-3 rounded-3"
-            style={{ 
+            style={{
               background: 'rgba(16, 185, 129, 0.1)',
               border: '2px solid rgba(16, 185, 129, 0.2)',
               color: '#065f46'
@@ -1729,9 +1729,9 @@ export function SocialWorkerRequestsPage() {
               </thead>
               <tbody>
                 {completedRequests.map((req, index) => (
-                  <tr 
+                  <tr
                     key={req.id}
-                    style={{ 
+                    style={{
                       backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(220, 252, 231, 0.4)',
                       transition: 'all 0.2s ease',
                       cursor: 'pointer'
@@ -1749,8 +1749,8 @@ export function SocialWorkerRequestsPage() {
                       {req.trackingId || req.id}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
-                        style={{ 
+                      <Badge
+                        style={{
                           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
@@ -1769,8 +1769,8 @@ export function SocialWorkerRequestsPage() {
                         <div style={{ fontWeight: '600', color: '#065f46', marginBottom: '0.25rem' }}>
                           {formatDateTime((req as any).completedDate || (req as any).updatedDate)}
                         </div>
-                        <Badge 
-                          style={{ 
+                        <Badge
+                          style={{
                             background: 'linear-gradient(135deg, #10b981 0%, #22c55e 100%)',
                             padding: '0.25rem 0.5rem',
                             fontSize: '0.75rem',
@@ -1788,9 +1788,9 @@ export function SocialWorkerRequestsPage() {
                           const stars = []
                           for (let i = 1; i <= 5; i++) {
                             stars.push(
-                              <span 
+                              <span
                                 key={i}
-                                style={{ 
+                                style={{
                                   fontSize: '1.1rem',
                                   color: i <= rating ? '#f59e0b' : '#d1d5db'
                                 }}
@@ -1803,9 +1803,9 @@ export function SocialWorkerRequestsPage() {
                             <>
                               {stars}
                               {rating > 0 && (
-                                <span style={{ 
-                                  fontSize: '0.85rem', 
-                                  fontWeight: '600', 
+                                <span style={{
+                                  fontSize: '0.85rem',
+                                  fontWeight: '600',
                                   color: '#065f46',
                                   marginLeft: '0.25rem'
                                 }}>
@@ -1824,8 +1824,8 @@ export function SocialWorkerRequestsPage() {
                     </td>
                     <td style={{ padding: '1rem', maxWidth: '300px' }}>
                       {(req as any).feedback || (req as any).completionFeedback ? (
-                        <div 
-                          style={{ 
+                        <div
+                          style={{
                             padding: '0.5rem',
                             background: 'rgba(16, 185, 129, 0.1)',
                             borderRadius: '6px',
@@ -1885,7 +1885,7 @@ export function SocialWorkerRequestsPage() {
   const renderRejectedTab = () => {
     if (rejectedRequests.length === 0) {
       return (
-        <Card 
+        <Card
           className="border-0 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' }}
         >
@@ -1899,15 +1899,15 @@ export function SocialWorkerRequestsPage() {
     }
 
     return (
-      <Card 
+      <Card
         className="border-0 shadow-sm"
         style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' }}
       >
         <Card.Body className="p-0">
           {/* Info Note */}
-          <div 
+          <div
             className="m-3 p-3 rounded-3"
-            style={{ 
+            style={{
               background: 'rgba(239, 68, 68, 0.1)',
               border: '2px solid rgba(239, 68, 68, 0.2)',
               color: '#991b1b'
@@ -1942,9 +1942,9 @@ export function SocialWorkerRequestsPage() {
               </thead>
               <tbody>
                 {rejectedRequests.map((req, index) => (
-                  <tr 
+                  <tr
                     key={req.id}
-                    style={{ 
+                    style={{
                       backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(254, 226, 226, 0.4)',
                       transition: 'all 0.2s ease',
                       cursor: 'pointer'
@@ -1962,8 +1962,8 @@ export function SocialWorkerRequestsPage() {
                       {req.trackingId || req.id}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <Badge 
-                        style={{ 
+                      <Badge
+                        style={{
                           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                           padding: '0.5rem 0.75rem',
                           fontSize: '0.85rem',
@@ -1975,8 +1975,8 @@ export function SocialWorkerRequestsPage() {
                       </Badge>
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <div 
-                        style={{ 
+                      <div
+                        style={{
                           padding: '0.5rem 0.75rem',
                           background: 'rgba(239, 68, 68, 0.1)',
                           borderRadius: '6px',
@@ -1995,8 +1995,8 @@ export function SocialWorkerRequestsPage() {
                     </td>
                     <td style={{ padding: '1rem' }}>
                       <div>
-                        <Badge 
-                          style={{ 
+                        <Badge
+                          style={{
                             background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                             padding: '0.5rem 0.75rem',
                             fontSize: '0.85rem',
@@ -2052,9 +2052,9 @@ export function SocialWorkerRequestsPage() {
       {error && (
         <Row className="mb-3">
           <Col xs={12}>
-            <div 
+            <div
               className="p-3 rounded-3"
-              style={{ 
+              style={{
                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 color: '#dc2626',
                 border: '2px solid rgba(239, 68, 68, 0.2)'
@@ -2069,15 +2069,15 @@ export function SocialWorkerRequestsPage() {
       {/* Header */}
       <Row className="mb-4">
         <Col xs={12}>
-          <div 
+          <div
             className="p-4 rounded-3 shadow-sm position-relative overflow-hidden"
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
               color: 'white'
             }}
           >
             {/* Decorative pattern */}
-            <div 
+            <div
               style={{
                 position: 'absolute',
                 top: -50,
@@ -2091,7 +2091,7 @@ export function SocialWorkerRequestsPage() {
             />
             <div className="position-relative">
               <div className="d-flex align-items-center gap-3">
-                <div 
+                <div
                   className="d-flex align-items-center justify-content-center"
                   style={{
                     width: '60px',
@@ -2118,7 +2118,7 @@ export function SocialWorkerRequestsPage() {
       {/* Tab Navigation */}
       <Row className="mb-4">
         <Col xs={12}>
-          <div 
+          <div
             className="p-3 rounded-3 shadow-sm"
             style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}
           >
@@ -2132,7 +2132,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'pending' 
+                  background: activeTab === 'pending'
                     ? 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)'
                     : 'transparent',
                   color: activeTab === 'pending' ? 'white' : '#64748b',
@@ -2150,7 +2150,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'active' 
+                  background: activeTab === 'active'
                     ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'
                     : 'transparent',
                   color: activeTab === 'active' ? 'white' : '#64748b',
@@ -2168,7 +2168,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'reassigned' 
+                  background: activeTab === 'reassigned'
                     ? 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)'
                     : 'transparent',
                   color: activeTab === 'reassigned' ? 'white' : '#64748b',
@@ -2186,7 +2186,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'transfers' 
+                  background: activeTab === 'transfers'
                     ? 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)'
                     : 'transparent',
                   color: activeTab === 'transfers' ? 'white' : '#64748b',
@@ -2204,7 +2204,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'collaborations' 
+                  background: activeTab === 'collaborations'
                     ? 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)'
                     : 'transparent',
                   color: activeTab === 'collaborations' ? 'white' : '#64748b',
@@ -2222,7 +2222,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'completed' 
+                  background: activeTab === 'completed'
                     ? 'linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%)'
                     : 'transparent',
                   color: activeTab === 'completed' ? 'white' : '#64748b',
@@ -2240,7 +2240,7 @@ export function SocialWorkerRequestsPage() {
                   fontWeight: '600',
                   border: 'none',
                   transition: 'all 0.3s ease',
-                  background: activeTab === 'rejected' 
+                  background: activeTab === 'rejected'
                     ? 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)'
                     : 'transparent',
                   color: activeTab === 'rejected' ? 'white' : '#64748b',
@@ -2263,9 +2263,9 @@ export function SocialWorkerRequestsPage() {
 
       {/* View Details Modal */}
       <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
-        <Modal.Header 
+        <Modal.Header
           closeButton
-          style={{ 
+          style={{
             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
             color: 'white',
             borderBottom: 'none'
@@ -2309,11 +2309,11 @@ export function SocialWorkerRequestsPage() {
                 </Card.Body>
               </Card>
 
-              {selectedRequest.anonymous === false && selectedRequest.requesterId && (
+              {selectedRequest.anonymous === false && selectedRequest.requesterUserId && (
                 <Card className="mt-3 border-0 shadow-sm">
                   <Card.Body>
                     <h6 className="mb-2">👤 Primary User Details</h6>
-                    <p className="mb-1"><strong>ID:</strong> {selectedRequest.requesterId}</p>
+                    <p className="mb-1"><strong>ID:</strong> {selectedRequest.requesterUserId}</p>
                     <p className="mb-0"><strong>Name:</strong> {selectedRequest.requesterName || 'Not provided'}</p>
                   </Card.Body>
                 </Card>
@@ -2328,8 +2328,8 @@ export function SocialWorkerRequestsPage() {
           )}
         </Modal.Body>
         <Modal.Footer style={{ borderTop: 'none', background: '#ffffff' }}>
-          <Button 
-            variant="outline-secondary" 
+          <Button
+            variant="outline-secondary"
             onClick={() => setShowDetailsModal(false)}
           >
             Close
@@ -2376,9 +2376,9 @@ export function SocialWorkerRequestsPage() {
 
       {/* Reject Modal */}
       <Modal show={showRejectModal} onHide={() => setShowRejectModal(false)}>
-        <Modal.Header 
+        <Modal.Header
           closeButton
-          style={{ 
+          style={{
             background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             color: 'white',
             borderBottom: 'none'
@@ -2422,9 +2422,9 @@ export function SocialWorkerRequestsPage() {
 
       {/* Transfer Modal */}
       <Modal show={showTransferModal} onHide={() => setShowTransferModal(false)} size="lg">
-        <Modal.Header 
+        <Modal.Header
           closeButton
-          style={{ 
+          style={{
             background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
             color: 'white',
             borderBottom: 'none'

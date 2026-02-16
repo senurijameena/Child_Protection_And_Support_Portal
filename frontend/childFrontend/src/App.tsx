@@ -51,8 +51,6 @@ import { PoliceReportsPage } from './pages/police/PoliceReportsPage'
 import { PoliceProfilePage } from './pages/police/PoliceProfilePage'
 import { SocialWorkerDashboard } from './pages/social-worker/SocialWorkerDashboard'
 import { SocialWorkerAnalyticsPage } from './pages/social-worker/SocialWorkerAnalytics'
-import { SocialWorkerFeedbackPage } from './pages/social-worker/SocialWorkerFeedbackPage'
-import { SocialWorkerFeedbackViewPage } from './pages/social-worker/SocialWorkerFeedbackViewPage'
 import {
   SocialWorkerRequestsPage,
   SocialWorkerRequestDetailsPage,
@@ -68,7 +66,7 @@ import {
 import { SocialWorkerCollaborationPage } from './pages/social-worker/SocialWorkerCollaborationPage'
 import { ServicePackageListingPage } from './pages/social-worker/ServicePackageListingPage'
 import { ServicePackageFormPage } from './pages/social-worker/ServicePackageFormPage'
-import { ErrorBoundary } from './components/ErrorBoundary'
+
 
 function App() {
   return (
@@ -174,7 +172,7 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<ErrorBoundary><SocialWorkerDashboard /></ErrorBoundary>} />
+        <Route index element={<SocialWorkerDashboard />} />
         <Route path="analytics" element={<SocialWorkerAnalyticsPage />} />
         <Route path="requests" element={<SocialWorkerRequestsPage />} />
         <Route path="requests/:requestId" element={<SocialWorkerRequestDetailsPage />} />
@@ -190,8 +188,7 @@ function App() {
         <Route path="packages/create" element={<ServicePackageFormPage />} />
         <Route path="packages/:packageId/edit" element={<ServicePackageFormPage />} />
         <Route path="reports" element={<SocialWorkerReportsPage />} />
-        <Route path="feedback" element={<SocialWorkerFeedbackPage />} />
-        <Route path="feedback/:requestId" element={<SocialWorkerFeedbackViewPage />} />
+        <Route path="feedback" element={<FeedbackPage />} />
         <Route path="profile" element={<SocialWorkerProfilePage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

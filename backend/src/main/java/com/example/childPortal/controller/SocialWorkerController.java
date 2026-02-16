@@ -51,6 +51,7 @@ public class SocialWorkerController {
                     dto.setSpecializations(worker.getSpecializations());
                     dto.setOrganization(worker.getOrganization());
                     dto.setYearsOfExperience(String.valueOf(worker.getYearsOfExperience()));
+                    // Add other fields as needed
                     return ResponseEntity.ok(dto);
                 })
                 .orElse(ResponseEntity.notFound().build());

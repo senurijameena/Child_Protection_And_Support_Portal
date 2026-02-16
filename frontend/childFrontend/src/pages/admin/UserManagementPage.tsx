@@ -284,8 +284,8 @@ export function UserManagementPage() {
                                   : 'info'
                           }
                         >
-                          {ROLE_LABELS[(u.role as keyof typeof ROLE_LABELS) || 'PU']}
-                        </Badge>
+                        {ROLE_LABELS[(u.role as keyof typeof ROLE_LABELS) || 'PU']}
+                      </Badge>
                         {(() => {
                           const normalizedRole = (u.role || '').toUpperCase().trim()
                           const isSocialWorker = normalizedRole === 'SW' || normalizedRole === 'SOCIAL_WORKER'
@@ -372,50 +372,50 @@ export function UserManagementPage() {
                       {u.role === 'PO' || u.role === 'POLICE' ? (
                         <span className="text-muted small">No actions</span>
                       ) : (
-                        <Dropdown>
-                          <Dropdown.Toggle
-                            variant="outline-primary"
-                            size="sm"
-                            id={`actions-${u.userId}`}
-                          >
-                            Actions
-                          </Dropdown.Toggle>
-                          <Dropdown.Menu align="end">
-                            {!u.approved && (
-                              <>
-                                <Dropdown.Item
-                                  onClick={() => {
-                                    setSelectedUser(u)
-                                    setShowApproveModal(true)
-                                  }}
-                                  disabled={actionLoading}
-                                >
-                                  Approve
-                                </Dropdown.Item>
-                                <Dropdown.Item
-                                  onClick={() => {
-                                    setSelectedUser(u)
-                                    setShowRejectModal(true)
-                                  }}
-                                  className="text-danger"
-                                >
-                                  Reject
-                                </Dropdown.Item>
-                              </>
-                            )}
-                            {u.approved && u.role !== 'ADMIN' && (
+                      <Dropdown>
+                        <Dropdown.Toggle
+                          variant="outline-primary"
+                          size="sm"
+                          id={`actions-${u.userId}`}
+                        >
+                          Actions
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu align="end">
+                          {!u.approved && (
+                            <>
                               <Dropdown.Item
                                 onClick={() => {
                                   setSelectedUser(u)
-                                  setShowLockModal(true)
+                                  setShowApproveModal(true)
                                 }}
                                 disabled={actionLoading}
                               >
-                                {u.active ? 'Lock / Deactivate' : 'Activate'}
+                                Approve
                               </Dropdown.Item>
-                            )}
-                          </Dropdown.Menu>
-                        </Dropdown>
+                              <Dropdown.Item
+                                onClick={() => {
+                                  setSelectedUser(u)
+                                  setShowRejectModal(true)
+                                }}
+                                className="text-danger"
+                              >
+                                Reject
+                              </Dropdown.Item>
+                            </>
+                          )}
+                          {u.approved && u.role !== 'ADMIN' && (
+                            <Dropdown.Item
+                              onClick={() => {
+                                setSelectedUser(u)
+                                setShowLockModal(true)
+                              }}
+                              disabled={actionLoading}
+                            >
+                              {u.active ? 'Lock / Deactivate' : 'Activate'}
+                            </Dropdown.Item>
+                          )}
+                        </Dropdown.Menu>
+                      </Dropdown>
                       )}
                     </td>
                   </tr>

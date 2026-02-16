@@ -431,7 +431,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserManagementDTO> getAllUsersForManagement() {
         try {
-            return userRepository.findAll().stream()
+        return userRepository.findAll().stream()
                     .map(user -> {
                         try {
                             return convertToUserManagementDTO(user);
@@ -442,7 +442,7 @@ public class UserServiceImpl implements UserService {
                         }
                     })
                     .filter(dto -> dto != null)
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
         } catch (Exception e) {
             System.err.println("Error in getAllUsersForManagement: " + e.getMessage());
             e.printStackTrace();

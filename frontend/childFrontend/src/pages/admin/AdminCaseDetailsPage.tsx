@@ -119,14 +119,14 @@ export function AdminCaseDetailsPage() {
         </Link>
         <div className="text-end">
           <h2 className="h4 fw-bold mb-0">
-            Case {c.trackingId || c.id}
+        Case {c.trackingId || c.id}
           </h2>
           <Badge
             bg={CASE_STATUS_BADGE_VARIANTS[(c.status as keyof typeof CASE_STATUS_BADGE_VARIANTS) || 'REPORTED']}
             className="mt-1"
           >
-            {CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
-          </Badge>
+          {CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
+        </Badge>
         </div>
       </div>
       {successMessage && (
@@ -384,7 +384,7 @@ export function AdminCaseDetailsPage() {
                     onClick={handleAssign}
                   >
                     {assignLoading ? 'Assigning...' : 'Assign Station'}
-                  </Button>
+                </Button>
                 </>
               )}
               {!canShowAdminActions && !canShowAssignSection && (

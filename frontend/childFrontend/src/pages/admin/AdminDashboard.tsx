@@ -166,7 +166,7 @@ export function AdminDashboard() {
               <Link to={card.link} className="text-decoration-none">
                 <Card
                   className="border-0 shadow-lg rounded-4 h-100 admin-stat-card"
-                  style={{
+                      style={{
                     background: card.color.bg,
                     color: card.color.text,
                     transition: 'all 0.3s ease',
@@ -179,13 +179,13 @@ export function AdminDashboard() {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)'
                     e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)'
-                  }}
-                >
+                      }}
+                    >
                   <Card.Body className="p-4">
                     <div>
                       <div className="text-white-50 text-uppercase small mb-2 fw-semibold" style={{ opacity: 0.9 }}>
                         {card.title}
-                      </div>
+                    </div>
                       <div className="fw-bold display-4 text-white">{card.value}</div>
                     </div>
                   </Card.Body>
@@ -194,7 +194,7 @@ export function AdminDashboard() {
             ) : (
               <Card
                 className="border-0 shadow-lg rounded-4 h-100 admin-stat-card"
-                style={{
+                    style={{
                   background: card.color.bg,
                   color: card.color.text,
                   transition: 'all 0.3s ease',
@@ -206,13 +206,13 @@ export function AdminDashboard() {
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
                   e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)'
-                }}
-              >
+                    }}
+                  >
                 <Card.Body className="p-4">
                   <div>
                     <div className="text-white-50 text-uppercase small mb-2 fw-semibold" style={{ opacity: 0.9 }}>
                       {card.title}
-                    </div>
+                  </div>
                     <div className="fw-bold display-4 text-white">{card.value}</div>
                   </div>
                 </Card.Body>
@@ -225,43 +225,43 @@ export function AdminDashboard() {
       {/* Timeline and Recent Activity Row */}
       <Row className="g-4 mb-4">
         <Col lg={8}>
-          <Row className="g-4">
+      <Row className="g-4">
             <Col xs={12}>
               <Card className="border-0 shadow-sm rounded-4">
-                <Card.Header className="bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+            <Card.Header className="bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
                   <h5 className="mb-0 fw-bold">Recent Cases</h5>
-                  <Link to="/admin/cases" className="btn btn-sm btn-outline-primary">
-                    View All
-                  </Link>
-                </Card.Header>
-                <Card.Body className="p-0">
-                  {(data.recentCases?.length ?? 0) === 0 ? (
-                    <div className="p-4 text-muted text-center">No recent cases</div>
-                  ) : (
-                    <Table hover responsive className="mb-0">
+              <Link to="/admin/cases" className="btn btn-sm btn-outline-primary">
+                View All
+              </Link>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {(data.recentCases?.length ?? 0) === 0 ? (
+                <div className="p-4 text-muted text-center">No recent cases</div>
+              ) : (
+                <Table hover responsive className="mb-0">
                       <thead className="table-light">
-                        <tr>
-                          <th>ID</th>
-                          <th>Type</th>
-                          <th>Status</th>
-                          <th>Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.recentCases?.slice(0, 5).map((c) => (
-                          <tr key={c.id}>
-                            <td>
-                              <Link
-                                to={`/admin/cases/${c.id}`}
+                    <tr>
+                      <th>ID</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.recentCases?.slice(0, 5).map((c) => (
+                      <tr key={c.id}>
+                        <td>
+                          <Link
+                            to={`/admin/cases/${c.id}`}
                                 className="text-primary text-decoration-none fw-semibold"
-                              >
-                                {c.trackingId || c.id?.slice(0, 8)}
-                              </Link>
-                            </td>
-                            <td>{c.caseType || '-'}</td>
-                            <td>
-                              <Badge
-                                bg={
+                          >
+                            {c.trackingId || c.id?.slice(0, 8)}
+                          </Link>
+                        </td>
+                        <td>{c.caseType || '-'}</td>
+                        <td>
+                          <Badge
+                            bg={
                                   CASE_STATUS_BADGE_VARIANTS[
                                     (c.status as keyof typeof CASE_STATUS_BADGE_VARIANTS) || 'REPORTED'
                                   ]
@@ -270,79 +270,79 @@ export function AdminDashboard() {
                                 {c.status === 'UNDER_REVIEW'
                                   ? 'Accepted'
                                   : CASE_STATUS_LABELS[(c.status as keyof typeof CASE_STATUS_LABELS) || 'REPORTED']}
-                              </Badge>
-                            </td>
-                            <td className="text-muted small">
-                              {c.reportDate
-                                ? new Date(c.reportDate).toLocaleDateString()
-                                : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
+                          </Badge>
+                        </td>
+                        <td className="text-muted small">
+                          {c.reportDate
+                            ? new Date(c.reportDate).toLocaleDateString()
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
 
             <Col xs={12}>
               <Card className="border-0 shadow-sm rounded-4">
-                <Card.Header className="bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+            <Card.Header className="bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
                   <h5 className="mb-0 fw-bold">Recent Help Requests</h5>
-                  <Link to="/admin/help-requests" className="btn btn-sm btn-outline-primary">
-                    View All
-                  </Link>
-                </Card.Header>
-                <Card.Body className="p-0">
-                  {(data.recentHelpRequests?.length ?? 0) === 0 ? (
+              <Link to="/admin/help-requests" className="btn btn-sm btn-outline-primary">
+                View All
+              </Link>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {(data.recentHelpRequests?.length ?? 0) === 0 ? (
                     <div className="p-4 text-muted text-center">No recent help requests</div>
-                  ) : (
-                    <Table hover responsive className="mb-0">
+              ) : (
+                <Table hover responsive className="mb-0">
                       <thead className="table-light">
-                        <tr>
-                          <th>ID</th>
-                          <th>Type</th>
-                          <th>Status</th>
-                          <th>Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.recentHelpRequests?.slice(0, 5).map((r) => (
-                          <tr key={r.id}>
-                            <td>
-                              <Link
-                                to={`/admin/help-requests/${r.id}`}
+                    <tr>
+                      <th>ID</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.recentHelpRequests?.slice(0, 5).map((r) => (
+                      <tr key={r.id}>
+                        <td>
+                          <Link
+                            to={`/admin/help-requests/${r.id}`}
                                 className="text-primary text-decoration-none fw-semibold"
-                              >
-                                {r.trackingId || r.id?.slice(0, 8)}
-                              </Link>
-                            </td>
-                            <td>{r.helpType || '-'}</td>
-                            <td>
-                              <Badge
-                                bg={
+                          >
+                            {r.trackingId || r.id?.slice(0, 8)}
+                          </Link>
+                        </td>
+                        <td>{r.helpType || '-'}</td>
+                        <td>
+                          <Badge
+                            bg={
                                   REQUEST_STATUS_BADGE_VARIANTS[
                                     (r.status as keyof typeof REQUEST_STATUS_BADGE_VARIANTS) || 'REQUESTED'
                                   ]
-                                }
-                              >
-                                {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}
-                              </Badge>
-                            </td>
-                            <td className="text-muted small">
-                              {r.requestDate
-                                ? new Date(r.requestDate).toLocaleDateString()
-                                : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
+                            }
+                          >
+                            {REQUEST_STATUS_LABELS[(r.status as keyof typeof REQUEST_STATUS_LABELS) || 'REQUESTED']}
+                          </Badge>
+                        </td>
+                        <td className="text-muted small">
+                          {r.requestDate
+                            ? new Date(r.requestDate).toLocaleDateString()
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
           </Row>
         </Col>
 
@@ -392,7 +392,7 @@ export function AdminDashboard() {
       </Row>
 
       {/* Pending Transfers */}
-      {data.pendingTransfers && data.pendingTransfers.length > 0 && (
+        {data.pendingTransfers && data.pendingTransfers.length > 0 && (
         <Row className="g-4">
           <Col xs={12}>
             <Card className="border-0 shadow-sm rounded-4">
@@ -433,7 +433,7 @@ export function AdminDashboard() {
             </Card>
           </Col>
         </Row>
-      )}
+        )}
     </div>
   )
 }

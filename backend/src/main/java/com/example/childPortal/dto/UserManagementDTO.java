@@ -23,7 +23,7 @@ public class UserManagementDTO {
     private List<String> specializations;
     private String organization;
     private String yearsOfExperience;
-    
+
     private boolean hasAnonymousSubmissions;
     
     private String availabilityStatus;

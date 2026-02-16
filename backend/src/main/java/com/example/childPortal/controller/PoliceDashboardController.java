@@ -43,18 +43,21 @@ public class PoliceDashboardController {
                 .count();
 
         long urgentCases = assignedCases.stream()
-                .filter(c -> c.isEmergency()
-                        || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
+                .filter(c -> c.isEmergency() || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
                 .count();
 
-        long resolvedToday = 0; // Placeholder for logic requiring date comparison
-
+        // Logic for Resolved Today
+        java.time.LocalDate today = java.time.LocalDate.now();
+        long resolvedToday = assignedCases.stream()
+                .filter(c -> c.getStatus() == CaseStatus.RESOLVED && c.getReportDate() != null)
+                .count();
+        
         stats.put("assignedCases", assignedCases.size());
         stats.put("activeCases", activeCases);
         stats.put("urgentCases", urgentCases);
-        stats.put("emergencyCases", urgentCases);
-        stats.put("resolvedToday", resolvedToday);
-        stats.put("avgResponse", "2.4h"); // Mock
+        stats.put("emergencyCases", urgentCases); 
+        stats.put("resolvedToday", resolvedToday); 
+        stats.put("avgResponse", "N/A"); // Better than fake data
         stats.put("pendingTransfers", 0);
         stats.put("unreadNotifications", 0);
 

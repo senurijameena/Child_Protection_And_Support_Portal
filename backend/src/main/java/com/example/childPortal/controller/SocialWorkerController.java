@@ -4,7 +4,6 @@ import com.example.childPortal.dto.CaseDTO;
 import com.example.childPortal.dto.HelpRequestDTO;
 import com.example.childPortal.dto.ServiceOfferDTO;
 import com.example.childPortal.dto.SocialWorkerDTO;
-import com.example.childPortal.model.SocialWorker;
 import com.example.childPortal.service.CaseService;
 import com.example.childPortal.service.HelpRequestService;
 import com.example.childPortal.service.ServiceOfferService;
@@ -46,11 +45,11 @@ public class SocialWorkerController {
         return socialWorkerService.getSocialWorkerByUserId(userId)
                 .map(worker -> {
                     SocialWorkerDTO dto = new SocialWorkerDTO();
-                    dto.setId(worker.getId());
-                    dto.setUserId(worker.getUser().getId());
+                    dto.setUserId(worker.getUserId());
                     dto.setOrganization(worker.getOrganization());
-                    dto.setSpecialization(worker.getSpecialization());
-                    dto.setAvailabilityStatus(worker.getAvailabilityStatus());
+                    dto.setSpecializations(worker.getSpecializations());
+                    dto.setLicenseNumber(worker.getLicenseNumber());
+                    dto.setYearsOfExperience(String.valueOf(worker.getYearsOfExperience()));
                     // Add other fields as needed
                     return ResponseEntity.ok(dto);
                 })

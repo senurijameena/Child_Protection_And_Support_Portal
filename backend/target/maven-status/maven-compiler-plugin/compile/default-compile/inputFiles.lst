@@ -1,206 +1,206 @@
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\ChildPortalApplication.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\config\MailConfig.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\config\WebMvcConfig.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AdminController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AnalyticsController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AnnouncementController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AnonymityController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AuthController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CaseController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CaseTimelineController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CompletedHelpRequestReportController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CompletedHelpRequestReportManagementController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ContactController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\DashboardController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\DuplicateDetectionController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\FeedbackController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\FollowUpController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\HelpController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\HelpRequestCollaborationController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\MessageController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\NotificationController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\PoliceDashboardController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\PoliceStationController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\PublicStatisticsController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\SearchController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ServiceExecutionController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ServiceOfferController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ServicePackageController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\SocialWorkerController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\StatusManagementController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\TestController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\TransferController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\UserController.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\AdminDashboardOverviewDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\AnnouncementDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\AnonymityStatsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseReportRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseResponse.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseSearchFilterDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseStatisticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseTimelineDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseTrendDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ChangePasswordRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpReportDraftRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpReportListItemDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpReportReviewRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpRequestReportDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ConversationDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ConversionRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CustomReportDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\DashboardMetricsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\DuplicateDetectionDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackFilterDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackResponseDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackStatisticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FileUploadDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FinalAssessmentDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestCollaborationRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestCollaborationSummaryDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestCollaboratorDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestSearchFilterDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestStatisticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestTimelineDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpResponse.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\LocationAnalyticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\LoginRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\LoginResponse.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\MessageDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\MonthlyActivityDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PaginationDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PersonalAnalyticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PoliceOfficerDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PublicStatisticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\RealtimeUpdatesDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\RegisterRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ReportRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ResolutionRateDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ResourceAssignmentDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ResponseTimeMetricsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\SendMessageRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceExecutionDashboardDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceExecutionStatusDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceItemExecutionDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceOfferDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceOutcomeDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServicePackageDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceResponseDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\SocialWorkerDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\StatusChangeRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\TimelineFilterDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\TransferRequestDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserActivityDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserManagementDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserProfileStatsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserSearchFilterDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserStatisticsDTO.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserUpdateRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Announcement.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\AvailabilityStatus.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Case.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\CaseTimelineEvent.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\CaseType.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\CompletedHelpRequestReport.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ContactInquiry.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\DailyActivityTracker.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Feedback.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\FinalAssessment.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\FollowUp.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpRequestAssignment.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpRequestCollaboration.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpType.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Message.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\MonitoringChecklist.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Notification.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\PoliceOfficer.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\PoliceStation.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Priority.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ResourceAssignment.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Role.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Sequence.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ServiceItemExecution.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ServiceOffer.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ServicePackage.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\SocialWorker.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\TransferRequest.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\User.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\WorkSchedule.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\AnnouncementRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\CaseRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\CaseTimelineEventRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\CompletedHelpRequestReportRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ContactInquiryRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\DailyActivityTrackerRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\FeedbackRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\FinalAssessmentRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\FollowUpRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\HelpRequestAssignmentRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\HelpRequestCollaborationRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\HelpRequestRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\MessageRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\MonitoringChecklistRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\NotificationRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\PoliceOfficerRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\PoliceStationRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ResourceAssignmentRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\SequenceRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ServiceOfferRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ServicePackageRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\SocialWorkerRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\TransferRequestRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\UserRepository.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\JwtAuthenticationFilter.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\JwtUtil.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\SecurityConfig.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\SecurityExceptionHandler.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AiReportSummaryService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AnalyticsService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AnnouncementService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AnonymityService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\CaseService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\CaseTimelineService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\CompletedHelpRequestReportService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\DuplicateDetectionService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\EnhancedTransferService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\FeedbackService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\FollowUpSchedulerService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\FollowUpService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\HelpRequestCollaborationService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\HelpRequestService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\AnalyticsServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\AnnouncementServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\AnonymityServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\CaseServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\CaseTimelineServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\DuplicateDetectionServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\FeedbackServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\HelpRequestServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\MessageServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\PoliceOfficerServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\PoliceStationServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\SearchServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\SequenceServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\ServiceExecutionServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\ServiceOfferServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\ServicePackageServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\SocialWorkerServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\TransferServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\UserServiceImpl.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\MessageService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\NotificationService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\PoliceOfficerService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\PoliceStationService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\SearchService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\SequenceService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\ServiceExecutionService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\ServiceOfferService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\ServicePackageService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\SocialWorkerService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\StatusManagementService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\TransferService.java
-E:\UOK\3 Sem 2\Full Stack\Child_Protection\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\UserService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\ChildPortalApplication.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\config\MailConfig.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\config\WebMvcConfig.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AdminController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AnalyticsController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AnnouncementController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AnonymityController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\AuthController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CaseController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CaseTimelineController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CompletedHelpRequestReportController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\CompletedHelpRequestReportManagementController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ContactController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\DashboardController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\DuplicateDetectionController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\FeedbackController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\FollowUpController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\HelpController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\HelpRequestCollaborationController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\MessageController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\NotificationController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\PoliceDashboardController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\PoliceStationController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\PublicStatisticsController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\SearchController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ServiceExecutionController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ServiceOfferController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\ServicePackageController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\SocialWorkerController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\StatusManagementController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\TestController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\TransferController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\controller\UserController.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\AdminDashboardOverviewDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\AnnouncementDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\AnonymityStatsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseReportRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseResponse.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseSearchFilterDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseStatisticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseTimelineDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CaseTrendDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ChangePasswordRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpReportDraftRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpReportListItemDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpReportReviewRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CompletedHelpRequestReportDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ConversationDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ConversionRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\CustomReportDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\DashboardMetricsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\DuplicateDetectionDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackFilterDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackResponseDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FeedbackStatisticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FileUploadDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\FinalAssessmentDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestCollaborationRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestCollaborationSummaryDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestCollaboratorDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestSearchFilterDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestStatisticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpRequestTimelineDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\HelpResponse.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\LocationAnalyticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\LoginRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\LoginResponse.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\MessageDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\MonthlyActivityDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PaginationDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PersonalAnalyticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PoliceOfficerDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\PublicStatisticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\RealtimeUpdatesDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\RegisterRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ReportRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ResolutionRateDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ResourceAssignmentDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ResponseTimeMetricsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\SendMessageRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceExecutionDashboardDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceExecutionStatusDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceItemExecutionDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceOfferDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceOutcomeDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServicePackageDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\ServiceResponseDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\SocialWorkerDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\StatusChangeRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\TimelineFilterDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\TransferRequestDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserActivityDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserManagementDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserProfileStatsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserSearchFilterDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserStatisticsDTO.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\dto\UserUpdateRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Announcement.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\AvailabilityStatus.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Case.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\CaseTimelineEvent.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\CaseType.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\CompletedHelpRequestReport.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ContactInquiry.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\DailyActivityTracker.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Feedback.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\FinalAssessment.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\FollowUp.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpRequestAssignment.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpRequestCollaboration.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\HelpType.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Message.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\MonitoringChecklist.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Notification.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\PoliceOfficer.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\PoliceStation.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Priority.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ResourceAssignment.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Role.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\Sequence.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ServiceItemExecution.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ServiceOffer.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\ServicePackage.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\SocialWorker.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\TransferRequest.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\User.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\model\WorkSchedule.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\AnnouncementRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\CaseRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\CaseTimelineEventRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\CompletedHelpRequestReportRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ContactInquiryRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\DailyActivityTrackerRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\FeedbackRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\FinalAssessmentRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\FollowUpRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\HelpRequestAssignmentRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\HelpRequestCollaborationRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\HelpRequestRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\MessageRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\MonitoringChecklistRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\NotificationRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\PoliceOfficerRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\PoliceStationRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ResourceAssignmentRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\SequenceRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ServiceOfferRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\ServicePackageRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\SocialWorkerRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\TransferRequestRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\repository\UserRepository.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\JwtAuthenticationFilter.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\JwtUtil.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\SecurityConfig.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\security\SecurityExceptionHandler.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AiReportSummaryService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AnalyticsService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AnnouncementService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\AnonymityService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\CaseService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\CaseTimelineService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\CompletedHelpRequestReportService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\DuplicateDetectionService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\EnhancedTransferService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\FeedbackService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\FollowUpSchedulerService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\FollowUpService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\HelpRequestCollaborationService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\HelpRequestService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\AnalyticsServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\AnnouncementServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\AnonymityServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\CaseServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\CaseTimelineServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\DuplicateDetectionServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\FeedbackServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\HelpRequestServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\MessageServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\PoliceOfficerServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\PoliceStationServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\SearchServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\SequenceServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\ServiceExecutionServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\ServiceOfferServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\ServicePackageServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\SocialWorkerServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\TransferServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\impl\UserServiceImpl.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\MessageService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\NotificationService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\PoliceOfficerService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\PoliceStationService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\SearchService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\SequenceService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\ServiceExecutionService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\ServiceOfferService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\ServicePackageService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\SocialWorkerService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\StatusManagementService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\TransferService.java
+C:\Users\Janani Nethma\Pictures\Child_Protection_And_Support_Portal\backend\src\main\java\com\example\childPortal\service\UserService.java

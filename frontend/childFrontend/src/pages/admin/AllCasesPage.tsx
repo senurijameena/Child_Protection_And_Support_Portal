@@ -22,6 +22,7 @@ export function AllCasesPage() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || '')
   const [filterType, setFilterType] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [stations, setStations] = useState<PoliceStationDTO[]>([])
 
   const loadCases = () => {
@@ -41,8 +42,22 @@ export function AllCasesPage() {
   }, [])
 
   const filteredCases = cases.filter((c) => {
+    // Status filter
     if (filterStatus && c.status !== filterStatus) return false
+    
+    // Type filter
     if (filterType && c.caseType !== filterType) return false
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      const matchesTrackingId = (c.trackingId || c.id?.slice(0, 8) || '').toLowerCase().includes(query)
+      const matchesCaseType = CASE_TYPE_LABELS[(c.caseType as keyof typeof CASE_TYPE_LABELS) || 'OTHER']?.toLowerCase().includes(query) ?? false
+      const matchesLocation = (c.location || '').toLowerCase().includes(query)
+      const matchesReporter = (c.reporterName || '').toLowerCase().includes(query)
+      if (!matchesTrackingId && !matchesCaseType && !matchesLocation && !matchesReporter) return false
+    }
+    
     return true
   })
 
@@ -93,6 +108,15 @@ export function AllCasesPage() {
                 <option value="CHILD_TRAFFICKING">Child Trafficking</option>
                 <option value="OTHER">Other</option>
               </Form.Select>
+            </div>
+            <div className="col-md-4">
+              <Form.Label className="small text-muted">Search</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Search by ID, type, location, or reporter..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
         </Card.Body>

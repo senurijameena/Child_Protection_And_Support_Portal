@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Form, Button, Card } from 'react-bootstrap'
 import { login } from '../../services/authApi'
-import { ROLE_LABELS, normalizeRole } from '../../types/auth'
+import { ROLE_LABELS } from '../../types/auth'
 import type { Role } from '../../types/auth'
 
 export function LoginPage() {
@@ -31,24 +31,23 @@ export function LoginPage() {
     setLoading(true)
     try {
       const res = await login({ email: email.trim(), password })
-      const resolvedRole = normalizeRole(res.role)
       if (res.approved && res.token) {
         localStorage.setItem('token', res.token)
         localStorage.setItem('user', JSON.stringify({
           userId: res.userId,
           email: res.email,
           fullName: res.fullName,
-          role: resolvedRole,
+          role: res.role,
         }))
         const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
         const target =
-          resolvedRole === 'ADMIN'
+          res.role === 'ADMIN'
             ? '/admin'
-            : resolvedRole === 'PO'
+            : res.role === 'PO'
               ? '/police'
-              : resolvedRole === 'SW'
+              : res.role === 'SW'
                 ? '/social-worker'
-                : resolvedRole === 'PU'
+                : res.role === 'PU'
                   ? '/dashboard'
                   : from || '/'
         navigate(target)
@@ -66,7 +65,7 @@ export function LoginPage() {
   const roles: Role[] = ['PU', 'PO', 'SW', 'ADMIN']
 
   return (
-    <div className="login-split login-page-upgraded">
+    <div className="login-split">
       <button
         type="button"
         onClick={goBack}
@@ -82,16 +81,11 @@ export function LoginPage() {
           <img src="/images/logo.jpeg" alt="Child Portal logo" className="login-left-logo" />
           <h2>Child Protection Portal</h2>
           <p>Secure access for social workers, police, administrators, and families.</p>
-          <div className="login-trust-points mt-4 text-start">
-            <div className="login-trust-item">Shielded user sessions</div>
-            <div className="login-trust-item">Role-based access control</div>
-            <div className="login-trust-item">Real-time case coordination</div>
-          </div>
         </div>
       </div>
 
       <div className="login-right">
-        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card w-100 login-auth-card">
+        <Card className="shadow-lg border-0 rounded-4 overflow-hidden auth-card w-100">
           <Card.Body className="p-4 p-md-5">
             <div className="text-center mb-4">
               <h1 className="h3 fw-bold text-dark mb-1">Welcome Back</h1>

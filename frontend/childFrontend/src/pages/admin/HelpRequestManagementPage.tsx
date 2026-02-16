@@ -25,10 +25,16 @@ const STATUS_OPTIONS = [
   'REQUESTED',
   'UNDER_REVIEW',
   'ASSIGNED',
+  'PACKAGE_PROPOSED',
   'IN_PROGRESS',
   'COMPLETED',
+  'CLOSED',
+  'ARCHIVED',
   'REJECTED',
+  'PACKAGE_REJECTED',
   'CANCELLED',
+  'TRANSFER_REQUESTED',
+  'TRANSFERRED',
 ]
 
 export function HelpRequestManagementPage() {
@@ -44,14 +50,6 @@ export function HelpRequestManagementPage() {
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
-
-  const getPriorityVariant = (priority?: string) => {
-    const p = priority?.toUpperCase()
-    if (p === 'HIGH') return 'danger'
-    if (p === 'MEDIUM') return 'warning'
-    if (p === 'LOW') return 'primary'
-    return 'secondary'
-  }
 
   const loadRequests = () => {
     setLoading(true)
@@ -74,6 +72,31 @@ export function HelpRequestManagementPage() {
     if (filterType && r.helpType !== filterType) return false
     return true
   })
+
+  const getAssignedWorkerName = (workerId?: string) => {
+    if (!workerId) return '-'
+    if (workers.length === 0) return '-' // Workers not loaded yet
+    
+    // Try to match by userId first (most common case)
+    let worker = workers.find((w) => w.userId === workerId)
+    
+    // If not found, try matching by id
+    if (!worker) {
+      worker = workers.find((w) => w.id === workerId)
+    }
+    
+    // If still not found, try case-insensitive matching
+    if (!worker) {
+      const normalizedWorkerId = workerId.toLowerCase().trim()
+      worker = workers.find((w) => {
+        const normalizedUserId = (w.userId || '').toLowerCase().trim()
+        const normalizedId = (w.id || '').toLowerCase().trim()
+        return normalizedUserId === normalizedWorkerId || normalizedId === normalizedWorkerId
+      })
+    }
+    
+    return worker?.fullName || '-'
+  }
 
   const handleStatusChange = async (id: string, status: string) => {
     setActionLoading(true)
@@ -189,12 +212,12 @@ export function HelpRequestManagementPage() {
               <tr>
                 <th>ID</th>
                 <th>Type</th>
-                <th>Priority</th>
                 <th>Requester</th>
                 <th>Location</th>
                 <th>Status</th>
                 <th>Date</th>
                 <th>Assigned</th>
+                <th>Assigned Social Worker</th>
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
@@ -213,11 +236,6 @@ export function HelpRequestManagementPage() {
                     </td>
                     <td>
                       {HELP_TYPE_LABELS[(r.helpType as keyof typeof HELP_TYPE_LABELS) || 'OTHER']}
-                    </td>
-                    <td>
-                      <Badge bg={getPriorityVariant(r.priority)}>
-                        {(r.priority || 'MEDIUM').toUpperCase()}
-                      </Badge>
                     </td>
                     <td>
                       {r.anonymous ? (
@@ -248,6 +266,13 @@ export function HelpRequestManagementPage() {
                         <Badge bg="success">Assigned</Badge>
                       ) : (
                         <Badge bg="secondary">Unassigned</Badge>
+                      )}
+                    </td>
+                    <td>
+                      {r.assignedWorkerId ? (
+                        <span className="fw-medium">{getAssignedWorkerName(r.assignedWorkerId)}</span>
+                      ) : (
+                        <span className="text-muted">-</span>
                       )}
                     </td>
                     <td className="text-end">

@@ -24,6 +24,10 @@ public class UserManagementDTO {
     private String organization;
     private String yearsOfExperience;
 
+    private boolean hasAnonymousSubmissions;
+    
+    private String availabilityStatus;
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public String getFullName() { return fullName; }
@@ -58,4 +62,8 @@ public class UserManagementDTO {
     public void setOrganization(String organization) { this.organization = organization; }
     public String getYearsOfExperience() { return yearsOfExperience; }
     public void setYearsOfExperience(String yearsOfExperience) { this.yearsOfExperience = yearsOfExperience; }
+    public boolean isHasAnonymousSubmissions() { return hasAnonymousSubmissions; }
+    public void setHasAnonymousSubmissions(boolean hasAnonymousSubmissions) { this.hasAnonymousSubmissions = hasAnonymousSubmissions; }
+    public String getAvailabilityStatus() { return availabilityStatus; }
+    public void setAvailabilityStatus(String availabilityStatus) { this.availabilityStatus = availabilityStatus; }
 }

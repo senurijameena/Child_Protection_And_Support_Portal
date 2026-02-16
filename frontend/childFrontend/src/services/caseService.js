@@ -1,4 +1,5 @@
-import { api } from './api';
+
+import { apiGet, apiPost, apiPut, apiDelete } from './api';
 
 const transformCaseResponse = (backendData) => {
   if (!backendData) return null;
@@ -30,7 +31,7 @@ const transformCaseResponse = (backendData) => {
 };
 
 export const caseService = {
-  reportCase: (caseData) => {
+  reportCase: async (caseData) => {
     const requestBody = {
       anonymous: caseData.reporterInfo?.isAnonymous || false,
       approximateAge: caseData.childDetails?.ageRange || caseData.childDetails?.approximateAge || '',
@@ -43,56 +44,59 @@ export const caseService = {
       evidenceUrls: caseData.evidence?.map(item => item.url || '').filter(url => url) || []
     };
 
-    return api.post('/api/cases/report', requestBody);
+    const data = await apiPost('/cases/report', requestBody);
+    return { data: transformCaseResponse(data) };
   },
 
   getCaseById: async (caseId) => {
-    const response = await api.get(`/api/cases/${caseId}`);
-    // Transform response to frontend structure
-    if (response.data) {
-      response.data = transformCaseResponse(response.data);
-    }
-    return response;
+    const data = await apiGet(`/cases/${caseId}`);
+    return { data: transformCaseResponse(data) };
   },
 
   getMyCases: async () => {
-    const response = await api.get('/api/cases/my-cases');
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformCaseResponse);
-    }
-    return response;
+    const data = await apiGet('/cases/my-cases');
+    const transformed = Array.isArray(data) ? data.map(transformCaseResponse) : data;
+    return { data: transformed };
   },
 
   getAllCases: async () => {
-    const response = await api.get('/api/cases/all');
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformCaseResponse);
-    }
-    return response;
+    const data = await apiGet('/cases/all');
+    const transformed = Array.isArray(data) ? data.map(transformCaseResponse) : data;
+    return { data: transformed };
   },
 
   getCasesByStatus: async (status) => {
-    const response = await api.get(`/api/cases/status/${status}`);
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformCaseResponse);
-    }
-    return response;
+    const data = await apiGet(`/cases/status/${status}`);
+    const transformed = Array.isArray(data) ? data.map(transformCaseResponse) : data;
+    return { data: transformed };
   },
 
-  updateStatus: (caseId, status) =>
-    api.put(`/api/cases/${caseId}/status`, null, { params: { status } }),
+  updateStatus: async (caseId, status) => {
+    const data = await apiPut(`/cases/${caseId}/status?status=${status}`, {});
+    return { data };
+  },
 
-  assignOfficer: (caseId, officerId) =>
-    api.put(`/api/cases/${caseId}/assign/officer`, null, { params: { officerId } }),
+  assignOfficer: async (caseId, officerId) => {
+    const data = await apiPut(`/cases/${caseId}/assign/officer?officerId=${officerId}`, {});
+    return { data };
+  },
 
-  assignSocialWorker: (caseId, workerId) =>
-    api.put(`/api/cases/${caseId}/assign/social-worker`, null, { params: { workerId } }),
+  assignSocialWorker: async (caseId, workerId) => {
+    const data = await apiPut(`/cases/${caseId}/assign/social-worker?workerId=${workerId}`, {});
+    return { data };
+  },
 
-  deleteCase: (caseId) => api.delete(`/api/cases/${caseId}`),
+  deleteCase: (caseId) => apiDelete(`/cases/${caseId}`),
 
-  getAllCasesWithDetails: () => api.get('/api/cases/admin/all-details'),
+  getAllCasesWithDetails: async () => {
+    const data = await apiGet('/cases/admin/all-details');
+    return { data };
+  },
 
-  getPublicActiveCases: () => api.get('/api/cases/public/active'),
+  getPublicActiveCases: async () => {
+    const data = await apiGet('/cases/public/active');
+    return { data };
+  },
 
   // Close/Decline case with reason
   closeCase: (caseId, reason) =>

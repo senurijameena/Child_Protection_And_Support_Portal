@@ -27,13 +27,22 @@ public class PoliceDashboardController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal String userId) {
         Map<String, Object> stats = new HashMap<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
         // Demo fallback
         if (userId == null) {
             userId = "DEMO_OFFICER_001";
             System.out.println("Using DEMO ID for stats");
         }
+<<<<<<< HEAD
 
+=======
+        
+        // Log for debugging
+>>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
         System.out.println("Fetching police stats for user: " + userId);
 
         List<CaseDTO> assignedCases = caseService.getCasesForOfficer(userId);
@@ -43,6 +52,7 @@ public class PoliceDashboardController {
                 .count();
 
         long urgentCases = assignedCases.stream()
+<<<<<<< HEAD
                 .filter(c -> c.isEmergency()
                         || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
                 .count();
@@ -55,6 +65,23 @@ public class PoliceDashboardController {
         stats.put("emergencyCases", urgentCases);
         stats.put("resolvedToday", resolvedToday);
         stats.put("avgResponse", "N/A");
+=======
+                .filter(c -> c.isEmergency() || (c.getPriority() != null && "URGENT".equalsIgnoreCase(c.getPriority().toString())))
+                .count();
+
+        // Logic for Resolved Today
+        java.time.LocalDate today = java.time.LocalDate.now();
+        long resolvedToday = assignedCases.stream()
+                .filter(c -> c.getStatus() == CaseStatus.RESOLVED && c.getReportDate() != null)
+                .count();
+        
+        stats.put("assignedCases", assignedCases.size());
+        stats.put("activeCases", activeCases);
+        stats.put("urgentCases", urgentCases);
+        stats.put("emergencyCases", urgentCases); 
+        stats.put("resolvedToday", resolvedToday); 
+        stats.put("avgResponse", "N/A"); // Better than fake data
+>>>>>>> 188e32773ef139f5860fb8f8e9ffeb47887cb6d4
         stats.put("pendingTransfers", 0);
         stats.put("unreadNotifications", 0);
 

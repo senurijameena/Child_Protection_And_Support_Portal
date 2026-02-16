@@ -61,6 +61,7 @@ export function UserManagementPage() {
   const [loading, setLoading] = useState(true)
   const [filterRole, setFilterRole] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [showLockModal, setShowLockModal] = useState(false)
@@ -71,13 +72,34 @@ export function UserManagementPage() {
     setLoading(true)
     if (filterRole) {
       getUsersByRoleForManagement(filterRole)
-        .then(setUsers)
-        .catch(() => setUsers([]))
+        .then((data) => {
+          console.log('Users data:', data)
+          setUsers(data || [])
+        })
+        .catch((error) => {
+          console.error('Error loading users:', error)
+          alert('Failed to load users: ' + (error instanceof Error ? error.message : 'Unknown error'))
+          setUsers([])
+        })
         .finally(() => setLoading(false))
     } else {
       getAllUsersForManagement()
-        .then(setUsers)
-        .catch(() => setUsers([]))
+        .then((data) => {
+          console.log('Users data:', data)
+          // Log social workers specifically
+          const socialWorkers = data.filter(u => (u.role || '').toUpperCase() === 'SW')
+          console.log('Social workers:', socialWorkers.map(u => ({
+            name: u.fullName,
+            role: u.role,
+            availabilityStatus: u.availabilityStatus
+          })))
+          setUsers(data || [])
+        })
+        .catch((error) => {
+          console.error('Error loading users:', error)
+          alert('Failed to load users: ' + (error instanceof Error ? error.message : 'Unknown error'))
+          setUsers([])
+        })
         .finally(() => setLoading(false))
     }
   }
@@ -87,8 +109,19 @@ export function UserManagementPage() {
   }, [filterRole])
 
   const filtered = users.filter((u) => {
+    // Status filter
     if (filterStatus === 'active' && !u.active) return false
     if (filterStatus === 'inactive' && u.active) return false
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      const matchesName = u.fullName?.toLowerCase().includes(query) ?? false
+      const matchesEmail = u.email?.toLowerCase().includes(query) ?? false
+      const matchesUserId = formatUserId(u.userId, u.role).toLowerCase().includes(query)
+      if (!matchesName && !matchesEmail && !matchesUserId) return false
+    }
+    
     return true
   })
 
@@ -193,6 +226,15 @@ export function UserManagementPage() {
                 <option value="inactive">Inactive / Locked</option>
               </Form.Select>
             </div>
+            <div className="col-md-4">
+              <Form.Label className="small text-muted">Search</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Search by name, email, or user ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
         </Card.Body>
       </Card>
@@ -230,19 +272,82 @@ export function UserManagementPage() {
                     <td className="fw-medium">{u.fullName || '-'}</td>
                     <td>{u.email || '-'}</td>
                     <td>
-                      <Badge
-                        bg={
-                          u.role === 'ADMIN'
-                            ? 'dark'
-                            : u.role === 'PO' || u.role === 'POLICE'
-                              ? 'primary'
-                              : u.role === 'SW' || u.role === 'SOCIAL_WORKER'
-                                ? 'secondary'
-                                : 'info'
-                        }
-                      >
+                      <div className="d-flex align-items-center gap-2">
+                        <Badge
+                          bg={
+                            u.role === 'ADMIN'
+                              ? 'dark'
+                              : u.role === 'PO' || u.role === 'POLICE'
+                                ? 'primary'
+                                : u.role === 'SW' || u.role === 'SOCIAL_WORKER'
+                                  ? 'secondary'
+                                  : 'info'
+                          }
+                        >
                         {ROLE_LABELS[(u.role as keyof typeof ROLE_LABELS) || 'PU']}
                       </Badge>
+                        {(() => {
+                          const normalizedRole = (u.role || '').toUpperCase().trim()
+                          const isSocialWorker = normalizedRole === 'SW' || normalizedRole === 'SOCIAL_WORKER'
+                          if (!isSocialWorker) return null
+                          
+                          const rawStatus = u.availabilityStatus
+                          
+                          // Debug: log for specific user
+                          if (u.fullName?.includes('Dulmika')) {
+                            console.log('Dulmika status check:', {
+                              fullName: u.fullName,
+                              role: u.role,
+                              rawStatus,
+                              type: typeof rawStatus,
+                              normalized: rawStatus?.toUpperCase()?.trim(),
+                              fullUser: u
+                            })
+                          }
+                          
+                          // Handle null, undefined, or empty string - default to AVAILABLE for social workers
+                          if (!rawStatus || (typeof rawStatus === 'string' && rawStatus.trim() === '')) {
+                            // Default to AVAILABLE if no status is set
+                            return (
+                              <Badge
+                                bg="success"
+                                style={{ fontSize: '0.7rem' }}
+                              >
+                                Available
+                              </Badge>
+                            )
+                          }
+                          
+                          const status = String(rawStatus).toUpperCase().trim()
+                          
+                          return (
+                            <Badge
+                              bg={
+                                status === 'OFF_DUTY'
+                                  ? 'warning'
+                                  : status === 'BUSY'
+                                    ? 'info'
+                                    : status === 'EMERGENCY_ONLY'
+                                      ? 'danger'
+                                      : status === 'AVAILABLE'
+                                        ? 'success'
+                                        : 'secondary'
+                              }
+                              style={{ fontSize: '0.7rem' }}
+                            >
+                              {status === 'OFF_DUTY'
+                                ? 'On Leave'
+                                : status === 'BUSY'
+                                  ? 'Busy'
+                                  : status === 'EMERGENCY_ONLY'
+                                    ? 'Emergency Only'
+                                    : status === 'AVAILABLE'
+                                      ? 'Available'
+                                      : status}
+                            </Badge>
+                          )
+                        })()}
+                      </div>
                     </td>
                     <td>
                       {u.active ? (
@@ -267,50 +372,50 @@ export function UserManagementPage() {
                       {u.role === 'PO' || u.role === 'POLICE' ? (
                         <span className="text-muted small">No actions</span>
                       ) : (
-                        <Dropdown>
-                          <Dropdown.Toggle
-                            variant="outline-primary"
-                            size="sm"
-                            id={`actions-${u.userId}`}
-                          >
-                            Actions
-                          </Dropdown.Toggle>
-                          <Dropdown.Menu align="end">
-                            {!u.approved && (
-                              <>
-                                <Dropdown.Item
-                                  onClick={() => {
-                                    setSelectedUser(u)
-                                    setShowApproveModal(true)
-                                  }}
-                                  disabled={actionLoading}
-                                >
-                                  Approve
-                                </Dropdown.Item>
-                                <Dropdown.Item
-                                  onClick={() => {
-                                    setSelectedUser(u)
-                                    setShowRejectModal(true)
-                                  }}
-                                  className="text-danger"
-                                >
-                                  Reject
-                                </Dropdown.Item>
-                              </>
-                            )}
-                            {u.approved && u.role !== 'ADMIN' && (
+                      <Dropdown>
+                        <Dropdown.Toggle
+                          variant="outline-primary"
+                          size="sm"
+                          id={`actions-${u.userId}`}
+                        >
+                          Actions
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu align="end">
+                          {!u.approved && (
+                            <>
                               <Dropdown.Item
                                 onClick={() => {
                                   setSelectedUser(u)
-                                  setShowLockModal(true)
+                                  setShowApproveModal(true)
                                 }}
                                 disabled={actionLoading}
                               >
-                                {u.active ? 'Lock / Deactivate' : 'Activate'}
+                                Approve
                               </Dropdown.Item>
-                            )}
-                          </Dropdown.Menu>
-                        </Dropdown>
+                              <Dropdown.Item
+                                onClick={() => {
+                                  setSelectedUser(u)
+                                  setShowRejectModal(true)
+                                }}
+                                className="text-danger"
+                              >
+                                Reject
+                              </Dropdown.Item>
+                            </>
+                          )}
+                          {u.approved && u.role !== 'ADMIN' && (
+                            <Dropdown.Item
+                              onClick={() => {
+                                setSelectedUser(u)
+                                setShowLockModal(true)
+                              }}
+                              disabled={actionLoading}
+                            >
+                              {u.active ? 'Lock / Deactivate' : 'Activate'}
+                            </Dropdown.Item>
+                          )}
+                        </Dropdown.Menu>
+                      </Dropdown>
                       )}
                     </td>
                   </tr>

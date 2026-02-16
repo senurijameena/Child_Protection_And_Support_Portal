@@ -1,5 +1,6 @@
+
 // File: src/services/helpRequestService.js
-import { api } from './api';
+import { apiGet, apiPost, apiPut, apiDelete } from './api';
 
 // Transform backend response to frontend expected structure
 const transformHelpRequestResponse = (backendData) => {
@@ -57,85 +58,67 @@ export const helpRequestService = {
       documentUrls: requestData.documentUrls || [],
       priority: requestData.urgency || requestData.priority || 'MEDIUM'
     };
-    const response = await api.post('/api/help-requests/request', backendData);
-    // Transform response to frontend structure
-    if (response.data) {
-      response.data = transformHelpRequestResponse(response.data);
-    }
-    return response;
+    const data = await apiPost('/help-requests/request', backendData);
+    return { data: transformHelpRequestResponse(data) };
   },
 
   // GET /api/help-requests/{requestId} - Get help request by ID
   getHelpRequest: async (requestId) => {
-    const response = await api.get(`/api/help-requests/${requestId}`);
-    // Transform response to frontend structure
-    if (response.data) {
-      response.data = transformHelpRequestResponse(response.data);
-    }
-    return response;
+    const data = await apiGet(`/help-requests/${requestId}`);
+    return { data: transformHelpRequestResponse(data) };
   },
 
   // GET /api/help-requests/my-requests - Get my help requests
   getMyRequests: async () => {
-    const response = await api.get('/api/help-requests/my-requests');
-    // Transform response array
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformHelpRequestResponse);
-    }
-    return response;
+    const data = await apiGet('/help-requests/my-requests');
+    const transformed = Array.isArray(data) ? data.map(transformHelpRequestResponse) : data;
+    return { data: transformed };
   },
 
   // GET /api/help-requests/all - Get all help requests
   getAllRequests: async () => {
-    const response = await api.get('/api/help-requests/all');
-    // Transform response array
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformHelpRequestResponse);
-    }
-    return response;
+    const data = await apiGet('/help-requests/all');
+    const transformed = Array.isArray(data) ? data.map(transformHelpRequestResponse) : data;
+    return { data: transformed };
   },
 
   // GET /api/help-requests/status/{status} - Get by status
   getByStatus: async (status) => {
-    const response = await api.get(`/api/help-requests/status/${status}`);
-    // Transform response array
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformHelpRequestResponse);
-    }
-    return response;
+    const data = await apiGet(`/help-requests/status/${status}`);
+    const transformed = Array.isArray(data) ? data.map(transformHelpRequestResponse) : data;
+    return { data: transformed };
   },
 
   // GET /api/help-requests/type/{helpType} - Get by help type
   getByType: async (helpType) => {
-    const response = await api.get(`/api/help-requests/type/${helpType}`);
-    // Transform response array
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformHelpRequestResponse);
-    }
-    return response;
+    const data = await apiGet(`/help-requests/type/${helpType}`);
+    const transformed = Array.isArray(data) ? data.map(transformHelpRequestResponse) : data;
+    return { data: transformed };
   },
 
   // GET /api/help-requests/search/location - Search by location
   searchByLocation: async (location) => {
-    const response = await api.get('/api/help-requests/search/location', { params: { location } });
-    // Transform response array
-    if (Array.isArray(response.data)) {
-      response.data = response.data.map(transformHelpRequestResponse);
-    }
-    return response;
+    const data = await apiGet(`/help-requests/search/location?location=${encodeURIComponent(location)}`);
+    const transformed = Array.isArray(data) ? data.map(transformHelpRequestResponse) : data;
+    return { data: transformed };
   },
 
   // PUT /api/help-requests/{requestId}/status - Update status
-  updateStatus: (requestId, status) =>
-    api.put(`/api/help-requests/${requestId}/status`, null, { params: { status } }),
+  updateStatus: async (requestId, status) => {
+    const data = await apiPut(`/help-requests/${requestId}/status?status=${status}`, {});
+    return { data };
+  },
 
   // PUT /api/help-requests/{requestId}/assign - Assign to social worker
-  assignSocialWorker: (requestId, workerId) =>
-    api.put(`/api/help-requests/${requestId}/assign`, null, { params: { workerId } }),
+  assignSocialWorker: async (requestId, workerId) => {
+    const data = await apiPut(`/help-requests/${requestId}/assign?workerId=${workerId}`, {});
+    return { data };
+  },
 
   // DELETE /api/help-requests/{requestId} - Delete help request
-  deleteRequest: (requestId) =>
-    api.delete(`/api/help-requests/${requestId}`),
+  deleteRequest: async (requestId) => {
+    return apiDelete(`/help-requests/${requestId}`);
+  },
 
   // Close/Decline help request with reason
   closeRequest: (requestId, reason) =>

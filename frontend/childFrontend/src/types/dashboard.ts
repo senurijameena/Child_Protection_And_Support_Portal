@@ -85,7 +85,6 @@ export interface HelpRequestDTO {
   description?: string
   location?: string
   gender?: string
-  approximateAge?: string
   documentUrls?: string[]
   requestNotes?: string
   status?: RequestStatus
@@ -95,6 +94,7 @@ export interface HelpRequestDTO {
   closedDate?: string
   archivedDate?: string
   priority?: string
+  approximateAge?: string
   // Food Assistance fields
   familyMembers?: number
   monthlyIncomeRange?: string
@@ -361,7 +361,7 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   REJECTED: 'Rejected',
   PACKAGE_REJECTED: 'Package Rejected',
   CANCELLED: 'Cancelled',
-  TRANSFER_REQUESTED: 'Transferred',
+  TRANSFER_REQUESTED: 'Transfer Requested',
   TRANSFERRED: 'Transferred',
 }
 

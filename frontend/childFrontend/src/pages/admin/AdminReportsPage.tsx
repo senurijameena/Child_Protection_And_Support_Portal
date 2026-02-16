@@ -387,69 +387,63 @@ export function AdminReportsPage() {
       </div>
 
       <Card className="border-0 shadow-sm rounded-3 mb-4">
-        <Card.Body className="p-4">
+        <Card.Body>
           <div className="row g-3">
             <div className="col-md-4">
-              <Form.Group>
-            <Form.Label>Report Type</Form.Label>
-                <Form.Select
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value as ReportType)}
-                >
-                  <option value="cases">Cases</option>
-                  <option value="help-requests">Help Requests</option>
-            </Form.Select>
-          </Form.Group>
+              <Form.Label className="small text-muted">Report Type</Form.Label>
+              <Form.Select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value as ReportType)}
+              >
+                <option value="cases">Cases</option>
+                <option value="help-requests">Help Requests</option>
+              </Form.Select>
             </div>
 
             <div className="col-md-4">
-              <Form.Group>
-                <Form.Label>Scope</Form.Label>
-                <div className="d-flex gap-3 mt-1">
-                  <Form.Check
-                    type="radio"
-                    id="scope-all"
-                    label="All data"
-                    name="scope"
-                    checked={scope === 'all'}
-                    onChange={() => setScope('all')}
-                  />
-                  <Form.Check
-                    type="radio"
-                    id="scope-id"
-                    label="ID-based"
-                    name="scope"
-                    checked={scope === 'by-id'}
-                    onChange={() => setScope('by-id')}
-                  />
-                </div>
-              </Form.Group>
+              <Form.Label className="small text-muted">Scope</Form.Label>
+              <div className="d-flex gap-3 mt-1">
+                <Form.Check
+                  type="radio"
+                  id="scope-all"
+                  label="All data"
+                  name="scope"
+                  checked={scope === 'all'}
+                  onChange={() => setScope('all')}
+                />
+                <Form.Check
+                  type="radio"
+                  id="scope-id"
+                  label="ID-based"
+                  name="scope"
+                  checked={scope === 'by-id'}
+                  onChange={() => setScope('by-id')}
+                />
+              </div>
             </div>
 
             {scope === 'by-id' && (
               <div className="col-md-4">
-                <Form.Group>
-                  <Form.Label>Search by</Form.Label>
-                  <div className="d-flex gap-2 mb-2">
-                    <Form.Select
-                      value={idType}
-                      onChange={(e) => setIdType(e.target.value as IdType)}
-                      style={{ maxWidth: 160 }}
-                    >
-                      <option value="case">Case ID</option>
-                      <option value="help">Help ID</option>
-            </Form.Select>
-                    <Form.Control
-                      type="text"
-                      placeholder={idType === 'case' ? 'Enter Case ID' : 'Enter Help ID'}
-                      value={searchId}
-                      onChange={(e) => setSearchId(e.target.value)}
-                    />
-                  </div>
-                  <small className="text-muted">
-                    Use the system ID from the admin dashboards (case or help request details URL).
-                  </small>
-          </Form.Group>
+                <Form.Label className="small text-muted">Search by</Form.Label>
+                <div className="d-flex gap-2 mb-2">
+                  <Form.Select
+                    value={idType}
+                    onChange={(e) => setIdType(e.target.value as IdType)}
+                    style={{ maxWidth: 160 }}
+                  >
+                    <option value="case">Case ID</option>
+                    <option value="help">Help ID</option>
+                  </Form.Select>
+                  <Form.Control
+                    type="text"
+                    placeholder={idType === 'case' ? 'Enter Case ID' : 'Enter Help ID'}
+                    value={searchId}
+                    onChange={(e) => setSearchId(e.target.value)}
+                  />
+                </div>
+                <small className="text-muted">
+                  Use the system ID from the admin dashboards (case or help request details URL).
+                </small>
               </div>
             )}
           </div>
@@ -478,64 +472,59 @@ export function AdminReportsPage() {
               disabled={loading}
             >
               Export PDF
-          </Button>
+            </Button>
           </div>
         </Card.Body>
       </Card>
 
       <Card className="border-0 shadow-sm rounded-3">
-        <Card.Body className="p-4">
-          <div ref={reportRef}>
-            <h2 className="h5 mb-3">
-              {scope === 'all'
-                ? reportType === 'cases'
-                  ? 'Cases Overview'
-                  : 'Help Requests Overview'
-                : idType === 'case'
-                  ? 'Case Detail'
-                  : 'Help Request Detail'}
-            </h2>
-            {rows.length === 0 ? (
+        <Card.Body className="p-0">
+          {rows.length === 0 ? (
+            <div className="p-4 text-center">
               <p className="text-muted mb-0">No data loaded yet. Generate a report to see results.</p>
-            ) : (
-              <div className="table-responsive">
-                <Table striped bordered hover size="sm">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>ID</th>
-                      <th>Tracking ID</th>
-                      <th>Title</th>
-                      <th>Description</th>
-                      <th>Status</th>
-                      <th>Created Date</th>
-                      <th>Last Updated</th>
-                      <th>Assigned User</th>
-                      <th>Location</th>
-                      <th>Category</th>
+            </div>
+          ) : (
+            <div className="table-responsive" ref={reportRef}>
+              <Table hover responsive className="mb-0">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>ID</th>
+                    <th>Tracking ID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th>Last Updated</th>
+                    <th>Assigned User</th>
+                    <th>Location</th>
+                    <th>Category</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={`${row.kind}-${row.id}`}>
+                      <td>{row.kind}</td>
+                      <td>
+                        <code className="small">{row.id?.slice(0, 8)}</code>
+                      </td>
+                      <td>
+                        <code className="small">{row.trackingId || '-'}</code>
+                      </td>
+                      <td>{row.title || '-'}</td>
+                      <td style={{ maxWidth: 300, wordWrap: 'break-word' }}>{row.description || '-'}</td>
+                      <td>{row.status || '-'}</td>
+                      <td className="text-muted small">{row.createdDate || '-'}</td>
+                      <td className="text-muted small">{row.lastUpdated || '-'}</td>
+                      <td>{row.assignedUser || '-'}</td>
+                      <td>{row.location || '-'}</td>
+                      <td>{row.typeLabel || '-'}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={`${row.kind}-${row.id}`}>
-                        <td>{row.kind}</td>
-                        <td>{row.id}</td>
-                        <td>{row.trackingId}</td>
-                        <td>{row.title}</td>
-                        <td style={{ maxWidth: 300, wordWrap: 'break-word' }}>{row.description}</td>
-                        <td>{row.status}</td>
-                        <td>{row.createdDate}</td>
-                        <td>{row.lastUpdated}</td>
-                        <td>{row.assignedUser}</td>
-                        <td>{row.location}</td>
-                        <td>{row.typeLabel}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            )}
-          </div>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </Card.Body>
       </Card>
     </div>

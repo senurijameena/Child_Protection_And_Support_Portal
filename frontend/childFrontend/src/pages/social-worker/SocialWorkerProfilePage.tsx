@@ -28,6 +28,40 @@ const getInitials = (fullName?: string) => {
     .toUpperCase()
 }
 
+const formatUserId = (rawId?: string, role?: string) => {
+  if (!rawId) return '-'
+  const upperRole = (role || '').toUpperCase()
+  const numericPart = rawId.replace(/\D/g, '') || rawId
+
+  // Admin: AD-000 style (3 digits from the end)
+  if (upperRole === 'ADMIN') {
+    const last3 = numericPart.slice(-3) || numericPart
+    return `AD-${last3.padStart(3, '0')}`
+  }
+
+  let prefix = ''
+  switch (upperRole) {
+    case 'PU':
+    case 'PUBLIC':
+      prefix = 'PU-'
+      break
+    case 'PO':
+    case 'POLICE':
+      prefix = 'PO-'
+      break
+    case 'SW':
+    case 'SOCIAL_WORKER':
+      prefix = 'SW-'
+      break
+    default:
+      // Unknown roles: show raw ID
+      return rawId
+  }
+
+  const last4 = numericPart.slice(-4) || numericPart
+  return `${prefix}${last4.padStart(4, '0')}`
+}
+
 // Helper to get full photo URL (handles relative paths from backend)
 const getPhotoUrl = (photoPath?: string | null): string | null => {
   if (!photoPath) return null
@@ -73,8 +107,8 @@ export function SocialWorkerProfilePage() {
     const load = async () => {
       if (!user?.userId) {
         setLoadingProfile(false)
-        return
-      }
+      return
+    }
       try {
         const data = await getUserProfile(user.userId)
         setProfile(data)
@@ -87,10 +121,10 @@ export function SocialWorkerProfilePage() {
         setYearsOfExperience(data.yearsOfExperience || '')
       } catch (err) {
         console.error('Failed to load user profile', err)
-      } finally {
+    } finally {
         setLoadingProfile(false)
-      }
     }
+  }
 
     void load()
   }, [user?.userId])
@@ -278,7 +312,7 @@ export function SocialWorkerProfilePage() {
   const displaySpecializations = (() => {
     if (profile?.specializations && Array.isArray(profile.specializations)) {
       return profile.specializations.join(', ')
-    }
+  }
     if (Array.isArray(user?.specializations)) {
       return user.specializations.join(', ')
     }
@@ -322,7 +356,7 @@ export function SocialWorkerProfilePage() {
                 />
                 
                 {/* Profile photo with upload overlay */}
-                <div
+                  <div
                   className="position-relative"
                   style={{ width: '90px', height: '90px' }}
                 >
@@ -393,21 +427,21 @@ export function SocialWorkerProfilePage() {
                 <div>
                   <div className="fw-700" style={{ fontSize: '1.1rem' }}>
                     {displayName}
-                  </div>
+                    </div>
                   {displayEmail && (
                     <div className="text-muted small">{displayEmail}</div>
                   )}
                   <div className="text-muted small">Role: Social Worker</div>
                   <div className="text-primary small mt-1" style={{ cursor: 'pointer' }} onClick={handlePhotoClick}>
                     {uploadingPhoto ? 'Uploading...' : 'Change photo'}
-                  </div>
-                </div>
-              </div>
+                        </div>
+                        </div>
+                        </div>
 
               {loadingProfile ? (
                 <div className="text-muted small">Loading your profile details…</div>
-              ) : (
-                <>
+                    ) : (
+                      <>
                   <Row className="g-3">
                     <Col xs={12} md={6}>
                       <Form.Group className="mb-3">
@@ -439,7 +473,7 @@ export function SocialWorkerProfilePage() {
                     <Col xs={12} md={6}>
                       <Form.Group className="mb-3">
                         <Form.Label>Professional ID</Form.Label>
-                        <Form.Control value={user?.userId?.slice(0, 8) ?? ''} disabled />
+                        <Form.Control value={formatUserId(user?.userId, user?.role)} disabled />
                       </Form.Group>
                     </Col>
                     <Col xs={12}>
@@ -480,23 +514,23 @@ export function SocialWorkerProfilePage() {
                     <Col xs={12}>
                       <Form.Group className="mb-3">
                         <Form.Label>Specializations (comma-separated)</Form.Label>
-                        <Form.Control
+                          <Form.Control
                           value={isEditing ? specializations : (displaySpecializations || 'Not provided')}
                           onChange={(e) => setSpecializations(e.target.value)}
                           disabled={!isEditing}
                           placeholder="e.g. Child Psychology, Trauma Counseling, Family Support"
-                        />
+                          />
                       </Form.Group>
                     </Col>
                     <Col xs={12} md={6}>
                       <Form.Group className="mb-3">
                         <Form.Label>Years of Experience</Form.Label>
-                        <Form.Control
+                          <Form.Control
                           value={isEditing ? yearsOfExperience : (displayYearsOfExperience || 'Not provided')}
                           onChange={(e) => setYearsOfExperience(e.target.value)}
                           disabled={!isEditing}
                           placeholder="e.g. 5 years"
-                        />
+                          />
                       </Form.Group>
                     </Col>
                   </Row>
@@ -504,13 +538,13 @@ export function SocialWorkerProfilePage() {
                   <div className="d-flex justify-content-end gap-2 mt-3">
                     {isEditing ? (
                       <>
-                        <Button
+                          <Button
                           variant="secondary"
                           onClick={handleCancelClick}
                           disabled={saving}
-                        >
-                          Cancel
-                        </Button>
+                          >
+                            Cancel
+                          </Button>
                         <Button
                           variant="primary"
                           onClick={handleSaveClick}
@@ -580,13 +614,13 @@ export function SocialWorkerProfilePage() {
                 />
               </Form.Group>
               <div className="d-flex justify-content-end">
-                <Button
+              <Button
                   variant="primary"
-                  onClick={handleChangePassword}
+                onClick={handleChangePassword}
                   disabled={changingPassword}
-                >
+              >
                   {changingPassword ? 'Updating…' : 'Change Password'}
-                </Button>
+              </Button>
               </div>
             </Card.Body>
           </Card>

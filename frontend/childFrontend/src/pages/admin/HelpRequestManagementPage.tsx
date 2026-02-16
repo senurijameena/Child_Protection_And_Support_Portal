@@ -25,10 +25,16 @@ const STATUS_OPTIONS = [
   'REQUESTED',
   'UNDER_REVIEW',
   'ASSIGNED',
+  'PACKAGE_PROPOSED',
   'IN_PROGRESS',
   'COMPLETED',
+  'CLOSED',
+  'ARCHIVED',
   'REJECTED',
+  'PACKAGE_REJECTED',
   'CANCELLED',
+  'TRANSFER_REQUESTED',
+  'TRANSFERRED',
 ]
 
 export function HelpRequestManagementPage() {
@@ -69,7 +75,26 @@ export function HelpRequestManagementPage() {
 
   const getAssignedWorkerName = (workerId?: string) => {
     if (!workerId) return '-'
-    const worker = workers.find((w) => (w.userId || w.id) === workerId)
+    if (workers.length === 0) return '-' // Workers not loaded yet
+    
+    // Try to match by userId first (most common case)
+    let worker = workers.find((w) => w.userId === workerId)
+    
+    // If not found, try matching by id
+    if (!worker) {
+      worker = workers.find((w) => w.id === workerId)
+    }
+    
+    // If still not found, try case-insensitive matching
+    if (!worker) {
+      const normalizedWorkerId = workerId.toLowerCase().trim()
+      worker = workers.find((w) => {
+        const normalizedUserId = (w.userId || '').toLowerCase().trim()
+        const normalizedId = (w.id || '').toLowerCase().trim()
+        return normalizedUserId === normalizedWorkerId || normalizedId === normalizedWorkerId
+      })
+    }
+    
     return worker?.fullName || '-'
   }
 

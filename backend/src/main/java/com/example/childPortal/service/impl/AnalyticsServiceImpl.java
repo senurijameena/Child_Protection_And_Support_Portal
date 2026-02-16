@@ -618,6 +618,14 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 long totalCases = dto.getTotalCases();
                 dto.setCaseResolutionRate(totalCases > 0 ? (double) resolvedCount / totalCases * 100 : 0.0);
 
+                // Populate casesByStatus
+                Map<String, Long> casesByStatusMap = getCaseStatusDistribution();
+                dto.setCasesByStatus(casesByStatusMap);
+
+                // Populate helpRequestsByType
+                Map<String, Long> helpRequestsByTypeMap = getHelpTypeDistribution();
+                dto.setHelpRequestsByType(helpRequestsByTypeMap);
+
                 dto.setLastUpdated(LocalDateTime.now());
                 return dto;
         }

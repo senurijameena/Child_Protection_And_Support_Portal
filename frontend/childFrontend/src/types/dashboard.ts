@@ -66,6 +66,7 @@ export interface CaseDTO {
   priority?: string
   caseNotes?: string
   gender?: string
+  approximateAge?: string
   photographUrl?: string
   physicalIdentificationMarks?: string
   lastSeenDressDetails?: string
@@ -85,10 +86,15 @@ export interface HelpRequestDTO {
   location?: string
   gender?: string
   documentUrls?: string[]
+  requestNotes?: string
   status?: RequestStatus
   assignedWorkerId?: string
   requestDate?: string
+  completionDate?: string
+  closedDate?: string
+  archivedDate?: string
   priority?: string
+  approximateAge?: string
   // Food Assistance fields
   familyMembers?: number
   monthlyIncomeRange?: string
@@ -210,6 +216,7 @@ export interface AnnouncementDTO {
   id: string
   title: string
   message: string
+  link?: string
   icon?: string
   type: AnnouncementType
   active: boolean

@@ -92,6 +92,12 @@ npm run dev
 
 Default frontend URL (typical): `http://localhost:5173`
 
+## User Logins
+
+Admin Dashboard Login
+Email: admin@gmail.com
+Password: admin123
+
 ## Environment Notes
 
 - Configure backend DB and security settings in backend configuration files.

@@ -3,7 +3,7 @@
 A role-based web platform to report child protection concerns, request support services, and coordinate case handling across Public Users, Social Workers, Admins, and Police.
 
 
-<img width="400" alt="Demo" src="./demo.gif.gif" />
+<img width="800" alt="Demo" src="./demo.gif.gif" />
 
 
 ## Project Overview

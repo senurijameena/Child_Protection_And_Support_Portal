@@ -1,6 +1,7 @@
 # Child Protection and Support Portal
 
 A role-based web platform to report child protection concerns, request support services, and coordinate case handling across Public Users, Social Workers, Admins, and Police.
+https://github.com/user-attachments/assets/2cc26986-66d9-43ae-98b4-b1cb492e6f74
 
 ## Project Overview
 
